@@ -26,3 +26,10 @@ Record AI-assisted development evidence here.
 - Prompt: Add persistent AGENTS rules for subject-specific course links and stronger focus on visual quality and security.
 - AI output used: AGENTS.md rule extension and source-priority policy.
 - Changes made manually: Confirmed subject names and final link set.
+
+- Date: 2026-02-25
+- Subject: javascript
+- Assignment: assignment-02-ts-task-manager
+- Prompt: Migrate A1 to strict TypeScript and add recurring tasks, dependencies, statistics, search, sorting, and category-priority rules.
+- AI output used: Full TS project scaffold, typed architecture, generic utilities, and UI command integration.
+- Changes made manually: Validation rule tuning and assignment-specific wording.
