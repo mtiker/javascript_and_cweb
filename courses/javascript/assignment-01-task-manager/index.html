@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'">
+  <title>Task Command Center</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="background-glow bg-one" aria-hidden="true"></div>
+  <div class="background-glow bg-two" aria-hidden="true"></div>
+
+  <main class="app-shell">
+    <header class="hero">
+      <p class="eyebrow">JavaScript Fundamentals</p>
+      <h1>Task Command Center</h1>
+      <p class="subtitle">
+        Pure JavaScript task manager with secure rendering, input validation, and async browser storage.
+      </p>
+      <div class="badges" aria-label="Feature highlights">
+        <span>Pure JS</span>
+        <span>Async CRUD</span>
+        <span>Input Validation</span>
+        <span>Security First</span>
+      </div>
+    </header>
+
+    <section class="grid-layout">
+      <section class="panel card animate-in">
+        <h2>Task Editor</h2>
+        <p class="muted">Use this form for <strong>add</strong> and <strong>update</strong>.</p>
+
+        <form id="task-form" class="task-form" novalidate>
+          <input type="hidden" id="task-id">
+
+          <label for="title">Title *</label>
+          <input id="title" name="title" type="text" maxlength="100" required autocomplete="off">
+
+          <label for="description">Description</label>
+          <textarea id="description" name="description" maxlength="500" rows="4"></textarea>
+
+          <div class="inline-fields">
+            <div>
+              <label for="status">Status</label>
+              <select id="status" name="status">
+                <option value="todo">todo</option>
+                <option value="in_progress">in_progress</option>
+                <option value="done">done</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="priority">Priority</label>
+              <select id="priority" name="priority">
+                <option value="low">low</option>
+                <option value="medium" selected>medium</option>
+                <option value="high">high</option>
+              </select>
+            </div>
+          </div>
+
+          <label for="due-date">Due Date</label>
+          <input id="due-date" name="dueDate" type="date">
+
+          <label for="tags">Tags (comma-separated)</label>
+          <input id="tags" name="tags" type="text" maxlength="120" placeholder="study, urgent" autocomplete="off">
+
+          <div class="form-actions">
+            <button type="submit" id="save-btn" class="btn btn-primary">Add Task</button>
+            <button type="button" id="reset-btn" class="btn btn-secondary">Reset</button>
+            <button type="button" id="delete-selected-btn" class="btn btn-danger">Delete Selected</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="panel card animate-in delay-1">
+        <h2>Command Deck</h2>
+        <p class="muted">Required commands: add, list, update, delete, filter, search.</p>
+
+        <div class="command-row">
+          <button type="button" class="cmd-btn" data-command="add">add</button>
+          <button type="button" class="cmd-btn" data-command="list">list</button>
+          <button type="button" class="cmd-btn" data-command="update">update</button>
+          <button type="button" class="cmd-btn" data-command="delete">delete</button>
+          <button type="button" class="cmd-btn" data-command="filter">filter</button>
+          <button type="button" class="cmd-btn" data-command="search">search</button>
+        </div>
+
+        <div class="filters">
+          <h3>Filter / Search Inputs</h3>
+
+          <label for="search-query">Search Query</label>
+          <input id="search-query" type="text" maxlength="80" placeholder="title, description, or tag" autocomplete="off">
+
+          <div class="inline-fields">
+            <div>
+              <label for="filter-status">Filter Status</label>
+              <select id="filter-status">
+                <option value="">any</option>
+                <option value="todo">todo</option>
+                <option value="in_progress">in_progress</option>
+                <option value="done">done</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="filter-priority">Filter Priority</label>
+              <select id="filter-priority">
+                <option value="">any</option>
+                <option value="low">low</option>
+                <option value="medium">medium</option>
+                <option value="high">high</option>
+              </select>
+            </div>
+          </div>
+
+          <label for="filter-due-before">Due Before</label>
+          <input id="filter-due-before" type="date">
+
+          <label for="filter-tag">Tag</label>
+          <input id="filter-tag" type="text" maxlength="30" placeholder="urgent" autocomplete="off">
+
+          <button type="button" id="clear-filters-btn" class="btn btn-secondary">Clear Filters</button>
+        </div>
+      </section>
+    </section>
+
+    <section class="panel card animate-in delay-2">
+      <div class="status-bar">
+        <strong>System Message</strong>
+        <p id="status-message">Ready.</p>
+      </div>
+
+      <div class="table-container" role="region" aria-label="Task list">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Title</th>
+              <th>Status</th>
+              <th>Priority</th>
+              <th>Due Date</th>
+              <th>Tags</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="task-table-body"></tbody>
+        </table>
+      </div>
+
+      <p id="empty-state" class="empty-state">No tasks yet. Add your first task above.</p>
+    </section>
+  </main>
+
+  <template id="task-row-template">
+    <tr>
+      <td class="id-cell"></td>
+      <td class="title-cell">
+        <strong class="title-text"></strong>
+        <div class="description-text"></div>
+      </td>
+      <td class="status-cell"><span class="pill"></span></td>
+      <td class="priority-cell"><span class="pill"></span></td>
+      <td class="due-cell"></td>
+      <td class="tags-cell"></td>
+      <td class="actions-cell">
+        <button type="button" class="btn btn-table edit-btn">Edit</button>
+        <button type="button" class="btn btn-table danger delete-btn">Delete</button>
+      </td>
+    </tr>
+  </template>
+
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
