@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'">
+  <title>Task Matrix TS</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="noise" aria-hidden="true"></div>
+
+  <main class="app">
+    <header class="hero animate-in">
+      <p class="kicker">Assignment 2 · TypeScript Migration</p>
+      <h1>Task Matrix TS</h1>
+      <p class="sub">
+        Strict TypeScript task manager with recurring tasks, dependency control, advanced sorting, and live statistics.
+      </p>
+      <div class="chips">
+        <span>strict mode</span>
+        <span>custom types</span>
+        <span>generics</span>
+        <span>security-first</span>
+      </div>
+    </header>
+
+    <section class="layout">
+      <section class="card animate-in d1">
+        <h2>Task Editor</h2>
+        <p class="muted">Use for add/update commands.</p>
+
+        <form id="task-form" novalidate>
+          <input type="hidden" id="task-id">
+
+          <label for="title">Title *</label>
+          <input id="title" type="text" maxlength="120" required autocomplete="off">
+
+          <label for="description">Description</label>
+          <textarea id="description" rows="3" maxlength="600"></textarea>
+
+          <div class="two-col">
+            <div>
+              <label for="status">Status</label>
+              <select id="status">
+                <option value="todo">todo</option>
+                <option value="in_progress">in_progress</option>
+                <option value="blocked">blocked</option>
+                <option value="done">done</option>
+              </select>
+            </div>
+            <div>
+              <label for="priority">Priority</label>
+              <select id="priority">
+                <option value="low">low</option>
+                <option value="medium">medium</option>
+                <option value="high">high</option>
+                <option value="critical">critical</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="two-col">
+            <div>
+              <label for="category">Category</label>
+              <select id="category">
+                <option value="study">study</option>
+                <option value="work">work</option>
+                <option value="personal">personal</option>
+                <option value="health">health</option>
+                <option value="admin">admin</option>
+              </select>
+            </div>
+            <div>
+              <label for="due-date">Due Date</label>
+              <input id="due-date" type="date">
+            </div>
+          </div>
+
+          <label for="tags">Tags (comma-separated)</label>
+          <input id="tags" type="text" placeholder="exam, urgent, backend" maxlength="240" autocomplete="off">
+
+          <label for="dependencies">Dependencies (task IDs, comma-separated)</label>
+          <input id="dependencies" type="text" placeholder="task ids..." maxlength="420" autocomplete="off">
+
+          <fieldset class="recurrence">
+            <legend>Recurrence</legend>
+            <div class="three-col">
+              <div>
+                <label for="recurrence-frequency">Frequency</label>
+                <select id="recurrence-frequency">
+                  <option value="none">none</option>
+                  <option value="daily">daily</option>
+                  <option value="weekly">weekly</option>
+                  <option value="monthly">monthly</option>
+                </select>
+              </div>
+              <div>
+                <label for="recurrence-interval">Interval</label>
+                <input id="recurrence-interval" type="number" min="1" max="365" value="1">
+              </div>
+              <div>
+                <label for="recurrence-end-date">End Date</label>
+                <input id="recurrence-end-date" type="date">
+              </div>
+            </div>
+          </fieldset>
+
+          <div class="row-actions">
+            <button type="submit" id="save-btn" class="btn primary">Add Task</button>
+            <button type="button" id="reset-btn" class="btn ghost">Reset</button>
+            <button type="button" id="delete-selected-btn" class="btn danger">Delete Selected</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="card animate-in d2">
+        <h2>Command Deck</h2>
+        <p class="muted">Required commands + sorting.</p>
+
+        <div class="command-grid">
+          <button class="cmd-btn" type="button" data-command="add">add</button>
+          <button class="cmd-btn" type="button" data-command="list">list</button>
+          <button class="cmd-btn" type="button" data-command="update">update</button>
+          <button class="cmd-btn" type="button" data-command="delete">delete</button>
+          <button class="cmd-btn" type="button" data-command="filter">filter</button>
+          <button class="cmd-btn" type="button" data-command="search">search</button>
+          <button class="cmd-btn" type="button" data-command="sort">sort</button>
+        </div>
+
+        <div class="query-box">
+          <h3>Filter / Search / Sort</h3>
+
+          <label for="search-query">Search</label>
+          <input id="search-query" type="text" maxlength="100" placeholder="title, id, tag, category">
+
+          <div class="two-col">
+            <div>
+              <label for="filter-status">Status</label>
+              <select id="filter-status">
+                <option value="">any</option>
+                <option value="todo">todo</option>
+                <option value="in_progress">in_progress</option>
+                <option value="blocked">blocked</option>
+                <option value="done">done</option>
+              </select>
+            </div>
+            <div>
+              <label for="filter-priority">Priority</label>
+              <select id="filter-priority">
+                <option value="">any</option>
+                <option value="low">low</option>
+                <option value="medium">medium</option>
+                <option value="high">high</option>
+                <option value="critical">critical</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="two-col">
+            <div>
+              <label for="filter-category">Category</label>
+              <select id="filter-category">
+                <option value="">any</option>
+                <option value="study">study</option>
+                <option value="work">work</option>
+                <option value="personal">personal</option>
+                <option value="health">health</option>
+                <option value="admin">admin</option>
+              </select>
+            </div>
+            <div>
+              <label for="filter-due-before">Due Before</label>
+              <input id="filter-due-before" type="date">
+            </div>
+          </div>
+
+          <label for="filter-tag">Tag</label>
+          <input id="filter-tag" type="text" maxlength="24" placeholder="urgent">
+
+          <div class="two-col">
+            <div>
+              <label for="sort-by">Sort By</label>
+              <select id="sort-by">
+                <option value="priority">priority</option>
+                <option value="dueDate">dueDate</option>
+                <option value="status">status</option>
+                <option value="title">title</option>
+                <option value="category">category</option>
+                <option value="createdAt">createdAt</option>
+                <option value="updatedAt">updatedAt</option>
+              </select>
+            </div>
+            <div>
+              <label for="sort-direction">Direction</label>
+              <select id="sort-direction">
+                <option value="asc">asc</option>
+                <option value="desc">desc</option>
+              </select>
+            </div>
+          </div>
+
+          <button id="clear-query-btn" type="button" class="btn ghost">Clear Filters</button>
+        </div>
+      </section>
+    </section>
+
+    <section class="card animate-in d3">
+      <div class="status-line">
+        <strong>System</strong>
+        <p id="status-message">Ready.</p>
+      </div>
+
+      <section class="stats-grid" aria-label="Task statistics">
+        <article class="stat">
+          <span>Total</span>
+          <strong id="stat-total">0</strong>
+        </article>
+        <article class="stat">
+          <span>Completed</span>
+          <strong id="stat-completed">0</strong>
+        </article>
+        <article class="stat">
+          <span>Blocked</span>
+          <strong id="stat-blocked">0</strong>
+        </article>
+        <article class="stat">
+          <span>Overdue</span>
+          <strong id="stat-overdue">0</strong>
+        </article>
+        <article class="stat">
+          <span>Completion Rate</span>
+          <strong id="stat-rate">0%</strong>
+        </article>
+      </section>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Task</th>
+              <th>Status</th>
+              <th>Priority</th>
+              <th>Category</th>
+              <th>Due</th>
+              <th>Recurrence</th>
+              <th>Dependencies</th>
+              <th>Tags</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="task-table-body"></tbody>
+        </table>
+      </div>
+
+      <p id="empty-state" class="empty-state">No tasks in the current query.</p>
+    </section>
+  </main>
+
+  <template id="task-row-template">
+    <tr>
+      <td class="id-cell"></td>
+      <td class="task-cell">
+        <strong class="task-title"></strong>
+        <span class="task-description"></span>
+      </td>
+      <td class="status-cell"><span class="pill"></span></td>
+      <td class="priority-cell"><span class="pill"></span></td>
+      <td class="category-cell"></td>
+      <td class="due-cell"></td>
+      <td class="recurrence-cell"></td>
+      <td class="dependencies-cell"></td>
+      <td class="tags-cell"></td>
+      <td class="actions-cell">
+        <button class="btn table-btn edit-btn" type="button">Edit</button>
+        <button class="btn table-btn delete-btn" type="button">Delete</button>
+      </td>
+    </tr>
+  </template>
+
+  <script type="module" src="./dist/main.js"></script>
+</body>
+</html>
