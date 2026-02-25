@@ -35,6 +35,27 @@ Use Conventional Commits with subject/assignment scope:
 - Keep per-assignment `README.md` inside each assignment folder.
 - Log AI assistance in `docs/ai-prompts.md`.
 
+## Course Source Priority
+
+- For `courses/javascript` tasks, prioritize:
+  - `https://courses.taltech.akaver.com/javascript/`
+- For `courses/webapp-csharp` tasks, prioritize:
+  - `https://courses.taltech.akaver.com/web-applications-with-csharp`
+  - `https://courses.taltech.akaver.com/programming-in-csharp`
+- When course material conflicts with generic guidance, follow course material first.
+
+## Quality Defaults
+
+- Put strong emphasis on visual quality in frontend outputs:
+  - responsive layout
+  - clear hierarchy and typography
+  - intentional color/motion choices
+- Put strong emphasis on security in all assignments:
+  - strict input validation
+  - safe DOM writes (`textContent`, no unsafe HTML insertion)
+  - defensive error handling
+  - secure-by-default browser settings where practical (for example CSP)
+
 ## Integration Rule
 
 When both subjects start sharing functionality:
