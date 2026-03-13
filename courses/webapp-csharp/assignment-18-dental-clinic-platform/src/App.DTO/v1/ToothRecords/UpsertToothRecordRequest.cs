@@ -7,7 +7,7 @@ public class UpsertToothRecordRequest
     [Required]
     public Guid PatientId { get; set; }
 
-    [Range(1, 32)]
+    [Range(11, 48)]
     public int ToothNumber { get; set; }
 
     [Required]

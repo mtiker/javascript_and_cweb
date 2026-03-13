@@ -1,12 +1,15 @@
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using App.DAL.EF;
+using App.Domain;
 using App.Domain.Entities;
+using App.Domain.Identity;
 using App.DTO.v1.Appointments;
 using App.DTO.v1.Identity;
 using App.DTO.v1.Patients;
 using App.DTO.v1.System;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -29,6 +32,8 @@ public class IntegrationTestTenantOperations : IClassFixture<CustomWebApplicatio
     [Fact]
     public async Task PatientCrud_And_AppointmentCreate_Flow_Works()
     {
+        await AuthenticateAsSystemOperatorAsync();
+
         var slug = $"acme-{Guid.NewGuid():N}"[..12];
         var ownerEmail = $"owner-{Guid.NewGuid():N}@tenant.test";
         const string ownerPassword = "Strong.Pass.123!";
@@ -126,5 +131,54 @@ public class IntegrationTestTenantOperations : IClassFixture<CustomWebApplicatio
 
         var deletePatient = await _client.DeleteAsync($"/api/v1/{slug}/patients/{createdPatient.Id}");
         Assert.Equal(System.Net.HttpStatusCode.NoContent, deletePatient.StatusCode);
+    }
+
+    private async Task AuthenticateAsSystemOperatorAsync()
+    {
+        const string email = "sysadmin-tenant-ops@test.local";
+        const string password = "Strong.Pass.123!";
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var userManager = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
+            var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<AppRole>>();
+
+            if (!await roleManager.RoleExistsAsync(RoleNames.SystemAdmin))
+            {
+                var createRole = await roleManager.CreateAsync(new AppRole { Name = RoleNames.SystemAdmin });
+                Assert.True(createRole.Succeeded);
+            }
+
+            var user = await userManager.FindByEmailAsync(email);
+            if (user == null)
+            {
+                user = new AppUser
+                {
+                    Email = email,
+                    UserName = email,
+                    EmailConfirmed = true
+                };
+
+                var createUser = await userManager.CreateAsync(user, password);
+                Assert.True(createUser.Succeeded);
+            }
+
+            if (!await userManager.IsInRoleAsync(user, RoleNames.SystemAdmin))
+            {
+                var addRole = await userManager.AddToRoleAsync(user, RoleNames.SystemAdmin);
+                Assert.True(addRole.Succeeded);
+            }
+        }
+
+        var login = await _client.PostAsJsonAsync("/api/v1/account/login", new Login
+        {
+            Email = email,
+            Password = password
+        });
+        login.EnsureSuccessStatusCode();
+
+        var token = await login.Content.ReadFromJsonAsync<JWTResponse>();
+        Assert.NotNull(token);
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.Jwt);
     }
 }

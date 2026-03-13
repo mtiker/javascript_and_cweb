@@ -17,7 +17,7 @@ namespace WebApp.ApiControllers.System;
 public class OnboardingController(ICompanyOnboardingService onboardingService, AppDbContext dbContext) : ControllerBase
 {
     [HttpPost]
-    [AllowAnonymous]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = RoleNames.SystemAdmin + "," + RoleNames.SystemSupport)]
     [ProducesResponseType(typeof(RegisterCompanyResponse), StatusCodes.Status200OK)]
     public async Task<ActionResult<RegisterCompanyResponse>> RegisterCompany([FromBody] RegisterCompanyRequest request, CancellationToken cancellationToken)
     {

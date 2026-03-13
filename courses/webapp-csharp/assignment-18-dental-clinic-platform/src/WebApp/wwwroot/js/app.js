@@ -2,12 +2,63 @@
     const sessionStorageKey = "dental-saas-ui-session";
     const themeStorageKey = "dental-saas-ui-theme";
     const maxLogEntries = 60;
+    const baseTitle = "Dental Clinic SaaS Console";
+    const screenRouteMap = {
+        overview: "/app/overview",
+        platform: "/app/platform",
+        support: "/app/support",
+        billing: "/app/billing",
+        auth: "/app/auth",
+        patients: "/app/patients",
+        resources: "/app/resources",
+        appointments: "/app/appointments",
+        plans: "/app/plans",
+        team: "/app/team",
+        settings: "/app/settings",
+        logs: "/app/logs"
+    };
+    const screenTitleMap = {
+        overview: "Overview",
+        platform: "Platform",
+        support: "Support",
+        billing: "Billing",
+        auth: "Access",
+        patients: "Patients",
+        resources: "Resources",
+        appointments: "Schedule",
+        plans: "Plans",
+        team: "Team",
+        settings: "Settings",
+        logs: "API Logs"
+    };
+    const routeScreenMap = Object.fromEntries(
+        Object.entries(screenRouteMap).map(([screenId, route]) => [normalizeRoute(route), screenId])
+    );
+    const validScreens = new Set(Object.keys(screenRouteMap));
+    const permanentToothGroups = [
+        [18, 17, 16, 15, 14, 13, 12, 11],
+        [21, 22, 23, 24, 25, 26, 27, 28],
+        [48, 47, 46, 45, 44, 43, 42, 41],
+        [31, 32, 33, 34, 35, 36, 37, 38]
+    ];
+    const permanentToothNumbers = permanentToothGroups.flat();
+    const toothConditionOptions = [
+        "Healthy",
+        "Caries",
+        "Filled",
+        "Crown",
+        "RootCanal",
+        "Missing"
+    ];
 
     const state = {
         ...loadSession(),
         patients: [],
+        patientProfile: null,
+        selectedPatientToothNumber: null,
         dentists: [],
         treatmentRooms: [],
+        treatmentTypes: [],
         appointments: [],
         openPlanItems: [],
         companyUsers: [],
@@ -34,7 +85,6 @@
         appRoot: document.getElementById("app-root"),
         gatewayScreen: document.getElementById("gateway-screen"),
         gatewayLoginForm: document.getElementById("gateway-login-form"),
-        gatewayOpenAuthButton: document.getElementById("gateway-open-auth"),
         sessionRole: document.getElementById("session-role"),
         sessionTenant: document.getElementById("session-tenant"),
         sessionExpiry: document.getElementById("session-expiry"),
@@ -47,6 +97,25 @@
         platformInvoiceCount: document.getElementById("platform-invoice-count"),
         logBox: document.getElementById("log-box"),
         patientsBody: document.getElementById("patients-body"),
+        patientsWorkspace: document.getElementById("patients-workspace"),
+        patientProfilePanel: document.getElementById("patient-profile-panel"),
+        patientProfileName: document.getElementById("patient-profile-name"),
+        patientProfileMeta: document.getElementById("patient-profile-meta"),
+        patientProfileIssueCount: document.getElementById("patient-profile-issue-count"),
+        patientProfileTreatmentCount: document.getElementById("patient-profile-treatment-count"),
+        patientProfileDob: document.getElementById("patient-profile-dob"),
+        patientProfileCode: document.getElementById("patient-profile-code"),
+        patientProfileEmail: document.getElementById("patient-profile-email"),
+        patientProfilePhone: document.getElementById("patient-profile-phone"),
+        patientProfileForm: document.getElementById("patient-profile-form"),
+        patientProfileBackButton: document.getElementById("patient-profile-back-btn"),
+        patientProfileRefreshButton: document.getElementById("patient-profile-refresh-btn"),
+        patientProfileDeleteButton: document.getElementById("patient-profile-delete-btn"),
+        patientToothChart: document.getElementById("patient-tooth-chart"),
+        patientToothHoverCard: document.getElementById("patient-tooth-hover-card"),
+        patientSelectedToothTitle: document.getElementById("patient-selected-tooth-title"),
+        patientSelectedToothSummary: document.getElementById("patient-selected-tooth-summary"),
+        patientSelectedToothHistory: document.getElementById("patient-selected-tooth-history"),
         themeToggle: document.getElementById("theme-toggle"),
         logoutButton: document.getElementById("logout-btn"),
         refreshPatientsButton: document.getElementById("refresh-patients-btn"),
@@ -82,6 +151,13 @@
         dentistsBody: document.getElementById("dentists-body"),
         treatmentRoomsBody: document.getElementById("treatment-rooms-body"),
         appointmentsBody: document.getElementById("appointments-body"),
+        appointmentClinicalForm: document.getElementById("appointment-clinical-form"),
+        appointmentClinicalItems: document.getElementById("appointment-clinical-items"),
+        appointmentClinicalAppointmentSelect: document.getElementById("appointmentClinicalAppointmentId"),
+        appointmentClinicalPerformedAtInput: document.getElementById("appointmentClinicalPerformedAt"),
+        appointmentClinicalMarkCompleted: document.getElementById("appointmentClinicalMarkCompleted"),
+        appointmentClinicalAddRowButton: document.getElementById("appointment-clinical-add-row-btn"),
+        appointmentClinicalItemTemplate: document.getElementById("appointment-clinical-item-template"),
         planItemsBody: document.getElementById("plan-items-body"),
         featureFlagsBody: document.getElementById("feature-flags-body"),
         supportCompaniesBody: document.getElementById("support-companies-body"),
@@ -108,6 +184,7 @@
     initializeTabs();
     renderSession();
     renderPatients([]);
+    renderPatientProfile(null);
     renderDentists([]);
     renderTreatmentRooms([]);
     renderAppointments([]);
@@ -120,6 +197,7 @@
     renderSupportTickets([]);
     renderBillingSubscriptions([]);
     renderBillingInvoices([]);
+    resetAppointmentClinicalForm();
     setSyncStatus("Idle", "neutral");
     log("SYSTEM/READY", null, { message: "UI initialized." });
 
@@ -142,9 +220,11 @@
         bindAsyncSubmit(elements.forgotPasswordForm, onForgotPasswordSubmit);
         bindAsyncSubmit(elements.resetPasswordForm, onResetPasswordSubmit);
         bindAsyncSubmit(elements.patientForm, onPatientCreateSubmit);
+        bindAsyncSubmit(elements.patientProfileForm, onPatientProfileSubmit);
         bindAsyncSubmit(elements.dentistForm, onDentistCreateSubmit);
         bindAsyncSubmit(elements.treatmentRoomForm, onTreatmentRoomCreateSubmit);
         bindAsyncSubmit(elements.appointmentForm, onAppointmentCreateSubmit);
+        bindAsyncSubmit(elements.appointmentClinicalForm, onAppointmentClinicalSubmit);
         bindAsyncSubmit(elements.planDecisionForm, onPlanDecisionSubmit);
         bindAsyncSubmit(elements.costEstimateForm, onCostEstimateSubmit);
         bindAsyncSubmit(elements.legalEstimateForm, onLegalEstimateSubmit);
@@ -159,6 +239,17 @@
 
         bindAsyncClick(elements.refreshPatientsButton, async () => {
             await refreshPatients({ trigger: elements.refreshPatientsButton });
+        });
+        bindAsyncClick(elements.patientProfileRefreshButton, async () => {
+            await refreshPatientProfile({ trigger: elements.patientProfileRefreshButton });
+        });
+        bindAsyncClick(elements.patientProfileBackButton, async () => {
+            closePatientProfile();
+        });
+        bindAsyncClick(elements.patientProfileDeleteButton, async () => {
+            if (state.patientProfile) {
+                openDeleteDialog(state.patientProfile);
+            }
         });
         bindAsyncClick(elements.refreshResourcesButton, async () => {
             await refreshResources({ trigger: elements.refreshResourcesButton });
@@ -187,9 +278,11 @@
         bindAsyncClick(elements.refreshSubscriptionButton, async () => {
             await refreshTenantSubscription({ trigger: elements.refreshSubscriptionButton });
         });
+        bindSyncClick(elements.appointmentClinicalAddRowButton, () => {
+            addAppointmentClinicalEntryRow();
+        });
 
         bindAsyncClick(elements.logoutButton, onLogoutClick);
-        bindSyncClick(elements.gatewayOpenAuthButton, onGatewayOpenAuthClick);
         bindSyncClick(elements.themeToggle, onThemeToggle);
 
         if (elements.patientDeleteDialog) {
@@ -206,8 +299,8 @@
             });
         });
 
-        window.addEventListener("hashchange", () => {
-            activateScreen(getRequestedScreen(), { updateHash: false });
+        window.addEventListener("popstate", () => {
+            activateScreen(getRequestedScreen(), { updatePath: false });
         });
     }
 
@@ -262,40 +355,64 @@
     }
 
     function initializeTabs() {
-        activateScreen(getRequestedScreen(), { updateHash: false });
+        activateScreen(getRequestedScreen(), { updatePath: false });
     }
 
     function getRequestedScreen() {
-        const raw = (window.location.hash || "").replace("#", "").trim();
-        const allowed = new Set(["overview", "platform", "support", "billing", "auth", "patients", "resources", "appointments", "plans", "team", "settings", "logs"]);
-        return allowed.has(raw) ? raw : "overview";
+        const pathScreen = routeScreenMap[normalizeRoute(window.location.pathname)];
+        if (pathScreen) {
+            return pathScreen;
+        }
+
+        // Backward compatibility for old hash-based links.
+        const legacyHash = (window.location.hash || "").replace("#", "").trim();
+        if (validScreens.has(legacyHash)) {
+            return legacyHash;
+        }
+
+        return "overview";
     }
 
     function activateScreen(screenId, options = {}) {
-        const updateHash = options.updateHash !== false;
+        const updatePath = options.updatePath !== false;
+        const useReplaceState = options.replaceHistory === true;
+        const safeScreen = validScreens.has(screenId) ? screenId : "overview";
         const panels = document.querySelectorAll("[data-screen]");
         const tabs = document.querySelectorAll("[data-tab-target]");
 
         panels.forEach((panel) => {
-            const isMatch = panel.getAttribute("data-screen") === screenId;
+            const isMatch = panel.getAttribute("data-screen") === safeScreen;
             panel.hidden = !isMatch;
         });
 
         tabs.forEach((tab) => {
-            const isMatch = tab.getAttribute("data-tab-target") === screenId;
+            const isMatch = tab.getAttribute("data-tab-target") === safeScreen;
             if (tab.classList.contains("tab")) {
                 tab.classList.toggle("is-active", isMatch);
                 tab.setAttribute("aria-selected", isMatch ? "true" : "false");
             }
         });
 
-        if (updateHash) {
-            history.replaceState(null, "", `#${screenId}`);
+        if (updatePath) {
+            const nextPath = screenRouteMap[safeScreen] || screenRouteMap.overview;
+            const currentPath = normalizeRoute(window.location.pathname);
+            if (nextPath !== currentPath) {
+                if (useReplaceState) {
+                    history.replaceState(null, "", nextPath);
+                } else {
+                    history.pushState(null, "", nextPath);
+                }
+            }
         }
+
+        const screenTitle = screenTitleMap[safeScreen] || "Workspace";
+        document.title = `${screenTitle} | ${baseTitle}`;
     }
 
     async function onOnboardingSubmit(event) {
         event.preventDefault();
+        requireSystemRole("SystemAdmin", "SystemSupport");
+
         const form = event.currentTarget;
         const payload = {
             companyName: form.companyName.value.trim(),
@@ -309,7 +426,7 @@
             const data = await apiRequest("/api/v1/system/onboarding/registercompany", {
                 method: "POST",
                 body: payload,
-                auth: false,
+                auth: true,
                 tag: "ONBOARDING"
             });
 
@@ -325,16 +442,6 @@
         event.preventDefault();
         const form = event.currentTarget;
         await performLogin(form.email.value.trim(), form.password.value, form, "GATEWAY");
-    }
-
-    function onGatewayOpenAuthClick() {
-        if (elements.gatewayScreen) {
-            elements.gatewayScreen.hidden = true;
-        }
-        if (elements.appRoot) {
-            elements.appRoot.hidden = false;
-        }
-        activateScreen("auth");
     }
 
     async function onLoginSubmit(event) {
@@ -470,6 +577,39 @@
         });
     }
 
+    async function onPatientProfileSubmit(event) {
+        event.preventDefault();
+        requireTenant();
+
+        const patientId = state.patientProfile?.id;
+        if (!patientId) {
+            throw new Error("Open a patient profile before saving changes.");
+        }
+
+        const form = event.currentTarget;
+        const payload = {
+            firstName: form.firstName.value.trim(),
+            lastName: form.lastName.value.trim(),
+            dateOfBirth: form.dateOfBirth.value || null,
+            personalCode: optional(form.personalCode.value),
+            email: optional(form.email.value),
+            phone: optional(form.phone.value)
+        };
+
+        await withBusy(form, async () => {
+            await apiRequest(`/api/v1/${state.companySlug}/patients/${patientId}`, {
+                method: "PUT",
+                body: payload,
+                auth: true,
+                tag: "PATIENT/UPDATE"
+            });
+
+            showToast("Patient profile updated.", "success");
+            await refreshPatients({ silentToast: true, silentSyncStatus: true });
+            await refreshPatientProfile({ patientId, silentToast: true, trigger: form });
+        });
+    }
+
     async function onDentistCreateSubmit(event) {
         event.preventDefault();
         requireTenant();
@@ -549,6 +689,66 @@
             showToast("Appointment created.", "success");
             form.reset();
             await refreshAppointments({ silentToast: true });
+        });
+    }
+
+    async function onAppointmentClinicalSubmit(event) {
+        event.preventDefault();
+        requireTenant();
+
+        const form = event.currentTarget;
+        const appointmentId = form.appointmentId.value;
+        if (!appointmentId) {
+            throw new Error("Select an appointment first.");
+        }
+
+        const rows = Array.from(elements.appointmentClinicalItems?.querySelectorAll(".clinical-entry") ?? []);
+        if (rows.length === 0) {
+            throw new Error("Add at least one tooth entry.");
+        }
+
+        const items = rows.map((row) => {
+            const toothNumber = row.querySelector('[data-clinical-field="toothNumber"]')?.value || "";
+            const treatmentTypeId = row.querySelector('[data-clinical-field="treatmentTypeId"]')?.value || "";
+            const condition = row.querySelector('[data-clinical-field="condition"]')?.value || "";
+            const priceRaw = row.querySelector('[data-clinical-field="price"]')?.value || "";
+            const notes = row.querySelector('[data-clinical-field="notes"]')?.value || "";
+
+            if (!toothNumber || !treatmentTypeId || !condition) {
+                throw new Error("Complete tooth, treatment type, and status for each clinical entry.");
+            }
+
+            return {
+                toothNumber: Number(toothNumber),
+                treatmentTypeId,
+                condition,
+                price: priceRaw === "" ? null : Number(priceRaw),
+                notes: optional(notes)
+            };
+        });
+
+        const payload = {
+            performedAtUtc: toUtcIso(form.performedAtLocal.value),
+            markAppointmentCompleted: Boolean(form.markCompleted.checked),
+            items
+        };
+
+        await withBusy(form, async () => {
+            await apiRequest(`/api/v1/${state.companySlug}/appointments/${appointmentId}/clinical-record`, {
+                method: "POST",
+                body: payload,
+                auth: true,
+                tag: "APPOINTMENT/CLINICAL-RECORD"
+            });
+
+            const appointment = state.appointments.find((item) => item.id === appointmentId) || null;
+            showToast(`${items.length} tooth entr${items.length === 1 ? "y" : "ies"} recorded.`, "success");
+            resetAppointmentClinicalForm({ appointmentId });
+            await refreshAppointments({ silentToast: true });
+
+            if (appointment && state.patientProfile?.id === appointment.patientId) {
+                await refreshPatientProfile({ patientId: appointment.patientId, silentToast: true, trigger: form });
+            }
         });
     }
 
@@ -872,6 +1072,7 @@
             clearSession();
             renderSession();
             renderPatients([]);
+            renderPatientProfile(null);
             renderDentists([]);
             renderTreatmentRooms([]);
             renderAppointments([]);
@@ -886,10 +1087,11 @@
             renderBillingSubscriptions([]);
             renderBillingInvoices([]);
             renderLegalEstimateOutput("No legal preview generated yet.");
+            resetAppointmentClinicalForm();
             setSyncStatus("Idle", "neutral");
             log("LOGOUT/SUCCESS", null, { message: "Session cleared." });
             showToast("Logged out.", "info");
-            activateScreen("overview");
+            syncPublicEntryState();
         });
     }
 
@@ -914,16 +1116,22 @@
             }
         }
 
-        if (state.companySlug) {
+        if (state.companySlug && state.companyRole) {
             await refreshPatients({ silentToast: true, silentSyncStatus: true, trigger: options.trigger });
             await refreshClinicalViews({ silentToast: true, trigger: options.trigger });
             await refreshTenantAdminViews({ silentToast: true, trigger: options.trigger });
             await refreshTenantSubscription({ silentToast: true, silentErrors: true, trigger: options.trigger });
+
+            if (state.patientProfile?.id) {
+                await refreshPatientProfile({ silentToast: true, trigger: options.trigger });
+            }
+        } else if (state.companySlug) {
+            setSyncStatus("Tenant selected without company access", "warning");
         } else if (!hasAnySystemRole()) {
             setSyncStatus("No active tenant", "warning");
         }
 
-        if (!silentSyncStatus && state.companySlug) {
+        if (!silentSyncStatus && state.companySlug && state.companyRole) {
             setSyncStatus(`Synced ${formatTime(new Date())}`, "success");
         }
 
@@ -975,6 +1183,64 @@
         }
     }
 
+    async function refreshPatientProfile(options = {}) {
+        requireTenant();
+
+        const patientId = options.patientId || state.patientProfile?.id;
+        if (!patientId) {
+            return;
+        }
+
+        const trigger = options.trigger || elements.patientProfileRefreshButton || elements.refreshPatientsButton;
+        const profile = await withBusy(trigger, async () => {
+            return await apiRequest(`/api/v1/${state.companySlug}/patients/${patientId}/profile`, {
+                method: "GET",
+                auth: true,
+                tag: "PATIENT/PROFILE"
+            });
+        });
+
+        renderPatientProfile(profile, {
+            selectedToothNumber: state.selectedPatientToothNumber
+        });
+
+        if (!options.silentToast) {
+            showToast("Patient profile loaded.", "info");
+        }
+    }
+
+    async function refreshTreatmentTypes(options = {}) {
+        requireTenant();
+
+        const {
+            trigger = elements.refreshAppointmentsButton,
+            silentErrors = false
+        } = options;
+
+        try {
+            const types = await withBusy(trigger, async () => {
+                const data = await apiRequest(`/api/v1/${state.companySlug}/treatmenttypes`, {
+                    method: "GET",
+                    auth: true,
+                    tag: "TREATMENT-TYPES/LIST"
+                });
+
+                return Array.isArray(data) ? data : [];
+            });
+
+            state.treatmentTypes = types;
+            renderAppointmentClinicalSelectOptions();
+        } catch (error) {
+            if (silentErrors) {
+                state.treatmentTypes = [];
+                renderAppointmentClinicalSelectOptions();
+                return;
+            }
+
+            throw error;
+        }
+    }
+
     async function refreshClinicalViews(options = {}) {
         if (!state.companySlug) {
             return;
@@ -986,16 +1252,20 @@
         if (!canAccessResources) {
             state.dentists = [];
             state.treatmentRooms = [];
+            state.treatmentTypes = [];
             state.appointments = [];
             state.openPlanItems = [];
             renderDentists([]);
             renderTreatmentRooms([]);
             renderAppointments([]);
+            renderAppointmentClinicalSelectOptions();
+            resetAppointmentClinicalForm();
             renderOpenPlanItems([]);
             return;
         }
 
         await refreshResources({ silentToast: true, silentErrors: true, trigger: options.trigger });
+        await refreshTreatmentTypes({ silentErrors: true, trigger: options.trigger });
         await refreshAppointments({ silentToast: true, silentErrors: true, trigger: options.trigger });
 
         if (canAccessPlanDecisions) {
@@ -1565,6 +1835,7 @@
 
         const patientId = pendingDelete.id;
         const patientLabel = pendingDelete.label;
+        const shouldCloseProfile = state.patientProfile?.id === patientId;
         pendingDelete = { id: "", label: "" };
 
         await withBusy(elements.confirmDeleteButton, async () => {
@@ -1578,6 +1849,9 @@
         });
 
         await refreshPatients({ silentToast: true, silentSyncStatus: true });
+        if (shouldCloseProfile) {
+            closePatientProfile();
+        }
     }
 
     async function withBusy(target, action) {
@@ -1701,6 +1975,12 @@
 
         if (!response.ok) {
             log(options.tag || "API/ERROR", options.body || null, parsedBody, true);
+            if (options.auth && response.status === 401) {
+                clearSession();
+                renderSession();
+                syncPublicEntryState();
+                throw new Error("Session expired. Sign in again.");
+            }
             const errorMessage = readErrorMessage(parsedBody) || `HTTP ${response.status}`;
             throw new Error(errorMessage);
         }
@@ -1711,6 +1991,7 @@
     function renderSession() {
         const isAuthenticated = Boolean(state.jwt);
         const hasTenant = Boolean(state.companySlug);
+        const hasTenantAccess = Boolean(state.companySlug && state.companyRole);
         const systemRoleLabel = state.systemRoles.length > 0 ? state.systemRoles.join(", ") : "";
 
         if (elements.gatewayScreen) {
@@ -1718,6 +1999,9 @@
         }
         if (elements.appRoot) {
             elements.appRoot.hidden = !isAuthenticated;
+        }
+        if (!isAuthenticated) {
+            syncPublicEntryState();
         }
 
         if (elements.authPill) {
@@ -1756,18 +2040,32 @@
             elements.overviewPatientCount.textContent = String(state.patients.length);
         }
 
-        const allowedTabs = getAllowedTabs(isAuthenticated, hasTenant);
+        const allowedTabs = getAllowedTabs(isAuthenticated, hasTenantAccess);
         applyTabVisibility(allowedTabs);
 
         const canManagePlatform = hasSystemRole("SystemAdmin");
+        const canOnboardCompanies = hasSystemRole("SystemAdmin", "SystemSupport");
         const canSupport = hasSystemRole("SystemSupport", "SystemAdmin");
         const canBill = hasSystemRole("SystemBilling", "SystemAdmin");
-        const canAccessResources = hasTenant && hasCompanyRole("CompanyOwner", "CompanyAdmin", "CompanyManager", "CompanyEmployee");
-        const canManageResources = hasTenant && hasCompanyRole("CompanyOwner", "CompanyAdmin");
-        const canManageAppointments = hasTenant && hasCompanyRole("CompanyOwner", "CompanyAdmin", "CompanyManager", "CompanyEmployee");
-        const canRecordPlanDecisions = hasTenant && hasCompanyRole("CompanyOwner", "CompanyAdmin", "CompanyManager");
-        const canManageUsers = hasTenant && hasCompanyRole("CompanyOwner", "CompanyAdmin");
-        const canManageSettings = hasTenant && hasCompanyRole("CompanyOwner");
+        const canAccessResources = hasTenantAccess && hasCompanyRole("CompanyOwner", "CompanyAdmin", "CompanyManager", "CompanyEmployee");
+        const canManageResources = hasTenantAccess && hasCompanyRole("CompanyOwner", "CompanyAdmin");
+        const canManagePatients = hasTenantAccess && hasCompanyRole("CompanyOwner", "CompanyAdmin", "CompanyManager", "CompanyEmployee");
+        const canManageAppointments = hasTenantAccess && hasCompanyRole("CompanyOwner", "CompanyAdmin", "CompanyManager", "CompanyEmployee");
+        const canRecordPlanDecisions = hasTenantAccess && hasCompanyRole("CompanyOwner", "CompanyAdmin", "CompanyManager");
+        const canManageUsers = hasTenantAccess && hasCompanyRole("CompanyOwner", "CompanyAdmin");
+        const canManageSettings = hasTenantAccess && hasCompanyRole("CompanyOwner");
+
+        if (elements.refreshPatientsButton) {
+            elements.refreshPatientsButton.disabled = !canManagePatients;
+        }
+        if (elements.patientProfileRefreshButton) {
+            elements.patientProfileRefreshButton.disabled = !canManagePatients;
+        }
+        if (elements.patientProfileDeleteButton) {
+            elements.patientProfileDeleteButton.disabled = !canManagePatients;
+        }
+        toggleFormControls(elements.patientForm, canManagePatients);
+        toggleFormControls(elements.patientProfileForm, canManagePatients);
 
         if (elements.refreshResourcesButton) {
             elements.refreshResourcesButton.disabled = !canAccessResources;
@@ -1779,6 +2077,10 @@
             elements.refreshAppointmentsButton.disabled = !canManageAppointments;
         }
         toggleFormControls(elements.appointmentForm, canManageAppointments);
+        toggleFormControls(elements.appointmentClinicalForm, canManageAppointments);
+        if (elements.appointmentClinicalAddRowButton) {
+            elements.appointmentClinicalAddRowButton.disabled = !canManageAppointments;
+        }
 
         if (elements.refreshPlanItemsButton) {
             elements.refreshPlanItemsButton.disabled = !canRecordPlanDecisions;
@@ -1809,6 +2111,7 @@
         }
         toggleFormControls(elements.featureFlagForm, canManagePlatform);
         toggleFormControls(elements.companyActivationForm, canManagePlatform);
+        toggleFormControls(elements.onboardingForm, canOnboardCompanies);
         toggleFormControls(elements.supportTicketForm, canSupport);
         toggleFormControls(elements.billingSubscriptionForm, canBill);
         toggleFormControls(elements.billingInvoiceStatusForm, canBill);
@@ -2062,6 +2365,8 @@
             return;
         }
 
+        const canManagePatients = canManagePatientsUi();
+
         patients.forEach((patient) => {
             const row = document.createElement("tr");
             row.appendChild(createCell(`${patient.firstName ?? ""} ${patient.lastName ?? ""}`.trim() || "-"));
@@ -2072,13 +2377,23 @@
 
             const actionsCell = createCell("");
             actionsCell.classList.add("text-right");
-            const deleteButton = document.createElement("button");
-            deleteButton.type = "button";
-            deleteButton.className = "btn btn--ghost btn--sm";
-            deleteButton.textContent = "Delete";
+            actionsCell.classList.add("table-actions");
+            const viewButton = createPatientActionButton("View", "btn btn--ghost btn--sm", () => {
+                void openPatientProfile(patient.id);
+            });
+            const editButton = createPatientActionButton("Edit", "btn btn--secondary btn--sm", () => {
+                void openPatientProfile(patient.id, { focusForm: true });
+            });
+            const deleteButton = createPatientActionButton("Delete", "btn btn--ghost btn--sm", () => {
+                openDeleteDialog(patient);
+            });
+            viewButton.disabled = !canManagePatients;
+            editButton.disabled = !canManagePatients;
+            deleteButton.disabled = !canManagePatients;
             deleteButton.setAttribute("aria-label", `Delete patient ${patient.firstName ?? ""} ${patient.lastName ?? ""}`.trim());
-            deleteButton.addEventListener("click", () => openDeleteDialog(patient));
 
+            actionsCell.appendChild(viewButton);
+            actionsCell.appendChild(editButton);
             actionsCell.appendChild(deleteButton);
             row.appendChild(actionsCell);
             elements.patientsBody.appendChild(row);
@@ -2086,6 +2401,10 @@
 
         state.patients = patients;
         renderAppointmentSelectOptions();
+
+        if (state.patientProfile?.id && !patients.some((patient) => patient.id === state.patientProfile.id)) {
+            closePatientProfile();
+        }
     }
 
     function renderDentists(dentists) {
@@ -2159,8 +2478,11 @@
         if (!Array.isArray(appointments) || appointments.length === 0) {
             renderAppointmentsEmptyState();
             state.appointments = [];
+            renderAppointmentClinicalSelectOptions();
             return;
         }
+
+        const canManageAppointments = canManageAppointmentsUi();
 
         appointments.forEach((appointment) => {
             const row = document.createElement("tr");
@@ -2177,10 +2499,314 @@
             statusCell.appendChild(statusBadge);
             row.appendChild(statusCell);
 
+            const actionsCell = createCell("");
+            actionsCell.classList.add("text-right", "table-actions");
+            const recordButton = document.createElement("button");
+            recordButton.type = "button";
+            recordButton.className = "btn btn--ghost btn--sm";
+            recordButton.textContent = "Record work";
+            recordButton.disabled = !canManageAppointments;
+            recordButton.addEventListener("click", () => {
+                recordAppointmentWork(appointment.id);
+            });
+            actionsCell.appendChild(recordButton);
+            row.appendChild(actionsCell);
+
             elements.appointmentsBody.appendChild(row);
         });
 
         state.appointments = appointments;
+        renderAppointmentClinicalSelectOptions();
+    }
+
+    function renderPatientProfile(profile, options = {}) {
+        state.patientProfile = profile || null;
+
+        if (!elements.patientProfilePanel || !elements.patientsWorkspace) {
+            return;
+        }
+
+        if (!profile) {
+            elements.patientProfilePanel.hidden = true;
+            elements.patientsWorkspace.hidden = false;
+            state.selectedPatientToothNumber = null;
+            setText(elements.patientProfileName, "Select a patient");
+            setText(elements.patientProfileMeta, "Open a patient record to see the full tooth chart and treatment history.");
+            setText(elements.patientProfileIssueCount, "0");
+            setText(elements.patientProfileTreatmentCount, "0");
+            setText(elements.patientProfileDob, "-");
+            setText(elements.patientProfileCode, "-");
+            setText(elements.patientProfileEmail, "-");
+            setText(elements.patientProfilePhone, "-");
+
+            if (elements.patientProfileForm) {
+                elements.patientProfileForm.reset();
+            }
+
+            updatePatientToothHoverCard(null);
+
+            if (elements.patientToothChart) {
+                clearElement(elements.patientToothChart);
+                const emptyState = document.createElement("div");
+                emptyState.className = "empty-state";
+                emptyState.textContent = "Select a patient to load a dental chart.";
+                elements.patientToothChart.appendChild(emptyState);
+            }
+
+            renderSelectedPatientTooth(null);
+            return;
+        }
+
+        elements.patientsWorkspace.hidden = true;
+        elements.patientProfilePanel.hidden = false;
+
+        const teeth = Array.isArray(profile.teeth) ? profile.teeth : [];
+        const activeIssueCount = teeth.filter((tooth) => (tooth.condition || "Healthy") !== "Healthy").length;
+        const treatmentCount = teeth.reduce((sum, tooth) => sum + (Array.isArray(tooth.history) ? tooth.history.length : 0), 0);
+
+        setText(elements.patientProfileName, `${profile.firstName ?? ""} ${profile.lastName ?? ""}`.trim() || "Unnamed patient");
+        setText(
+            elements.patientProfileMeta,
+            `${activeIssueCount} active issue${activeIssueCount === 1 ? "" : "s"} - ${treatmentCount} recorded treatment${treatmentCount === 1 ? "" : "s"}`
+        );
+        setText(elements.patientProfileIssueCount, String(activeIssueCount));
+        setText(elements.patientProfileTreatmentCount, String(treatmentCount));
+        setText(elements.patientProfileDob, profile.dateOfBirth || "-");
+        setText(elements.patientProfileCode, profile.personalCode || "-");
+        setText(elements.patientProfileEmail, profile.email || "-");
+        setText(elements.patientProfilePhone, profile.phone || "-");
+
+        if (elements.patientProfileForm) {
+            elements.patientProfileForm.firstName.value = profile.firstName || "";
+            elements.patientProfileForm.lastName.value = profile.lastName || "";
+            elements.patientProfileForm.dateOfBirth.value = profile.dateOfBirth || "";
+            elements.patientProfileForm.personalCode.value = profile.personalCode || "";
+            elements.patientProfileForm.email.value = profile.email || "";
+            elements.patientProfileForm.phone.value = profile.phone || "";
+        }
+
+        const selectedTooth = resolveSelectedPatientTooth(profile, options.selectedToothNumber ?? state.selectedPatientToothNumber);
+        state.selectedPatientToothNumber = selectedTooth?.toothNumber ?? null;
+
+        renderPatientToothChart(teeth, state.selectedPatientToothNumber);
+        renderSelectedPatientTooth(selectedTooth);
+        updatePatientToothHoverCard(selectedTooth);
+
+        if (options.focusForm && elements.patientProfileForm?.firstName instanceof HTMLElement) {
+            focusElementIfPossible(elements.patientProfileForm.firstName);
+        }
+    }
+
+    function renderPatientToothChart(teeth, selectedToothNumber) {
+        if (!elements.patientToothChart) {
+            return;
+        }
+
+        clearElement(elements.patientToothChart);
+
+        const toothMap = new Map((Array.isArray(teeth) ? teeth : []).map((tooth) => [Number(tooth.toothNumber), tooth]));
+
+        permanentToothGroups.forEach((group, index) => {
+            const row = document.createElement("div");
+            row.className = "tooth-chart__row";
+            if (index === 2) {
+                row.classList.add("tooth-chart__row--lower");
+            }
+
+            group.forEach((toothNumber) => {
+                const tooth = toothMap.get(toothNumber) || {
+                    toothNumber,
+                    condition: "Healthy",
+                    notes: null,
+                    history: []
+                };
+
+                const button = document.createElement("button");
+                button.type = "button";
+                button.className = `tooth-button tooth-button--${getToothConditionTone(tooth.condition)}`;
+                if (selectedToothNumber === toothNumber) {
+                    button.classList.add("is-selected");
+                }
+
+                const previewText = buildToothPreviewText(tooth);
+                button.title = previewText;
+                button.setAttribute("aria-label", `Tooth ${toothNumber}. ${previewText}`);
+                button.addEventListener("mouseenter", () => updatePatientToothHoverCard(tooth));
+                button.addEventListener("focus", () => updatePatientToothHoverCard(tooth));
+                button.addEventListener("click", () => {
+                    state.selectedPatientToothNumber = toothNumber;
+                    renderPatientToothChart(teeth, toothNumber);
+                    renderSelectedPatientTooth(tooth);
+                    updatePatientToothHoverCard(tooth);
+                });
+
+                const number = document.createElement("span");
+                number.className = "tooth-button__number";
+                number.textContent = String(toothNumber);
+                button.appendChild(number);
+
+                const condition = document.createElement("span");
+                condition.className = "tooth-button__label";
+                condition.textContent = formatConditionLabel(tooth.condition);
+                button.appendChild(condition);
+
+                row.appendChild(button);
+            });
+
+            elements.patientToothChart.appendChild(row);
+        });
+    }
+
+    function renderSelectedPatientTooth(tooth) {
+        setText(elements.patientSelectedToothTitle, tooth ? `Tooth ${tooth.toothNumber}` : "Tooth history");
+        setText(
+            elements.patientSelectedToothSummary,
+            tooth
+                ? `${formatConditionLabel(tooth.condition)} - ${tooth.lastTreatmentAtUtc ? `last treatment ${formatDateTime(tooth.lastTreatmentAtUtc)}` : "no treatment history yet"}`
+                : "Select a tooth to inspect status changes and previous treatments."
+        );
+
+        if (!elements.patientSelectedToothHistory) {
+            return;
+        }
+
+        clearElement(elements.patientSelectedToothHistory);
+
+        if (!tooth) {
+            const emptyState = document.createElement("div");
+            emptyState.className = "empty-state";
+            emptyState.textContent = "Select a tooth to inspect its full history.";
+            elements.patientSelectedToothHistory.appendChild(emptyState);
+            return;
+        }
+
+        const dropdown = document.createElement("details");
+        dropdown.className = "tooth-history-dropdown";
+        dropdown.open = true;
+
+        const summary = document.createElement("summary");
+        summary.textContent = `${Array.isArray(tooth.history) ? tooth.history.length : 0} history entr${tooth.history?.length === 1 ? "y" : "ies"}`;
+        dropdown.appendChild(summary);
+
+        const content = document.createElement("div");
+        content.className = "tooth-history-dropdown__content";
+
+        const statusNote = document.createElement("div");
+        statusNote.className = "tooth-history-current";
+        statusNote.textContent = tooth.notes
+            ? `Current status note: ${tooth.notes}`
+            : "No current tooth note recorded.";
+        content.appendChild(statusNote);
+
+        if (!Array.isArray(tooth.history) || tooth.history.length === 0) {
+            const emptyState = document.createElement("div");
+            emptyState.className = "empty-state";
+            emptyState.textContent = "No treatment history recorded for this tooth yet.";
+            content.appendChild(emptyState);
+        } else {
+            tooth.history.forEach((entry) => {
+                const item = document.createElement("article");
+                item.className = "tooth-history-entry";
+
+                const head = document.createElement("div");
+                head.className = "tooth-history-entry__head";
+                head.textContent = `${entry.treatmentTypeName || "Treatment"} - ${formatDateTime(entry.performedAtUtc)}`;
+                item.appendChild(head);
+
+                const meta = document.createElement("p");
+                meta.className = "text-muted";
+                meta.textContent = entry.notes
+                    ? `${entry.notes} - ${formatMoney(entry.price)}`
+                    : `Recorded price: ${formatMoney(entry.price)}`;
+                item.appendChild(meta);
+
+                content.appendChild(item);
+            });
+        }
+
+        dropdown.appendChild(content);
+        elements.patientSelectedToothHistory.appendChild(dropdown);
+    }
+
+    async function openPatientProfile(patientId, options = {}) {
+        if (!patientId) {
+            return;
+        }
+
+        await refreshPatientProfile({
+            patientId,
+            trigger: options.trigger || elements.refreshPatientsButton,
+            silentToast: true
+        });
+
+        if (options.focusForm && elements.patientProfileForm?.firstName instanceof HTMLElement) {
+            focusElementIfPossible(elements.patientProfileForm.firstName);
+        }
+    }
+
+    function closePatientProfile() {
+        renderPatientProfile(null);
+    }
+
+    function resolveSelectedPatientTooth(profile, preferredToothNumber) {
+        const teeth = Array.isArray(profile?.teeth) ? profile.teeth : [];
+        if (teeth.length === 0) {
+            return null;
+        }
+
+        if (preferredToothNumber) {
+            const explicitMatch = teeth.find((tooth) => Number(tooth.toothNumber) === Number(preferredToothNumber));
+            if (explicitMatch) {
+                return explicitMatch;
+            }
+        }
+
+        return teeth.find((tooth) => Array.isArray(tooth.history) && tooth.history.length > 0)
+            || teeth.find((tooth) => tooth.condition && tooth.condition !== "Healthy")
+            || teeth[0];
+    }
+
+    function updatePatientToothHoverCard(tooth) {
+        if (!elements.patientToothHoverCard) {
+            return;
+        }
+
+        elements.patientToothHoverCard.textContent = tooth
+            ? `Tooth ${tooth.toothNumber}: ${buildToothPreviewText(tooth)}`
+            : "Hover over a tooth to preview its latest condition.";
+    }
+
+    function buildToothPreviewText(tooth) {
+        if (!tooth) {
+            return "No tooth selected.";
+        }
+
+        const latestTreatmentLabel = tooth.lastTreatmentAtUtc
+            ? `${tooth.lastTreatmentTypeName || "Treatment"} on ${formatDateTime(tooth.lastTreatmentAtUtc)}`
+            : "No treatment recorded";
+
+        const detail = tooth.lastTreatmentNotes || tooth.notes || "No procedure notes recorded.";
+        return `${formatConditionLabel(tooth.condition)}. Last treatment: ${latestTreatmentLabel}. ${detail}`;
+    }
+
+    function createPatientActionButton(label, className, onClick) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = className;
+        button.textContent = label;
+        button.addEventListener("click", onClick);
+        return button;
+    }
+
+    function recordAppointmentWork(appointmentId) {
+        if (!appointmentId || !(elements.appointmentClinicalForm instanceof HTMLFormElement)) {
+            return;
+        }
+
+        resetAppointmentClinicalForm({ appointmentId });
+        activateScreen("appointments");
+        focusElementIfPossible(elements.appointmentClinicalForm.appointmentId);
+        elements.appointmentClinicalForm.scrollIntoView({ behavior: "smooth", block: "start" });
     }
 
     function renderOpenPlanItems(items) {
@@ -2259,7 +2885,7 @@
         clearElement(elements.appointmentsBody);
         for (let rowIndex = 0; rowIndex < 3; rowIndex += 1) {
             const row = document.createElement("tr");
-            for (let cellIndex = 0; cellIndex < 6; cellIndex += 1) {
+            for (let cellIndex = 0; cellIndex < 7; cellIndex += 1) {
                 const cell = document.createElement("td");
                 const skeleton = document.createElement("div");
                 skeleton.className = "skeleton";
@@ -2331,7 +2957,7 @@
         const row = document.createElement("tr");
         const cell = document.createElement("td");
         const content = document.createElement("div");
-        cell.colSpan = 6;
+        cell.colSpan = 7;
         content.className = "empty-state";
         content.textContent = "No appointments loaded.";
         cell.appendChild(content);
@@ -2392,6 +3018,153 @@
                 })),
             "Select room"
         );
+
+        renderAppointmentClinicalSelectOptions();
+    }
+
+    function renderAppointmentClinicalSelectOptions() {
+        setSelectOptions(
+            elements.appointmentClinicalAppointmentSelect,
+            state.appointments.map((appointment) => ({
+                value: appointment.id,
+                label: `${resolvePatientName(appointment.patientId)} - ${formatDateTime(appointment.startAtUtc)} - ${appointment.status || "Scheduled"}`
+            })),
+            "Select appointment"
+        );
+
+        const rows = Array.from(elements.appointmentClinicalItems?.querySelectorAll(".clinical-entry") ?? []);
+        rows.forEach((row) => {
+            populateAppointmentClinicalRow(row);
+        });
+        updateAppointmentClinicalRemoveButtons();
+    }
+
+    function resetAppointmentClinicalForm(options = {}) {
+        if (!(elements.appointmentClinicalForm instanceof HTMLFormElement)) {
+            return;
+        }
+
+        elements.appointmentClinicalForm.reset();
+
+        if (elements.appointmentClinicalItems) {
+            clearElement(elements.appointmentClinicalItems);
+        }
+
+        addAppointmentClinicalEntryRow();
+
+        if (elements.appointmentClinicalPerformedAtInput) {
+            elements.appointmentClinicalPerformedAtInput.value = formatDateTimeLocalInput(new Date());
+        }
+
+        if (elements.appointmentClinicalMarkCompleted) {
+            elements.appointmentClinicalMarkCompleted.checked = true;
+        }
+
+        if (elements.appointmentClinicalAppointmentSelect) {
+            elements.appointmentClinicalAppointmentSelect.value = options.appointmentId || "";
+        }
+    }
+
+    function addAppointmentClinicalEntryRow(initialValues = {}) {
+        if (!elements.appointmentClinicalItems || !(elements.appointmentClinicalItemTemplate instanceof HTMLTemplateElement)) {
+            return;
+        }
+
+        const row = elements.appointmentClinicalItemTemplate.content.firstElementChild?.cloneNode(true);
+        if (!(row instanceof HTMLElement)) {
+            return;
+        }
+
+        const removeButton = row.querySelector('[data-clinical-action="remove"]');
+        if (removeButton instanceof HTMLButtonElement) {
+            removeButton.addEventListener("click", () => {
+                row.remove();
+                if ((elements.appointmentClinicalItems?.children.length || 0) === 0) {
+                    addAppointmentClinicalEntryRow();
+                }
+                updateAppointmentClinicalRemoveButtons();
+            });
+        }
+
+        const typeSelect = row.querySelector('[data-clinical-field="treatmentTypeId"]');
+        const priceInput = row.querySelector('[data-clinical-field="price"]');
+        if (typeSelect instanceof HTMLSelectElement && priceInput instanceof HTMLInputElement) {
+            typeSelect.addEventListener("change", () => {
+                const treatmentType = state.treatmentTypes.find((item) => item.id === typeSelect.value);
+                if (treatmentType && !priceInput.value) {
+                    priceInput.value = String(treatmentType.basePrice ?? 0);
+                }
+            });
+        }
+
+        elements.appointmentClinicalItems.appendChild(row);
+        populateAppointmentClinicalRow(row, initialValues);
+        updateAppointmentClinicalRemoveButtons();
+    }
+
+    function populateAppointmentClinicalRow(row, initialValues = {}) {
+        const toothSelect = row.querySelector('[data-clinical-field="toothNumber"]');
+        const treatmentTypeSelect = row.querySelector('[data-clinical-field="treatmentTypeId"]');
+        const conditionSelect = row.querySelector('[data-clinical-field="condition"]');
+        const priceInput = row.querySelector('[data-clinical-field="price"]');
+        const notesInput = row.querySelector('[data-clinical-field="notes"]');
+
+        setSelectOptions(
+            toothSelect,
+            permanentToothNumbers.map((toothNumber) => ({
+                value: String(toothNumber),
+                label: `Tooth ${toothNumber}`
+            })),
+            "Select tooth"
+        );
+
+        setSelectOptions(
+            treatmentTypeSelect,
+            state.treatmentTypes.map((type) => ({
+                value: type.id,
+                label: `${type.name || "Treatment"}${type.basePrice !== undefined ? ` - ${formatMoney(type.basePrice)}` : ""}`
+            })),
+            "Select treatment"
+        );
+
+        setSelectOptions(
+            conditionSelect,
+            toothConditionOptions.map((condition) => ({
+                value: condition,
+                label: formatConditionLabel(condition)
+            })),
+            "Select status"
+        );
+
+        if (toothSelect instanceof HTMLSelectElement) {
+            toothSelect.value = initialValues.toothNumber ? String(initialValues.toothNumber) : toothSelect.value;
+        }
+
+        if (treatmentTypeSelect instanceof HTMLSelectElement) {
+            treatmentTypeSelect.value = initialValues.treatmentTypeId || treatmentTypeSelect.value;
+        }
+
+        if (conditionSelect instanceof HTMLSelectElement) {
+            conditionSelect.value = initialValues.condition || conditionSelect.value || toothConditionOptions[0];
+        }
+
+        if (priceInput instanceof HTMLInputElement) {
+            priceInput.value = initialValues.price ?? "";
+        }
+
+        if (notesInput instanceof HTMLTextAreaElement) {
+            notesInput.value = initialValues.notes || "";
+        }
+    }
+
+    function updateAppointmentClinicalRemoveButtons() {
+        const rows = Array.from(elements.appointmentClinicalItems?.querySelectorAll(".clinical-entry") ?? []);
+        rows.forEach((row) => {
+            const removeButton = row.querySelector('[data-clinical-action="remove"]');
+            if (removeButton instanceof HTMLButtonElement) {
+                removeButton.disabled = rows.length <= 1;
+            }
+        });
     }
 
     function updatePlanItemSelection(items) {
@@ -2399,7 +3172,7 @@
             elements.planItemSelection,
             (Array.isArray(items) ? items : []).map((item) => ({
                 value: `${item.planId}|${item.planItemId}`,
-                label: `${item.patientName || "Unknown patient"} • ${item.treatmentTypeName || "Treatment"} • ${item.urgency || "Urgency"}`
+                label: `${item.patientName || "Unknown patient"} - ${item.treatmentTypeName || "Treatment"} - ${item.urgency || "Urgency"}`
             })),
             "Select plan item"
         );
@@ -2581,6 +3354,56 @@
         elements.patientsBody.appendChild(row);
     }
 
+    function setText(element, text) {
+        if (element) {
+            element.textContent = text;
+        }
+    }
+
+    function formatConditionLabel(condition) {
+        return String(condition || "Unknown").replace(/([a-z])([A-Z])/g, "$1 $2");
+    }
+
+    function getToothConditionTone(condition) {
+        const value = String(condition || "Healthy");
+        if (value === "Caries") return "caries";
+        if (value === "Filled") return "filled";
+        if (value === "Crown") return "crown";
+        if (value === "RootCanal") return "rootcanal";
+        if (value === "Missing") return "missing";
+        return "healthy";
+    }
+
+    function canManagePatientsUi() {
+        return Boolean(
+            state.companySlug
+            && hasCompanyRole("CompanyOwner", "CompanyAdmin", "CompanyManager", "CompanyEmployee")
+        );
+    }
+
+    function canManageAppointmentsUi() {
+        return Boolean(
+            state.companySlug
+            && hasCompanyRole("CompanyOwner", "CompanyAdmin", "CompanyManager", "CompanyEmployee")
+        );
+    }
+
+    function formatDateTimeLocalInput(value) {
+        const parsed = value instanceof Date ? value : new Date(value);
+        if (Number.isNaN(parsed.getTime())) {
+            return "";
+        }
+
+        const pad = (part) => String(part).padStart(2, "0");
+        return `${parsed.getFullYear()}-${pad(parsed.getMonth() + 1)}-${pad(parsed.getDate())}T${pad(parsed.getHours())}:${pad(parsed.getMinutes())}`;
+    }
+
+    function focusElementIfPossible(element) {
+        if (element instanceof HTMLElement && typeof element.focus === "function") {
+            element.focus({ preventScroll: false });
+        }
+    }
+
     function createCell(text) {
         const cell = document.createElement("td");
         cell.textContent = text;
@@ -2610,8 +3433,11 @@
         state.companyRole = "";
         state.systemRoles = [];
         state.patients = [];
+        state.patientProfile = null;
+        state.selectedPatientToothNumber = null;
         state.dentists = [];
         state.treatmentRooms = [];
+        state.treatmentTypes = [];
         state.appointments = [];
         state.openPlanItems = [];
         state.companyUsers = [];
@@ -2629,6 +3455,9 @@
         requireJwt();
         if (!state.companySlug) {
             throw new Error("No active tenant. Login or switch company first.");
+        }
+        if (!state.companyRole) {
+            throw new Error("Active tenant exists, but this session has no company role for tenant endpoints.");
         }
     }
 
@@ -2684,7 +3513,7 @@
         return "overview";
     }
 
-    function getAllowedTabs(isAuthenticated, hasTenant) {
+    function getAllowedTabs(isAuthenticated, hasTenantAccess) {
         const tabs = new Set();
         tabs.add("overview");
         tabs.add("auth");
@@ -2707,7 +3536,7 @@
             }
         }
 
-        if (!hasTenant) {
+        if (!hasTenantAccess) {
             return tabs;
         }
 
@@ -2747,6 +3576,23 @@
                 element.setAttribute("aria-hidden", isAllowed ? "false" : "true");
             }
         });
+    }
+
+    function normalizeRoute(path) {
+        if (!path || path === "/") {
+            return "/";
+        }
+
+        const trimmed = path.trim().toLowerCase();
+        return trimmed.endsWith("/") ? trimmed.slice(0, -1) : trimmed;
+    }
+
+    function syncPublicEntryState() {
+        document.title = baseTitle;
+        const currentPath = normalizeRoute(window.location.pathname);
+        if (currentPath !== "/") {
+            history.replaceState(null, "", "/");
+        }
     }
 
     function readErrorMessage(payload) {
@@ -2875,30 +3721,47 @@
     }
 
     function extractSystemRolesFromJwt(jwt) {
-        if (!jwt || typeof jwt !== "string") {
+        const payload = decodeJwtPayload(jwt);
+        if (!payload) {
             return [];
+        }
+
+        const rolesClaim = payload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] ?? payload.role;
+        const roles = Array.isArray(rolesClaim) ? rolesClaim : (rolesClaim ? [rolesClaim] : []);
+        const allowed = new Set(["SystemAdmin", "SystemSupport", "SystemBilling"]);
+
+        return roles
+            .filter((role) => typeof role === "string" && allowed.has(role))
+            .map((role) => role.trim());
+    }
+
+    function decodeJwtPayload(jwt) {
+        if (!jwt || typeof jwt !== "string") {
+            return null;
         }
 
         try {
             const parts = jwt.split(".");
             if (parts.length < 2) {
-                return [];
+                return null;
             }
 
             const payloadBase64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
             const padded = payloadBase64 + "=".repeat((4 - (payloadBase64.length % 4)) % 4);
-            const payload = JSON.parse(window.atob(padded));
-
-            const rolesClaim = payload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] ?? payload.role;
-            const roles = Array.isArray(rolesClaim) ? rolesClaim : (rolesClaim ? [rolesClaim] : []);
-            const allowed = new Set(["SystemAdmin", "SystemSupport", "SystemBilling"]);
-
-            return roles
-                .filter((role) => typeof role === "string" && allowed.has(role))
-                .map((role) => role.trim());
+            return JSON.parse(window.atob(padded));
         } catch {
-            return [];
+            return null;
         }
+    }
+
+    function isJwtExpired(jwt) {
+        const payload = decodeJwtPayload(jwt);
+        if (!payload || typeof payload.exp !== "number") {
+            return false;
+        }
+
+        const nowInSeconds = Math.floor(Date.now() / 1000);
+        return payload.exp <= nowInSeconds;
     }
 
     function loadSession() {
@@ -2916,13 +3779,26 @@
             }
 
             const parsed = JSON.parse(raw);
+            const jwt = parsed.jwt || "";
+            if (jwt && isJwtExpired(jwt)) {
+                localStorage.removeItem(sessionStorageKey);
+                return {
+                    jwt: "",
+                    refreshToken: "",
+                    expiresInSeconds: 0,
+                    companySlug: "",
+                    companyRole: "",
+                    systemRoles: []
+                };
+            }
+
             return {
-                jwt: parsed.jwt || "",
+                jwt,
                 refreshToken: parsed.refreshToken || "",
                 expiresInSeconds: Number(parsed.expiresInSeconds || 0),
                 companySlug: parsed.companySlug || "",
                 companyRole: parsed.companyRole || "",
-                systemRoles: Array.isArray(parsed.systemRoles) ? parsed.systemRoles : extractSystemRolesFromJwt(parsed.jwt || "")
+                systemRoles: Array.isArray(parsed.systemRoles) ? parsed.systemRoles : extractSystemRolesFromJwt(jwt)
             };
         } catch {
             return {

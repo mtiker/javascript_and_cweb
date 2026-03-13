@@ -75,7 +75,9 @@ Tagastab uue JWT, kus company claimid viitavad valitud tenantile.
 
 ### POST `/api/v1/system/onboarding/registercompany`
 
-Auth: Anonymous
+Auth: `SystemAdmin` või `SystemSupport`
+
+Security note: endpoint on praegu role-protected. Kui tenant provisioning peab olema ainult tsentraalne backoffice tegevus, ahenda lubatud rollid `SystemAdmin`-iks või liiguta flow invite/approval workflow taha.
 
 Request:
 

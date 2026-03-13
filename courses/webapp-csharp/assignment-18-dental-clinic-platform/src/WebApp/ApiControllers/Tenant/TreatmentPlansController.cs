@@ -94,7 +94,7 @@ public class TreatmentPlansController(
         {
             PatientId = request.PatientId,
             DentistId = request.DentistId,
-            Status = "Pending"
+            Status = TreatmentPlanStatus.Pending
         };
 
         foreach (var item in parseResult.Items!)
@@ -162,14 +162,13 @@ public class TreatmentPlansController(
 
         if (!string.IsNullOrWhiteSpace(request.Status))
         {
-            var status = request.Status.Trim();
-            if (!IsAllowedPlanStatus(status))
+            if (!Enum.TryParse<TreatmentPlanStatus>(request.Status.Trim(), true, out var status))
             {
                 return BadRequest(new Message("Invalid treatment plan status."));
             }
 
             plan.Status = status;
-            plan.ApprovedAtUtc = status is "Accepted" or "PartiallyAccepted"
+            plan.ApprovedAtUtc = status is TreatmentPlanStatus.Accepted or TreatmentPlanStatus.PartiallyAccepted
                 ? DateTime.UtcNow
                 : null;
         }
@@ -356,11 +355,6 @@ public class TreatmentPlansController(
         return (true, null, items);
     }
 
-    private static bool IsAllowedPlanStatus(string status)
-    {
-        return status is "Draft" or "Pending" or "Accepted" or "PartiallyAccepted" or "Deferred";
-    }
-
     private static TreatmentPlanResponse ToResponse(TreatmentPlan plan)
     {
         return new TreatmentPlanResponse
@@ -368,7 +362,7 @@ public class TreatmentPlansController(
             Id = plan.Id,
             PatientId = plan.PatientId,
             DentistId = plan.DentistId,
-            Status = plan.Status,
+            Status = plan.Status.ToString(),
             ApprovedAtUtc = plan.ApprovedAtUtc,
             Items = plan.Items
                 .OrderBy(entity => entity.Sequence)

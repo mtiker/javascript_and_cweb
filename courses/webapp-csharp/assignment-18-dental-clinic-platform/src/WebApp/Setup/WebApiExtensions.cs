@@ -36,17 +36,38 @@ public static class WebApiExtensions
         return services;
     }
 
-    public static IServiceCollection AddAppCors(this IServiceCollection services)
+    public static IServiceCollection AddAppCors(this IServiceCollection services, IConfiguration configuration, IWebHostEnvironment environment)
     {
+        var allowedOrigins = configuration.GetSection("Cors:AllowedOrigins").Get<string[]>();
+
         services.AddCors(options =>
         {
             options.AddPolicy("CorsAllowAll", builder =>
             {
-                builder
-                    .AllowAnyOrigin()
-                    .AllowAnyHeader()
+                builder.AllowAnyHeader()
                     .AllowAnyMethod()
                     .WithExposedHeaders("X-Version", "X-Version-Created-At");
+
+                if (environment.IsDevelopment())
+                {
+                    if (allowedOrigins is { Length: > 0 })
+                    {
+                        builder.WithOrigins(allowedOrigins);
+                    }
+                    else
+                    {
+                        builder.AllowAnyOrigin();
+                    }
+                }
+                else
+                {
+                    if (allowedOrigins is not { Length: > 0 })
+                    {
+                        throw new InvalidOperationException("Cors:AllowedOrigins must be configured outside Development.");
+                    }
+
+                    builder.WithOrigins(allowedOrigins);
+                }
             });
         });
 

@@ -32,7 +32,7 @@ dotnet test dental-clinic-platform.slnx
 - tenant role check (forbidden case)
 - appointment overlap valideerimine (unit)
 - account register/login flow (HTTP kaudu)
-- onboarding flow (HTTP kaudu) + andmete püsivus
+- onboarding flow (HTTP kaudu, `SystemAdmin` authiga) + andmete püsivus
 - tenant patient CRUD flow (integration)
 - tenant appointment create/list flow (integration)
 - system admin impersonation flow + audit kirje (integration)

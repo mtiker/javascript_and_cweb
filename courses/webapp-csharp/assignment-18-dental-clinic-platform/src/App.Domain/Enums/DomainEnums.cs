@@ -40,6 +40,15 @@ public enum PlanItemDecision
     Rejected = 3
 }
 
+public enum TreatmentPlanStatus
+{
+    Draft = 0,
+    Pending = 1,
+    Accepted = 2,
+    PartiallyAccepted = 3,
+    Deferred = 4
+}
+
 public enum AppointmentStatus
 {
     Scheduled = 0,

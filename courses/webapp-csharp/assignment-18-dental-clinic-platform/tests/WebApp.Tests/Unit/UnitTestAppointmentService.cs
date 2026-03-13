@@ -66,4 +66,85 @@ public class UnitTestAppointmentService
                     null),
                 CancellationToken.None));
     }
+
+    [Fact]
+    public async Task RecordClinicalWorkAsync_CreatesTreatmentUpdatesToothRecordAndCompletesAppointment()
+    {
+        var tenantProvider = new TestTenantProvider();
+        var companyId = Guid.NewGuid();
+        tenantProvider.SetTenant(companyId, "acme");
+        tenantProvider.SetIgnoreTenantFilter(false);
+
+        await using var db = TestDbContextFactory.Create($"appointment-clinical-{Guid.NewGuid():N}", tenantProvider);
+
+        var userId = Guid.NewGuid();
+        db.AppUserRoles.Add(new AppUserRole
+        {
+            AppUserId = userId,
+            CompanyId = companyId,
+            RoleName = RoleNames.CompanyEmployee,
+            IsActive = true
+        });
+
+        var patient = new Patient { CompanyId = companyId, FirstName = "Jane", LastName = "Doe" };
+        var dentist = new Dentist { CompanyId = companyId, DisplayName = "Dr One", LicenseNumber = "LIC-001" };
+        var room = new TreatmentRoom { CompanyId = companyId, Name = "Room 1", Code = "R1" };
+        var treatmentType = new TreatmentType
+        {
+            CompanyId = companyId,
+            Name = "Composite Filling",
+            BasePrice = 150m,
+            DefaultDurationMinutes = 30
+        };
+        var appointment = new Appointment
+        {
+            CompanyId = companyId,
+            PatientId = patient.Id,
+            DentistId = dentist.Id,
+            TreatmentRoomId = room.Id,
+            StartAtUtc = DateTime.UtcNow.AddHours(-1),
+            EndAtUtc = DateTime.UtcNow,
+            Status = AppointmentStatus.Confirmed
+        };
+
+        db.Patients.Add(patient);
+        db.Dentists.Add(dentist);
+        db.TreatmentRooms.Add(room);
+        db.TreatmentTypes.Add(treatmentType);
+        db.Appointments.Add(appointment);
+
+        await db.SaveChangesAsync();
+
+        var service = new AppointmentService(db, new TenantAccessService(db));
+
+        var result = await service.RecordClinicalWorkAsync(
+            userId,
+            new RecordAppointmentClinicalCommand(
+                appointment.Id,
+                DateTime.UtcNow,
+                true,
+                new[]
+                {
+                    new RecordAppointmentClinicalItemCommand(
+                        treatmentType.Id,
+                        11,
+                        ToothConditionStatus.Filled,
+                        null,
+                        "Occlusal composite restoration")
+                }),
+            CancellationToken.None);
+
+        Assert.Equal("Completed", result.Status);
+        Assert.Equal(1, result.RecordedItemCount);
+
+        var treatment = Assert.Single(db.Treatments);
+        Assert.Equal(appointment.Id, treatment.AppointmentId);
+        Assert.Equal(11, treatment.ToothNumber);
+        Assert.Equal(150m, treatment.Price);
+
+        var toothRecord = Assert.Single(db.ToothRecords.Where(entity => entity.PatientId == patient.Id && entity.ToothNumber == 11));
+        Assert.Equal(ToothConditionStatus.Filled, toothRecord.Condition);
+        Assert.Equal("Occlusal composite restoration", toothRecord.Notes);
+        Assert.Equal(AppointmentStatus.Completed, appointment.Status);
+    }
 }

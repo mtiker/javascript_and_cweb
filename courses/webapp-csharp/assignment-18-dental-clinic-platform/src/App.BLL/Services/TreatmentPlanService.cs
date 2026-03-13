@@ -41,39 +41,39 @@ public class TreatmentPlanService(AppDbContext dbContext, ITenantAccessService t
         item.DecisionNotes = command.Notes;
 
         plan.Status = ResolvePlanStatus(plan.Items.Select(entity => entity.Decision).ToArray());
-        if (plan.Status is "Accepted" or "PartiallyAccepted")
+        if (plan.Status is TreatmentPlanStatus.Accepted or TreatmentPlanStatus.PartiallyAccepted)
         {
             plan.ApprovedAtUtc = DateTime.UtcNow;
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return new PlanDecisionResult(plan.Id, item.Id, plan.Status, item.Decision.ToString());
+        return new PlanDecisionResult(plan.Id, item.Id, plan.Status.ToString(), item.Decision.ToString());
     }
 
-    private static string ResolvePlanStatus(PlanItemDecision[] decisions)
+    private static TreatmentPlanStatus ResolvePlanStatus(PlanItemDecision[] decisions)
     {
         if (decisions.Length == 0)
         {
-            return "Draft";
+            return TreatmentPlanStatus.Draft;
         }
 
         if (decisions.All(decision => decision == PlanItemDecision.Accepted))
         {
-            return "Accepted";
+            return TreatmentPlanStatus.Accepted;
         }
 
         if (decisions.Any(decision => decision == PlanItemDecision.Accepted) &&
             decisions.Any(decision => decision is PlanItemDecision.Deferred or PlanItemDecision.Rejected or PlanItemDecision.Pending))
         {
-            return "PartiallyAccepted";
+            return TreatmentPlanStatus.PartiallyAccepted;
         }
 
         if (decisions.All(decision => decision == PlanItemDecision.Deferred || decision == PlanItemDecision.Rejected))
         {
-            return "Deferred";
+            return TreatmentPlanStatus.Deferred;
         }
 
-        return "Pending";
+        return TreatmentPlanStatus.Pending;
     }
 }

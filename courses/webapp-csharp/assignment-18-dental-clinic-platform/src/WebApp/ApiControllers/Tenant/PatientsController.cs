@@ -37,6 +37,16 @@ public class PatientsController(IPatientService patientService, ITenantProvider 
         return Ok(ToResponse(patient));
     }
 
+    [HttpGet("{patientId:guid}/profile")]
+    [ProducesResponseType(typeof(PatientProfileResponse), StatusCodes.Status200OK)]
+    public async Task<ActionResult<PatientProfileResponse>> GetProfile([FromRoute] string companySlug, [FromRoute] Guid patientId, CancellationToken cancellationToken)
+    {
+        if (!TenantMatches(companySlug)) return Forbid();
+
+        var patient = await patientService.GetProfileAsync(User.UserId(), patientId, cancellationToken);
+        return Ok(ToProfileResponse(patient));
+    }
+
     [HttpPost]
     [ProducesResponseType(typeof(PatientResponse), StatusCodes.Status201Created)]
     public async Task<ActionResult<PatientResponse>> Create([FromRoute] string companySlug, [FromBody] CreatePatientRequest request, CancellationToken cancellationToken)
@@ -110,6 +120,40 @@ public class PatientsController(IPatientService patientService, ITenantProvider 
             PersonalCode = result.PersonalCode,
             Email = result.Email,
             Phone = result.Phone
+        };
+    }
+
+    private static PatientProfileResponse ToProfileResponse(PatientProfileResult result)
+    {
+        return new PatientProfileResponse
+        {
+            Id = result.Id,
+            FirstName = result.FirstName,
+            LastName = result.LastName,
+            DateOfBirth = result.DateOfBirth,
+            PersonalCode = result.PersonalCode,
+            Email = result.Email,
+            Phone = result.Phone,
+            Teeth = result.Teeth.Select(tooth => new PatientToothResponse
+            {
+                Id = tooth.Id,
+                ToothNumber = tooth.ToothNumber,
+                Condition = tooth.Condition,
+                Notes = tooth.Notes,
+                StatusUpdatedAtUtc = tooth.StatusUpdatedAtUtc,
+                LastTreatmentAtUtc = tooth.LastTreatmentAtUtc,
+                LastTreatmentTypeName = tooth.LastTreatmentTypeName,
+                LastTreatmentNotes = tooth.LastTreatmentNotes,
+                History = tooth.History.Select(history => new PatientToothHistoryResponse
+                {
+                    Id = history.Id,
+                    AppointmentId = history.AppointmentId,
+                    TreatmentTypeName = history.TreatmentTypeName,
+                    PerformedAtUtc = history.PerformedAtUtc,
+                    Price = history.Price,
+                    Notes = history.Notes
+                }).ToArray()
+            }).ToArray()
         };
     }
 }

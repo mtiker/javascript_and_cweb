@@ -9,7 +9,7 @@ namespace WebApp.Setup;
 
 public static class AppDataInitExtensions
 {
-    public static void SetupAppData(this WebApplication app)
+    public static async Task SetupAppDataAsync(this WebApplication app)
     {
         using var scope = app.Services.GetRequiredService<IServiceScopeFactory>().CreateScope();
         using var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -41,13 +41,13 @@ public static class AppDataInitExtensions
         if (configuration.GetValue<bool>("DataInitialization:SeedIdentity"))
         {
             logger.LogInformation("SeedIdentity");
-            AppDataInit.SeedIdentity(userManager, roleManager);
+            await AppDataInit.SeedIdentityAsync(userManager, roleManager);
         }
 
         if (configuration.GetValue<bool>("DataInitialization:SeedData"))
         {
             logger.LogInformation("SeedData");
-            AppDataInit.SeedAppData(context);
+            await AppDataInit.SeedAppDataAsync(context);
         }
     }
 

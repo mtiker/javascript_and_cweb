@@ -35,7 +35,6 @@
             </label>
             <div class="form-actions">
                 <button type="submit" class="btn btn--primary">Sign in</button>
-                <button type="button" id="gateway-open-auth" class="btn btn--ghost">Open onboarding & advanced access</button>
             </div>
         </form>
     </article>
@@ -448,7 +447,7 @@
                 <div class="auth-grid">
                     <article class="card card--subtle">
                         <h3>1. Company Onboarding</h3>
-                        <p class="text-muted">Create a clinic and owner account.</p>
+                        <p class="text-muted">SystemAdmin/SystemSupport can create a clinic and owner account.</p>
                         <form id="onboarding-form" class="form-grid form-grid--2">
                             <label class="field" for="companyName">
                                 <span>Company name</span>
@@ -551,57 +550,179 @@
                     <button id="refresh-patients-btn" class="btn btn--ghost btn--sm" type="button">Refresh list</button>
                 </header>
 
-                <form id="patient-form" class="form-grid form-grid--3">
-                    <label class="field" for="patientFirstName">
-                        <span>First name</span>
-                        <input id="patientFirstName" class="form-input" name="firstName" required maxlength="64" placeholder="Mari">
-                    </label>
-                    <label class="field" for="patientLastName">
-                        <span>Last name</span>
-                        <input id="patientLastName" class="form-input" name="lastName" required maxlength="64" placeholder="Tamm">
-                    </label>
-                    <label class="field" for="patientDob">
-                        <span>Date of birth</span>
-                        <input id="patientDob" class="form-input" name="dateOfBirth" type="date">
-                    </label>
-                    <label class="field" for="patientCode">
-                        <span>Personal code</span>
-                        <input id="patientCode" class="form-input" name="personalCode" maxlength="64" placeholder="49001010000">
-                    </label>
-                    <label class="field" for="patientEmail">
-                        <span>Email</span>
-                        <input id="patientEmail" class="form-input" name="email" type="email" maxlength="256" placeholder="mari@example.com">
-                    </label>
-                    <label class="field" for="patientPhone">
-                        <span>Phone</span>
-                        <input id="patientPhone" class="form-input" name="phone" maxlength="32" placeholder="+3725555555">
-                    </label>
-                    <div class="form-actions">
-                        <button type="submit" class="btn btn--primary">Add patient</button>
-                    </div>
-                </form>
+                <div id="patients-workspace" class="screen-panel">
+                    <form id="patient-form" class="form-grid form-grid--3">
+                        <label class="field" for="patientFirstName">
+                            <span>First name</span>
+                            <input id="patientFirstName" class="form-input" name="firstName" required maxlength="64" placeholder="Mari">
+                        </label>
+                        <label class="field" for="patientLastName">
+                            <span>Last name</span>
+                            <input id="patientLastName" class="form-input" name="lastName" required maxlength="64" placeholder="Tamm">
+                        </label>
+                        <label class="field" for="patientDob">
+                            <span>Date of birth</span>
+                            <input id="patientDob" class="form-input" name="dateOfBirth" type="date">
+                        </label>
+                        <label class="field" for="patientCode">
+                            <span>Personal code</span>
+                            <input id="patientCode" class="form-input" name="personalCode" maxlength="64" placeholder="49001010000">
+                        </label>
+                        <label class="field" for="patientEmail">
+                            <span>Email</span>
+                            <input id="patientEmail" class="form-input" name="email" type="email" maxlength="256" placeholder="mari@example.com">
+                        </label>
+                        <label class="field" for="patientPhone">
+                            <span>Phone</span>
+                            <input id="patientPhone" class="form-input" name="phone" maxlength="32" placeholder="+3725555555">
+                        </label>
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn--primary">Add patient</button>
+                        </div>
+                    </form>
 
-                <div class="table-wrap">
-                    <table class="app-table">
-                        <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Date of birth</th>
-                            <th>Personal code</th>
-                            <th>Email</th>
-                            <th>Phone</th>
-                            <th class="text-right">Actions</th>
-                        </tr>
-                        </thead>
-                        <tbody id="patients-body">
-                        <tr>
-                            <td colspan="6">
-                                <div class="empty-state">No patient data yet.</div>
-                            </td>
-                        </tr>
-                        </tbody>
-                    </table>
+                    <div class="table-wrap">
+                        <table class="app-table">
+                            <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Date of birth</th>
+                                <th>Personal code</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th class="text-right">Actions</th>
+                            </tr>
+                            </thead>
+                            <tbody id="patients-body">
+                            <tr>
+                                <td colspan="6">
+                                    <div class="empty-state">No patient data yet.</div>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
+
+                <section id="patient-profile-panel" class="screen-panel patient-profile-panel" hidden>
+                    <header class="section-head">
+                        <div>
+                            <p class="eyebrow">Patient Profile</p>
+                            <h3 id="patient-profile-name">Select a patient</h3>
+                        </div>
+                        <div class="form-actions">
+                            <button id="patient-profile-refresh-btn" class="btn btn--ghost btn--sm" type="button">Refresh profile</button>
+                            <button id="patient-profile-back-btn" class="btn btn--secondary btn--sm" type="button">Back to list</button>
+                        </div>
+                    </header>
+
+                    <div class="patient-profile-grid">
+                        <article class="card card--subtle">
+                            <div class="patient-profile-summary">
+                                <div>
+                                    <p class="eyebrow">Overview</p>
+                                    <p id="patient-profile-meta" class="text-muted">Open a patient record to see the full tooth chart and treatment history.</p>
+                                </div>
+                                <div class="patient-profile-metrics">
+                                    <div class="metric-card patient-profile-metric">
+                                        <p class="metric-label">Active issues</p>
+                                        <p id="patient-profile-issue-count" class="metric-value">0</p>
+                                    </div>
+                                    <div class="metric-card patient-profile-metric">
+                                        <p class="metric-label">Recorded treatments</p>
+                                        <p id="patient-profile-treatment-count" class="metric-value">0</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <dl class="patient-profile-facts">
+                                <div>
+                                    <dt>Date of birth</dt>
+                                    <dd id="patient-profile-dob">-</dd>
+                                </div>
+                                <div>
+                                    <dt>Personal code</dt>
+                                    <dd id="patient-profile-code">-</dd>
+                                </div>
+                                <div>
+                                    <dt>Email</dt>
+                                    <dd id="patient-profile-email">-</dd>
+                                </div>
+                                <div>
+                                    <dt>Phone</dt>
+                                    <dd id="patient-profile-phone">-</dd>
+                                </div>
+                            </dl>
+                            <div class="form-actions">
+                                <button id="patient-profile-delete-btn" class="btn btn--destructive btn--sm" type="button">Delete patient</button>
+                            </div>
+                        </article>
+
+                        <article class="card card--subtle">
+                            <h3>Edit patient details</h3>
+                            <p class="text-muted">Update patient contact data without leaving the profile workspace.</p>
+                            <form id="patient-profile-form" class="form-grid form-grid--2">
+                                <label class="field" for="patientProfileFirstName">
+                                    <span>First name</span>
+                                    <input id="patientProfileFirstName" class="form-input" name="firstName" required maxlength="64" placeholder="Mari">
+                                </label>
+                                <label class="field" for="patientProfileLastName">
+                                    <span>Last name</span>
+                                    <input id="patientProfileLastName" class="form-input" name="lastName" required maxlength="64" placeholder="Tamm">
+                                </label>
+                                <label class="field" for="patientProfileDob">
+                                    <span>Date of birth</span>
+                                    <input id="patientProfileDob" class="form-input" name="dateOfBirth" type="date">
+                                </label>
+                                <label class="field" for="patientProfileCode">
+                                    <span>Personal code</span>
+                                    <input id="patientProfileCode" class="form-input" name="personalCode" maxlength="64" placeholder="49001010000">
+                                </label>
+                                <label class="field" for="patientProfileEmail">
+                                    <span>Email</span>
+                                    <input id="patientProfileEmail" class="form-input" name="email" type="email" maxlength="256" placeholder="mari@example.com">
+                                </label>
+                                <label class="field" for="patientProfilePhone">
+                                    <span>Phone</span>
+                                    <input id="patientProfilePhone" class="form-input" name="phone" maxlength="32" placeholder="+3725555555">
+                                </label>
+                                <div class="form-actions">
+                                    <button type="submit" class="btn btn--primary">Save changes</button>
+                                </div>
+                            </form>
+                        </article>
+                    </div>
+
+                    <div class="patient-profile-grid patient-profile-grid--chart">
+                        <article class="card card--subtle">
+                            <div class="section-head">
+                                <div>
+                                    <h3>Dental chart</h3>
+                                    <p class="text-muted">Hover to preview tooth status and click any tooth to open its history drop list.</p>
+                                </div>
+                            </div>
+                            <div class="tooth-legend" aria-label="Tooth status legend">
+                                <span class="tooth-legend__item"><span class="tooth-legend__swatch tooth-legend__swatch--healthy"></span>Healthy</span>
+                                <span class="tooth-legend__item"><span class="tooth-legend__swatch tooth-legend__swatch--caries"></span>Caries</span>
+                                <span class="tooth-legend__item"><span class="tooth-legend__swatch tooth-legend__swatch--filled"></span>Filled</span>
+                                <span class="tooth-legend__item"><span class="tooth-legend__swatch tooth-legend__swatch--crown"></span>Crown</span>
+                                <span class="tooth-legend__item"><span class="tooth-legend__swatch tooth-legend__swatch--rootcanal"></span>Root canal</span>
+                                <span class="tooth-legend__item"><span class="tooth-legend__swatch tooth-legend__swatch--missing"></span>Missing</span>
+                            </div>
+                            <div id="patient-tooth-hover-card" class="tooth-hover-card">Hover over a tooth to preview its latest condition.</div>
+                            <div id="patient-tooth-chart" class="tooth-chart" aria-live="polite"></div>
+                        </article>
+
+                        <article class="card card--subtle">
+                            <div>
+                                <h3 id="patient-selected-tooth-title">Tooth history</h3>
+                                <p id="patient-selected-tooth-summary" class="text-muted">Select a tooth to inspect status changes and previous treatments.</p>
+                            </div>
+                            <div id="patient-selected-tooth-history" class="tooth-history-stack">
+                                <div class="empty-state">Select a tooth to inspect its full history.</div>
+                            </div>
+                        </article>
+                    </div>
+                </section>
             </section>
 
             <section id="screen-resources" class="screen-panel card card--elevated" data-screen="resources" hidden>
@@ -763,11 +884,12 @@
                                     <th>Start</th>
                                     <th>End</th>
                                     <th>Status</th>
+                                    <th class="text-right">Actions</th>
                                 </tr>
                                 </thead>
                                 <tbody id="appointments-body">
                                 <tr>
-                                    <td colspan="6">
+                                    <td colspan="7">
                                         <div class="empty-state">No appointments loaded.</div>
                                     </td>
                                 </tr>
@@ -776,6 +898,41 @@
                         </div>
                     </article>
                 </div>
+
+                <article class="card card--subtle">
+                    <div class="section-head">
+                        <div>
+                            <h3>Record worked teeth</h3>
+                            <p class="text-muted">Dentists can log what was done before or after the visit, tooth by tooth, from one appointment form.</p>
+                        </div>
+                        <button id="appointment-clinical-add-row-btn" class="btn btn--ghost btn--sm" type="button">Add tooth entry</button>
+                    </div>
+
+                    <form id="appointment-clinical-form" class="form-grid">
+                        <div class="form-grid form-grid--3">
+                            <label class="field" for="appointmentClinicalAppointmentId">
+                                <span>Appointment</span>
+                                <select id="appointmentClinicalAppointmentId" class="form-select" name="appointmentId" required>
+                                    <option value="">Select appointment</option>
+                                </select>
+                            </label>
+                            <label class="field" for="appointmentClinicalPerformedAt">
+                                <span>Performed at</span>
+                                <input id="appointmentClinicalPerformedAt" class="form-input" name="performedAtLocal" type="datetime-local" required>
+                            </label>
+                            <label class="field check" for="appointmentClinicalMarkCompleted">
+                                <input id="appointmentClinicalMarkCompleted" type="checkbox" name="markCompleted" checked>
+                                <span>Mark appointment as completed</span>
+                            </label>
+                        </div>
+
+                        <div id="appointment-clinical-items" class="clinical-entry-stack"></div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn--primary">Save clinical record</button>
+                        </div>
+                    </form>
+                </article>
             </section>
 
             <section id="screen-plans" class="screen-panel card card--elevated" data-screen="plans" hidden>
@@ -1035,6 +1192,34 @@
         </section>
     </main>
 </div>
+
+<template id="appointment-clinical-item-template">
+    <div class="clinical-entry">
+        <label class="field">
+            <span>Tooth</span>
+            <select class="form-select" data-clinical-field="toothNumber" required></select>
+        </label>
+        <label class="field">
+            <span>Treatment type</span>
+            <select class="form-select" data-clinical-field="treatmentTypeId" required></select>
+        </label>
+        <label class="field">
+            <span>New status</span>
+            <select class="form-select" data-clinical-field="condition" required></select>
+        </label>
+        <label class="field">
+            <span>Price</span>
+            <input class="form-input" data-clinical-field="price" type="number" min="0" step="0.01" placeholder="Auto from treatment type">
+        </label>
+        <label class="field clinical-entry__notes">
+            <span>Notes</span>
+            <textarea class="form-textarea" data-clinical-field="notes" maxlength="512" placeholder="What was done on this tooth?"></textarea>
+        </label>
+        <div class="clinical-entry__actions">
+            <button class="btn btn--ghost btn--sm" data-clinical-action="remove" type="button">Remove</button>
+        </div>
+    </div>
+</template>
 
 <dialog id="patient-delete-dialog" class="modal" aria-labelledby="patient-delete-title">
     <form method="dialog" class="modal__surface">

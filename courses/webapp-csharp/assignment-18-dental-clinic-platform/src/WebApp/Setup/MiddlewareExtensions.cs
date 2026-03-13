@@ -55,6 +55,7 @@ public static class MiddlewareExtensions
         app.MapControllerRoute(name: "default", pattern: "{controller=Home}/{action=Index}/{id?}");
         app.MapControllers();
         app.MapRazorPages();
+        app.MapFallbackToFile("/app/{*path:nonfile}", "index.html");
 
         return app;
     }

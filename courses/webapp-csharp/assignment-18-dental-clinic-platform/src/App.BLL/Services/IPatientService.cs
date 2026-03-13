@@ -6,6 +6,7 @@ public interface IPatientService
 {
     Task<IReadOnlyCollection<PatientResult>> ListAsync(Guid userId, CancellationToken cancellationToken);
     Task<PatientResult> GetAsync(Guid userId, Guid patientId, CancellationToken cancellationToken);
+    Task<PatientProfileResult> GetProfileAsync(Guid userId, Guid patientId, CancellationToken cancellationToken);
     Task<PatientResult> CreateAsync(Guid userId, CreatePatientCommand command, CancellationToken cancellationToken);
     Task<PatientResult> UpdateAsync(Guid userId, UpdatePatientCommand command, CancellationToken cancellationToken);
     Task DeleteAsync(Guid userId, Guid patientId, CancellationToken cancellationToken);

@@ -33,7 +33,7 @@ public class UnitTestTreatmentPlanService
         {
             CompanyId = companyId,
             PatientId = Guid.NewGuid(),
-            Status = "Pending"
+            Status = TreatmentPlanStatus.Pending
         };
 
         var firstItem = new PlanItem
@@ -95,7 +95,7 @@ public class UnitTestTreatmentPlanService
         {
             CompanyId = companyId,
             PatientId = Guid.NewGuid(),
-            Status = "Pending"
+            Status = TreatmentPlanStatus.Pending
         };
 
         db.TreatmentPlans.Add(plan);

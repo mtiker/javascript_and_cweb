@@ -142,6 +142,73 @@ Swagger: `https://localhost:5001/swagger`
 
 Demo UI: `http://localhost:5107/`
 
+### Default süsteemikontod (seed)
+
+Need kontod luuakse identity seedingu käigus arenduskeskkonnas:
+
+- `sysadmin@dental-saas.local` / `Dental.Saas.101` (`SystemAdmin`)
+- `support@dental-saas.local` / `Dental.Saas.101` (`SystemSupport`)
+- `billing@dental-saas.local` / `Dental.Saas.101` (`SystemBilling`)
+
+### Demo tenant-kontod ja slugid (seed)
+
+Need kontod luuakse samuti seedingu käigus (parool koigil sama):
+
+- Parool: `Dental.Saas.101`
+- Demo kliinikud (slug): `smileworks-demo`, `nordic-smiles-demo`
+- `owner.demo@dental-saas.local` (`CompanyOwner`)
+- `admin.demo@dental-saas.local` (`CompanyAdmin`)
+- `manager.demo@dental-saas.local` (`CompanyManager`)
+- `employee.demo@dental-saas.local` (`CompanyEmployee`)
+- `multitenant.demo@dental-saas.local` (rollid kahes kliinikus, sobib `switch-company` testiks)
+
+### Post-login route'id (UI)
+
+UI avab rolli järgi vaikimisi route'i `/app/...` all (mitte enam hash-tab navigeerimine):
+
+- `SystemAdmin` -> `/app/platform`
+- `SystemSupport` -> `/app/support`
+- `SystemBilling` -> `/app/billing`
+- `CompanyOwner` -> `/app/team`
+- `CompanyAdmin` -> `/app/team`
+- `CompanyManager` -> `/app/plans`
+- `CompanyEmployee` -> `/app/appointments`
+- fallback (rolli/tenanti pole) -> `/app/overview`
+
+`/app/*` route'id toetavad browser refreshi (fallback `index.html`-ile) ja URL peegeldab aktiivset vaadet.
+
+### Rollid: eesmärk ja õigused
+
+- `SystemAdmin`
+  - Eesmärk: platvormiülene haldus.
+  - Vaikimisi vaade: `/app/platform`.
+  - Saab: analytics, feature flagid, tenant activation/deactivation, impersonation, lisaks support + billing vaated.
+- `SystemSupport`
+  - Eesmärk: klienditoe töövood.
+  - Vaikimisi vaade: `/app/support`.
+  - Saab: tenant snapshotid, support ticketid, onboarding companies list, uue tenanti onboarding (`registercompany`).
+  - Märkus: onboarding endpoint ei ole avalik; see on piiratud `SystemAdmin` ja `SystemSupport` rollidele. Kui soovid rangemat SaaS kontrolli, ahenda see ainult `SystemAdmin`-ile voi invite/approval workflow taha.
+- `SystemBilling`
+  - Eesmärk: arvelduse haldus.
+  - Vaikimisi vaade: `/app/billing`.
+  - Saab: subscriptioni muutmine, invoice staatuse haldus, billing listid.
+- `CompanyOwner`
+  - Eesmärk: tenanti äriline ja administratiivne omanik.
+  - Vaikimisi vaade: `/app/team`.
+  - Saab: kõik tenant CRUD-id, team management, company settings ja subscription tier update.
+- `CompanyAdmin`
+  - Eesmärk: tenanti operatiivne admin.
+  - Vaikimisi vaade: `/app/team`.
+  - Saab: enamik tenant operatsioone ja team management; ei saa owner-only company settings/subscription update.
+- `CompanyManager`
+  - Eesmärk: kliiniku igapäevane tööjuhtimine.
+  - Vaikimisi vaade: `/app/plans`.
+  - Saab: patients/resources/appointments/plans/cost estimates/invoices/payment plans; ei saa team/settings admin.
+- `CompanyEmployee`
+  - Eesmärk: front-line kliiniline kasutaja.
+  - Vaikimisi vaade: `/app/appointments`.
+  - Saab: patients, resources (read), appointments, tooth records, xrays, insurance plans (read); ei saa plans/team/settings admin.
+
 ### Testid
 
 ```powershell
@@ -200,8 +267,8 @@ Peamised route'id:
 ## Esitlusvoog (UI)
 
 1. Ava `http://localhost:5107/`
-2. Kasuta **Onboarding** vormi, et luua uus kliinik + owner kasutaja
-3. Logi sisse **Login** vormis
+2. Logi sisse system kasutajaga (`SystemAdmin` või `SystemSupport`)
+3. Kasuta **Onboarding** vormi, et luua uus kliinik + owner kasutaja
 4. Vajadusel vali tenant **Company Switch** vormiga
 5. Lisa kliiniku ressursid (**Dentists and Rooms**) resources ekraanil
 6. Lisa ja kuva patsiente **Patients** sektsioonis
@@ -211,6 +278,11 @@ Peamised route'id:
 ## Veahaldus standard
 
 Rakendus tagastab vigadel `application/problem+json` payloadi (global middleware).
+
+## Security Notes
+
+- `POST /api/v1/system/onboarding/registercompany` on praeguses implementeeringus JWT + rollipohiselt kaitstud (`SystemAdmin` voi `SystemSupport`), mitte avalik endpoint.
+- Kui platvorm peab lubama tenantide loomist ainult tsentraalse approval protsessi kaudu, siis koige lihtsam karmistus on eemaldada `SystemSupport` ligipaas voi asendada see invite-only/backoffice workflow'ga.
 
 Näide:
 

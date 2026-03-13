@@ -60,6 +60,11 @@ public class ToothRecordsController(AppDbContext dbContext, ITenantProvider tena
             return BadRequest(new Message("Invalid tooth condition value."));
         }
 
+        if (!ToothChart.IsValidPermanentToothNumber(request.ToothNumber))
+        {
+            return BadRequest(new Message("Tooth number must use a valid permanent FDI tooth number."));
+        }
+
         var patientExists = await dbContext.Patients
             .AsNoTracking()
             .AnyAsync(entity => entity.Id == request.PatientId, cancellationToken);

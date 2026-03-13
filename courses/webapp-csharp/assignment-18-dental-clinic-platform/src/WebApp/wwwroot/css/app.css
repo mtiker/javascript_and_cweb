@@ -6,6 +6,10 @@ body {
         var(--color-bg);
 }
 
+[hidden] {
+    display: none !important;
+}
+
 .gateway-screen {
     min-height: 100vh;
     display: grid;
@@ -232,6 +236,278 @@ body {
     grid-column: 1 / -1;
 }
 
+.table-actions {
+    display: flex;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+}
+
+.patient-profile-panel {
+    gap: var(--space-4);
+}
+
+.patient-profile-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-4);
+}
+
+.patient-profile-grid--chart {
+    align-items: start;
+}
+
+.patient-profile-summary {
+    display: grid;
+    gap: var(--space-4);
+}
+
+.patient-profile-metrics {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-3);
+}
+
+.patient-profile-metric {
+    min-height: auto;
+}
+
+.patient-profile-facts {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-3);
+    margin: var(--space-4) 0 0;
+}
+
+.patient-profile-facts dt {
+    color: var(--color-text-soft);
+    font-size: 0.74rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 700;
+}
+
+.patient-profile-facts dd {
+    margin: var(--space-1) 0 0;
+    font-weight: 700;
+    word-break: break-word;
+}
+
+.tooth-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-top: var(--space-4);
+}
+
+.tooth-legend__item {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: 0.82rem;
+    color: var(--color-text-muted);
+}
+
+.tooth-legend__swatch {
+    inline-size: 0.9rem;
+    block-size: 0.9rem;
+    border-radius: 0.35rem;
+    border: 1px solid color-mix(in srgb, var(--color-border-strong) 60%, transparent);
+}
+
+.tooth-legend__swatch--healthy {
+    background: color-mix(in srgb, var(--color-brand-500) 72%, var(--color-bg-soft));
+}
+
+.tooth-legend__swatch--caries {
+    background: color-mix(in srgb, var(--color-danger-500) 78%, var(--color-bg-soft));
+}
+
+.tooth-legend__swatch--filled {
+    background: color-mix(in srgb, var(--color-info-text) 62%, var(--color-bg-soft));
+}
+
+.tooth-legend__swatch--crown {
+    background: color-mix(in srgb, var(--color-accent-500) 78%, var(--color-bg-soft));
+}
+
+.tooth-legend__swatch--rootcanal {
+    background: color-mix(in srgb, var(--color-warning-text) 76%, var(--color-bg-soft));
+}
+
+.tooth-legend__swatch--missing {
+    background: color-mix(in srgb, var(--color-text-soft) 68%, var(--color-bg-soft));
+}
+
+.tooth-hover-card {
+    margin-top: var(--space-4);
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+    background: color-mix(in srgb, var(--color-bg-subtle) 76%, var(--color-bg-surface));
+    color: var(--color-text-muted);
+    min-height: 3.5rem;
+}
+
+.tooth-chart {
+    display: grid;
+    gap: var(--space-3);
+    margin-top: var(--space-4);
+    overflow-x: auto;
+    padding-bottom: var(--space-1);
+}
+
+.tooth-chart__row {
+    display: grid;
+    grid-template-columns: repeat(8, minmax(3.65rem, 1fr));
+    gap: var(--space-2);
+    min-width: 33rem;
+}
+
+.tooth-chart__row--lower {
+    margin-top: var(--space-2);
+}
+
+.tooth-button {
+    min-height: 5rem;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+    background: color-mix(in srgb, var(--color-bg-subtle) 82%, var(--color-bg-surface));
+    color: var(--color-text);
+    padding: var(--space-3);
+    display: grid;
+    gap: var(--space-1);
+    align-content: start;
+    text-align: left;
+    transition:
+        transform var(--duration-fast) var(--ease-standard),
+        border-color var(--duration-fast) var(--ease-standard),
+        box-shadow var(--duration-fast) var(--ease-standard),
+        background var(--duration-fast) var(--ease-standard);
+}
+
+.tooth-button:hover,
+.tooth-button:focus-visible {
+    transform: translateY(-2px);
+    border-color: var(--color-border-focus);
+    box-shadow: var(--shadow-xs);
+    outline: none;
+}
+
+.tooth-button.is-selected {
+    border-color: var(--color-border-focus);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-border-focus) 16%, transparent);
+}
+
+.tooth-button__number {
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+    font-weight: 800;
+}
+
+.tooth-button__label {
+    font-size: 0.72rem;
+    color: rgba(255, 255, 255, 0.82);
+}
+
+.tooth-button--healthy {
+    background: linear-gradient(180deg, color-mix(in srgb, var(--color-brand-500) 70%, var(--color-bg-soft)), color-mix(in srgb, var(--color-brand-300) 58%, var(--color-bg-subtle)));
+}
+
+.tooth-button--caries {
+    background: linear-gradient(180deg, color-mix(in srgb, var(--color-danger-500) 80%, var(--color-bg-soft)), color-mix(in srgb, var(--color-danger-300) 58%, var(--color-bg-subtle)));
+}
+
+.tooth-button--filled {
+    background: linear-gradient(180deg, color-mix(in srgb, var(--color-info-text) 62%, var(--color-bg-soft)), color-mix(in srgb, var(--color-info-bg) 80%, var(--color-bg-subtle)));
+}
+
+.tooth-button--crown {
+    background: linear-gradient(180deg, color-mix(in srgb, var(--color-accent-500) 82%, var(--color-bg-soft)), color-mix(in srgb, var(--color-warning-bg) 64%, var(--color-bg-subtle)));
+}
+
+.tooth-button--rootcanal {
+    background: linear-gradient(180deg, color-mix(in srgb, var(--color-warning-text) 76%, var(--color-bg-soft)), color-mix(in srgb, var(--color-warning-bg) 88%, var(--color-bg-subtle)));
+}
+
+.tooth-button--missing {
+    background: linear-gradient(180deg, color-mix(in srgb, var(--color-text-soft) 74%, var(--color-bg-soft)), color-mix(in srgb, var(--color-border) 90%, var(--color-bg-subtle)));
+}
+
+.tooth-history-stack {
+    display: grid;
+    gap: var(--space-3);
+}
+
+.tooth-history-dropdown {
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+    background: color-mix(in srgb, var(--color-bg-subtle) 80%, var(--color-bg-surface));
+    overflow: hidden;
+}
+
+.tooth-history-dropdown > summary {
+    cursor: pointer;
+    list-style: none;
+    padding: var(--space-3) var(--space-4);
+    font-weight: 800;
+}
+
+.tooth-history-dropdown > summary::-webkit-details-marker {
+    display: none;
+}
+
+.tooth-history-dropdown__content {
+    display: grid;
+    gap: var(--space-3);
+    padding: 0 var(--space-4) var(--space-4);
+}
+
+.tooth-history-current {
+    padding: var(--space-3);
+    border-radius: var(--radius-sm);
+    background: color-mix(in srgb, var(--color-bg-soft) 72%, var(--color-bg-surface));
+    color: var(--color-text-muted);
+}
+
+.tooth-history-entry {
+    padding: var(--space-3);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-border);
+    background: color-mix(in srgb, var(--color-bg-surface) 72%, var(--color-bg-subtle));
+    display: grid;
+    gap: var(--space-1);
+}
+
+.tooth-history-entry__head {
+    font-weight: 800;
+}
+
+.clinical-entry-stack {
+    display: grid;
+    gap: var(--space-3);
+}
+
+.clinical-entry {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--space-3);
+    padding: var(--space-4);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+    background: color-mix(in srgb, var(--color-bg-subtle) 80%, var(--color-bg-surface));
+}
+
+.clinical-entry__notes,
+.clinical-entry__actions {
+    grid-column: 1 / -1;
+}
+
+.clinical-entry__actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
 .log-box {
     margin: 0;
     border: 1px solid var(--color-border);
@@ -272,6 +548,14 @@ body {
     .auth-grid {
         grid-template-columns: 1fr;
     }
+
+    .patient-profile-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .clinical-entry {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
 }
 
 @media (max-width: 58rem) {
@@ -285,6 +569,12 @@ body {
 
     .form-grid--2,
     .form-grid--3 {
+        grid-template-columns: 1fr;
+    }
+
+    .patient-profile-facts,
+    .patient-profile-metrics,
+    .clinical-entry {
         grid-template-columns: 1fr;
     }
 

@@ -8,13 +8,13 @@ builder.Services.AddAppIdentity(builder.Configuration);
 builder.Services.AddAppServices();
 builder.Services.AddAppControllers();
 builder.Services.AddForwardedHeaders();
-builder.Services.AddAppCors();
+builder.Services.AddAppCors(builder.Configuration, builder.Environment);
 builder.Services.AddAppApiVersioning();
 builder.Services.AddAppSwagger();
 
 var app = builder.Build();
 
-app.SetupAppData();
+await app.SetupAppDataAsync();
 app.UseAppMiddleware();
 app.UseAppSwagger();
 app.MapAppEndpoints();

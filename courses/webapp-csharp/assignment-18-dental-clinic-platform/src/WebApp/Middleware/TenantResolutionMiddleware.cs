@@ -10,6 +10,7 @@ public class TenantResolutionMiddleware(RequestDelegate next)
     private static readonly HashSet<string> ReservedTopSegments = new(StringComparer.OrdinalIgnoreCase)
     {
         "api",
+        "app",
         "swagger",
         "identity",
         "health"

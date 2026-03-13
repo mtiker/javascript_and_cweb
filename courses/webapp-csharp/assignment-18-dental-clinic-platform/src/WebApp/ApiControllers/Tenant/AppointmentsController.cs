@@ -2,6 +2,7 @@ using App.BLL.Contracts.Appointments;
 using App.BLL.Services;
 using App.DAL.EF.Tenant;
 using App.Domain;
+using App.Domain.Enums;
 using App.DTO.v1.Appointments;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -45,6 +46,56 @@ public class AppointmentsController(IAppointmentService appointmentService, ITen
             cancellationToken);
 
         return Created(string.Empty, ToResponse(appointment));
+    }
+
+    [HttpPost("{appointmentId:guid}/clinical-record")]
+    [ProducesResponseType(typeof(AppointmentClinicalRecordResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(App.DTO.v1.Message), StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<AppointmentClinicalRecordResponse>> RecordClinicalWork(
+        [FromRoute] string companySlug,
+        [FromRoute] Guid appointmentId,
+        [FromBody] RecordAppointmentClinicalRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (!TenantMatches(companySlug)) return Forbid();
+
+        var items = new List<RecordAppointmentClinicalItemCommand>(request.Items.Count);
+
+        foreach (var item in request.Items)
+        {
+            if (!Enum.TryParse<ToothConditionStatus>(item.Condition, true, out var condition))
+            {
+                return BadRequest(new App.DTO.v1.Message($"Invalid tooth condition value '{item.Condition}'."));
+            }
+
+            if (!ToothChart.IsValidPermanentToothNumber(item.ToothNumber))
+            {
+                return BadRequest(new App.DTO.v1.Message($"Tooth number {item.ToothNumber} is not a valid permanent FDI tooth number."));
+            }
+
+            items.Add(new RecordAppointmentClinicalItemCommand(
+                item.TreatmentTypeId,
+                item.ToothNumber,
+                condition,
+                item.Price,
+                item.Notes));
+        }
+
+        var result = await appointmentService.RecordClinicalWorkAsync(
+            User.UserId(),
+            new RecordAppointmentClinicalCommand(
+                appointmentId,
+                request.PerformedAtUtc,
+                request.MarkAppointmentCompleted,
+                items),
+            cancellationToken);
+
+        return Ok(new AppointmentClinicalRecordResponse
+        {
+            AppointmentId = result.AppointmentId,
+            Status = result.Status,
+            RecordedItemCount = result.RecordedItemCount
+        });
     }
 
     private bool TenantMatches(string companySlug)
