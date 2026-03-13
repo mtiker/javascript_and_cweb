@@ -75,3 +75,24 @@ Record AI-assisted development evidence here.
 - Prompt: Build a presentable web interface similar to exam project style, not only Swagger.
 - AI output used: Added frontend files under `src/WebApp/wwwroot` and enabled `UseDefaultFiles()` so `/` opens the UI; implemented onboarding/login/switch-company/patient list-create-delete flows.
 - Changes made manually: Verified HTTP root (`/`) serves UI and Swagger still works.
+
+- Date: 2026-03-12
+- Subject: webapp-csharp
+- Assignment: assignment-18-dental-clinic-platform
+- Prompt: Add broad seed/demo data across modules so functionality can be tested immediately.
+- AI output used: Extended identity seed users, added demo companies and role links, and seeded sample records for patients, tooth records, treatment types, plans/items, appointments, treatments, xrays, insurance, estimates, invoices, and payment plans.
+- Changes made manually: Validated build and updated README with demo login/slug information.
+
+- Date: 2026-03-12
+- Subject: webapp-csharp
+- Assignment: assignment-18-dental-clinic-platform
+- Prompt: Replace hash-tab navigation with role-based `/app/...` routes, keep refresh-safe routing, and document full role purpose/access matrix in README.
+- AI output used: Added path-based client routing and browser history support, reserved `/app` from tenant middleware resolution, configured server fallback for `/app/*`, and expanded README role/view documentation.
+- Changes made manually: Verified role landing routes and aligned role descriptions with controller authorization scope.
+
+- Date: 2026-03-12
+- Subject: webapp-csharp
+- Assignment: assignment-18-dental-clinic-platform
+- Prompt: Harden onboarding security by removing anonymous tenant registration and requiring system-role authorization; update tests and docs accordingly.
+- AI output used: Added authorization on onboarding POST, updated integration tests to authenticate a system admin before onboarding, and aligned UI/docs text with new access rule.
+- Changes made manually: Verified endpoint auth behavior and adjusted walkthrough/docs wording for system-role-first onboarding flow.
