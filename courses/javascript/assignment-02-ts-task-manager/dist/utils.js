@@ -1,22 +1,20 @@
-import { RecurrenceRule } from "./types.js";
-
-function parseIsoDate(value: string): { year: number; month: number; day: number } {
+function parseIsoDate(value) {
   const [year, month, day] = value.split("-").map(Number);
   return { year, month, day };
 }
 
-function formatUtcDate(date: Date): string {
+function formatUtcDate(date) {
   const yyyy = String(date.getUTCFullYear()).padStart(4, "0");
   const mm = String(date.getUTCMonth() + 1).padStart(2, "0");
   const dd = String(date.getUTCDate()).padStart(2, "0");
   return `${yyyy}-${mm}-${dd}`;
 }
 
-export function normalizeText(value: unknown): string {
+export function normalizeText(value) {
   return String(value ?? "").trim();
 }
 
-export function normalizeTagList(value: string): string[] {
+export function normalizeTagList(value) {
   return [...new Set(
     value
       .split(",")
@@ -25,7 +23,7 @@ export function normalizeTagList(value: string): string[] {
   )];
 }
 
-export function normalizeDependencyList(value: string): string[] {
+export function normalizeDependencyList(value) {
   return [...new Set(
     value
       .split(",")
@@ -34,7 +32,7 @@ export function normalizeDependencyList(value: string): string[] {
   )];
 }
 
-export function isValidDateOnly(value: string): boolean {
+export function isValidDateOnly(value) {
   if (!value) {
     return true;
   }
@@ -53,11 +51,11 @@ export function isValidDateOnly(value: string): boolean {
   );
 }
 
-export function isoNow(): string {
+export function isoNow() {
   return new Date().toISOString();
 }
 
-export function nextDueDate(currentDueDate: string | null, recurrence: RecurrenceRule): string | null {
+export function nextDueDate(currentDueDate, recurrence) {
   if (recurrence.frequency === "none") {
     return null;
   }
@@ -95,7 +93,7 @@ export function nextDueDate(currentDueDate: string | null, recurrence: Recurrenc
   return formatUtcDate(next);
 }
 
-export function isOverdue(dueDate: string | null, status: string): boolean {
+export function isOverdue(dueDate, status) {
   if (!dueDate || status === "done") {
     return false;
   }
@@ -109,6 +107,6 @@ export function isOverdue(dueDate: string | null, status: string): boolean {
   return dueDate < todayKey;
 }
 
-export async function nextTick(): Promise<void> {
+export async function nextTick() {
   await Promise.resolve();
 }

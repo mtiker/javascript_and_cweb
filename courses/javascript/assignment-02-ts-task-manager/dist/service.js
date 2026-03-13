@@ -2,18 +2,6 @@ import { PRIORITY_RANK, STATUS_RANK } from "./constants.js";
 import { NotFoundError, ValidationError } from "./errors.js";
 import { sortBy, uniqueBy } from "./generics.js";
 import { calculateStatistics } from "./statistics.js";
-import { TaskStorage } from "./storage.js";
-import {
-  SortDirection,
-  SortField,
-  Task,
-  TaskCore,
-  TaskCreateInput,
-  TaskId,
-  TaskQueryOptions,
-  TaskStatistics,
-  TaskUpdateInput
-} from "./types.js";
 import { isoNow, nextDueDate, normalizeText } from "./utils.js";
 import {
   parseRecurrenceRule,
@@ -24,7 +12,7 @@ import {
   validateTaskUpdate
 } from "./validation.js";
 
-function createTaskId(): TaskId {
+function createTaskId() {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
     return crypto.randomUUID();
   }
@@ -33,22 +21,20 @@ function createTaskId(): TaskId {
 }
 
 export class TaskService {
-  private readonly storage: TaskStorage;
-
-  constructor(storage: TaskStorage) {
+  constructor(storage) {
     this.storage = storage;
   }
 
-  public async listTasks(): Promise<Task[]> {
+  async listTasks() {
     const records = await this.storage.readAll();
     const sanitized = records
       .map((record) => this.normalizeStoredTask(record))
-      .filter((task): task is Task => task !== null);
+      .filter((task) => task !== null);
 
     return this.sortByDefault(sanitized);
   }
 
-  public async addTask(input: TaskCreateInput): Promise<Task> {
+  async addTask(input) {
     const validated = validateTaskCore({
       ...input,
       tags: uniqueBy(input.tags, (tag) => tag),
@@ -59,7 +45,7 @@ export class TaskService {
     this.ensureDependenciesExist(tasks, validated.dependencies);
 
     const now = isoNow();
-    const task: Task = {
+    const task = {
       id: createTaskId(),
       ...validated,
       createdAt: now,
@@ -72,7 +58,7 @@ export class TaskService {
     return task;
   }
 
-  public async updateTask(idRaw: string, patch: TaskUpdateInput): Promise<Task> {
+  async updateTask(idRaw, patch) {
     const id = normalizeText(idRaw);
     if (!id) {
       throw new ValidationError("task id is required for update.");
@@ -88,6 +74,7 @@ export class TaskService {
     if (!before) {
       throw new NotFoundError(`task "${id}" not found.`);
     }
+
     const validatedPatch = validateTaskUpdate(patch);
     const mergedCore = validateTaskCore({
       ...before,
@@ -99,7 +86,7 @@ export class TaskService {
       this.ensureDependenciesDone(tasks, mergedCore.dependencies);
     }
 
-    const after: Task = {
+    const after = {
       ...before,
       ...mergedCore,
       updatedAt: isoNow()
@@ -119,7 +106,7 @@ export class TaskService {
     return after;
   }
 
-  public async deleteTask(idRaw: string): Promise<Task> {
+  async deleteTask(idRaw) {
     const id = normalizeText(idRaw);
     if (!id) {
       throw new ValidationError("task id is required for delete.");
@@ -135,6 +122,7 @@ export class TaskService {
     if (!removed) {
       throw new NotFoundError(`task "${id}" not found.`);
     }
+
     for (const task of tasks) {
       task.dependencies = task.dependencies.filter((depId) => depId !== id);
     }
@@ -143,7 +131,7 @@ export class TaskService {
     return removed;
   }
 
-  public async queryTasks(options: TaskQueryOptions): Promise<Task[]> {
+  async queryTasks(options) {
     const search = validateSearchQuery(options.search);
     const filters = validateFilters(options.filters);
     const sort = validateSort(options.sort);
@@ -189,30 +177,18 @@ export class TaskService {
     return this.sortTasks(tasks, sort.by, sort.direction);
   }
 
-  public async getStatistics(dataset: Task[] | null = null): Promise<TaskStatistics> {
+  async getStatistics(dataset = null) {
     const tasks = dataset ?? (await this.listTasks());
     return calculateStatistics(tasks);
   }
 
-  public createTaskCoreFromInput(raw: {
-    title: string;
-    description: string;
-    status: string;
-    priority: string;
-    category: string;
-    dueDate: string;
-    tags: string[];
-    dependencies: string[];
-    recurrenceFrequency: string;
-    recurrenceInterval: string;
-    recurrenceEndDate: string;
-  }): TaskCore {
+  createTaskCoreFromInput(raw) {
     return validateTaskCore({
       title: raw.title,
       description: raw.description,
-      status: raw.status as TaskCore["status"],
-      priority: raw.priority as TaskCore["priority"],
-      category: raw.category as TaskCore["category"],
+      status: raw.status,
+      priority: raw.priority,
+      category: raw.category,
       dueDate: raw.dueDate || null,
       tags: uniqueBy(raw.tags, (tag) => tag),
       dependencies: uniqueBy(raw.dependencies, (value) => value),
@@ -221,10 +197,10 @@ export class TaskService {
         raw.recurrenceInterval,
         raw.recurrenceEndDate
       )
-    } satisfies TaskCreateInput);
+    });
   }
 
-  private buildNextRecurringTask(task: Task): Task | null {
+  buildNextRecurringTask(task) {
     if (task.recurrence.frequency === "none") {
       return null;
     }
@@ -250,11 +226,7 @@ export class TaskService {
     };
   }
 
-  private ensureDependenciesExist(
-    tasks: Task[],
-    dependencyIds: TaskId[],
-    selfId: TaskId | null = null
-  ): void {
+  ensureDependenciesExist(tasks, dependencyIds, selfId = null) {
     const ids = new Set(tasks.map((task) => task.id));
 
     for (const dep of dependencyIds) {
@@ -268,7 +240,7 @@ export class TaskService {
     }
   }
 
-  private ensureDependenciesDone(tasks: Task[], dependencyIds: TaskId[]): void {
+  ensureDependenciesDone(tasks, dependencyIds) {
     const byId = new Map(tasks.map((task) => [task.id, task]));
     const pending = dependencyIds.filter((depId) => byId.get(depId)?.status !== "done");
     if (pending.length > 0) {
@@ -278,12 +250,12 @@ export class TaskService {
     }
   }
 
-  private assertNoDependencyCycles(tasks: Task[]): void {
+  assertNoDependencyCycles(tasks) {
     const graph = new Map(tasks.map((task) => [task.id, task.dependencies]));
-    const visiting = new Set<TaskId>();
-    const visited = new Set<TaskId>();
+    const visiting = new Set();
+    const visited = new Set();
 
-    const visit = (id: TaskId): void => {
+    const visit = (id) => {
       if (visited.has(id)) {
         return;
       }
@@ -305,20 +277,13 @@ export class TaskService {
     }
   }
 
-  private normalizeStoredTask(raw: unknown): Task | null {
+  normalizeStoredTask(raw) {
     if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
       this.reportInvalidStoredTask(undefined, "stored value is not a task object.");
       return null;
     }
 
-    const record = raw as Partial<Task> & {
-      recurrence?: {
-        frequency?: string;
-        interval?: number;
-        endDate?: string | null;
-      };
-    };
-
+    const record = raw;
     const id = normalizeText(record.id);
     if (!id) {
       this.reportInvalidStoredTask(record.id, "stored task is missing a valid id.");
@@ -335,9 +300,9 @@ export class TaskService {
       const core = validateTaskCore({
         title: record.title ?? "",
         description: record.description ?? "",
-        status: (record.status ?? "todo") as TaskCore["status"],
-        priority: (record.priority ?? "medium") as TaskCore["priority"],
-        category: (record.category ?? "study") as TaskCore["category"],
+        status: record.status ?? "todo",
+        priority: record.priority ?? "medium",
+        category: record.category ?? "study",
         dueDate: record.dueDate ?? null,
         tags: Array.isArray(record.tags) ? record.tags : [],
         dependencies: Array.isArray(record.dependencies) ? record.dependencies : [],
@@ -356,18 +321,18 @@ export class TaskService {
     }
   }
 
-  private reportInvalidStoredTask(taskId: unknown, error: unknown): void {
+  reportInvalidStoredTask(taskId, error) {
     const id = normalizeText(taskId) || "<missing-id>";
     const reason = error instanceof Error ? error.message : String(error);
     console.warn(`Dropping invalid stored task "${id}": ${reason}`);
   }
 
-  private sortByDefault(tasks: Task[]): Task[] {
+  sortByDefault(tasks) {
     const byPriority = sortBy(tasks, (task) => PRIORITY_RANK[task.priority], "asc");
     return sortBy(byPriority, (task) => task.dueDate ?? "9999-12-31", "asc");
   }
 
-  private sortTasks(tasks: Task[], by: SortField, direction: SortDirection): Task[] {
+  sortTasks(tasks, by, direction) {
     switch (by) {
       case "priority":
         return sortBy(tasks, (task) => PRIORITY_RANK[task.priority], direction);

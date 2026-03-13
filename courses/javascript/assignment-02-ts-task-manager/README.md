@@ -24,10 +24,10 @@ TypeScript migration of Assignment 1 with strict typing and new features.
 ## Build and Run
 
 1. Open this folder in terminal.
-2. Install TypeScript (if missing): `npm install --save-dev typescript`
-3. Build: `npx tsc`
-4. Serve this folder with a static server (for example VS Code Live Server).
-5. Open `index.html` and confirm `dist/main.js` is loaded.
+2. If TypeScript tooling is available, install dependencies and rebuild `dist/` with `npm install` and `npx tsc`.
+3. Serve this folder with a static server (for example VS Code Live Server).
+4. Open `index.html` and confirm `dist/main.js` is loaded.
+5. Treat `src/` as the source of truth and `dist/` as committed browser output.
 
 ## Command Coverage
 

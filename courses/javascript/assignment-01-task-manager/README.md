@@ -26,8 +26,8 @@ Browser-based task management utility built with pure JavaScript.
 
 ## Run
 
-1. Open `index.html` directly in browser, or run via a static server.
-2. If browser blocks local file storage for `file://`, use VS Code Live Server.
+1. Prefer running via a static server (for example VS Code Live Server), because the app now uses ES module entry points.
+2. Open `index.html` and confirm it loads `src/main.js`.
 
 ## Usage
 

@@ -1,68 +1,11 @@
 import { ValidationError } from "./errors.js";
-import { TaskService } from "./service.js";
-import {
-  Task,
-  TaskFilters,
-  TaskId,
-  TaskQueryOptions,
-  TaskSort,
-  TaskStatistics
-} from "./types.js";
 import {
   normalizeDependencyList,
   normalizeTagList,
   normalizeText
 } from "./utils.js";
 
-type CommandName = "add" | "list" | "update" | "delete" | "filter" | "search" | "sort";
-type Tone = "neutral" | "success" | "error";
-
-interface UIElements {
-  form: HTMLFormElement;
-  taskId: HTMLInputElement;
-  title: HTMLInputElement;
-  description: HTMLTextAreaElement;
-  status: HTMLSelectElement;
-  priority: HTMLSelectElement;
-  category: HTMLSelectElement;
-  dueDate: HTMLInputElement;
-  tags: HTMLInputElement;
-  dependencies: HTMLInputElement;
-  recurrenceFrequency: HTMLSelectElement;
-  recurrenceInterval: HTMLInputElement;
-  recurrenceEndDate: HTMLInputElement;
-  saveBtn: HTMLButtonElement;
-  resetBtn: HTMLButtonElement;
-  deleteSelectedBtn: HTMLButtonElement;
-  clearQueryBtn: HTMLButtonElement;
-  commandButtons: NodeListOf<HTMLButtonElement>;
-  searchQuery: HTMLInputElement;
-  filterStatus: HTMLSelectElement;
-  filterPriority: HTMLSelectElement;
-  filterCategory: HTMLSelectElement;
-  filterDueBefore: HTMLInputElement;
-  filterTag: HTMLInputElement;
-  sortBy: HTMLSelectElement;
-  sortDirection: HTMLSelectElement;
-  statusMessage: HTMLParagraphElement;
-  tableBody: HTMLTableSectionElement;
-  emptyState: HTMLParagraphElement;
-  rowTemplate: HTMLTemplateElement;
-  statTotal: HTMLElement;
-  statCompleted: HTMLElement;
-  statBlocked: HTMLElement;
-  statOverdue: HTMLElement;
-  statRate: HTMLElement;
-}
-
-interface UIState {
-  busy: boolean;
-  selectedTaskId: TaskId | null;
-  visibleTasks: Task[];
-  query: TaskQueryOptions;
-}
-
-function defaultFilters(): TaskFilters {
+function defaultFilters() {
   return {
     status: "",
     priority: "",
@@ -72,14 +15,14 @@ function defaultFilters(): TaskFilters {
   };
 }
 
-function defaultSort(): TaskSort {
+function defaultSort() {
   return {
     by: "priority",
     direction: "asc"
   };
 }
 
-function defaultQueryOptions(): TaskQueryOptions {
+function defaultQueryOptions() {
   return {
     search: "",
     filters: defaultFilters(),
@@ -87,7 +30,7 @@ function defaultQueryOptions(): TaskQueryOptions {
   };
 }
 
-function recurrenceText(task: Task): string {
+function recurrenceText(task) {
   if (task.recurrence.frequency === "none") {
     return "none";
   }
@@ -97,12 +40,7 @@ function recurrenceText(task: Task): string {
 }
 
 export class TaskManagerUI {
-  private readonly service: TaskService;
-  private readonly doc: Document;
-  private readonly elements: UIElements;
-  private readonly state: UIState;
-
-  constructor(service: TaskService, doc: Document = document) {
+  constructor(service, doc = document) {
     this.service = service;
     this.doc = doc;
     this.elements = this.collectElements();
@@ -114,67 +52,67 @@ export class TaskManagerUI {
     };
   }
 
-  public async init(): Promise<void> {
+  async init() {
     this.bindEvents();
     await this.executeSafely("list", async () => {
       await this.refreshView();
     });
   }
 
-  private byId<TElement extends HTMLElement>(id: string): TElement {
+  byId(id) {
     const node = this.doc.getElementById(id);
     if (!node) {
       throw new Error(`Missing UI element: ${id}`);
     }
-    return node as TElement;
+    return node;
   }
 
-  private collectElements(): UIElements {
-    const commandButtons = this.doc.querySelectorAll<HTMLButtonElement>(".cmd-btn");
+  collectElements() {
+    const commandButtons = this.doc.querySelectorAll(".cmd-btn");
     if (commandButtons.length === 0) {
       throw new Error("No command buttons found.");
     }
 
     return {
-      form: this.byId<HTMLFormElement>("task-form"),
-      taskId: this.byId<HTMLInputElement>("task-id"),
-      title: this.byId<HTMLInputElement>("title"),
-      description: this.byId<HTMLTextAreaElement>("description"),
-      status: this.byId<HTMLSelectElement>("status"),
-      priority: this.byId<HTMLSelectElement>("priority"),
-      category: this.byId<HTMLSelectElement>("category"),
-      dueDate: this.byId<HTMLInputElement>("due-date"),
-      tags: this.byId<HTMLInputElement>("tags"),
-      dependencies: this.byId<HTMLInputElement>("dependencies"),
-      recurrenceFrequency: this.byId<HTMLSelectElement>("recurrence-frequency"),
-      recurrenceInterval: this.byId<HTMLInputElement>("recurrence-interval"),
-      recurrenceEndDate: this.byId<HTMLInputElement>("recurrence-end-date"),
-      saveBtn: this.byId<HTMLButtonElement>("save-btn"),
-      resetBtn: this.byId<HTMLButtonElement>("reset-btn"),
-      deleteSelectedBtn: this.byId<HTMLButtonElement>("delete-selected-btn"),
-      clearQueryBtn: this.byId<HTMLButtonElement>("clear-query-btn"),
+      form: this.byId("task-form"),
+      taskId: this.byId("task-id"),
+      title: this.byId("title"),
+      description: this.byId("description"),
+      status: this.byId("status"),
+      priority: this.byId("priority"),
+      category: this.byId("category"),
+      dueDate: this.byId("due-date"),
+      tags: this.byId("tags"),
+      dependencies: this.byId("dependencies"),
+      recurrenceFrequency: this.byId("recurrence-frequency"),
+      recurrenceInterval: this.byId("recurrence-interval"),
+      recurrenceEndDate: this.byId("recurrence-end-date"),
+      saveBtn: this.byId("save-btn"),
+      resetBtn: this.byId("reset-btn"),
+      deleteSelectedBtn: this.byId("delete-selected-btn"),
+      clearQueryBtn: this.byId("clear-query-btn"),
       commandButtons,
-      searchQuery: this.byId<HTMLInputElement>("search-query"),
-      filterStatus: this.byId<HTMLSelectElement>("filter-status"),
-      filterPriority: this.byId<HTMLSelectElement>("filter-priority"),
-      filterCategory: this.byId<HTMLSelectElement>("filter-category"),
-      filterDueBefore: this.byId<HTMLInputElement>("filter-due-before"),
-      filterTag: this.byId<HTMLInputElement>("filter-tag"),
-      sortBy: this.byId<HTMLSelectElement>("sort-by"),
-      sortDirection: this.byId<HTMLSelectElement>("sort-direction"),
-      statusMessage: this.byId<HTMLParagraphElement>("status-message"),
-      tableBody: this.byId<HTMLTableSectionElement>("task-table-body"),
-      emptyState: this.byId<HTMLParagraphElement>("empty-state"),
-      rowTemplate: this.byId<HTMLTemplateElement>("task-row-template"),
-      statTotal: this.byId<HTMLElement>("stat-total"),
-      statCompleted: this.byId<HTMLElement>("stat-completed"),
-      statBlocked: this.byId<HTMLElement>("stat-blocked"),
-      statOverdue: this.byId<HTMLElement>("stat-overdue"),
-      statRate: this.byId<HTMLElement>("stat-rate")
+      searchQuery: this.byId("search-query"),
+      filterStatus: this.byId("filter-status"),
+      filterPriority: this.byId("filter-priority"),
+      filterCategory: this.byId("filter-category"),
+      filterDueBefore: this.byId("filter-due-before"),
+      filterTag: this.byId("filter-tag"),
+      sortBy: this.byId("sort-by"),
+      sortDirection: this.byId("sort-direction"),
+      statusMessage: this.byId("status-message"),
+      tableBody: this.byId("task-table-body"),
+      emptyState: this.byId("empty-state"),
+      rowTemplate: this.byId("task-row-template"),
+      statTotal: this.byId("stat-total"),
+      statCompleted: this.byId("stat-completed"),
+      statBlocked: this.byId("stat-blocked"),
+      statOverdue: this.byId("stat-overdue"),
+      statRate: this.byId("stat-rate")
     };
   }
 
-  private bindEvents(): void {
+  bindEvents() {
     this.elements.form.addEventListener("submit", async (event) => {
       event.preventDefault();
       await this.handleSave();
@@ -199,7 +137,7 @@ export class TaskManagerUI {
 
     this.elements.commandButtons.forEach((button) => {
       button.addEventListener("click", async () => {
-        const command = button.dataset.command as CommandName | undefined;
+        const command = button.dataset.command;
         if (!command) {
           return;
         }
@@ -208,12 +146,12 @@ export class TaskManagerUI {
     });
 
     this.elements.tableBody.addEventListener("click", async (event) => {
-      const trigger = (event.target as HTMLElement).closest("button");
+      const trigger = event.target.closest("button");
       if (!trigger) {
         return;
       }
 
-      const row = trigger.closest("tr") as HTMLTableRowElement | null;
+      const row = trigger.closest("tr");
       const taskId = row?.dataset.taskId ?? "";
       if (!taskId) {
         return;
@@ -240,7 +178,7 @@ export class TaskManagerUI {
     });
   }
 
-  private async handleCommand(command: CommandName): Promise<void> {
+  async handleCommand(command) {
     switch (command) {
       case "add":
         await this.handleSave({ forcedMode: "add" });
@@ -281,7 +219,7 @@ export class TaskManagerUI {
     }
   }
 
-  private async handleSave(options: { forcedMode?: "add" | "update" } = {}): Promise<void> {
+  async handleSave(options = {}) {
     await this.executeSafely(options.forcedMode ?? "add", async () => {
       const mode = options.forcedMode ?? (this.state.selectedTaskId ? "update" : "add");
       const taskCore = this.service.createTaskCoreFromInput(this.readFormRawValues());
@@ -301,7 +239,7 @@ export class TaskManagerUI {
     });
   }
 
-  private async handleDeleteSelected(): Promise<void> {
+  async handleDeleteSelected() {
     await this.executeSafely("delete", async () => {
       const selectedId = this.state.selectedTaskId;
       if (!selectedId) {
@@ -318,19 +256,7 @@ export class TaskManagerUI {
     });
   }
 
-  private readFormRawValues(): {
-    title: string;
-    description: string;
-    status: string;
-    priority: string;
-    category: string;
-    dueDate: string;
-    tags: string[];
-    dependencies: string[];
-    recurrenceFrequency: string;
-    recurrenceInterval: string;
-    recurrenceEndDate: string;
-  } {
+  readFormRawValues() {
     return {
       title: this.elements.title.value,
       description: this.elements.description.value,
@@ -346,24 +272,24 @@ export class TaskManagerUI {
     };
   }
 
-  private readFilterInputs(): TaskFilters {
+  readFilterInputs() {
     return {
-      status: this.elements.filterStatus.value as TaskFilters["status"],
-      priority: this.elements.filterPriority.value as TaskFilters["priority"],
-      category: this.elements.filterCategory.value as TaskFilters["category"],
+      status: this.elements.filterStatus.value,
+      priority: this.elements.filterPriority.value,
+      category: this.elements.filterCategory.value,
       dueBefore: this.elements.filterDueBefore.value,
       tag: normalizeText(this.elements.filterTag.value)
     };
   }
 
-  private readSortInputs(): TaskSort {
+  readSortInputs() {
     return {
-      by: this.elements.sortBy.value as TaskSort["by"],
-      direction: this.elements.sortDirection.value as TaskSort["direction"]
+      by: this.elements.sortBy.value,
+      direction: this.elements.sortDirection.value
     };
   }
 
-  private resetQueryInputs(): void {
+  resetQueryInputs() {
     this.elements.searchQuery.value = "";
     this.elements.filterStatus.value = "";
     this.elements.filterPriority.value = "";
@@ -374,7 +300,7 @@ export class TaskManagerUI {
     this.elements.sortDirection.value = "asc";
   }
 
-  private loadTaskIntoForm(taskId: TaskId): void {
+  loadTaskIntoForm(taskId) {
     const task = this.state.visibleTasks.find((item) => item.id === taskId);
     if (!task) {
       this.setStatus("Task not found in current view.", "error");
@@ -399,7 +325,7 @@ export class TaskManagerUI {
     this.setStatus(`Loaded task ${task.id}.`, "neutral");
   }
 
-  private resetForm(): void {
+  resetForm() {
     this.elements.form.reset();
     this.elements.status.value = "todo";
     this.elements.priority.value = "medium";
@@ -412,13 +338,13 @@ export class TaskManagerUI {
     this.renderTasks(this.state.visibleTasks);
   }
 
-  private renderTasks(tasks: Task[]): void {
+  renderTasks(tasks) {
     this.elements.tableBody.textContent = "";
     this.elements.emptyState.style.display = tasks.length > 0 ? "none" : "block";
 
     for (const task of tasks) {
       const fragment = this.elements.rowTemplate.content.cloneNode(true);
-      const row = fragment.querySelector("tr") as HTMLTableRowElement | null;
+      const row = fragment.querySelector("tr");
       if (!row) {
         continue;
       }
@@ -473,7 +399,7 @@ export class TaskManagerUI {
     }
   }
 
-  private renderStatistics(stats: TaskStatistics): void {
+  renderStatistics(stats) {
     this.elements.statTotal.textContent = String(stats.total);
     this.elements.statCompleted.textContent = String(stats.completed);
     this.elements.statBlocked.textContent = String(stats.blocked);
@@ -481,7 +407,7 @@ export class TaskManagerUI {
     this.elements.statRate.textContent = `${stats.completionRate}%`;
   }
 
-  private async refreshView(): Promise<void> {
+  async refreshView() {
     const tasks = await this.service.queryTasks(this.state.query);
     const stats = await this.service.getStatistics(tasks);
     this.state.visibleTasks = tasks;
@@ -489,10 +415,7 @@ export class TaskManagerUI {
     this.renderStatistics(stats);
   }
 
-  private async executeSafely(
-    command: CommandName | "startup",
-    action: () => Promise<void | { cancelled: true; message?: string }>
-  ): Promise<void> {
+  async executeSafely(command, action) {
     if (this.state.busy) {
       return;
     }
@@ -518,7 +441,7 @@ export class TaskManagerUI {
     }
   }
 
-  private setBusy(busy: boolean): void {
+  setBusy(busy) {
     this.state.busy = busy;
     this.elements.commandButtons.forEach((button) => {
       button.disabled = busy;
@@ -529,7 +452,7 @@ export class TaskManagerUI {
     this.elements.clearQueryBtn.disabled = busy;
   }
 
-  private setStatus(message: string, tone: Tone): void {
+  setStatus(message, tone) {
     this.elements.statusMessage.textContent = message;
     this.elements.statusMessage.dataset.tone = tone;
   }
