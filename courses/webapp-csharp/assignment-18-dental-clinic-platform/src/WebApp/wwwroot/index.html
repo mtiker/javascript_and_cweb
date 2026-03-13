@@ -1,0 +1,1052 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Dental Clinic SaaS Console</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800&family=Manrope:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/tokens.css">
+    <link rel="stylesheet" href="/css/components.css">
+    <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+<a class="skip-link" href="#main-content">Skip to main content</a>
+<div class="app-bg-orb app-bg-orb--a" aria-hidden="true"></div>
+<div class="app-bg-orb app-bg-orb--b" aria-hidden="true"></div>
+<div id="global-loading" class="loading-bar" role="status" aria-live="polite" aria-label="Loading indicator"></div>
+<div id="toast-region" class="toast-region" aria-live="polite" aria-atomic="true"></div>
+
+<section id="gateway-screen" class="gateway-screen">
+    <article class="card card--elevated gateway-card">
+        <p class="eyebrow">Dental Clinic SaaS</p>
+        <h1>Sign in to your workspace</h1>
+        <p class="text-muted">Authenticate first, then the console opens directly to your role-specific view.</p>
+
+        <form id="gateway-login-form" class="form-grid">
+            <label class="field" for="gatewayEmail">
+                <span>Email</span>
+                <input id="gatewayEmail" class="form-input" name="email" type="email" required placeholder="owner@clinic.com">
+            </label>
+            <label class="field" for="gatewayPassword">
+                <span>Password</span>
+                <input id="gatewayPassword" class="form-input" name="password" type="password" required placeholder="********">
+            </label>
+            <div class="form-actions">
+                <button type="submit" class="btn btn--primary">Sign in</button>
+                <button type="button" id="gateway-open-auth" class="btn btn--ghost">Open onboarding & advanced access</button>
+            </div>
+        </form>
+    </article>
+</section>
+
+<div id="app-root" class="app-root" hidden>
+    <header class="app-header card card--elevated">
+        <div class="brand">
+            <span class="brand-mark" aria-hidden="true">DC</span>
+            <div class="brand-copy">
+                <p class="eyebrow">Dental Clinic SaaS</p>
+                <h1>Operations Console</h1>
+            </div>
+        </div>
+
+        <nav class="tabs tabs--pill" aria-label="Primary navigation">
+            <button type="button" class="tab is-active" data-tab-target="overview" aria-controls="screen-overview" aria-selected="true">Overview</button>
+            <button type="button" class="tab" data-tab-target="platform" aria-controls="screen-platform" aria-selected="false">Platform</button>
+            <button type="button" class="tab" data-tab-target="support" aria-controls="screen-support" aria-selected="false">Support</button>
+            <button type="button" class="tab" data-tab-target="billing" aria-controls="screen-billing" aria-selected="false">Billing</button>
+            <button type="button" class="tab" data-tab-target="auth" aria-controls="screen-auth" aria-selected="false">Access</button>
+            <button type="button" class="tab" data-tab-target="patients" aria-controls="screen-patients" aria-selected="false">Patients</button>
+            <button type="button" class="tab" data-tab-target="resources" aria-controls="screen-resources" aria-selected="false">Resources</button>
+            <button type="button" class="tab" data-tab-target="appointments" aria-controls="screen-appointments" aria-selected="false">Schedule</button>
+            <button type="button" class="tab" data-tab-target="plans" aria-controls="screen-plans" aria-selected="false">Plans</button>
+            <button type="button" class="tab" data-tab-target="team" aria-controls="screen-team" aria-selected="false">Team</button>
+            <button type="button" class="tab" data-tab-target="settings" aria-controls="screen-settings" aria-selected="false">Settings</button>
+            <button type="button" class="tab" data-tab-target="logs" aria-controls="screen-logs" aria-selected="false">API Logs</button>
+        </nav>
+
+        <div class="header-actions">
+            <span class="badge badge--warning" id="auth-pill">Not signed in</span>
+            <span class="badge badge--neutral" id="company-pill">No tenant</span>
+            <button id="theme-toggle" class="btn btn--ghost btn--sm" type="button" aria-pressed="true">Dark mode</button>
+            <button type="button" id="logout-btn" class="btn btn--secondary btn--sm">Log out</button>
+        </div>
+    </header>
+
+    <main id="main-content" class="app-shell" tabindex="-1">
+        <aside class="app-sidebar">
+            <section class="card sidebar-card">
+                <h2>Workspace</h2>
+                <p class="text-muted">Move through the workflow in this order.</p>
+                <div class="stack-sm">
+                    <button type="button" class="btn btn--ghost btn--block" data-tab-target="auth">1. Onboarding and Auth</button>
+                    <button type="button" class="btn btn--ghost btn--block" data-tab-target="patients">2. Patient Operations</button>
+                    <button type="button" class="btn btn--ghost btn--block" data-tab-target="resources">3. Dentists and Rooms</button>
+                    <button type="button" class="btn btn--ghost btn--block" data-tab-target="appointments">4. Appointment Scheduling</button>
+                    <button type="button" class="btn btn--ghost btn--block" data-tab-target="plans">5. Treatment Plan Decisions</button>
+                    <button type="button" class="btn btn--ghost btn--block" data-tab-target="team">6. Team and Roles</button>
+                    <button type="button" class="btn btn--ghost btn--block" data-tab-target="settings">7. Company Settings</button>
+                    <button type="button" class="btn btn--ghost btn--block" data-tab-target="logs">8. API Audit Log</button>
+                </div>
+            </section>
+
+            <section class="card sidebar-card card--subtle">
+                <h2>Session</h2>
+                <dl class="session-list">
+                    <div>
+                        <dt>Role</dt>
+                        <dd id="session-role">None</dd>
+                    </div>
+                    <div>
+                        <dt>Tenant</dt>
+                        <dd id="session-tenant">-</dd>
+                    </div>
+                    <div>
+                        <dt>Token TTL</dt>
+                        <dd id="session-expiry">Unknown</dd>
+                    </div>
+                </dl>
+            </section>
+
+            <section class="alert alert--info" role="status">
+                Use tenant-safe operations only after login and company switch.
+            </section>
+        </aside>
+
+        <section class="app-content">
+            <section id="screen-overview" class="screen-panel card card--elevated" data-screen="overview">
+                <header class="section-head">
+                    <div>
+                        <p class="eyebrow">Control Center</p>
+                        <h2>Dashboard Snapshot</h2>
+                    </div>
+                    <span class="badge badge--neutral" id="overview-sync-status">Idle</span>
+                </header>
+
+                <div class="metric-grid">
+                    <article class="metric-card">
+                        <p class="metric-label">Auth state</p>
+                        <p class="metric-value" id="overview-auth">Offline</p>
+                    </article>
+                    <article class="metric-card">
+                        <p class="metric-label">Active tenant</p>
+                        <p class="metric-value" id="overview-tenant">-</p>
+                    </article>
+                    <article class="metric-card">
+                        <p class="metric-label">Patients loaded</p>
+                        <p class="metric-value" id="overview-patient-count">0</p>
+                    </article>
+                </div>
+
+                <div class="quick-actions">
+                    <button type="button" class="btn btn--primary" data-tab-target="auth">Start onboarding</button>
+                    <button type="button" class="btn btn--secondary" data-tab-target="patients">Open patients</button>
+                    <button type="button" class="btn btn--ghost" data-tab-target="resources">Set dentists and rooms</button>
+                    <button type="button" class="btn btn--ghost" data-tab-target="appointments">Schedule appointments</button>
+                    <button type="button" class="btn btn--ghost" data-tab-target="plans">Record plan decisions</button>
+                    <button type="button" class="btn btn--ghost" data-tab-target="team">Manage team</button>
+                    <button type="button" class="btn btn--ghost" data-tab-target="settings">Open settings</button>
+                    <button type="button" class="btn btn--ghost" data-tab-target="logs">Review API logs</button>
+                </div>
+            </section>
+
+            <section id="screen-platform" class="screen-panel card card--elevated" data-screen="platform" hidden>
+                <header class="section-head">
+                    <div>
+                        <p class="eyebrow">System Administration</p>
+                        <h2>Platform Control</h2>
+                    </div>
+                    <button id="refresh-platform-btn" class="btn btn--ghost btn--sm" type="button">Refresh platform data</button>
+                </header>
+
+                <div class="metric-grid">
+                    <article class="metric-card">
+                        <p class="metric-label">Companies</p>
+                        <p class="metric-value" id="platform-company-count">0</p>
+                    </article>
+                    <article class="metric-card">
+                        <p class="metric-label">Users</p>
+                        <p class="metric-value" id="platform-user-count">0</p>
+                    </article>
+                    <article class="metric-card">
+                        <p class="metric-label">Invoices</p>
+                        <p class="metric-value" id="platform-invoice-count">0</p>
+                    </article>
+                </div>
+
+                <div class="auth-grid">
+                    <article class="card card--subtle">
+                        <h3>Feature flags</h3>
+                        <p class="text-muted">SystemAdmin can toggle platform-wide capabilities.</p>
+                        <form id="feature-flag-form" class="form-grid form-grid--2">
+                            <label class="field" for="featureKey">
+                                <span>Flag key</span>
+                                <input id="featureKey" class="form-input" name="key" required maxlength="80" placeholder="insurance-automation">
+                            </label>
+                            <label class="field check" for="featureEnabled">
+                                <input id="featureEnabled" type="checkbox" name="enabled">
+                                <span>Enabled</span>
+                            </label>
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn--primary">Save flag</button>
+                            </div>
+                        </form>
+
+                        <div class="table-wrap">
+                            <table class="app-table">
+                                <thead>
+                                <tr>
+                                    <th>Flag key</th>
+                                    <th>Status</th>
+                                </tr>
+                                </thead>
+                                <tbody id="feature-flags-body">
+                                <tr>
+                                    <td colspan="2">
+                                        <div class="empty-state">No feature flags loaded.</div>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </article>
+
+                    <article class="card card--subtle">
+                        <h3>Company activation</h3>
+                        <p class="text-muted">Activate/deactivate tenant access without deleting data.</p>
+                        <form id="company-activation-form" class="form-grid form-grid--2">
+                            <label class="field" for="companyActivationId">
+                                <span>Company ID</span>
+                                <input id="companyActivationId" class="form-input" name="companyId" required placeholder="GUID">
+                            </label>
+                            <label class="field check" for="companyActivationActive">
+                                <input id="companyActivationActive" type="checkbox" name="isActive" checked>
+                                <span>Company active</span>
+                            </label>
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn--secondary">Update activation</button>
+                            </div>
+                        </form>
+                    </article>
+                </div>
+            </section>
+
+            <section id="screen-support" class="screen-panel card card--elevated" data-screen="support" hidden>
+                <header class="section-head">
+                    <div>
+                        <p class="eyebrow">System Support</p>
+                        <h2>Tenant Troubleshooting</h2>
+                    </div>
+                    <button id="refresh-support-btn" class="btn btn--ghost btn--sm" type="button">Refresh support data</button>
+                </header>
+
+                <div class="auth-grid">
+                    <article class="card card--subtle">
+                        <h3>Create support ticket</h3>
+                        <p class="text-muted">Support can open tenant-bound tickets without changing billing or config.</p>
+                        <form id="support-ticket-form" class="form-grid form-grid--2">
+                            <label class="field" for="supportCompanySlug">
+                                <span>Company slug</span>
+                                <input id="supportCompanySlug" class="form-input" name="companySlug" required maxlength="64" placeholder="acme-dental">
+                            </label>
+                            <label class="field" for="supportTicketSubject">
+                                <span>Subject</span>
+                                <input id="supportTicketSubject" class="form-input" name="subject" required maxlength="160" placeholder="Login issue">
+                            </label>
+                            <label class="field" for="supportTicketDetails">
+                                <span>Details</span>
+                                <textarea id="supportTicketDetails" class="form-textarea" name="details" required maxlength="2000" placeholder="Describe troubleshooting context"></textarea>
+                            </label>
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn--primary">Create ticket</button>
+                            </div>
+                        </form>
+                    </article>
+
+                    <article class="card card--subtle">
+                        <h3>Company snapshots</h3>
+                        <div class="table-wrap">
+                            <table class="app-table">
+                                <thead>
+                                <tr>
+                                    <th>Company</th>
+                                    <th>Slug</th>
+                                    <th>Users</th>
+                                    <th>Patients</th>
+                                    <th>Open invoices</th>
+                                </tr>
+                                </thead>
+                                <tbody id="support-companies-body">
+                                <tr>
+                                    <td colspan="5">
+                                        <div class="empty-state">No snapshot data loaded.</div>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </article>
+                </div>
+
+                <article class="card card--subtle">
+                    <h3>Support tickets</h3>
+                    <div class="table-wrap">
+                        <table class="app-table">
+                            <thead>
+                            <tr>
+                                <th>Ticket ID</th>
+                                <th>Company</th>
+                                <th>Subject</th>
+                                <th>Status</th>
+                                <th>Created</th>
+                            </tr>
+                            </thead>
+                            <tbody id="support-tickets-body">
+                            <tr>
+                                <td colspan="5">
+                                    <div class="empty-state">No support tickets loaded.</div>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </article>
+            </section>
+
+            <section id="screen-billing" class="screen-panel card card--elevated" data-screen="billing" hidden>
+                <header class="section-head">
+                    <div>
+                        <p class="eyebrow">System Billing</p>
+                        <h2>Subscriptions and Invoice Status</h2>
+                    </div>
+                    <button id="refresh-billing-btn" class="btn btn--ghost btn--sm" type="button">Refresh billing data</button>
+                </header>
+
+                <div class="auth-grid">
+                    <article class="card card--subtle">
+                        <h3>Update subscription</h3>
+                        <form id="billing-subscription-form" class="form-grid form-grid--2">
+                            <label class="field" for="billingSubscriptionId">
+                                <span>Subscription ID</span>
+                                <input id="billingSubscriptionId" class="form-input" name="subscriptionId" required placeholder="GUID">
+                            </label>
+                            <label class="field" for="billingTier">
+                                <span>Tier</span>
+                                <select id="billingTier" class="form-select" name="tier" required>
+                                    <option value="Free">Free</option>
+                                    <option value="Standard">Standard</option>
+                                    <option value="Premium">Premium</option>
+                                </select>
+                            </label>
+                            <label class="field" for="billingStatus">
+                                <span>Status</span>
+                                <select id="billingStatus" class="form-select" name="status" required>
+                                    <option value="Active">Active</option>
+                                    <option value="PastDue">PastDue</option>
+                                    <option value="Cancelled">Cancelled</option>
+                                </select>
+                            </label>
+                            <label class="field" for="billingUserLimit">
+                                <span>User limit</span>
+                                <input id="billingUserLimit" class="form-input" name="userLimit" type="number" min="0" required value="5">
+                            </label>
+                            <label class="field" for="billingEntityLimit">
+                                <span>Entity limit</span>
+                                <input id="billingEntityLimit" class="form-input" name="entityLimit" type="number" min="0" required value="100">
+                            </label>
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn--primary">Save subscription</button>
+                            </div>
+                        </form>
+
+                        <hr class="separator">
+
+                        <h3>Update invoice status</h3>
+                        <form id="billing-invoice-status-form" class="form-grid form-grid--2">
+                            <label class="field" for="billingInvoiceId">
+                                <span>Invoice ID</span>
+                                <input id="billingInvoiceId" class="form-input" name="invoiceId" required placeholder="GUID">
+                            </label>
+                            <label class="field" for="billingInvoiceStatus">
+                                <span>Status</span>
+                                <select id="billingInvoiceStatus" class="form-select" name="status" required>
+                                    <option value="Draft">Draft</option>
+                                    <option value="Issued">Issued</option>
+                                    <option value="Paid">Paid</option>
+                                    <option value="Overdue">Overdue</option>
+                                    <option value="Cancelled">Cancelled</option>
+                                </select>
+                            </label>
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn--secondary">Save invoice status</button>
+                            </div>
+                        </form>
+                    </article>
+
+                    <article class="card card--subtle">
+                        <h3>Subscriptions</h3>
+                        <div class="table-wrap">
+                            <table class="app-table">
+                                <thead>
+                                <tr>
+                                    <th>Company</th>
+                                    <th>Tier</th>
+                                    <th>Status</th>
+                                    <th>User limit</th>
+                                    <th>Entity limit</th>
+                                    <th>Subscription ID</th>
+                                </tr>
+                                </thead>
+                                <tbody id="billing-subscriptions-body">
+                                <tr>
+                                    <td colspan="6">
+                                        <div class="empty-state">No subscriptions loaded.</div>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </article>
+                </div>
+
+                <article class="card card--subtle">
+                    <h3>Invoices</h3>
+                    <div class="table-wrap">
+                        <table class="app-table">
+                            <thead>
+                            <tr>
+                                <th>Company</th>
+                                <th>Invoice</th>
+                                <th>Total</th>
+                                <th>Balance</th>
+                                <th>Status</th>
+                                <th>Due</th>
+                                <th>Invoice ID</th>
+                            </tr>
+                            </thead>
+                            <tbody id="billing-invoices-body">
+                            <tr>
+                                <td colspan="7">
+                                    <div class="empty-state">No invoices loaded.</div>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </article>
+            </section>
+
+            <section id="screen-auth" class="screen-panel card card--elevated" data-screen="auth" hidden>
+                <header class="section-head">
+                    <div>
+                        <p class="eyebrow">Identity and Tenancy</p>
+                        <h2>Onboarding and Access</h2>
+                    </div>
+                </header>
+
+                <div class="auth-grid">
+                    <article class="card card--subtle">
+                        <h3>1. Company Onboarding</h3>
+                        <p class="text-muted">Create a clinic and owner account.</p>
+                        <form id="onboarding-form" class="form-grid form-grid--2">
+                            <label class="field" for="companyName">
+                                <span>Company name</span>
+                                <input id="companyName" class="form-input" name="companyName" required maxlength="128" placeholder="Acme Dental">
+                            </label>
+                            <label class="field" for="companySlug">
+                                <span>Company slug</span>
+                                <input id="companySlug" class="form-input" name="companySlug" required maxlength="64" pattern="[a-z0-9-]+" placeholder="acme-dental">
+                            </label>
+                            <label class="field" for="ownerEmail">
+                                <span>Owner email</span>
+                                <input id="ownerEmail" class="form-input" name="ownerEmail" type="email" required maxlength="256" placeholder="owner@acme.com">
+                            </label>
+                            <label class="field" for="ownerPassword">
+                                <span>Owner password</span>
+                                <input id="ownerPassword" class="form-input" name="ownerPassword" type="password" required minlength="8" maxlength="100" placeholder="Minimum 8 chars">
+                            </label>
+                            <label class="field" for="countryCode">
+                                <span>Country code</span>
+                                <input id="countryCode" class="form-input" name="countryCode" required minlength="2" maxlength="2" value="EE">
+                            </label>
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn--primary">Create company</button>
+                            </div>
+                        </form>
+                    </article>
+
+                    <article class="card card--subtle">
+                        <h3>2. Login</h3>
+                        <p class="text-muted">Authenticate and receive tenant-aware JWT.</p>
+                        <form id="login-form" class="form-grid form-grid--2">
+                            <label class="field" for="loginEmail">
+                                <span>Email</span>
+                                <input id="loginEmail" class="form-input" name="email" type="email" required placeholder="owner@acme.com">
+                            </label>
+                            <label class="field" for="loginPassword">
+                                <span>Password</span>
+                                <input id="loginPassword" class="form-input" name="password" type="password" required placeholder="********">
+                            </label>
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn--primary">Sign in</button>
+                            </div>
+                        </form>
+
+                        <hr class="separator">
+
+                        <h3>3. Tenant Switch</h3>
+                        <p class="text-muted">Switch active company for scoped API calls.</p>
+                        <form id="switch-form" class="form-grid form-grid--2">
+                            <label class="field" for="switchSlug">
+                                <span>Company slug</span>
+                                <input id="switchSlug" class="form-input" name="companySlug" required maxlength="64" pattern="[a-z0-9-]+" placeholder="acme-dental">
+                            </label>
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn--secondary">Switch company</button>
+                            </div>
+                        </form>
+
+                        <hr class="separator">
+
+                        <h3>4. Password Reset (Demo)</h3>
+                        <p class="text-muted">Generate and apply password reset token for user support flows.</p>
+                        <form id="forgot-password-form" class="form-grid form-grid--2">
+                            <label class="field" for="forgotEmail">
+                                <span>User email</span>
+                                <input id="forgotEmail" class="form-input" name="email" type="email" required placeholder="user@acme.com">
+                            </label>
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn--ghost">Generate reset token</button>
+                            </div>
+                        </form>
+
+                        <form id="reset-password-form" class="form-grid form-grid--2">
+                            <label class="field" for="resetEmail">
+                                <span>User email</span>
+                                <input id="resetEmail" class="form-input" name="email" type="email" required placeholder="user@acme.com">
+                            </label>
+                            <label class="field" for="resetToken">
+                                <span>Reset token</span>
+                                <textarea id="resetToken" class="form-textarea" name="resetToken" required placeholder="Paste generated token"></textarea>
+                            </label>
+                            <label class="field" for="newPassword">
+                                <span>New password</span>
+                                <input id="newPassword" class="form-input" name="newPassword" type="password" required minlength="8" maxlength="100" placeholder="Strong.Pass.123!">
+                            </label>
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn--secondary">Reset password</button>
+                            </div>
+                        </form>
+                    </article>
+                </div>
+            </section>
+
+            <section id="screen-patients" class="screen-panel card card--elevated" data-screen="patients" hidden>
+                <header class="section-head">
+                    <div>
+                        <p class="eyebrow">Tenant Data</p>
+                        <h2>Patient Management</h2>
+                    </div>
+                    <button id="refresh-patients-btn" class="btn btn--ghost btn--sm" type="button">Refresh list</button>
+                </header>
+
+                <form id="patient-form" class="form-grid form-grid--3">
+                    <label class="field" for="patientFirstName">
+                        <span>First name</span>
+                        <input id="patientFirstName" class="form-input" name="firstName" required maxlength="64" placeholder="Mari">
+                    </label>
+                    <label class="field" for="patientLastName">
+                        <span>Last name</span>
+                        <input id="patientLastName" class="form-input" name="lastName" required maxlength="64" placeholder="Tamm">
+                    </label>
+                    <label class="field" for="patientDob">
+                        <span>Date of birth</span>
+                        <input id="patientDob" class="form-input" name="dateOfBirth" type="date">
+                    </label>
+                    <label class="field" for="patientCode">
+                        <span>Personal code</span>
+                        <input id="patientCode" class="form-input" name="personalCode" maxlength="64" placeholder="49001010000">
+                    </label>
+                    <label class="field" for="patientEmail">
+                        <span>Email</span>
+                        <input id="patientEmail" class="form-input" name="email" type="email" maxlength="256" placeholder="mari@example.com">
+                    </label>
+                    <label class="field" for="patientPhone">
+                        <span>Phone</span>
+                        <input id="patientPhone" class="form-input" name="phone" maxlength="32" placeholder="+3725555555">
+                    </label>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn--primary">Add patient</button>
+                    </div>
+                </form>
+
+                <div class="table-wrap">
+                    <table class="app-table">
+                        <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Date of birth</th>
+                            <th>Personal code</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th class="text-right">Actions</th>
+                        </tr>
+                        </thead>
+                        <tbody id="patients-body">
+                        <tr>
+                            <td colspan="6">
+                                <div class="empty-state">No patient data yet.</div>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="screen-resources" class="screen-panel card card--elevated" data-screen="resources" hidden>
+                <header class="section-head">
+                    <div>
+                        <p class="eyebrow">Clinical Setup</p>
+                        <h2>Dentists and Treatment Rooms</h2>
+                    </div>
+                    <button id="refresh-resources-btn" class="btn btn--ghost btn--sm" type="button">Refresh resources</button>
+                </header>
+
+                <div class="auth-grid">
+                    <article class="card card--subtle">
+                        <h3>Dentists</h3>
+                        <p class="text-muted">These entries are used when creating appointments.</p>
+                        <form id="dentist-form" class="form-grid form-grid--2">
+                            <label class="field" for="dentistDisplayName">
+                                <span>Display name</span>
+                                <input id="dentistDisplayName" class="form-input" name="displayName" required maxlength="128" placeholder="Dr. Kask">
+                            </label>
+                            <label class="field" for="dentistLicenseNumber">
+                                <span>License number</span>
+                                <input id="dentistLicenseNumber" class="form-input" name="licenseNumber" required maxlength="64" placeholder="EE-DENT-001">
+                            </label>
+                            <label class="field" for="dentistSpecialty">
+                                <span>Specialty</span>
+                                <input id="dentistSpecialty" class="form-input" name="specialty" maxlength="128" placeholder="Orthodontics">
+                            </label>
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn--primary">Add dentist</button>
+                            </div>
+                        </form>
+
+                        <div class="table-wrap">
+                            <table class="app-table">
+                                <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>License</th>
+                                    <th>Specialty</th>
+                                    <th>ID</th>
+                                </tr>
+                                </thead>
+                                <tbody id="dentists-body">
+                                <tr>
+                                    <td colspan="4">
+                                        <div class="empty-state">No dentists loaded.</div>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </article>
+
+                    <article class="card card--subtle">
+                        <h3>Treatment Rooms</h3>
+                        <p class="text-muted">Room codes are used for scheduling conflict checks.</p>
+                        <form id="treatment-room-form" class="form-grid form-grid--2">
+                            <label class="field" for="roomName">
+                                <span>Room name</span>
+                                <input id="roomName" class="form-input" name="name" required maxlength="128" placeholder="Main treatment room">
+                            </label>
+                            <label class="field" for="roomCode">
+                                <span>Room code</span>
+                                <input id="roomCode" class="form-input" name="code" required maxlength="32" placeholder="R1">
+                            </label>
+                            <label class="field check" for="roomIsActive">
+                                <input id="roomIsActive" type="checkbox" name="isActiveRoom" checked>
+                                <span>Room is active</span>
+                            </label>
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn--primary">Add room</button>
+                            </div>
+                        </form>
+
+                        <div class="table-wrap">
+                            <table class="app-table">
+                                <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Code</th>
+                                    <th>Status</th>
+                                    <th>ID</th>
+                                </tr>
+                                </thead>
+                                <tbody id="treatment-rooms-body">
+                                <tr>
+                                    <td colspan="4">
+                                        <div class="empty-state">No treatment rooms loaded.</div>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </article>
+                </div>
+            </section>
+
+            <section id="screen-appointments" class="screen-panel card card--elevated" data-screen="appointments" hidden>
+                <header class="section-head">
+                    <div>
+                        <p class="eyebrow">Scheduling</p>
+                        <h2>Appointments</h2>
+                    </div>
+                    <button id="refresh-appointments-btn" class="btn btn--ghost btn--sm" type="button">Refresh appointments</button>
+                </header>
+
+                <div class="auth-grid">
+                    <article class="card card--subtle">
+                        <h3>Create appointment</h3>
+                        <p class="text-muted">Employees and managers can schedule visits once patients, dentists and rooms exist.</p>
+                        <form id="appointment-form" class="form-grid form-grid--2">
+                            <label class="field" for="appointmentPatientId">
+                                <span>Patient</span>
+                                <select id="appointmentPatientId" class="form-select" name="patientId" required>
+                                    <option value="">Select patient</option>
+                                </select>
+                            </label>
+                            <label class="field" for="appointmentDentistId">
+                                <span>Dentist</span>
+                                <select id="appointmentDentistId" class="form-select" name="dentistId" required>
+                                    <option value="">Select dentist</option>
+                                </select>
+                            </label>
+                            <label class="field" for="appointmentRoomId">
+                                <span>Treatment room</span>
+                                <select id="appointmentRoomId" class="form-select" name="treatmentRoomId" required>
+                                    <option value="">Select room</option>
+                                </select>
+                            </label>
+                            <label class="field" for="appointmentStartAt">
+                                <span>Start time</span>
+                                <input id="appointmentStartAt" class="form-input" name="startAtLocal" type="datetime-local" required>
+                            </label>
+                            <label class="field" for="appointmentEndAt">
+                                <span>End time</span>
+                                <input id="appointmentEndAt" class="form-input" name="endAtLocal" type="datetime-local" required>
+                            </label>
+                            <label class="field" for="appointmentNotes">
+                                <span>Notes</span>
+                                <textarea id="appointmentNotes" class="form-textarea" name="notes" maxlength="512" placeholder="Procedure notes"></textarea>
+                            </label>
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn--primary">Create appointment</button>
+                            </div>
+                        </form>
+                    </article>
+
+                    <article class="card card--subtle">
+                        <h3>Upcoming appointments</h3>
+                        <p class="text-muted">Schedule view for active tenant.</p>
+                        <div class="table-wrap">
+                            <table class="app-table">
+                                <thead>
+                                <tr>
+                                    <th>Patient</th>
+                                    <th>Dentist</th>
+                                    <th>Room</th>
+                                    <th>Start</th>
+                                    <th>End</th>
+                                    <th>Status</th>
+                                </tr>
+                                </thead>
+                                <tbody id="appointments-body">
+                                <tr>
+                                    <td colspan="6">
+                                        <div class="empty-state">No appointments loaded.</div>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </article>
+                </div>
+            </section>
+
+            <section id="screen-plans" class="screen-panel card card--elevated" data-screen="plans" hidden>
+                <header class="section-head">
+                    <div>
+                        <p class="eyebrow">Clinical Decisions</p>
+                        <h2>Treatment Plan Item Decisions</h2>
+                    </div>
+                    <button id="refresh-plan-items-btn" class="btn btn--ghost btn--sm" type="button">Refresh pending items</button>
+                </header>
+
+                <div class="auth-grid">
+                    <article class="card card--subtle">
+                        <h3>Record decision</h3>
+                        <p class="text-muted">Managers and admins can accept, defer or reject plan items.</p>
+                        <form id="plan-decision-form" class="form-grid form-grid--2">
+                            <label class="field" for="planItemSelection">
+                                <span>Pending plan item</span>
+                                <select id="planItemSelection" class="form-select" name="planItemSelection" required>
+                                    <option value="">Select plan item</option>
+                                </select>
+                            </label>
+                            <label class="field" for="planDecision">
+                                <span>Decision</span>
+                                <select id="planDecision" class="form-select" name="decision" required>
+                                    <option value="Accepted">Accepted</option>
+                                    <option value="Deferred">Deferred</option>
+                                    <option value="Rejected">Rejected</option>
+                                </select>
+                            </label>
+                            <label class="field" for="planDecisionNotes">
+                                <span>Notes</span>
+                                <textarea id="planDecisionNotes" class="form-textarea" name="notes" maxlength="512" placeholder="Explain urgency, budget, or patient preference"></textarea>
+                            </label>
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn--primary">Save decision</button>
+                            </div>
+                        </form>
+                    </article>
+
+                    <article class="card card--subtle">
+                        <h3>Pending plan items</h3>
+                        <p class="text-muted">Open items waiting for a decision in this tenant.</p>
+                        <div class="table-wrap">
+                            <table class="app-table">
+                                <thead>
+                                <tr>
+                                    <th>Patient</th>
+                                    <th>Plan ID</th>
+                                    <th>Item ID</th>
+                                    <th>Treatment</th>
+                                    <th>Urgency</th>
+                                    <th>Price</th>
+                                </tr>
+                                </thead>
+                                <tbody id="plan-items-body">
+                                <tr>
+                                    <td colspan="6">
+                                        <div class="empty-state">No pending plan items loaded.</div>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </article>
+                </div>
+
+                <article class="card card--subtle">
+                    <h3>Cost Estimates and Legal Output</h3>
+                    <p class="text-muted">Create estimates and generate country-specific legal preview (DE => Kostenvoranschlag).</p>
+
+                    <form id="cost-estimate-form" class="form-grid form-grid--2">
+                        <label class="field" for="estimatePatientId">
+                            <span>Patient</span>
+                            <select id="estimatePatientId" class="form-select" name="patientId" required>
+                                <option value="">Select patient</option>
+                            </select>
+                        </label>
+                        <label class="field" for="estimatePlanId">
+                            <span>Treatment plan ID</span>
+                            <input id="estimatePlanId" class="form-input" name="treatmentPlanId" required placeholder="GUID">
+                        </label>
+                        <label class="field" for="estimateInsurancePlanId">
+                            <span>Insurance plan ID (optional)</span>
+                            <input id="estimateInsurancePlanId" class="form-input" name="insurancePlanId" placeholder="GUID">
+                        </label>
+                        <label class="field" for="estimateNumber">
+                            <span>Estimate number</span>
+                            <input id="estimateNumber" class="form-input" name="estimateNumber" required maxlength="64" placeholder="EST-2026-001">
+                        </label>
+                        <label class="field" for="estimateFormatCode">
+                            <span>Format code</span>
+                            <input id="estimateFormatCode" class="form-input" name="formatCode" required maxlength="32" value="STD">
+                        </label>
+                        <label class="field" for="estimateTotal">
+                            <span>Total estimated amount</span>
+                            <input id="estimateTotal" class="form-input" name="totalEstimatedAmount" type="number" min="0" step="0.01" required value="0">
+                        </label>
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn--secondary">Create estimate</button>
+                        </div>
+                    </form>
+
+                    <hr class="separator">
+
+                    <form id="legal-estimate-form" class="form-grid form-grid--2">
+                        <label class="field" for="legalEstimateId">
+                            <span>Cost estimate ID</span>
+                            <input id="legalEstimateId" class="form-input" name="costEstimateId" required placeholder="GUID">
+                        </label>
+                        <label class="field" for="legalCountryCode">
+                            <span>Country code override</span>
+                            <input id="legalCountryCode" class="form-input" name="countryCode" maxlength="2" placeholder="DE">
+                        </label>
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn--primary">Generate legal preview</button>
+                        </div>
+                    </form>
+
+                    <pre id="legal-estimate-output" class="log-box">No legal preview generated yet.</pre>
+                </article>
+            </section>
+
+            <section id="screen-team" class="screen-panel card card--elevated" data-screen="team" hidden>
+                <header class="section-head">
+                    <div>
+                        <p class="eyebrow">Tenant Administration</p>
+                        <h2>Team and Role Management</h2>
+                    </div>
+                    <button id="refresh-company-users-btn" class="btn btn--ghost btn--sm" type="button">Refresh team</button>
+                </header>
+
+                <div class="auth-grid">
+                    <article class="card card--subtle">
+                        <h3>Assign or update membership</h3>
+                        <p class="text-muted">CompanyOwner and CompanyAdmin can manage company memberships.</p>
+                        <form id="company-user-form" class="form-grid form-grid--2">
+                            <label class="field" for="companyUserEmail">
+                                <span>User email</span>
+                                <input id="companyUserEmail" class="form-input" name="email" type="email" required maxlength="256" placeholder="employee@acme.com">
+                            </label>
+                            <label class="field" for="companyUserRole">
+                                <span>Role</span>
+                                <select id="companyUserRole" class="form-select" name="roleName" required>
+                                    <option value="CompanyEmployee">CompanyEmployee</option>
+                                    <option value="CompanyManager">CompanyManager</option>
+                                    <option value="CompanyAdmin">CompanyAdmin</option>
+                                    <option value="CompanyOwner">CompanyOwner</option>
+                                </select>
+                            </label>
+                            <label class="field" for="companyUserTempPassword">
+                                <span>Temporary password (for new users)</span>
+                                <input id="companyUserTempPassword" class="form-input" name="temporaryPassword" minlength="8" maxlength="100" placeholder="Temp.Pass.123!">
+                            </label>
+                            <label class="field check" for="companyUserIsActive">
+                                <input id="companyUserIsActive" type="checkbox" name="isActive" checked>
+                                <span>Membership active</span>
+                            </label>
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn--primary">Save membership</button>
+                            </div>
+                        </form>
+                    </article>
+
+                    <article class="card card--subtle">
+                        <h3>Current team memberships</h3>
+                        <p class="text-muted">Each row is one role assignment for current tenant.</p>
+                        <div class="table-wrap">
+                            <table class="app-table">
+                                <thead>
+                                <tr>
+                                    <th>Email</th>
+                                    <th>Role</th>
+                                    <th>Status</th>
+                                    <th>Assigned at</th>
+                                </tr>
+                                </thead>
+                                <tbody id="company-users-body">
+                                <tr>
+                                    <td colspan="4">
+                                        <div class="empty-state">No memberships loaded.</div>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </article>
+                </div>
+            </section>
+
+            <section id="screen-settings" class="screen-panel card card--elevated" data-screen="settings" hidden>
+                <header class="section-head">
+                    <div>
+                        <p class="eyebrow">Tenant Configuration</p>
+                        <h2>Company Settings</h2>
+                    </div>
+                    <button id="refresh-company-settings-btn" class="btn btn--ghost btn--sm" type="button">Load settings</button>
+                </header>
+
+                <form id="company-settings-form" class="form-grid form-grid--2">
+                    <label class="field" for="settingsCountryCode">
+                        <span>Country code (2 letters)</span>
+                        <input id="settingsCountryCode" class="form-input" name="countryCode" required minlength="2" maxlength="2" placeholder="EE">
+                    </label>
+                    <label class="field" for="settingsCurrencyCode">
+                        <span>Currency code (3 letters)</span>
+                        <input id="settingsCurrencyCode" class="form-input" name="currencyCode" required minlength="3" maxlength="3" placeholder="EUR">
+                    </label>
+                    <label class="field" for="settingsTimezone">
+                        <span>Timezone</span>
+                        <input id="settingsTimezone" class="form-input" name="timezone" required maxlength="128" placeholder="Europe/Tallinn">
+                    </label>
+                    <label class="field" for="settingsXrayInterval">
+                        <span>Default X-ray interval (months)</span>
+                        <input id="settingsXrayInterval" class="form-input" name="defaultXrayIntervalMonths" type="number" min="3" max="60" required value="12">
+                    </label>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn--primary">Save settings</button>
+                    </div>
+                </form>
+
+                <article class="card card--subtle">
+                    <header class="section-head">
+                        <div>
+                            <h3>Subscription Tier</h3>
+                            <p class="text-muted">CompanyOwner can switch tenant tier (Free/Standard/Premium).</p>
+                        </div>
+                        <button id="refresh-subscription-btn" class="btn btn--ghost btn--sm" type="button">Load subscription</button>
+                    </header>
+
+                    <form id="subscription-form" class="form-grid form-grid--2">
+                        <label class="field" for="subscriptionTier">
+                            <span>Tier</span>
+                            <select id="subscriptionTier" class="form-select" name="tier" required>
+                                <option value="Free">Free</option>
+                                <option value="Standard">Standard</option>
+                                <option value="Premium">Premium</option>
+                            </select>
+                        </label>
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn--primary">Save tier</button>
+                        </div>
+                    </form>
+                    <p><span id="subscription-pill" class="badge badge--neutral">No subscription loaded</span></p>
+                </article>
+            </section>
+
+            <section id="screen-logs" class="screen-panel card card--elevated" data-screen="logs" hidden>
+                <header class="section-head">
+                    <div>
+                        <p class="eyebrow">Observability</p>
+                        <h2>API Request and Response Log</h2>
+                    </div>
+                </header>
+                <pre id="log-box" class="log-box">Ready. Waiting for actions...</pre>
+            </section>
+        </section>
+    </main>
+</div>
+
+<dialog id="patient-delete-dialog" class="modal" aria-labelledby="patient-delete-title">
+    <form method="dialog" class="modal__surface">
+        <h2 id="patient-delete-title">Delete patient</h2>
+        <p id="patient-delete-text" class="text-muted">This action cannot be undone.</p>
+        <div class="modal__actions">
+            <button type="submit" value="cancel" class="btn btn--ghost">Cancel</button>
+            <button type="submit" value="confirm" id="confirm-delete-btn" class="btn btn--destructive">Delete</button>
+        </div>
+    </form>
+</dialog>
+
+<script src="/js/app.js"></script>
+</body>
+</html>

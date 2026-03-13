@@ -1,0 +1,69 @@
+using App.BLL.Contracts.Appointments;
+using App.BLL.Exceptions;
+using App.BLL.Services;
+using App.Domain;
+using App.Domain.Entities;
+using App.Domain.Enums;
+using WebApp.Tests.Helpers;
+
+namespace WebApp.Tests.Unit;
+
+public class UnitTestAppointmentService
+{
+    [Fact]
+    public async Task CreateAsync_ThrowsValidation_WhenDentistHasOverlap()
+    {
+        var tenantProvider = new TestTenantProvider();
+        var companyId = Guid.NewGuid();
+        tenantProvider.SetTenant(companyId, "acme");
+        tenantProvider.SetIgnoreTenantFilter(false);
+
+        await using var db = TestDbContextFactory.Create($"appointment-overlap-{Guid.NewGuid():N}", tenantProvider);
+
+        var userId = Guid.NewGuid();
+        db.AppUserRoles.Add(new AppUserRole
+        {
+            AppUserId = userId,
+            CompanyId = companyId,
+            RoleName = RoleNames.CompanyEmployee,
+            IsActive = true
+        });
+
+        var patient = new Patient { CompanyId = companyId, FirstName = "Jane", LastName = "Doe" };
+        var dentist = new Dentist { CompanyId = companyId, DisplayName = "Dr One", LicenseNumber = "LIC-001" };
+        var room = new TreatmentRoom { CompanyId = companyId, Name = "Room 1", Code = "R1" };
+
+        db.Patients.Add(patient);
+        db.Dentists.Add(dentist);
+        db.TreatmentRooms.Add(room);
+
+        var existing = new Appointment
+        {
+            CompanyId = companyId,
+            PatientId = patient.Id,
+            DentistId = dentist.Id,
+            TreatmentRoomId = room.Id,
+            StartAtUtc = DateTime.UtcNow.AddHours(1),
+            EndAtUtc = DateTime.UtcNow.AddHours(2),
+            Status = AppointmentStatus.Scheduled
+        };
+        db.Appointments.Add(existing);
+
+        await db.SaveChangesAsync();
+
+        var accessService = new TenantAccessService(db);
+        var service = new AppointmentService(db, accessService);
+
+        await Assert.ThrowsAsync<ValidationAppException>(async () =>
+            await service.CreateAsync(
+                userId,
+                new CreateAppointmentCommand(
+                    patient.Id,
+                    dentist.Id,
+                    room.Id,
+                    existing.StartAtUtc.AddMinutes(15),
+                    existing.EndAtUtc.AddMinutes(15),
+                    null),
+                CancellationToken.None));
+    }
+}

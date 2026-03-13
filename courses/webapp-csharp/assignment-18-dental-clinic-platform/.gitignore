@@ -1,0 +1,5 @@
+bin/
+obj/
+.dotnet/
+app-bll-build.log
+build-diag.log

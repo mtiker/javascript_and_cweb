@@ -26,9 +26,8 @@ Browser-based task management utility built with pure JavaScript.
 
 ## Run
 
-1. Open this folder in VS Code.
-2. Start a static server (for example VS Code Live Server).
-3. Open `index.html`.
+1. Open `index.html` directly in browser, or run via a static server.
+2. If browser blocks local file storage for `file://`, use VS Code Live Server.
 
 ## Usage
 
