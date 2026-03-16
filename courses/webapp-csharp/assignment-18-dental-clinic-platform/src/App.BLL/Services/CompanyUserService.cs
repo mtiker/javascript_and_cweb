@@ -22,23 +22,21 @@ public class CompanyUserService(
     {
         await EnsureManagementAccessAsync(actorUserId, cancellationToken);
 
-        var users = await dbContext.AppUserRoles
+        var roleLinks = await dbContext.AppUserRoles
             .AsNoTracking()
-            .Join(
-                dbContext.Users.AsNoTracking(),
-                role => role.AppUserId,
-                user => user.Id,
-                (role, user) => new CompanyUserResult(
-                    role.AppUserId,
-                    user.Email ?? user.UserName ?? string.Empty,
-                    role.RoleName,
-                    role.IsActive,
-                    role.AssignedAtUtc))
-            .OrderBy(item => item.Email)
-            .ThenBy(item => item.RoleName)
+            .Include(role => role.AppUser)
             .ToListAsync(cancellationToken);
 
-        return users;
+        return roleLinks
+            .Select(role => new CompanyUserResult(
+                role.AppUserId,
+                role.AppUser?.Email ?? role.AppUser?.UserName ?? string.Empty,
+                role.RoleName,
+                role.IsActive,
+                role.AssignedAtUtc))
+            .OrderBy(item => item.Email)
+            .ThenBy(item => item.RoleName)
+            .ToList();
     }
 
     public async Task<CompanyUserResult> UpsertAsync(Guid actorUserId, UpsertCompanyUserCommand command, CancellationToken cancellationToken)

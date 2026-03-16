@@ -23,6 +23,11 @@ body {
     gap: var(--space-4);
 }
 
+.gateway-brand {
+    display: flex;
+    justify-content: center;
+}
+
 .app-bg-orb {
     position: fixed;
     border-radius: 50%;
@@ -71,19 +76,16 @@ body {
     min-width: 0;
 }
 
-.brand-mark {
-    inline-size: 2.75rem;
-    block-size: 2.75rem;
-    border-radius: var(--radius-md);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-family: var(--font-display);
-    font-size: 1rem;
-    font-weight: 800;
-    color: #051017;
-    background: linear-gradient(130deg, var(--color-brand-500), var(--color-brand-300));
-    box-shadow: var(--shadow-xs);
+.brand-logo {
+    inline-size: clamp(11rem, 18vw, 15rem);
+    max-inline-size: 100%;
+    block-size: auto;
+    flex: 0 0 auto;
+    filter: drop-shadow(0 0.75rem 1.25rem rgba(4, 17, 24, 0.2));
+}
+
+.brand-logo--hero {
+    inline-size: min(100%, 18rem);
 }
 
 .brand-copy {
@@ -206,6 +208,25 @@ body {
     gap: var(--space-4);
 }
 
+.auth-grid--single {
+    grid-template-columns: 1fr;
+}
+
+.auth-grid--appointments {
+    grid-template-columns: minmax(18rem, 22rem) minmax(0, 1.35fr);
+    align-items: start;
+}
+
+.auth-grid--team {
+    grid-template-columns: minmax(18rem, 0.95fr) minmax(22rem, 1.15fr);
+}
+
+.resources-layout,
+.appointments-layout {
+    display: grid;
+    gap: var(--space-4);
+}
+
 .auth-grid h3 {
     font-size: 1rem;
     margin-bottom: var(--space-2);
@@ -254,6 +275,7 @@ body {
 }
 
 .patient-profile-grid--chart {
+    grid-template-columns: minmax(0, 1.4fr) minmax(18rem, 0.9fr);
     align-items: start;
 }
 
@@ -291,6 +313,37 @@ body {
     margin: var(--space-1) 0 0;
     font-weight: 700;
     word-break: break-word;
+}
+
+.dentist-profile-panel {
+    gap: var(--space-4);
+}
+
+.dentist-profile-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-4);
+}
+
+.dentist-profile-toolbar {
+    display: grid;
+    grid-template-columns: minmax(16rem, 1.7fr) minmax(12rem, 1fr);
+    gap: var(--space-3);
+    align-items: end;
+    margin-top: var(--space-4);
+}
+
+.appointments-toolbar {
+    margin-bottom: var(--space-4);
+}
+
+.appointments-toolbar__actions {
+    justify-content: flex-start;
+}
+
+.profile-id {
+    word-break: break-all;
+    overflow-wrap: anywhere;
 }
 
 .tooth-legend {
@@ -343,95 +396,306 @@ body {
     margin-top: var(--space-4);
     padding: var(--space-3) var(--space-4);
     border-radius: var(--radius-md);
-    border: 1px solid var(--color-border);
-    background: color-mix(in srgb, var(--color-bg-subtle) 76%, var(--color-bg-surface));
+    border: 1px solid color-mix(in srgb, var(--color-border-strong) 52%, transparent);
+    background:
+        linear-gradient(135deg, color-mix(in srgb, var(--color-bg-subtle) 82%, var(--color-bg-surface)), color-mix(in srgb, var(--color-bg-soft) 70%, var(--color-bg-surface))),
+        var(--color-bg-surface);
     color: var(--color-text-muted);
-    min-height: 3.5rem;
+    min-height: 5.8rem;
+    display: grid;
+    align-content: start;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .tooth-chart {
     display: grid;
-    gap: var(--space-3);
+    gap: var(--space-5);
     margin-top: var(--space-4);
-    overflow-x: auto;
-    padding-bottom: var(--space-1);
+    overflow: hidden;
+    padding: clamp(0.75rem, 1.8vw, 1.15rem);
+    border-radius: calc(var(--radius-lg) + 0.15rem);
+    border: 1px solid color-mix(in srgb, var(--color-border-strong) 26%, transparent);
+    background:
+        radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.08), transparent 40%),
+        radial-gradient(circle at 50% 100%, rgba(255, 255, 255, 0.04), transparent 42%),
+        linear-gradient(180deg, #070b10 0%, #020407 50%, #0b1016 100%);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.04),
+        0 18px 34px rgba(2, 6, 10, 0.22);
+}
+
+.tooth-chart__arch {
+    display: grid;
+    gap: var(--space-3);
+    min-width: 0;
+}
+
+.tooth-chart__arch-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(237, 244, 248, 0.52);
+    padding-inline: var(--space-2);
 }
 
 .tooth-chart__row {
+    position: relative;
     display: grid;
-    grid-template-columns: repeat(8, minmax(3.65rem, 1fr));
-    gap: var(--space-2);
-    min-width: 33rem;
+    grid-template-columns: repeat(16, minmax(0, 1fr));
+    gap: clamp(0.05rem, 0.22vw, 0.22rem);
+}
+
+.tooth-chart__row::before,
+.tooth-chart__row::after {
+    content: "";
+    position: absolute;
+    inset-inline: 2%;
+    pointer-events: none;
+}
+
+.tooth-chart__row::before {
+    block-size: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.16), transparent);
+}
+
+.tooth-chart__row::after {
+    block-size: 3.8rem;
+    border-radius: 999px;
+    filter: blur(18px);
+    opacity: 0.4;
+}
+
+.tooth-chart__row--upper {
+    align-items: end;
+    padding-bottom: 0.35rem;
+}
+
+.tooth-chart__row--upper::before {
+    inset-block-end: 0.8rem;
+}
+
+.tooth-chart__row--upper::after {
+    inset-block-start: 0;
+    background: radial-gradient(circle, color-mix(in srgb, var(--color-brand-500) 34%, white), transparent 72%);
 }
 
 .tooth-chart__row--lower {
-    margin-top: var(--space-2);
+    align-items: start;
+    padding-top: 0.35rem;
+}
+
+.tooth-chart__row--lower::before {
+    inset-block-start: 0.8rem;
+}
+
+.tooth-chart__row--lower::after {
+    inset-block-end: 0;
+    background: radial-gradient(circle, color-mix(in srgb, var(--color-accent-500) 30%, white), transparent 72%);
 }
 
 .tooth-button {
-    min-height: 5rem;
-    border-radius: var(--radius-md);
-    border: 1px solid var(--color-border);
-    background: color-mix(in srgb, var(--color-bg-subtle) 82%, var(--color-bg-surface));
-    color: var(--color-text);
-    padding: var(--space-3);
+    --tooth-accent: color-mix(in srgb, var(--color-brand-500) 72%, white);
+    min-width: 0;
+    border: 0;
+    background: transparent;
+    color: var(--tooth-accent);
+    padding: 0;
     display: grid;
-    gap: var(--space-1);
-    align-content: start;
-    text-align: left;
+    justify-items: center;
+    gap: clamp(0.14rem, 0.45vw, 0.32rem);
+    cursor: pointer;
+    appearance: none;
     transition:
-        transform var(--duration-fast) var(--ease-standard),
-        border-color var(--duration-fast) var(--ease-standard),
-        box-shadow var(--duration-fast) var(--ease-standard),
-        background var(--duration-fast) var(--ease-standard);
+        filter var(--duration-fast) var(--ease-standard);
+}
+
+.tooth-button--upper {
+    align-content: end;
+}
+
+.tooth-button--lower {
+    align-content: start;
 }
 
 .tooth-button:hover,
 .tooth-button:focus-visible {
-    transform: translateY(-2px);
-    border-color: var(--color-border-focus);
-    box-shadow: var(--shadow-xs);
     outline: none;
 }
 
-.tooth-button.is-selected {
-    border-color: var(--color-border-focus);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-border-focus) 16%, transparent);
+.tooth-button__visual {
+    position: relative;
+    inline-size: min(100%, calc(var(--tooth-width, 3rem) * 0.7));
+    block-size: calc(var(--tooth-height, 6rem) * 0.7);
+    display: grid;
+    place-items: center;
+    transition:
+        filter var(--duration-fast) var(--ease-standard);
+}
+
+.tooth-button--upper .tooth-button__visual {
+    transform-origin: center bottom;
+}
+
+.tooth-button--lower .tooth-button__visual {
+    transform-origin: center top;
+}
+
+.tooth-button__visual::after {
+    content: "";
+    position: absolute;
+    inset-inline: 14%;
+    inset-block-end: 0.35rem;
+    block-size: 0.95rem;
+    border-radius: 999px;
+    background: radial-gradient(circle, color-mix(in srgb, var(--tooth-accent) 48%, rgba(255, 255, 255, 0.15)), transparent 74%);
+    filter: blur(12px);
+    opacity: 0.8;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.tooth-button--lower .tooth-button__visual::after {
+    inset-block-start: 1.1rem;
+    inset-block-end: auto;
+}
+
+.tooth-button__svg {
+    position: relative;
+    z-index: 1;
+    inline-size: 100%;
+    block-size: 100%;
+    overflow: visible;
+    filter: drop-shadow(0 0.9rem 1rem rgba(0, 0, 0, 0.42));
+    transition: filter var(--duration-fast) var(--ease-standard);
+}
+
+.tooth-button__body {
+    stroke: rgba(170, 183, 196, 0.72);
+    stroke-width: 1.25;
+    vector-effect: non-scaling-stroke;
+}
+
+.tooth-button__gloss {
+    opacity: 0.82;
+}
+
+.tooth-button__groove {
+    fill: none;
+    stroke: rgba(153, 165, 179, 0.54);
+    stroke-width: 2.1;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    vector-effect: non-scaling-stroke;
+}
+
+.tooth-button__missing-mark {
+    fill: none;
+    stroke: color-mix(in srgb, var(--color-danger-500) 78%, white);
+    stroke-width: 5;
+    stroke-linecap: round;
+    opacity: 0.85;
+}
+
+.tooth-button__meta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.18rem;
+    inline-size: 100%;
+    min-width: 0;
+    padding: 0.12rem 0.18rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, rgba(6, 11, 16, 0.88) 82%, var(--tooth-accent) 18%);
+    border: 1px solid color-mix(in srgb, var(--tooth-accent) 28%, rgba(255, 255, 255, 0.1));
+    backdrop-filter: blur(10px);
+    transition:
+        border-color var(--duration-fast) var(--ease-standard),
+        background var(--duration-fast) var(--ease-standard),
+        box-shadow var(--duration-fast) var(--ease-standard);
 }
 
 .tooth-button__number {
     font-family: var(--font-display);
-    font-size: 1.2rem;
+    font-size: clamp(0.42rem, 0.9vw, 0.74rem);
     font-weight: 800;
-}
-
-.tooth-button__label {
-    font-size: 0.72rem;
-    color: rgba(255, 255, 255, 0.82);
+    line-height: 1;
+    color: rgba(248, 251, 254, 0.96);
 }
 
 .tooth-button--healthy {
-    background: linear-gradient(180deg, color-mix(in srgb, var(--color-brand-500) 70%, var(--color-bg-soft)), color-mix(in srgb, var(--color-brand-300) 58%, var(--color-bg-subtle)));
+    --tooth-accent: color-mix(in srgb, var(--color-brand-500) 78%, #e8fff7);
 }
 
 .tooth-button--caries {
-    background: linear-gradient(180deg, color-mix(in srgb, var(--color-danger-500) 80%, var(--color-bg-soft)), color-mix(in srgb, var(--color-danger-300) 58%, var(--color-bg-subtle)));
+    --tooth-accent: color-mix(in srgb, var(--color-danger-500) 84%, #ffd9d9);
 }
 
 .tooth-button--filled {
-    background: linear-gradient(180deg, color-mix(in srgb, var(--color-info-text) 62%, var(--color-bg-soft)), color-mix(in srgb, var(--color-info-bg) 80%, var(--color-bg-subtle)));
+    --tooth-accent: color-mix(in srgb, var(--color-info-text) 74%, #dff5ff);
 }
 
 .tooth-button--crown {
-    background: linear-gradient(180deg, color-mix(in srgb, var(--color-accent-500) 82%, var(--color-bg-soft)), color-mix(in srgb, var(--color-warning-bg) 64%, var(--color-bg-subtle)));
+    --tooth-accent: color-mix(in srgb, var(--color-accent-500) 86%, #ffedd4);
 }
 
 .tooth-button--rootcanal {
-    background: linear-gradient(180deg, color-mix(in srgb, var(--color-warning-text) 76%, var(--color-bg-soft)), color-mix(in srgb, var(--color-warning-bg) 88%, var(--color-bg-subtle)));
+    --tooth-accent: color-mix(in srgb, var(--color-warning-text) 84%, #fff2ca);
 }
 
 .tooth-button--missing {
-    background: linear-gradient(180deg, color-mix(in srgb, var(--color-text-soft) 74%, var(--color-bg-soft)), color-mix(in srgb, var(--color-border) 90%, var(--color-bg-subtle)));
+    --tooth-accent: color-mix(in srgb, var(--color-text-soft) 68%, #d8dde4);
+}
+
+.tooth-button--missing .tooth-button__svg {
+    opacity: 0.72;
+    filter: grayscale(0.2) drop-shadow(0 0.9rem 1rem rgba(0, 0, 0, 0.32));
+}
+
+.tooth-button--missing .tooth-button__body {
+    stroke-dasharray: 3 2;
+}
+
+.tooth-button__status {
+    inline-size: clamp(0.26rem, 0.7vw, 0.58rem);
+    block-size: clamp(0.26rem, 0.7vw, 0.58rem);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--tooth-accent) 88%, white);
+    border: 1px solid rgba(255, 255, 255, 0.42);
+    box-shadow: none;
+    overflow: hidden;
+    white-space: nowrap;
+    text-indent: 200%;
+}
+
+.tooth-button:hover .tooth-button__visual,
+.tooth-button:focus-visible .tooth-button__visual {
+    filter: brightness(1.04);
+}
+
+.tooth-button:hover .tooth-button__svg,
+.tooth-button:focus-visible .tooth-button__svg {
+    filter:
+        drop-shadow(0 0 0.65rem color-mix(in srgb, var(--tooth-accent) 58%, transparent))
+        drop-shadow(0 1rem 1rem rgba(0, 0, 0, 0.45));
+}
+
+.tooth-button:hover .tooth-button__meta,
+.tooth-button:focus-visible .tooth-button__meta,
+.tooth-button.is-selected .tooth-button__meta {
+    border-color: color-mix(in srgb, var(--tooth-accent) 54%, rgba(255, 255, 255, 0.16));
+    background: rgba(9, 15, 21, 0.88);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--tooth-accent) 16%, transparent);
+}
+
+.tooth-button.is-selected .tooth-button__visual {
+    filter: brightness(1.08);
+}
+
+.tooth-button.is-selected .tooth-button__svg {
+    filter:
+        drop-shadow(0 0 0.8rem color-mix(in srgb, var(--tooth-accent) 72%, transparent))
+        drop-shadow(0 1rem 1rem rgba(0, 0, 0, 0.48));
 }
 
 .tooth-history-stack {
@@ -498,6 +762,128 @@ body {
     background: color-mix(in srgb, var(--color-bg-subtle) 80%, var(--color-bg-surface));
 }
 
+.table-wrap--appointments {
+    overflow: auto;
+}
+
+.app-table--resources td:not(.cell--id),
+.app-table--resources th:not(.column-id) {
+    word-break: normal;
+    overflow-wrap: normal;
+    hyphens: none;
+}
+
+.app-table--appointments {
+    min-width: 0;
+}
+
+.app-table--appointments th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.app-table--appointments td {
+    word-break: normal;
+    vertical-align: top;
+}
+
+.appointment-cell {
+    min-width: 0;
+}
+
+.appointment-cell--person {
+    min-width: 0;
+}
+
+.appointment-cell--room {
+    min-width: 0;
+}
+
+.appointment-cell--time {
+    min-width: 0;
+}
+
+.appointment-cell--status {
+    min-width: 0;
+}
+
+.appointment-card {
+    display: grid;
+    gap: 0.25rem;
+}
+
+.appointment-card__title {
+    font-weight: 800;
+    color: var(--color-text);
+    line-height: 1.3;
+}
+
+.appointment-card__meta {
+    font-size: 0.76rem;
+    color: var(--color-text-muted);
+    line-height: 1.35;
+}
+
+.appointment-time {
+    display: grid;
+    gap: 0.18rem;
+}
+
+.appointment-time__date {
+    font-weight: 800;
+    color: var(--color-text);
+}
+
+.appointment-time__clock {
+    font-size: 0.78rem;
+    color: var(--color-text-muted);
+}
+
+.entity-link {
+    width: 100%;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    display: grid;
+    gap: 0.18rem;
+    text-align: left;
+    font: inherit;
+    cursor: pointer;
+}
+
+.entity-link__title {
+    color: color-mix(in srgb, var(--color-brand-500) 88%, #123041);
+    font-weight: 800;
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.12em;
+    text-decoration-color: color-mix(in srgb, var(--color-brand-500) 35%, transparent);
+}
+
+.entity-link__meta {
+    font-size: 0.76rem;
+    color: var(--color-text-muted);
+    text-decoration: none;
+}
+
+.entity-link:hover .entity-link__title,
+.entity-link:focus-visible .entity-link__title {
+    color: color-mix(in srgb, var(--color-brand-400) 90%, #0d2230);
+    text-decoration-color: currentColor;
+}
+
+.entity-link:focus-visible {
+    border-radius: var(--radius-xs);
+}
+
+.cell--id {
+    word-break: break-all;
+    overflow-wrap: anywhere;
+    font-family: var(--font-mono);
+    font-size: 0.76rem;
+}
+
 .clinical-entry__notes,
 .clinical-entry__actions {
     grid-column: 1 / -1;
@@ -506,6 +892,28 @@ body {
 .clinical-entry__actions {
     display: flex;
     justify-content: flex-end;
+}
+
+.team-memberships-card {
+    grid-column: 1 / -1;
+}
+
+.table-wrap--team {
+    overflow-x: auto;
+}
+
+.app-table--team {
+    table-layout: auto;
+}
+
+.app-table--team th,
+.app-table--team td {
+    white-space: nowrap;
+}
+
+.app-table--team td {
+    word-break: normal;
+    overflow-wrap: normal;
 }
 
 .log-box {
@@ -553,6 +961,11 @@ body {
         grid-template-columns: 1fr;
     }
 
+    .dentist-profile-grid,
+    .dentist-profile-toolbar {
+        grid-template-columns: 1fr;
+    }
+
     .clinical-entry {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
@@ -586,9 +999,31 @@ body {
     .header-actions {
         justify-content: flex-start;
     }
-}
 
-@media (max-width: 44rem) {
+    .brand {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .brand-logo {
+        inline-size: min(100%, 13rem);
+    }
+
+	    .tooth-chart {
+	        padding: 0.7rem;
+	    }
+
+	    .tooth-button__visual {
+	        inline-size: min(100%, calc(var(--tooth-width, 3rem) * 0.6));
+	        block-size: calc(var(--tooth-height, 6rem) * 0.6);
+	    }
+
+	    .tooth-button__meta {
+	        padding: 0.08rem 0.12rem;
+	    }
+		}
+
+		@media (max-width: 44rem) {
     .app-sidebar {
         grid-template-columns: 1fr;
     }
@@ -606,4 +1041,31 @@ body {
         display: grid;
         grid-template-columns: 1fr;
     }
-}
+
+	    .tooth-chart {
+	        gap: var(--space-4);
+	        padding: 0.55rem;
+	    }
+
+	    .tooth-button {
+	        gap: 0.1rem;
+	    }
+
+	    .tooth-button__visual {
+	        inline-size: min(100%, calc(var(--tooth-width, 3rem) * 0.5));
+	        block-size: calc(var(--tooth-height, 6rem) * 0.5);
+	    }
+
+	    .tooth-button__meta {
+	        padding: 0.05rem 0.08rem;
+	    }
+
+	    .tooth-button__status {
+	        display: none;
+	    }
+
+	    .tooth-chart__arch-label {
+	        padding-inline: 0;
+	        font-size: 0.62rem;
+	    }
+		}

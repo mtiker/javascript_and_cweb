@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 220" role="img" aria-labelledby="logo-title logo-desc">
+  <title id="logo-title">Dental Clinic SaaS</title>
+  <desc id="logo-desc">Shield and tooth logo with the Dental Clinic SaaS wordmark.</desc>
+  <defs>
+    <linearGradient id="shield-left" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2f8c7d"/>
+      <stop offset="1" stop-color="#318f80"/>
+    </linearGradient>
+    <linearGradient id="shield-right" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#39a08e"/>
+      <stop offset="1" stop-color="#43b39f"/>
+    </linearGradient>
+  </defs>
+
+  <g transform="translate(18 10)">
+    <path d="M110 0 26 18v68c0 53 25 101 68 131l16 11 16-11c43-30 68-78 68-131V18L110 0Z" fill="url(#shield-left)"/>
+    <path d="M110 0v228l16-11c43-30 68-78 68-131V18L110 0Z" fill="url(#shield-right)"/>
+    <path d="M103 49c-18 0-31 14-31 32 0 9 2 16 7 24 4 7 6 15 6 24v34c0 7 7 12 13 8 3-2 5-5 5-8v-23c0-13 5-23 12-23s12 10 12 23v23c0 3 2 6 5 8 6 4 13-1 13-8v-34c0-9 2-17 6-24 5-8 7-15 7-24 0-18-13-32-31-32-8 0-14 2-19 5-5-3-11-5-19-5Z" fill="#ffffff"/>
+    <path d="M84 47c12 8 30 8 43 0-2 6-9 11-21 12-9 1-18-3-22-12Z" fill="#2f8c7d"/>
+  </g>
+
+  <g fill="#214f5f">
+    <text x="250" y="102" font-size="58" font-weight="800" font-family="Segoe UI, Arial, sans-serif" letter-spacing="1">DENTAL CLINIC</text>
+    <text x="250" y="162" font-size="58" font-weight="500" font-family="Segoe UI, Arial, sans-serif" letter-spacing="1">SAAS</text>
+  </g>
+</svg>

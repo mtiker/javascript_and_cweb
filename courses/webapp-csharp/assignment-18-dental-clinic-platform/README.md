@@ -209,6 +209,45 @@ UI avab rolli järgi vaikimisi route'i `/app/...` all (mitte enam hash-tab navig
   - Vaikimisi vaade: `/app/appointments`.
   - Saab: patients, resources (read), appointments, tooth records, xrays, insurance plans (read); ei saa plans/team/settings admin.
 
+### Rollide ligipääs tabelina
+
+#### System rollid
+
+Legend:
+
+- `Full` = vastava ala täielik töövoog UI-s/API-s
+- `-` = puudub ligipääs
+
+| Roll            | Default UI      | Platform | Support | Billing | Onboarding | Impersonation |
+|-----------------|-----------------|----------|---------|---------|------------|---------------|
+| `SystemAdmin`   | `/app/platform` | Full     | Full    | Full    | Full       | Full          |
+| `SystemSupport` | `/app/support`  | -        | Full    | -       | Full       | -             |
+| `SystemBilling` | `/app/billing`  | -        | -       | Full    | -          | -             |
+
+#### Tenant rollid
+
+Legend:
+
+- `Full` = saab ala kasutada ja selles muudatusi teha
+- `Read` = vaade/list on olemas, kuid haldusvormid on UI-s lukus
+- `-` = puudub ligipääs
+
+| Roll              | Default UI         | Patients | Resources | Appointments | Plans | Team | Settings |
+|-------------------|--------------------|----------|-----------|--------------|-------|------|----------|
+| `CompanyOwner`    | `/app/team`        | Full     | Full      | Full         | Full  | Full | Full     |
+| `CompanyAdmin`    | `/app/team`        | Full     | Full      | Full         | Full  | Full | -        |
+| `CompanyManager`  | `/app/plans`       | Full     | Read      | Full         | Full  | -    | -        |
+| `CompanyEmployee` | `/app/appointments`| Full     | Read      | Full         | -     | -    | -        |
+
+Märkused:
+
+- `Resources` tähendab dentists + treatment rooms vaadet. `Read` korral on list nähtav, kuid loomise haldusvormid on UI-s lukus.
+- `Patients` sisaldab patsiendi profiili, tooth charti ja raviajaloo vaatamist ning patsiendi andmete muutmist.
+- `Appointments` sisaldab nii aja broneerimist kui ka appointment clinical record workflow'd.
+- `Plans` koondab treatment plan decisions, cost estimate ja legal preview töövood; sama rolligrupp katab ka payment/invoice planning API-d.
+- `Team = Full` ei tähenda kõikide rollide määramist: `CompanyAdmin` saab hallata team liikmeid, kuid backend lubab tal määrata ainult `CompanyManager` ja `CompanyEmployee` rolle. `CompanyOwner` jääb owner-only õiguseks.
+- `Settings = Full` tähendab company settings haldust; subscription tier muutmine on owner-only tegevus.
+
 ### Testid
 
 ```powershell

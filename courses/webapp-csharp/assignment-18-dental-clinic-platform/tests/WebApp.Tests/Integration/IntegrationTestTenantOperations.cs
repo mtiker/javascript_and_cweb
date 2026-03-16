@@ -5,9 +5,11 @@ using App.Domain;
 using App.Domain.Entities;
 using App.Domain.Identity;
 using App.DTO.v1.Appointments;
+using App.DTO.v1.Dentists;
 using App.DTO.v1.Identity;
 using App.DTO.v1.Patients;
 using App.DTO.v1.System;
+using App.DTO.v1.TreatmentRooms;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -131,6 +133,140 @@ public class IntegrationTestTenantOperations : IClassFixture<CustomWebApplicatio
 
         var deletePatient = await _client.DeleteAsync($"/api/v1/{slug}/patients/{createdPatient.Id}");
         Assert.Equal(System.Net.HttpStatusCode.NoContent, deletePatient.StatusCode);
+    }
+
+    [Fact]
+    public async Task Dentist_Create_Update_Delete_Flow_Works()
+    {
+        await AuthenticateAsSystemOperatorAsync();
+
+        var slug = $"clinic-{Guid.NewGuid():N}"[..12];
+        var ownerEmail = $"owner-{Guid.NewGuid():N}@dentist.test";
+        const string ownerPassword = "Strong.Pass.123!";
+
+        var onboarding = await _client.PostAsJsonAsync("/api/v1/system/onboarding/registercompany", new RegisterCompanyRequest
+        {
+            CompanyName = "Dentist Clinic",
+            CompanySlug = slug,
+            OwnerEmail = ownerEmail,
+            OwnerPassword = ownerPassword,
+            CountryCode = "EE"
+        });
+        onboarding.EnsureSuccessStatusCode();
+
+        var login = await _client.PostAsJsonAsync("/api/v1/account/login", new Login
+        {
+            Email = ownerEmail,
+            Password = ownerPassword
+        });
+        login.EnsureSuccessStatusCode();
+
+        var token = await login.Content.ReadFromJsonAsync<JWTResponse>();
+        Assert.NotNull(token);
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.Jwt);
+
+        var createResponse = await _client.PostAsJsonAsync($"/api/v1/{slug}/dentists", new CreateDentistRequest
+        {
+            DisplayName = "Dr. Helena Saar",
+            LicenseNumber = "EE-DENT-555",
+            Specialty = "Restorative Dentistry"
+        });
+        createResponse.EnsureSuccessStatusCode();
+
+        var createdDentist = await createResponse.Content.ReadFromJsonAsync<DentistResponse>();
+        Assert.NotNull(createdDentist);
+        Assert.Equal("Dr. Helena Saar", createdDentist.DisplayName);
+
+        var updateResponse = await _client.PutAsJsonAsync($"/api/v1/{slug}/dentists/{createdDentist.Id}", new CreateDentistRequest
+        {
+            DisplayName = "Dr. Helena Saar, DDS",
+            LicenseNumber = "EE-DENT-556",
+            Specialty = "Prosthodontics"
+        });
+        updateResponse.EnsureSuccessStatusCode();
+
+        var updatedDentist = await updateResponse.Content.ReadFromJsonAsync<DentistResponse>();
+        Assert.NotNull(updatedDentist);
+        Assert.Equal("Dr. Helena Saar, DDS", updatedDentist.DisplayName);
+        Assert.Equal("EE-DENT-556", updatedDentist.LicenseNumber);
+        Assert.Equal("Prosthodontics", updatedDentist.Specialty);
+
+        var deleteResponse = await _client.DeleteAsync($"/api/v1/{slug}/dentists/{createdDentist.Id}");
+        Assert.Equal(System.Net.HttpStatusCode.NoContent, deleteResponse.StatusCode);
+
+        var listResponse = await _client.GetAsync($"/api/v1/{slug}/dentists");
+        listResponse.EnsureSuccessStatusCode();
+
+        var dentists = await listResponse.Content.ReadFromJsonAsync<List<DentistResponse>>();
+        Assert.NotNull(dentists);
+        Assert.DoesNotContain(dentists, item => item.Id == createdDentist.Id);
+    }
+
+    [Fact]
+    public async Task TreatmentRoom_Create_Update_Delete_Flow_Works()
+    {
+        await AuthenticateAsSystemOperatorAsync();
+
+        var slug = $"room-{Guid.NewGuid():N}"[..12];
+        var ownerEmail = $"owner-{Guid.NewGuid():N}@room.test";
+        const string ownerPassword = "Strong.Pass.123!";
+
+        var onboarding = await _client.PostAsJsonAsync("/api/v1/system/onboarding/registercompany", new RegisterCompanyRequest
+        {
+            CompanyName = "Room Clinic",
+            CompanySlug = slug,
+            OwnerEmail = ownerEmail,
+            OwnerPassword = ownerPassword,
+            CountryCode = "EE"
+        });
+        onboarding.EnsureSuccessStatusCode();
+
+        var login = await _client.PostAsJsonAsync("/api/v1/account/login", new Login
+        {
+            Email = ownerEmail,
+            Password = ownerPassword
+        });
+        login.EnsureSuccessStatusCode();
+
+        var token = await login.Content.ReadFromJsonAsync<JWTResponse>();
+        Assert.NotNull(token);
+        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.Jwt);
+
+        var createResponse = await _client.PostAsJsonAsync($"/api/v1/{slug}/treatmentrooms", new CreateTreatmentRoomRequest
+        {
+            Name = "North Room",
+            Code = "N1",
+            IsActiveRoom = true
+        });
+        createResponse.EnsureSuccessStatusCode();
+
+        var createdRoom = await createResponse.Content.ReadFromJsonAsync<TreatmentRoomResponse>();
+        Assert.NotNull(createdRoom);
+        Assert.Equal("North Room", createdRoom.Name);
+
+        var updateResponse = await _client.PutAsJsonAsync($"/api/v1/{slug}/treatmentrooms/{createdRoom.Id}", new CreateTreatmentRoomRequest
+        {
+            Name = "North Surgery",
+            Code = "N2",
+            IsActiveRoom = false
+        });
+        updateResponse.EnsureSuccessStatusCode();
+
+        var updatedRoom = await updateResponse.Content.ReadFromJsonAsync<TreatmentRoomResponse>();
+        Assert.NotNull(updatedRoom);
+        Assert.Equal("North Surgery", updatedRoom.Name);
+        Assert.Equal("N2", updatedRoom.Code);
+        Assert.False(updatedRoom.IsActiveRoom);
+
+        var deleteResponse = await _client.DeleteAsync($"/api/v1/{slug}/treatmentrooms/{createdRoom.Id}");
+        Assert.Equal(System.Net.HttpStatusCode.NoContent, deleteResponse.StatusCode);
+
+        var listResponse = await _client.GetAsync($"/api/v1/{slug}/treatmentrooms");
+        listResponse.EnsureSuccessStatusCode();
+
+        var rooms = await listResponse.Content.ReadFromJsonAsync<List<TreatmentRoomResponse>>();
+        Assert.NotNull(rooms);
+        Assert.DoesNotContain(rooms, item => item.Id == createdRoom.Id);
     }
 
     private async Task AuthenticateAsSystemOperatorAsync()

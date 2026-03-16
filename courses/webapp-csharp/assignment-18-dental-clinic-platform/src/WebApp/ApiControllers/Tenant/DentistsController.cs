@@ -76,6 +76,73 @@ public class DentistsController(AppDbContext dbContext, ITenantProvider tenantPr
         return CreatedAtAction(nameof(List), new { version = "1", companySlug }, response);
     }
 
+    [HttpPut("{dentistId:guid}")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = RoleNames.CompanyOwner + "," + RoleNames.CompanyAdmin)]
+    [ProducesResponseType(typeof(DentistResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(Message), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(Message), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<DentistResponse>> Update(
+        [FromRoute] string companySlug,
+        [FromRoute] Guid dentistId,
+        [FromBody] CreateDentistRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (!TenantMatches(companySlug)) return Forbid();
+
+        var dentist = await dbContext.Dentists
+            .SingleOrDefaultAsync(entity => entity.Id == dentistId, cancellationToken);
+        if (dentist == null)
+        {
+            return NotFound(new Message("Dentist was not found."));
+        }
+
+        var displayName = request.DisplayName.Trim();
+        var licenseNumber = request.LicenseNumber.Trim().ToUpperInvariant();
+        if (string.IsNullOrWhiteSpace(displayName) || string.IsNullOrWhiteSpace(licenseNumber))
+        {
+            return BadRequest(new Message("Display name and license number are required."));
+        }
+
+        var exists = await dbContext.Dentists
+            .AsNoTracking()
+            .AnyAsync(entity => entity.Id != dentistId && entity.LicenseNumber == licenseNumber, cancellationToken);
+        if (exists)
+        {
+            return BadRequest(new Message("Dentist with the same license number already exists."));
+        }
+
+        dentist.DisplayName = displayName;
+        dentist.LicenseNumber = licenseNumber;
+        dentist.Specialty = string.IsNullOrWhiteSpace(request.Specialty) ? null : request.Specialty.Trim();
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+        return Ok(ToResponse(dentist));
+    }
+
+    [HttpDelete("{dentistId:guid}")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = RoleNames.CompanyOwner + "," + RoleNames.CompanyAdmin)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(Message), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Delete(
+        [FromRoute] string companySlug,
+        [FromRoute] Guid dentistId,
+        CancellationToken cancellationToken)
+    {
+        if (!TenantMatches(companySlug)) return Forbid();
+
+        var dentist = await dbContext.Dentists
+            .SingleOrDefaultAsync(entity => entity.Id == dentistId, cancellationToken);
+        if (dentist == null)
+        {
+            return NotFound(new Message("Dentist was not found."));
+        }
+
+        dbContext.Dentists.Remove(dentist);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return NoContent();
+    }
+
     private bool TenantMatches(string companySlug)
     {
         return string.Equals(tenantProvider.CompanySlug, companySlug, StringComparison.OrdinalIgnoreCase);

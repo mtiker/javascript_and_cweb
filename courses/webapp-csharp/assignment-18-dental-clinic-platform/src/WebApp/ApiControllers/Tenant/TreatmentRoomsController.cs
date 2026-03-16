@@ -76,6 +76,74 @@ public class TreatmentRoomsController(AppDbContext dbContext, ITenantProvider te
         return CreatedAtAction(nameof(List), new { version = "1", companySlug }, response);
     }
 
+    [HttpPut("{roomId:guid}")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = RoleNames.CompanyOwner + "," + RoleNames.CompanyAdmin)]
+    [ProducesResponseType(typeof(TreatmentRoomResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(Message), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<TreatmentRoomResponse>> Update(
+        [FromRoute] string companySlug,
+        [FromRoute] Guid roomId,
+        [FromBody] CreateTreatmentRoomRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (!TenantMatches(companySlug)) return Forbid();
+
+        var room = await dbContext.TreatmentRooms
+            .SingleOrDefaultAsync(entity => entity.Id == roomId, cancellationToken);
+        if (room == null)
+        {
+            return NotFound();
+        }
+
+        var name = request.Name.Trim();
+        var code = request.Code.Trim().ToUpperInvariant();
+        if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(code))
+        {
+            return BadRequest(new Message("Room name and code are required."));
+        }
+
+        var exists = await dbContext.TreatmentRooms
+            .AsNoTracking()
+            .AnyAsync(entity => entity.Id != roomId && entity.Code == code, cancellationToken);
+        if (exists)
+        {
+            return BadRequest(new Message("Treatment room code is already in use."));
+        }
+
+        room.Name = name;
+        room.Code = code;
+        room.IsActiveRoom = request.IsActiveRoom;
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return Ok(ToResponse(room));
+    }
+
+    [HttpDelete("{roomId:guid}")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = RoleNames.CompanyOwner + "," + RoleNames.CompanyAdmin)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Delete(
+        [FromRoute] string companySlug,
+        [FromRoute] Guid roomId,
+        CancellationToken cancellationToken)
+    {
+        if (!TenantMatches(companySlug)) return Forbid();
+
+        var room = await dbContext.TreatmentRooms
+            .SingleOrDefaultAsync(entity => entity.Id == roomId, cancellationToken);
+        if (room == null)
+        {
+            return NotFound();
+        }
+
+        dbContext.TreatmentRooms.Remove(room);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return NoContent();
+    }
+
     private bool TenantMatches(string companySlug)
     {
         return string.Equals(tenantProvider.CompanySlug, companySlug, StringComparison.OrdinalIgnoreCase);

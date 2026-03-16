@@ -234,6 +234,72 @@ public class AccountController(
 
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [HttpPost]
+    [ProducesResponseType(typeof(JWTResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(Message), StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<JWTResponse>> SwitchRole([FromBody] SwitchRoleRequest request, CancellationToken cancellationToken)
+    {
+        var userId = User.UserId();
+        if (userId == Guid.Empty)
+        {
+            return BadRequest(new Message("Could not resolve user id from token."));
+        }
+
+        var companySlug = User.FindFirstValue("companySlug");
+        if (string.IsNullOrWhiteSpace(companySlug))
+        {
+            return BadRequest(new Message("Current session has no active company."));
+        }
+
+        var requestedRoleName = request.RoleName.Trim();
+        if (string.IsNullOrWhiteSpace(requestedRoleName))
+        {
+            return BadRequest(new Message("Role name is required."));
+        }
+
+        var user = await userManager.FindByIdAsync(userId.ToString());
+        if (user == null)
+        {
+            return BadRequest(new Message("User was not found."));
+        }
+
+        var roleLink = await dbContext.AppUserRoles
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .Where(entity => entity.AppUserId == userId && entity.IsActive && entity.RoleName == requestedRoleName)
+            .Join(
+                dbContext.Companies.IgnoreQueryFilters().AsNoTracking().Where(entity => entity.IsActive),
+                role => role.CompanyId,
+                company => company.Id,
+                (role, company) => new
+                {
+                    company.Id,
+                    company.Slug,
+                    role.RoleName
+                })
+            .SingleOrDefaultAsync(entity => entity.Slug == companySlug, cancellationToken);
+
+        if (roleLink == null)
+        {
+            return BadRequest(new Message("Requested active role membership was not found in current company."));
+        }
+
+        var systemRoles = await userManager.GetRolesAsync(user);
+        var jwt = jwtTokenService.GenerateToken(user, systemRoles, roleLink.Id, roleLink.Slug, roleLink.RoleName);
+        var refreshToken = await CreateRefreshTokenAsync(user.Id, cancellationToken);
+
+        return Ok(new JWTResponse
+        {
+            Jwt = jwt,
+            RefreshToken = refreshToken,
+            ExpiresInSeconds = jwtTokenService.ExpiresInSeconds,
+            ActiveCompanyId = roleLink.Id,
+            ActiveCompanySlug = roleLink.Slug,
+            ActiveCompanyRole = roleLink.RoleName
+        });
+    }
+
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    [HttpPost]
     [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
     public async Task<ActionResult> Logout([FromBody] RefreshTokenModel tokenModel, CancellationToken cancellationToken)
     {

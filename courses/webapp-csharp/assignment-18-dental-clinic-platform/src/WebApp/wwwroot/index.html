@@ -20,6 +20,9 @@
 
 <section id="gateway-screen" class="gateway-screen">
     <article class="card card--elevated gateway-card">
+        <div class="gateway-brand">
+            <img class="brand-logo brand-logo--hero" src="/assets/logo.svg" alt="Dental Clinic SaaS">
+        </div>
         <p class="eyebrow">Dental Clinic SaaS</p>
         <h1>Sign in to your workspace</h1>
         <p class="text-muted">Authenticate first, then the console opens directly to your role-specific view.</p>
@@ -43,7 +46,7 @@
 <div id="app-root" class="app-root" hidden>
     <header class="app-header card card--elevated">
         <div class="brand">
-            <span class="brand-mark" aria-hidden="true">DC</span>
+            <img class="brand-logo" src="/assets/logo.svg" alt="Dental Clinic SaaS">
             <div class="brand-copy">
                 <p class="eyebrow">Dental Clinic SaaS</p>
                 <h1>Operations Console</h1>
@@ -174,7 +177,7 @@
                     </article>
                 </div>
 
-                <div class="auth-grid">
+                <div class="auth-grid auth-grid--team">
                     <article class="card card--subtle">
                         <h3>Feature flags</h3>
                         <p class="text-muted">SystemAdmin can toggle platform-wide capabilities.</p>
@@ -444,8 +447,8 @@
                     </div>
                 </header>
 
-                <div class="auth-grid">
-                    <article class="card card--subtle">
+                <div id="auth-grid" class="auth-grid">
+                    <article id="onboarding-card" class="card card--subtle">
                         <h3>1. Company Onboarding</h3>
                         <p class="text-muted">SystemAdmin/SystemSupport can create a clinic and owner account.</p>
                         <form id="onboarding-form" class="form-grid form-grid--2">
@@ -692,12 +695,12 @@
                         </article>
                     </div>
 
-                    <div class="patient-profile-grid patient-profile-grid--chart">
+	                <div class="patient-profile-grid patient-profile-grid--chart">
                         <article class="card card--subtle">
                             <div class="section-head">
                                 <div>
                                     <h3>Dental chart</h3>
-                                    <p class="text-muted">Hover to preview tooth status and click any tooth to open its history drop list.</p>
+                                    <p class="text-muted">Hover or focus a tooth silhouette to preview status, then click it to inspect the full treatment history.</p>
                                 </div>
                             </div>
                             <div class="tooth-legend" aria-label="Tooth status legend">
@@ -734,13 +737,13 @@
                     <button id="refresh-resources-btn" class="btn btn--ghost btn--sm" type="button">Refresh resources</button>
                 </header>
 
-                <div class="auth-grid">
-                    <article class="card card--subtle">
-                        <h3>Dentists</h3>
-                        <p class="text-muted">These entries are used when creating appointments.</p>
-                        <form id="dentist-form" class="form-grid form-grid--2">
-                            <label class="field" for="dentistDisplayName">
-                                <span>Display name</span>
+	                <div id="resources-workspace" class="resources-layout">
+	                    <article class="card card--subtle">
+	                        <h3>Dentists</h3>
+	                        <p class="text-muted">These entries are used when creating appointments and each dentist now has its own profile workspace.</p>
+	                        <form id="dentist-form" class="form-grid form-grid--2">
+	                            <label class="field" for="dentistDisplayName">
+	                                <span>Display name</span>
                                 <input id="dentistDisplayName" class="form-input" name="displayName" required maxlength="128" placeholder="Dr. Kask">
                             </label>
                             <label class="field" for="dentistLicenseNumber">
@@ -756,31 +759,32 @@
                             </div>
                         </form>
 
-                        <div class="table-wrap">
-                            <table class="app-table">
-                                <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>License</th>
-                                    <th>Specialty</th>
-                                    <th>ID</th>
-                                </tr>
-                                </thead>
-                                <tbody id="dentists-body">
-                                <tr>
-                                    <td colspan="4">
-                                        <div class="empty-state">No dentists loaded.</div>
-                                    </td>
-                                </tr>
+	                        <div class="table-wrap">
+	                            <table class="app-table app-table--resources">
+	                                <thead>
+	                                <tr>
+	                                    <th>Name</th>
+	                                    <th>License</th>
+	                                    <th>Specialty</th>
+	                                    <th class="column-id">ID</th>
+	                                    <th class="text-right">Actions</th>
+	                                </tr>
+	                                </thead>
+	                                <tbody id="dentists-body">
+	                                <tr>
+	                                    <td colspan="5">
+	                                        <div class="empty-state">No dentists loaded.</div>
+	                                    </td>
+	                                </tr>
                                 </tbody>
                             </table>
                         </div>
                     </article>
 
-                    <article class="card card--subtle">
-                        <h3>Treatment Rooms</h3>
-                        <p class="text-muted">Room codes are used for scheduling conflict checks.</p>
-                        <form id="treatment-room-form" class="form-grid form-grid--2">
+	                    <article class="card card--subtle">
+	                        <h3>Treatment Rooms</h3>
+	                        <p class="text-muted">Room codes are used for scheduling conflict checks.</p>
+	                        <form id="treatment-room-form" class="form-grid form-grid--2">
                             <label class="field" for="roomName">
                                 <span>Room name</span>
                                 <input id="roomName" class="form-input" name="name" required maxlength="128" placeholder="Main treatment room">
@@ -789,37 +793,162 @@
                                 <span>Room code</span>
                                 <input id="roomCode" class="form-input" name="code" required maxlength="32" placeholder="R1">
                             </label>
-                            <label class="field check" for="roomIsActive">
-                                <input id="roomIsActive" type="checkbox" name="isActiveRoom" checked>
-                                <span>Room is active</span>
-                            </label>
-                            <div class="form-actions">
-                                <button type="submit" class="btn btn--primary">Add room</button>
-                            </div>
-                        </form>
+	                            <label class="field check" for="roomIsActive">
+	                                <input id="roomIsActive" type="checkbox" name="isActiveRoom" checked>
+	                                <span>Room is active</span>
+	                            </label>
+	                            <div class="form-actions">
+	                                <button id="treatment-room-submit-btn" type="submit" class="btn btn--primary">Add room</button>
+	                                <button id="treatment-room-cancel-btn" type="button" class="btn btn--ghost" hidden>Cancel edit</button>
+	                            </div>
+	                        </form>
 
-                        <div class="table-wrap">
-                            <table class="app-table">
-                                <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Code</th>
-                                    <th>Status</th>
-                                    <th>ID</th>
-                                </tr>
-                                </thead>
-                                <tbody id="treatment-rooms-body">
-                                <tr>
-                                    <td colspan="4">
-                                        <div class="empty-state">No treatment rooms loaded.</div>
-                                    </td>
-                                </tr>
-                                </tbody>
-                            </table>
+		                        <div class="table-wrap">
+		                            <table class="app-table app-table--resources">
+	                                <thead>
+		                                <tr>
+		                                    <th>Name</th>
+		                                    <th>Code</th>
+		                                    <th>Status</th>
+		                                    <th class="column-id">ID</th>
+		                                    <th class="text-right">Actions</th>
+		                                </tr>
+		                                </thead>
+		                                <tbody id="treatment-rooms-body">
+	                                <tr>
+	                                    <td colspan="5">
+	                                        <div class="empty-state">No treatment rooms loaded.</div>
+	                                    </td>
+	                                </tr>
+	                                </tbody>
+	                            </table>
                         </div>
-                    </article>
-                </div>
-            </section>
+	                    </article>
+	                </div>
+
+	                <section id="dentist-profile-panel" class="screen-panel dentist-profile-panel" hidden>
+	                    <header class="section-head">
+	                        <div>
+	                            <p class="eyebrow">Dentist Profile</p>
+	                            <h3 id="dentist-profile-name">Select a dentist</h3>
+	                        </div>
+	                        <div class="form-actions">
+	                            <button id="dentist-profile-refresh-btn" class="btn btn--ghost btn--sm" type="button">Refresh profile</button>
+	                            <button id="dentist-profile-back-btn" class="btn btn--secondary btn--sm" type="button">Back to resources</button>
+	                        </div>
+	                    </header>
+
+	                    <div class="dentist-profile-grid">
+	                        <article class="card card--subtle">
+	                            <div class="patient-profile-summary">
+	                                <div>
+	                                    <p class="eyebrow">Overview</p>
+	                                    <p id="dentist-profile-meta" class="text-muted">Open a dentist to review details and appointment activity.</p>
+	                                </div>
+	                                <div class="patient-profile-metrics">
+	                                    <div class="metric-card patient-profile-metric">
+	                                        <p class="metric-label">Total appointments</p>
+	                                        <p id="dentist-profile-appointment-count" class="metric-value">0</p>
+	                                    </div>
+	                                    <div class="metric-card patient-profile-metric">
+	                                        <p class="metric-label">Upcoming</p>
+	                                        <p id="dentist-profile-upcoming-count" class="metric-value">0</p>
+	                                    </div>
+	                                    <div class="metric-card patient-profile-metric">
+	                                        <p class="metric-label">Past</p>
+	                                        <p id="dentist-profile-past-count" class="metric-value">0</p>
+	                                    </div>
+	                                </div>
+	                            </div>
+	                            <dl class="patient-profile-facts">
+	                                <div>
+	                                    <dt>License number</dt>
+	                                    <dd id="dentist-profile-license">-</dd>
+	                                </div>
+	                                <div>
+	                                    <dt>Specialty</dt>
+	                                    <dd id="dentist-profile-specialty">-</dd>
+	                                </div>
+	                                <div>
+	                                    <dt>Dentist ID</dt>
+	                                    <dd id="dentist-profile-id" class="profile-id">-</dd>
+	                                </div>
+	                            </dl>
+	                            <div class="form-actions">
+	                                <button id="dentist-profile-delete-btn" class="btn btn--destructive btn--sm" type="button">Delete dentist</button>
+	                            </div>
+	                        </article>
+
+	                        <article class="card card--subtle">
+	                            <h3>Edit dentist details</h3>
+	                            <p class="text-muted">Keep the appointment-facing dentist record current without leaving this profile.</p>
+	                            <form id="dentist-profile-form" class="form-grid form-grid--2">
+	                                <label class="field" for="dentistProfileDisplayName">
+	                                    <span>Display name</span>
+	                                    <input id="dentistProfileDisplayName" class="form-input" name="displayName" required maxlength="128" placeholder="Dr. Kask">
+	                                </label>
+	                                <label class="field" for="dentistProfileLicenseNumber">
+	                                    <span>License number</span>
+	                                    <input id="dentistProfileLicenseNumber" class="form-input" name="licenseNumber" required maxlength="64" placeholder="EE-DENT-001">
+	                                </label>
+	                                <label class="field" for="dentistProfileSpecialty">
+	                                    <span>Specialty</span>
+	                                    <input id="dentistProfileSpecialty" class="form-input" name="specialty" maxlength="128" placeholder="Orthodontics">
+	                                </label>
+	                                <div class="form-actions">
+	                                    <button type="submit" class="btn btn--primary">Save dentist</button>
+	                                </div>
+	                            </form>
+	                        </article>
+	                    </div>
+
+	                    <article class="card card--subtle">
+	                        <div class="section-head">
+	                            <div>
+	                                <h3>Dentist appointments</h3>
+	                                <p id="dentist-profile-appointments-summary" class="text-muted">Use search and the time filter to review this dentist's schedule history.</p>
+	                            </div>
+	                        </div>
+
+	                        <div class="dentist-profile-toolbar">
+	                            <label class="field" for="dentistProfileAppointmentSearch">
+	                                <span>Search appointments</span>
+	                                <input id="dentistProfileAppointmentSearch" class="form-input" type="search" placeholder="Search patient, room or notes">
+	                            </label>
+	                            <label class="field" for="dentistProfileAppointmentFilter">
+	                                <span>Show</span>
+	                                <select id="dentistProfileAppointmentFilter" class="form-select">
+	                                    <option value="all">All appointments</option>
+	                                    <option value="upcoming">Upcoming only</option>
+	                                    <option value="past">Past only</option>
+	                                </select>
+	                            </label>
+	                        </div>
+
+	                        <div class="table-wrap">
+	                            <table class="app-table app-table--dentist-profile">
+	                                <thead>
+	                                <tr>
+	                                    <th>Patient</th>
+	                                    <th>Room</th>
+	                                    <th>Start</th>
+	                                    <th>End</th>
+	                                    <th>Status</th>
+	                                    <th>Notes</th>
+	                                </tr>
+	                                </thead>
+	                                <tbody id="dentist-profile-appointments-body">
+	                                <tr>
+	                                    <td colspan="6">
+	                                        <div class="empty-state">No appointments loaded.</div>
+	                                    </td>
+	                                </tr>
+	                                </tbody>
+	                            </table>
+	                        </div>
+	                    </article>
+	                </section>
+	            </section>
 
             <section id="screen-appointments" class="screen-panel card card--elevated" data-screen="appointments" hidden>
                 <header class="section-head">
@@ -830,10 +959,10 @@
                     <button id="refresh-appointments-btn" class="btn btn--ghost btn--sm" type="button">Refresh appointments</button>
                 </header>
 
-                <div class="auth-grid">
-                    <article class="card card--subtle">
-                        <h3>Create appointment</h3>
-                        <p class="text-muted">Employees and managers can schedule visits once patients, dentists and rooms exist.</p>
+	                <div class="appointments-layout">
+	                    <article class="card card--subtle">
+	                        <h3>Create appointment</h3>
+	                        <p class="text-muted">Employees and managers can schedule visits once patients, dentists and rooms exist.</p>
                         <form id="appointment-form" class="form-grid form-grid--2">
                             <label class="field" for="appointmentPatientId">
                                 <span>Patient</span>
@@ -869,35 +998,54 @@
                                 <button type="submit" class="btn btn--primary">Create appointment</button>
                             </div>
                         </form>
-                    </article>
+	                    </article>
 
-                    <article class="card card--subtle">
-                        <h3>Upcoming appointments</h3>
-                        <p class="text-muted">Schedule view for active tenant.</p>
-                        <div class="table-wrap">
-                            <table class="app-table">
-                                <thead>
-                                <tr>
-                                    <th>Patient</th>
-                                    <th>Dentist</th>
-                                    <th>Room</th>
-                                    <th>Start</th>
-                                    <th>End</th>
-                                    <th>Status</th>
-                                    <th class="text-right">Actions</th>
-                                </tr>
-                                </thead>
-                                <tbody id="appointments-body">
-                                <tr>
-                                    <td colspan="7">
-                                        <div class="empty-state">No appointments loaded.</div>
-                                    </td>
-                                </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </article>
-                </div>
+	                    <article class="card card--subtle">
+	                        <h3>Appointments</h3>
+	                        <p id="appointments-summary" class="text-muted">Default view shows ongoing and upcoming appointments. Click a patient to open the profile or a dentist to open that dentist's profile.</p>
+	                        <div class="dentist-profile-toolbar appointments-toolbar">
+	                            <label class="field" for="appointmentSearch">
+	                                <span>Search appointments</span>
+	                                <input id="appointmentSearch" class="form-input" type="search" placeholder="Search patient, dentist, room or notes">
+	                            </label>
+	                            <div class="form-actions appointments-toolbar__actions">
+	                                <label class="field" for="appointmentStatusFilter">
+	                                    <span>Status</span>
+	                                    <select id="appointmentStatusFilter" class="form-select">
+	                                        <option value="all">All statuses</option>
+	                                        <option value="scheduled">Scheduled</option>
+	                                        <option value="confirmed">Confirmed</option>
+	                                        <option value="completed">Completed</option>
+	                                        <option value="cancelled">Cancelled</option>
+	                                    </select>
+	                                </label>
+	                                <button id="appointments-past-toggle-btn" type="button" class="btn btn--ghost">Show past appointments</button>
+	                            </div>
+	                        </div>
+	                        <div class="table-wrap table-wrap--appointments">
+	                            <table class="app-table app-table--appointments">
+	                                <thead>
+	                                <tr>
+	                                    <th>Patient</th>
+	                                    <th>Dentist</th>
+	                                    <th>Room</th>
+	                                    <th>Start</th>
+	                                    <th>End</th>
+	                                    <th>Status</th>
+	                                    <th class="text-right">Actions</th>
+	                                </tr>
+	                                </thead>
+	                                <tbody id="appointments-body">
+	                                <tr>
+	                                    <td colspan="7">
+	                                        <div class="empty-state">No appointments loaded.</div>
+	                                    </td>
+	                                </tr>
+	                                </tbody>
+	                            </table>
+	                        </div>
+	                    </article>
+	                </div>
 
                 <article class="card card--subtle">
                     <div class="section-head">
@@ -1067,8 +1215,27 @@
 
                 <div class="auth-grid">
                     <article class="card card--subtle">
+                        <h3>Act as another role</h3>
+                        <p class="text-muted">If your account has multiple active memberships in this clinic, you can switch which one the current session uses.</p>
+                        <form id="company-role-switch-form" class="form-grid form-grid--2">
+                            <label class="field" for="companyRoleSwitchRole">
+                                <span>Active role for this session</span>
+                                <select id="companyRoleSwitchRole" class="form-select" name="roleName" required>
+                                    <option value="">Select role</option>
+                                </select>
+                            </label>
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn--secondary">Switch active role</button>
+                            </div>
+                        </form>
+                        <p id="company-role-switch-help" class="text-muted">
+                            This changes the role inside your current JWT for this company only. It does not delete any memberships.
+                        </p>
+                    </article>
+
+                    <article class="card card--subtle">
                         <h3>Assign or update membership</h3>
-                        <p class="text-muted">CompanyOwner and CompanyAdmin can manage company memberships.</p>
+                        <p class="text-muted">CompanyOwner and CompanyAdmin can manage memberships. Each saved membership is one user-to-role link inside the current company.</p>
                         <form id="company-user-form" class="form-grid form-grid--2">
                             <label class="field" for="companyUserEmail">
                                 <span>User email</span>
@@ -1097,11 +1264,11 @@
                         </form>
                     </article>
 
-                    <article class="card card--subtle">
-                        <h3>Current team memberships</h3>
-                        <p class="text-muted">Each row is one role assignment for current tenant.</p>
-                        <div class="table-wrap">
-                            <table class="app-table">
+		                    <article class="card card--subtle team-memberships-card">
+		                        <h3>Current team memberships</h3>
+		                        <p class="text-muted">Each row is one role assignment in this tenant, so the same email can appear more than once if that user has multiple roles.</p>
+	                        <div class="table-wrap table-wrap--team">
+	                            <table class="app-table app-table--team">
                                 <thead>
                                 <tr>
                                     <th>Email</th>

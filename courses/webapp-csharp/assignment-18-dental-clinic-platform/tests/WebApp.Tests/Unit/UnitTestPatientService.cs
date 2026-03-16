@@ -1,8 +1,10 @@
 using App.BLL.Contracts.Patients;
+using App.BLL.Exceptions;
 using App.BLL.Services;
 using App.Domain;
 using App.Domain.Entities;
 using App.Domain.Enums;
+using Microsoft.EntityFrameworkCore;
 using WebApp.Tests.Helpers;
 
 namespace WebApp.Tests.Unit;
@@ -113,6 +115,103 @@ public class UnitTestPatientService
         Assert.Equal("Composite Filling", tooth11.LastTreatmentTypeName);
         Assert.Equal("Palatal surface restored.", tooth11.LastTreatmentNotes);
         Assert.Single(tooth11.History);
+    }
+
+    [Fact]
+    public async Task CreateAsync_Throws_WhenPersonalCodeIsActiveInAnotherClinic()
+    {
+        var tenantProvider = new TestTenantProvider();
+        var currentCompanyId = Guid.NewGuid();
+        var previousCompanyId = Guid.NewGuid();
+        tenantProvider.SetTenant(currentCompanyId, "nordic");
+        tenantProvider.SetIgnoreTenantFilter(false);
+
+        await using var db = TestDbContextFactory.Create($"patient-transfer-block-{Guid.NewGuid():N}", tenantProvider);
+
+        var userId = Guid.NewGuid();
+        db.AppUserRoles.Add(new AppUserRole
+        {
+            AppUserId = userId,
+            CompanyId = currentCompanyId,
+            RoleName = RoleNames.CompanyEmployee,
+            IsActive = true
+        });
+        db.Patients.Add(new Patient
+        {
+            CompanyId = previousCompanyId,
+            FirstName = "Markus",
+            LastName = "Ilves",
+            PersonalCode = "38602020077",
+            Email = "markus.ilves@example.test"
+        });
+
+        await db.SaveChangesAsync();
+
+        var service = CreateService(db, tenantProvider);
+
+        var exception = await Assert.ThrowsAsync<ValidationAppException>(async () =>
+            await service.CreateAsync(
+                userId,
+                new CreatePatientCommand(
+                    "Markus",
+                    "Ilves",
+                    new DateOnly(1986, 2, 2),
+                    "38602020077",
+                    "markus.ilves@example.test",
+                    "+3725123456"),
+                CancellationToken.None));
+
+        Assert.Contains("same personal code", exception.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task CreateAsync_AllowsPersonalCodeAfterPreviousClinicRecordWasRemoved()
+    {
+        var tenantProvider = new TestTenantProvider();
+        var currentCompanyId = Guid.NewGuid();
+        var previousCompanyId = Guid.NewGuid();
+        tenantProvider.SetTenant(currentCompanyId, "nordic");
+        tenantProvider.SetIgnoreTenantFilter(false);
+
+        await using var db = TestDbContextFactory.Create($"patient-transfer-allow-{Guid.NewGuid():N}", tenantProvider);
+
+        var userId = Guid.NewGuid();
+        db.AppUserRoles.Add(new AppUserRole
+        {
+            AppUserId = userId,
+            CompanyId = currentCompanyId,
+            RoleName = RoleNames.CompanyEmployee,
+            IsActive = true
+        });
+        db.Patients.Add(new Patient
+        {
+            CompanyId = previousCompanyId,
+            FirstName = "Markus",
+            LastName = "Ilves",
+            PersonalCode = "38602020077",
+            Email = "markus.ilves@example.test",
+            IsDeleted = true,
+            DeletedAtUtc = DateTime.UtcNow.AddDays(-2)
+        });
+
+        await db.SaveChangesAsync();
+
+        var service = CreateService(db, tenantProvider);
+
+        var createdPatient = await service.CreateAsync(
+            userId,
+            new CreatePatientCommand(
+                "Markus",
+                "Ilves",
+                new DateOnly(1986, 2, 2),
+                "38602020077",
+                "markus.ilves@example.test",
+                "+3725123456"),
+            CancellationToken.None);
+
+        Assert.Equal("38602020077", createdPatient.PersonalCode);
+        Assert.Equal(2, await db.Patients.IgnoreQueryFilters().CountAsync(entity => entity.PersonalCode == "38602020077"));
+        Assert.Single(await db.Patients.Where(entity => entity.PersonalCode == "38602020077").ToListAsync());
     }
 
     private static PatientService CreateService(App.DAL.EF.AppDbContext db, TestTenantProvider tenantProvider)

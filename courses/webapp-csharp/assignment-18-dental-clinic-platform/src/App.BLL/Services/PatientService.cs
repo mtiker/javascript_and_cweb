@@ -127,6 +127,8 @@ public class PatientService(
     {
         await EnsureAccessAsync(userId, cancellationToken);
         Validate(command.FirstName, command.LastName);
+        var personalCode = NormalizeOptional(command.PersonalCode);
+        await EnsurePersonalCodeIsAvailableAsync(personalCode, null, cancellationToken);
         await subscriptionPolicyService.EnsureCanCreatePatientAsync(cancellationToken);
 
         var patient = new Patient
@@ -134,9 +136,9 @@ public class PatientService(
             FirstName = command.FirstName.Trim(),
             LastName = command.LastName.Trim(),
             DateOfBirth = command.DateOfBirth,
-            PersonalCode = command.PersonalCode?.Trim(),
-            Email = command.Email?.Trim(),
-            Phone = command.Phone?.Trim()
+            PersonalCode = personalCode,
+            Email = NormalizeOptional(command.Email),
+            Phone = NormalizeOptional(command.Phone)
         };
 
         dbContext.Patients.Add(patient);
@@ -150,6 +152,8 @@ public class PatientService(
     {
         await EnsureAccessAsync(userId, cancellationToken);
         Validate(command.FirstName, command.LastName);
+        var personalCode = NormalizeOptional(command.PersonalCode);
+        await EnsurePersonalCodeIsAvailableAsync(personalCode, command.PatientId, cancellationToken);
 
         var patient = await dbContext.Patients
             .SingleOrDefaultAsync(entity => entity.Id == command.PatientId, cancellationToken);
@@ -162,9 +166,9 @@ public class PatientService(
         patient.FirstName = command.FirstName.Trim();
         patient.LastName = command.LastName.Trim();
         patient.DateOfBirth = command.DateOfBirth;
-        patient.PersonalCode = command.PersonalCode?.Trim();
-        patient.Email = command.Email?.Trim();
-        patient.Phone = command.Phone?.Trim();
+        patient.PersonalCode = personalCode;
+        patient.Email = NormalizeOptional(command.Email);
+        patient.Phone = NormalizeOptional(command.Phone);
 
         await dbContext.SaveChangesAsync(cancellationToken);
 
@@ -209,6 +213,32 @@ public class PatientService(
         if (string.IsNullOrWhiteSpace(lastName))
         {
             throw new ValidationAppException("Patient last name is required.");
+        }
+    }
+
+    private async Task EnsurePersonalCodeIsAvailableAsync(
+        string? personalCode,
+        Guid? currentPatientId,
+        CancellationToken cancellationToken)
+    {
+        if (personalCode == null)
+        {
+            return;
+        }
+
+        var conflictExists = await dbContext.Patients
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .AnyAsync(entity =>
+                    !entity.IsDeleted &&
+                    entity.PersonalCode == personalCode &&
+                    (!currentPatientId.HasValue || entity.Id != currentPatientId.Value),
+                cancellationToken);
+
+        if (conflictExists)
+        {
+            throw new ValidationAppException(
+                "An active patient with the same personal code already exists. Remove the patient from the previous clinic before adding them to a new clinic.");
         }
     }
 
@@ -315,5 +345,10 @@ public class PatientService(
         dbContext.CostEstimates.RemoveRange(costEstimates);
         dbContext.PaymentPlans.RemoveRange(paymentPlans);
         dbContext.Invoices.RemoveRange(invoices);
+    }
+
+    private static string? NormalizeOptional(string? value)
+    {
+        return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
     }
 }
