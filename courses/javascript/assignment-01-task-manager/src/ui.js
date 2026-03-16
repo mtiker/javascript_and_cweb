@@ -69,6 +69,10 @@ export class TaskManagerUI {
   }
 
   bindEvents() {
+    this.elements.title.addEventListener("input", () => {
+      this.setFieldError(this.elements.title, false);
+    });
+
     this.elements.form.addEventListener("submit", async (event) => {
       event.preventDefault();
       await this.handleSave();
@@ -282,6 +286,7 @@ export class TaskManagerUI {
     this.elements.status.value = "todo";
     this.elements.priority.value = "medium";
     this.elements.taskId.value = "";
+    this.setFieldError(this.elements.title, false);
     this.elements.saveBtn.textContent = "Add Task";
     this.state.selectedTaskId = null;
     this.renderTasks(this.state.visibleTasks);
@@ -370,6 +375,12 @@ export class TaskManagerUI {
         ? error.message
         : "Unexpected error occurred.";
 
+    this.setFieldError(this.elements.title, message === "Title is required.");
     this.setStatus(message, "error");
+  }
+
+  setFieldError(element, hasError) {
+    element.classList.toggle("input-error", hasError);
+    element.setAttribute("aria-invalid", hasError ? "true" : "false");
   }
 }

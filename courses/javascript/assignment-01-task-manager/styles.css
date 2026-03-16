@@ -166,6 +166,12 @@ button:focus-visible {
   box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.22);
 }
 
+input.input-error,
+input.input-error:focus-visible {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 3px rgba(180, 35, 24, 0.18);
+}
+
 .inline-fields {
   display: grid;
   grid-template-columns: 1fr 1fr;

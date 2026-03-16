@@ -33,6 +33,7 @@ export class TaskManagerUI {
     constructor(service, doc = document) {
         this.service = service;
         this.doc = doc;
+        this.searchTimer = null;
         this.elements = this.collectElements();
         this.state = {
             busy: false,
@@ -110,11 +111,24 @@ export class TaskManagerUI {
             await this.handleDeleteSelected();
         });
         this.elements.clearQueryBtn.addEventListener("click", async () => {
+            this.clearPendingSearch();
             this.resetQueryInputs();
             this.state.query = defaultQueryOptions();
             await this.executeSafely("list", async () => {
                 await this.refreshView();
             });
+        });
+        this.elements.searchQuery.addEventListener("input", () => {
+            this.queueSearch();
+        });
+        this.elements.searchQuery.addEventListener("keydown", async (event) => {
+            if (event.key !== "Enter") {
+                return;
+            }
+            event.preventDefault();
+            this.clearPendingSearch();
+            this.state.query.search = normalizeText(this.elements.searchQuery.value);
+            await this.runSearch();
         });
         this.elements.commandButtons.forEach((button) => {
             button.addEventListener("click", async () => {
@@ -179,9 +193,7 @@ export class TaskManagerUI {
                 break;
             case "search":
                 this.state.query.search = normalizeText(this.elements.searchQuery.value);
-                await this.executeSafely("search", async () => {
-                    await this.refreshView();
-                });
+                await this.runSearch();
                 break;
             case "sort":
                 this.state.query.sort = this.readSortInputs();
@@ -254,6 +266,25 @@ export class TaskManagerUI {
             by: this.elements.sortBy.value,
             direction: this.elements.sortDirection.value
         };
+    }
+    queueSearch() {
+        this.state.query.search = normalizeText(this.elements.searchQuery.value);
+        this.clearPendingSearch();
+        this.searchTimer = window.setTimeout(() => {
+            this.searchTimer = null;
+            void this.runSearch();
+        }, 150);
+    }
+    clearPendingSearch() {
+        if (this.searchTimer !== null) {
+            window.clearTimeout(this.searchTimer);
+            this.searchTimer = null;
+        }
+    }
+    async runSearch() {
+        await this.executeSafely("search", async () => {
+            await this.refreshView();
+        });
     }
     resetQueryInputs() {
         this.elements.searchQuery.value = "";

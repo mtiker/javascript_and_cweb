@@ -101,6 +101,7 @@ export class TaskManagerUI {
   private readonly doc: Document;
   private readonly elements: UIElements;
   private readonly state: UIState;
+  private searchTimer: number | null = null;
 
   constructor(service: TaskService, doc: Document = document) {
     this.service = service;
@@ -190,11 +191,27 @@ export class TaskManagerUI {
     });
 
     this.elements.clearQueryBtn.addEventListener("click", async () => {
+      this.clearPendingSearch();
       this.resetQueryInputs();
       this.state.query = defaultQueryOptions();
       await this.executeSafely("list", async () => {
         await this.refreshView();
       });
+    });
+
+    this.elements.searchQuery.addEventListener("input", () => {
+      this.queueSearch();
+    });
+
+    this.elements.searchQuery.addEventListener("keydown", async (event) => {
+      if (event.key !== "Enter") {
+        return;
+      }
+
+      event.preventDefault();
+      this.clearPendingSearch();
+      this.state.query.search = normalizeText(this.elements.searchQuery.value);
+      await this.runSearch();
     });
 
     this.elements.commandButtons.forEach((button) => {
@@ -266,9 +283,7 @@ export class TaskManagerUI {
         break;
       case "search":
         this.state.query.search = normalizeText(this.elements.searchQuery.value);
-        await this.executeSafely("search", async () => {
-          await this.refreshView();
-        });
+        await this.runSearch();
         break;
       case "sort":
         this.state.query.sort = this.readSortInputs();
@@ -361,6 +376,28 @@ export class TaskManagerUI {
       by: this.elements.sortBy.value as TaskSort["by"],
       direction: this.elements.sortDirection.value as TaskSort["direction"]
     };
+  }
+
+  private queueSearch(): void {
+    this.state.query.search = normalizeText(this.elements.searchQuery.value);
+    this.clearPendingSearch();
+    this.searchTimer = window.setTimeout(() => {
+      this.searchTimer = null;
+      void this.runSearch();
+    }, 150);
+  }
+
+  private clearPendingSearch(): void {
+    if (this.searchTimer !== null) {
+      window.clearTimeout(this.searchTimer);
+      this.searchTimer = null;
+    }
+  }
+
+  private async runSearch(): Promise<void> {
+    await this.executeSafely("search", async () => {
+      await this.refreshView();
+    });
   }
 
   private resetQueryInputs(): void {
