@@ -1130,6 +1130,55 @@
 	                            </table>
 	                        </div>
 	                    </article>
+
+                        <article class="card card--subtle">
+                            <h3>Treatment Types</h3>
+                            <p class="text-muted">These catalog items drive treatment-plan rows, appointment clinical entries, and finance pricing defaults.</p>
+                            <form id="treatment-type-form" class="form-grid form-grid--2">
+                                <label class="field" for="treatmentTypeName">
+                                    <span>Name</span>
+                                    <input id="treatmentTypeName" class="form-input" name="name" required maxlength="128" placeholder="Composite Filling">
+                                </label>
+                                <label class="field" for="treatmentTypeDuration">
+                                    <span>Default duration (minutes)</span>
+                                    <input id="treatmentTypeDuration" class="form-input" name="defaultDurationMinutes" type="number" min="1" max="600" required value="45">
+                                </label>
+                                <label class="field" for="treatmentTypeBasePrice">
+                                    <span>Base price</span>
+                                    <input id="treatmentTypeBasePrice" class="form-input" name="basePrice" type="number" min="0" step="0.01" required value="145">
+                                </label>
+                                <label class="field" for="treatmentTypeDescription">
+                                    <span>Description</span>
+                                    <textarea id="treatmentTypeDescription" class="form-textarea" name="description" maxlength="512" placeholder="Direct composite restoration for one or two surfaces."></textarea>
+                                </label>
+                                <div class="form-actions">
+                                    <button id="treatment-type-submit-btn" type="submit" class="btn btn--primary">Add treatment type</button>
+                                    <button id="treatment-type-cancel-btn" type="button" class="btn btn--ghost" hidden>Cancel edit</button>
+                                </div>
+                            </form>
+
+                            <div class="table-wrap">
+                                <table class="app-table app-table--resources">
+                                    <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Duration</th>
+                                        <th>Base price</th>
+                                        <th>Description</th>
+                                        <th class="column-id">ID</th>
+                                        <th class="text-right">Actions</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody id="treatment-types-body">
+                                    <tr>
+                                        <td colspan="6">
+                                            <div class="empty-state">No treatment types loaded.</div>
+                                        </td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </article>
 	                </div>
 
                 <article class="card card--subtle">
@@ -1189,6 +1238,31 @@
                 <p id="finance-summary" class="text-muted">Choose a patient to review plan, insurance, estimate, procedures, invoices, payments, and payment plans in one workflow.</p>
 
                 <div class="auth-grid">
+                    <article class="card card--subtle">
+                        <div class="section-head">
+                            <div>
+                                <h3>Plan builder</h3>
+                                <p class="text-muted">Build a draft treatment plan for the selected patient before you submit it for decision tracking.</p>
+                            </div>
+                            <div class="form-actions">
+                                <button id="finance-plan-reset-btn" class="btn btn--ghost btn--sm" type="button">Clear builder</button>
+                                <button id="finance-plan-add-item-btn" class="btn btn--ghost btn--sm" type="button">Add plan item</button>
+                            </div>
+                        </div>
+                        <form id="finance-plan-form" class="form-grid">
+                            <label class="field" for="financePlanDentistId">
+                                <span>Dentist (optional)</span>
+                                <select id="financePlanDentistId" class="form-select" name="dentistId">
+                                    <option value="">Unassigned dentist</option>
+                                </select>
+                            </label>
+                            <div id="finance-plan-items-editor" class="clinical-entry-stack"></div>
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn--primary">Create treatment plan</button>
+                            </div>
+                        </form>
+                    </article>
+
                     <article class="card card--subtle">
                         <div class="section-head">
                             <div>
@@ -1756,6 +1830,34 @@
         </label>
         <div class="clinical-entry__actions">
             <button class="btn btn--ghost btn--sm" data-installment-action="remove" type="button">Remove</button>
+        </div>
+    </div>
+</template>
+
+<template id="treatment-plan-item-template">
+    <div class="clinical-entry">
+        <label class="field">
+            <span>Treatment type</span>
+            <select class="form-select" data-plan-item-field="treatmentTypeId" required></select>
+        </label>
+        <label class="field">
+            <span>Sequence</span>
+            <input class="form-input" data-plan-item-field="sequence" type="number" min="1" max="500" required>
+        </label>
+        <label class="field">
+            <span>Urgency</span>
+            <select class="form-select" data-plan-item-field="urgency" required>
+                <option value="Low">Low</option>
+                <option value="Medium">Medium</option>
+                <option value="High">High</option>
+            </select>
+        </label>
+        <label class="field">
+            <span>Estimated price</span>
+            <input class="form-input" data-plan-item-field="estimatedPrice" type="number" min="0" step="0.01" required>
+        </label>
+        <div class="clinical-entry__actions">
+            <button class="btn btn--ghost btn--sm" data-plan-item-action="remove" type="button">Remove</button>
         </div>
     </div>
 </template>

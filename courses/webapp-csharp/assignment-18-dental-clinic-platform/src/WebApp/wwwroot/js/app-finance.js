@@ -57,7 +57,11 @@
             log("TREATMENT-PLAN/DECISION/SUCCESS", payload, data);
             showToast("Plan item decision saved.", "success");
             form.notes.value = "";
-            await refreshOpenPlanItems({ silentToast: true });
+            await refreshFinanceDecisions({
+                patientId: state.financePatientId,
+                silentToast: true,
+                trigger: form
+            });
         });
     }
 
@@ -127,7 +131,76 @@
             elements.estimatePatientSelect.value = patientId;
         }
 
+        resetFinancePlanForm();
+
         await refreshFinanceWorkspace({ patientId, silentToast: true, trigger: elements.financePatientSelect });
+    }
+
+    async function onFinancePlanCreateSubmit(event) {
+        event.preventDefault();
+        requireTenant();
+
+        const patientId = state.financePatientId || elements.financePatientSelect?.value || "";
+        if (!patientId) {
+            throw new Error("Select a patient context before creating a treatment plan.");
+        }
+
+        const itemRows = getFinancePlanItemRows();
+        if (itemRows.length === 0) {
+            throw new Error("Add at least one treatment-plan item.");
+        }
+
+        const form = event.currentTarget;
+        const payload = {
+            patientId,
+            dentistId: optional(form.dentistId.value),
+            items: itemRows.map((row) => {
+                const treatmentTypeId = row.querySelector('[data-plan-item-field="treatmentTypeId"]')?.value || "";
+                const sequence = Number(row.querySelector('[data-plan-item-field="sequence"]')?.value || 0);
+                const urgency = row.querySelector('[data-plan-item-field="urgency"]')?.value || "";
+                const estimatedPrice = Number(row.querySelector('[data-plan-item-field="estimatedPrice"]')?.value || 0);
+
+                if (!treatmentTypeId) {
+                    throw new Error("Select a treatment type for every plan item.");
+                }
+                if (!Number.isInteger(sequence) || sequence < 1) {
+                    throw new Error("Every plan item sequence must be at least 1.");
+                }
+                if (!urgency) {
+                    throw new Error("Select urgency for every plan item.");
+                }
+                if (!Number.isFinite(estimatedPrice) || estimatedPrice < 0) {
+                    throw new Error("Estimated price must be 0 or greater for every plan item.");
+                }
+
+                return {
+                    treatmentTypeId,
+                    sequence,
+                    urgency,
+                    estimatedPrice
+                };
+            })
+        };
+
+        await withBusy(form, async () => {
+            const plan = await apiRequest(`/api/v1/${state.companySlug}/treatmentplans`, {
+                method: "POST",
+                body: payload,
+                auth: true,
+                tag: "TREATMENT-PLAN/CREATE"
+            });
+
+            log("TREATMENT-PLAN/CREATE/SUCCESS", payload, plan);
+            showToast("Treatment plan created as draft.", "success");
+            resetFinancePlanForm();
+            await refreshTreatmentPlans({ silentErrors: true, trigger: form });
+            await refreshFinanceWorkspace({ patientId, silentToast: true, trigger: form });
+
+            if (elements.financePlanSelect instanceof HTMLSelectElement && plan?.id) {
+                elements.financePlanSelect.value = plan.id;
+                renderFinancePlanReview();
+            }
+        });
     }
 
     async function onFinancePlanSubmit() {
@@ -148,9 +221,39 @@
 
             showToast("Treatment plan submitted.", "success");
             await refreshTreatmentPlans({ silentErrors: true, trigger: elements.financePlanSubmitButton });
-            await refreshOpenPlanItems({ silentToast: true, trigger: elements.financePlanSubmitButton });
-            await refreshFinanceWorkspace({ patientId: state.financePatientId, silentToast: true, trigger: elements.financePlanSubmitButton });
+            await refreshFinanceDecisions({
+                patientId: state.financePatientId,
+                silentToast: true,
+                trigger: elements.financePlanSubmitButton
+            });
         });
+    }
+
+    async function refreshFinanceDecisions(options = {}) {
+        const {
+            trigger = elements.refreshPlanItemsButton,
+            patientId = state.financePatientId || elements.financePatientSelect?.value || "",
+            silentToast = false,
+            silentErrors = false
+        } = options;
+
+        await refreshOpenPlanItems({ trigger, silentToast: true, silentErrors });
+        await refreshTreatmentPlans({ silentErrors, trigger });
+
+        if (patientId) {
+            await refreshFinanceWorkspace({
+                patientId,
+                trigger,
+                silentToast: true,
+                silentErrors
+            });
+        } else {
+            renderFinancePlanReview();
+        }
+
+        if (!silentToast) {
+            showToast("Decision queue refreshed.", "info");
+        }
     }
 
     async function onFinancePolicySubmit(event) {
@@ -236,7 +339,7 @@
         event.preventDefault();
         requireTenant();
 
-        const invoiceId = state.financeSelectedInvoiceId;
+        const invoiceId = state.financeInvoiceDetail?.id || state.financeSelectedInvoiceId;
         if (!invoiceId) {
             throw new Error("Select an invoice first.");
         }
@@ -474,6 +577,7 @@
             return;
         }
 
+        state.financeSelectedInvoiceId = invoiceId;
         const trigger = options.trigger || elements.refreshFinanceButton || elements.financeInvoicesBody;
         const detail = await withBusy(trigger, async () => {
             return await apiRequest(`/api/v1/${state.companySlug}/invoices/${invoiceId}`, {
@@ -611,6 +715,7 @@
     function renderFinanceWorkspace(workspace) {
         state.financeWorkspace = workspace || null;
         syncFinancePatientSelect();
+        syncFinancePlanBuilder();
 
         if (!workspace?.patient) {
             state.financeSelectedInvoiceId = "";
@@ -622,6 +727,7 @@
 
             setSelectOptions(elements.financePlanSelect, [], "Select plan");
             setSelectOptions(elements.financePolicyInsurancePlanSelect, [], "Select insurance plan");
+            syncFinancePlanBuilder();
 
             if (elements.costEstimateForm instanceof HTMLFormElement) {
                 elements.costEstimateForm.patientId.value = state.financePatientId || "";
@@ -651,6 +757,7 @@
         const procedures = Array.isArray(workspace.procedures) ? workspace.procedures : [];
         const invoices = Array.isArray(workspace.invoices) ? workspace.invoices : [];
         const insurancePlans = Array.isArray(workspace.insurancePlans) ? workspace.insurancePlans : [];
+        syncFinancePlanBuilder();
 
         if (elements.financeSummary) {
             elements.financeSummary.textContent = `${patientName}: ${plans.length} plan(s), ${policies.length} policy/policies, ${estimates.length} estimate(s), ${procedures.length} procedure(s), ${invoices.length} invoice(s).`;
@@ -793,6 +900,148 @@
             row.appendChild(createContentCell(createStatusBadge(item.decision || "Pending")));
             elements.financePlanItemsBody.appendChild(row);
         });
+    }
+
+    function getFinancePlanItemRows() {
+        return Array.from(elements.financePlanItemsEditor?.querySelectorAll(".clinical-entry") ?? []);
+    }
+
+    function updateFinancePlanItemRemoveButtons() {
+        const rows = getFinancePlanItemRows();
+        rows.forEach((row) => {
+            const removeButton = row.querySelector('[data-plan-item-action="remove"]');
+            if (removeButton instanceof HTMLButtonElement) {
+                removeButton.disabled = rows.length <= 1;
+            }
+        });
+    }
+
+    function renumberFinancePlanItems() {
+        getFinancePlanItemRows().forEach((row, index) => {
+            const sequenceInput = row.querySelector('[data-plan-item-field="sequence"]');
+            if (sequenceInput instanceof HTMLInputElement && !sequenceInput.dataset.userEdited) {
+                sequenceInput.value = String(index + 1);
+            }
+        });
+    }
+
+    function syncFinancePlanBuilder() {
+        setSelectOptions(
+            elements.financePlanDentistSelect,
+            state.dentists.map((dentist) => ({
+                value: dentist.id,
+                label: dentist.displayName || dentist.licenseNumber || dentist.id
+            })),
+            "Unassigned dentist"
+        );
+
+        getFinancePlanItemRows().forEach((row) => {
+            populateFinancePlanItemRow(row, {
+                treatmentTypeId: row.querySelector('[data-plan-item-field="treatmentTypeId"]')?.value || "",
+                sequence: row.querySelector('[data-plan-item-field="sequence"]')?.value || "",
+                urgency: row.querySelector('[data-plan-item-field="urgency"]')?.value || "Medium",
+                estimatedPrice: row.querySelector('[data-plan-item-field="estimatedPrice"]')?.value || ""
+            });
+        });
+    }
+
+    function addFinancePlanItemRow(initialValues = {}) {
+        if (!elements.financePlanItemsEditor || !(elements.treatmentPlanItemTemplate instanceof HTMLTemplateElement)) {
+            return;
+        }
+
+        const row = elements.treatmentPlanItemTemplate.content.firstElementChild?.cloneNode(true);
+        if (!(row instanceof HTMLElement)) {
+            return;
+        }
+
+        const removeButton = row.querySelector('[data-plan-item-action="remove"]');
+        const treatmentTypeSelect = row.querySelector('[data-plan-item-field="treatmentTypeId"]');
+        const sequenceInput = row.querySelector('[data-plan-item-field="sequence"]');
+        const priceInput = row.querySelector('[data-plan-item-field="estimatedPrice"]');
+
+        if (removeButton instanceof HTMLButtonElement) {
+            removeButton.addEventListener("click", () => {
+                row.remove();
+                if (getFinancePlanItemRows().length === 0) {
+                    addFinancePlanItemRow();
+                }
+                renumberFinancePlanItems();
+                updateFinancePlanItemRemoveButtons();
+            });
+        }
+
+        if (treatmentTypeSelect instanceof HTMLSelectElement && priceInput instanceof HTMLInputElement) {
+            treatmentTypeSelect.addEventListener("change", () => {
+                const treatmentType = state.treatmentTypes.find((item) => item.id === treatmentTypeSelect.value);
+                if (treatmentType) {
+                    priceInput.value = formatMoney(treatmentType.basePrice ?? 0);
+                }
+            });
+        }
+
+        if (sequenceInput instanceof HTMLInputElement) {
+            sequenceInput.addEventListener("input", () => {
+                sequenceInput.dataset.userEdited = "true";
+            });
+        }
+
+        elements.financePlanItemsEditor.appendChild(row);
+        populateFinancePlanItemRow(row, {
+            sequence: getFinancePlanItemRows().length,
+            urgency: "Medium",
+            ...initialValues
+        });
+        renumberFinancePlanItems();
+        updateFinancePlanItemRemoveButtons();
+    }
+
+    function populateFinancePlanItemRow(row, initialValues = {}) {
+        const treatmentTypeSelect = row.querySelector('[data-plan-item-field="treatmentTypeId"]');
+        const sequenceInput = row.querySelector('[data-plan-item-field="sequence"]');
+        const urgencySelect = row.querySelector('[data-plan-item-field="urgency"]');
+        const priceInput = row.querySelector('[data-plan-item-field="estimatedPrice"]');
+
+        setSelectOptions(
+            treatmentTypeSelect,
+            state.treatmentTypes.map((type) => ({
+                value: type.id,
+                label: `${type.name || "Treatment"}${type.basePrice !== undefined ? ` - ${formatMoney(type.basePrice)}` : ""}`
+            })),
+            "Select treatment"
+        );
+
+        if (treatmentTypeSelect instanceof HTMLSelectElement) {
+            treatmentTypeSelect.value = initialValues.treatmentTypeId || treatmentTypeSelect.value;
+        }
+        if (sequenceInput instanceof HTMLInputElement) {
+            sequenceInput.value = initialValues.sequence ? String(initialValues.sequence) : sequenceInput.value || "";
+        }
+        if (urgencySelect instanceof HTMLSelectElement) {
+            urgencySelect.value = initialValues.urgency || urgencySelect.value || "Medium";
+        }
+        if (priceInput instanceof HTMLInputElement) {
+            priceInput.value = initialValues.estimatedPrice !== undefined && initialValues.estimatedPrice !== null && initialValues.estimatedPrice !== ""
+                ? formatMoney(initialValues.estimatedPrice)
+                : priceInput.value;
+        }
+
+        if (treatmentTypeSelect instanceof HTMLSelectElement && priceInput instanceof HTMLInputElement && !priceInput.value) {
+            const treatmentType = state.treatmentTypes.find((item) => item.id === treatmentTypeSelect.value);
+            if (treatmentType) {
+                priceInput.value = formatMoney(treatmentType.basePrice ?? 0);
+            }
+        }
+    }
+
+    function resetFinancePlanForm() {
+        if (!(elements.financePlanForm instanceof HTMLFormElement)) {
+            return;
+        }
+
+        elements.financePlanForm.reset();
+        clearElement(elements.financePlanItemsEditor);
+        addFinancePlanItemRow();
     }
 
     function fillFinancePolicyForm(policy) {
@@ -972,6 +1221,7 @@
                 invoice.invoiceNumber || "Invoice",
                 `Due ${formatDateTime(invoice.dueDateUtc)}`,
                 () => {
+                    state.financeSelectedInvoiceId = invoice.id || "";
                     void refreshFinanceInvoiceDetail({
                         invoiceId: invoice.id,
                         silentToast: true,
@@ -994,6 +1244,7 @@
         state.financeInvoiceDetail = detail || null;
 
         if (!detail) {
+            state.financeSelectedInvoiceId = "";
             if (elements.financeInvoiceDetailSummary) {
                 elements.financeInvoiceDetailSummary.textContent = "Pick an invoice row to inspect lines, payments, and payment plan installments.";
             }
@@ -1005,6 +1256,11 @@
             if (elements.financePaymentForm instanceof HTMLFormElement) {
                 elements.financePaymentForm.reset();
                 elements.financePaymentForm.paidAtLocal.value = formatDateTimeLocalInput(new Date());
+                elements.financePaymentForm.querySelectorAll("button, input, select, textarea").forEach((control) => {
+                    if (control instanceof HTMLElement) {
+                        control.disabled = true;
+                    }
+                });
             }
 
             resetFinancePaymentPlanForm();
@@ -1067,6 +1323,11 @@
         }
 
         if (elements.financePaymentForm instanceof HTMLFormElement) {
+            elements.financePaymentForm.querySelectorAll("button, input, select, textarea").forEach((control) => {
+                if (control instanceof HTMLElement) {
+                    control.disabled = Number(detail.balanceAmount) <= 0;
+                }
+            });
             elements.financePaymentForm.amount.value = Number(detail.balanceAmount) > 0 ? formatMoney(detail.balanceAmount) : "";
             elements.financePaymentForm.paidAtLocal.value = formatDateTimeLocalInput(new Date());
             elements.financePaymentForm.reference.value = "";
@@ -1166,7 +1427,7 @@
         return state.treatmentPlans
             .filter((plan) => plan.patientId === patientId)
             .flatMap((plan) => (Array.isArray(plan.items) ? plan.items : [])
-                .filter((item) => item.decision === "Accepted" || item.decision === "Deferred")
+                .filter((item) => isRecordablePlanItemDecision(item.decision))
                 .map((item) => ({
                     ...item,
                     planId: plan.id,
@@ -1179,6 +1440,11 @@
                 }
                 return Number(left.sequence || 0) - Number(right.sequence || 0);
             });
+    }
+
+    function isRecordablePlanItemDecision(decision) {
+        const normalizedDecision = String(decision || "").trim().toLowerCase();
+        return normalizedDecision === "accepted" || normalizedDecision === "deferred";
     }
 
     function getCurrentAppointmentClinicalPatientId() {
@@ -1408,11 +1674,13 @@
     }
 
     Object.assign(app, {
+        onFinancePlanCreateSubmit,
         onPlanDecisionSubmit,
         onCostEstimateSubmit,
         onLegalEstimateSubmit,
         onFinancePatientChange,
         onFinancePlanSubmit,
+        refreshFinanceDecisions,
         onFinancePolicySubmit,
         onFinanceInvoiceGenerateSubmit,
         onFinancePaymentSubmit,
@@ -1422,12 +1690,15 @@
         refreshOpenPlanItems,
         refreshFinanceWorkspace,
         renderOpenPlanItems,
+        resetFinancePlanForm,
+        syncFinancePlanBuilder,
         syncFinancePatientSelect,
         renderFinanceWorkspace,
         renderFinancePlanReview,
         renderFinanceInvoiceDetail,
         resetFinancePolicyForm,
         addFinanceInstallmentRow,
+        addFinancePlanItemRow,
         resetFinancePaymentPlanForm,
         renderAppointmentClinicalSelectOptions,
         resetAppointmentClinicalForm,

@@ -46,6 +46,9 @@ See lahendus on multi-tenant SaaS platvorm hambakliinikutele. Iga kliinik tööt
 ### UI ja infrastruktuur
 
 - staatiline demo-UI `wwwroot` all, route'idega `/app/*`
+- Finance workspace demo-UI-s saab patsiendi kontekstis nüüd koostada raviplaani drafti, selle submit'ida ja sama vaate sees patsiendi otsuseid värskendada
+- Appointmentide `Record worked teeth` vorm sünkroniseerib end raviplaani otsustega ning lubab valida sama patsiendi accepted/deferred plan item'e
+- Resources vaates on demo-UI-s nüüd eraldi treatment type catalog, mida kasutavad raviplaanid, appointment clinical entries ja finance hinnastamine
 - browser refresh tugi `MapFallbackToFile("/app/{*path:nonfile}", "index.html")`
 - global exception middleware + `ProblemDetails`
 - Swagger + API versioning

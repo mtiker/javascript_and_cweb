@@ -526,11 +526,15 @@
         toggleFormControls(elements.dentistForm, canManageResources);
         toggleFormControls(elements.dentistProfileForm, canManageResources);
         toggleFormControls(elements.treatmentRoomForm, canManageResources);
+        toggleFormControls(elements.treatmentTypeForm, canRecordPlanDecisions);
         if (elements.dentistProfileRefreshButton) {
             elements.dentistProfileRefreshButton.disabled = !canAccessResources;
         }
         if (elements.dentistProfileDeleteButton) {
             elements.dentistProfileDeleteButton.disabled = !canManageResources;
+        }
+        if (elements.treatmentTypeCancelButton) {
+            elements.treatmentTypeCancelButton.disabled = !canRecordPlanDecisions;
         }
 
         if (elements.refreshAppointmentsButton) {
@@ -545,6 +549,7 @@
         if (elements.refreshPlanItemsButton) {
             elements.refreshPlanItemsButton.disabled = !canRecordPlanDecisions;
         }
+        toggleFormControls(elements.financePlanForm, canRecordPlanDecisions);
         toggleFormControls(elements.planDecisionForm, canRecordPlanDecisions);
         toggleFormControls(elements.costEstimateForm, canRecordPlanDecisions);
         toggleFormControls(elements.legalEstimateForm, canRecordPlanDecisions);
@@ -559,6 +564,12 @@
         }
         if (elements.financePolicyResetButton) {
             elements.financePolicyResetButton.disabled = !canRecordPlanDecisions;
+        }
+        if (elements.financePlanResetButton) {
+            elements.financePlanResetButton.disabled = !canRecordPlanDecisions;
+        }
+        if (elements.financePlanAddItemButton) {
+            elements.financePlanAddItemButton.disabled = !canRecordPlanDecisions;
         }
         if (elements.financeAddInstallmentButton) {
             elements.financeAddInstallmentButton.disabled = !canRecordPlanDecisions;

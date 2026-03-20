@@ -70,6 +70,7 @@
 	        selectedPatientToothNumber: null,
 	        dentistProfile: null,
 	        editingTreatmentRoomId: null,
+            editingTreatmentTypeId: null,
 	        dentists: [],
         dentistDirectory: {},
         treatmentRooms: [],
@@ -170,15 +171,19 @@
 	        dentistProfileAppointmentFilter: document.getElementById("dentistProfileAppointmentFilter"),
 	        treatmentRoomSubmitButton: document.getElementById("treatment-room-submit-btn"),
 	        treatmentRoomCancelButton: document.getElementById("treatment-room-cancel-btn"),
+        treatmentTypeSubmitButton: document.getElementById("treatment-type-submit-btn"),
+        treatmentTypeCancelButton: document.getElementById("treatment-type-cancel-btn"),
 	        onboardingForm: document.getElementById("onboarding-form"),
         loginForm: document.getElementById("login-form"),
         switchForm: document.getElementById("switch-form"),
         forgotPasswordForm: document.getElementById("forgot-password-form"),
         resetPasswordForm: document.getElementById("reset-password-form"),
         patientForm: document.getElementById("patient-form"),
-        dentistForm: document.getElementById("dentist-form"),
-        treatmentRoomForm: document.getElementById("treatment-room-form"),
+	        dentistForm: document.getElementById("dentist-form"),
+	        treatmentRoomForm: document.getElementById("treatment-room-form"),
+        treatmentTypeForm: document.getElementById("treatment-type-form"),
         appointmentForm: document.getElementById("appointment-form"),
+        financePlanForm: document.getElementById("finance-plan-form"),
         planDecisionForm: document.getElementById("plan-decision-form"),
         costEstimateForm: document.getElementById("cost-estimate-form"),
         legalEstimateForm: document.getElementById("legal-estimate-form"),
@@ -192,6 +197,7 @@
         subscriptionPill: document.getElementById("subscription-pill"),
 	        dentistsBody: document.getElementById("dentists-body"),
 	        treatmentRoomsBody: document.getElementById("treatment-rooms-body"),
+        treatmentTypesBody: document.getElementById("treatment-types-body"),
 	        appointmentsBody: document.getElementById("appointments-body"),
 	        appointmentsSummary: document.getElementById("appointments-summary"),
 	        appointmentSearch: document.getElementById("appointmentSearch"),
@@ -214,12 +220,16 @@
         appointmentDentistSelect: document.getElementById("appointmentDentistId"),
         appointmentRoomSelect: document.getElementById("appointmentRoomId"),
 	        planItemSelection: document.getElementById("planItemSelection"),
-	        estimatePatientSelect: document.getElementById("estimatePatientId"),
+        estimatePatientSelect: document.getElementById("estimatePatientId"),
         financePatientSelect: document.getElementById("financePatientId"),
         financeSummary: document.getElementById("finance-summary"),
+        financePlanDentistSelect: document.getElementById("financePlanDentistId"),
         financePlanSelect: document.getElementById("financePlanId"),
         financePlanStatus: document.getElementById("financePlanStatus"),
+        financePlanResetButton: document.getElementById("finance-plan-reset-btn"),
+        financePlanAddItemButton: document.getElementById("finance-plan-add-item-btn"),
         financePlanSubmitButton: document.getElementById("finance-plan-submit-btn"),
+        financePlanItemsEditor: document.getElementById("finance-plan-items-editor"),
         financePlanItemsBody: document.getElementById("finance-plan-items-body"),
         financePolicyForm: document.getElementById("finance-policy-form"),
         financePolicyResetButton: document.getElementById("finance-policy-reset-btn"),
@@ -239,6 +249,7 @@
         financeInstallmentsBody: document.getElementById("finance-installments-body"),
         financeAddInstallmentButton: document.getElementById("finance-add-installment-btn"),
         paymentPlanInstallmentTemplate: document.getElementById("payment-plan-installment-template"),
+        treatmentPlanItemTemplate: document.getElementById("treatment-plan-item-template"),
         companyUserForm: document.getElementById("company-user-form"),
         companyRoleSwitchForm: document.getElementById("company-role-switch-form"),
         companyRoleSwitchSelect: document.getElementById("companyRoleSwitchRole"),
@@ -278,8 +289,10 @@
         bindAsyncSubmit(elements.dentistForm, onDentistCreateSubmit);
         bindAsyncSubmit(elements.dentistProfileForm, onDentistProfileSubmit);
         bindAsyncSubmit(elements.treatmentRoomForm, onTreatmentRoomCreateSubmit);
+        bindAsyncSubmit(elements.treatmentTypeForm, onTreatmentTypeSubmit);
         bindAsyncSubmit(elements.appointmentForm, onAppointmentCreateSubmit);
         bindAsyncSubmit(elements.appointmentClinicalForm, onAppointmentClinicalSubmit);
+        bindAsyncSubmit(elements.financePlanForm, onFinancePlanCreateSubmit);
 	        bindAsyncSubmit(elements.planDecisionForm, onPlanDecisionSubmit);
 	        bindAsyncSubmit(elements.costEstimateForm, onCostEstimateSubmit);
 	        bindAsyncSubmit(elements.legalEstimateForm, onLegalEstimateSubmit);
@@ -323,14 +336,23 @@
         bindAsyncClick(elements.refreshResourcesButton, async () => {
             await refreshResources({ trigger: elements.refreshResourcesButton });
         });
+        bindSyncClick(elements.treatmentTypeCancelButton, () => {
+            resetTreatmentTypeForm();
+        });
         bindAsyncClick(elements.refreshAppointmentsButton, async () => {
             await refreshAppointments({ trigger: elements.refreshAppointmentsButton });
         });
 	        bindAsyncClick(elements.refreshPlanItemsButton, async () => {
-	            await refreshOpenPlanItems({ trigger: elements.refreshPlanItemsButton });
+	            await refreshFinanceDecisions({ trigger: elements.refreshPlanItemsButton });
 	        });
         bindAsyncClick(elements.refreshFinanceButton, async () => {
             await refreshFinanceWorkspace({ trigger: elements.refreshFinanceButton });
+        });
+        bindSyncClick(elements.financePlanResetButton, () => {
+            resetFinancePlanForm();
+        });
+        bindSyncClick(elements.financePlanAddItemButton, () => {
+            addFinancePlanItemRow();
         });
         bindAsyncClick(elements.financePlanSubmitButton, async () => {
             await onFinancePlanSubmit();
@@ -604,6 +626,7 @@
         state.patientProfile = null;
         state.selectedPatientToothNumber = null;
         state.dentistProfile = null;
+        state.editingTreatmentTypeId = null;
         state.dentists = [];
         state.dentistDirectory = {};
         state.treatmentRooms = [];
@@ -1061,13 +1084,16 @@
 	        onPatientCreateSubmit,
 	        onPatientProfileSubmit,
 	        onTreatmentRoomCreateSubmit,
+        onTreatmentTypeSubmit,
 	        onAppointmentCreateSubmit,
 	        onAppointmentClinicalSubmit,
+	        onFinancePlanCreateSubmit,
 	        onPlanDecisionSubmit,
 	        onCostEstimateSubmit,
 	        onLegalEstimateSubmit,
 	        onFinancePatientChange,
 	        onFinancePlanSubmit,
+	        refreshFinanceDecisions,
 	        onFinancePolicySubmit,
 	        onFinanceInvoiceGenerateSubmit,
 	        onFinancePaymentSubmit,
@@ -1114,18 +1140,22 @@
 	        renderPatientProfile,
 	        renderPatients,
 	        renderTreatmentRooms,
+        renderTreatmentTypes,
 	        renderOpenPlanItems,
+	        resetFinancePlanForm,
 	        syncFinancePatientSelect,
 	        renderFinanceWorkspace,
 	        renderFinancePlanReview,
 	        renderFinanceInvoiceDetail,
 	        resetFinancePolicyForm,
 	        addFinanceInstallmentRow,
+	        addFinancePlanItemRow,
 	        resetFinancePaymentPlanForm,
 	        renderAppointmentClinicalSelectOptions,
 	        renderLegalEstimateOutput,
 	        resetAppointmentClinicalForm,
 	        resetTreatmentRoomForm,
+        resetTreatmentTypeForm,
 	        addAppointmentClinicalEntryRow,
 	        renderCompanyUsers,
 	        renderCompanySettings,
@@ -1159,6 +1189,7 @@
 	    renderDentists([]);
 	    renderDentistProfile(null);
 	    renderTreatmentRooms([]);
+        renderTreatmentTypes([]);
 	    renderAppointments([]);
 	    renderOpenPlanItems([]);
 	    renderCompanyUsers([]);
@@ -1170,6 +1201,8 @@
 	    renderBillingSubscriptions([]);
 	    renderBillingInvoices([]);
 	    resetAppointmentClinicalForm();
+        resetTreatmentTypeForm();
+	    resetFinancePlanForm();
 	    resetFinancePolicyForm();
 	    resetFinancePaymentPlanForm();
 	    renderFinanceWorkspace(null);

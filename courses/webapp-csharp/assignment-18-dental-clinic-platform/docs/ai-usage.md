@@ -58,6 +58,31 @@ AI-d kasutati:
   - Tulemus: lisati `docs/app-dto-guide.md` ning README dokumentatsiooni loendisse viide uuele juhendile.
   - Kasitsi muudatused: kontrolliti juhendi sisu vastu tegelikku `App.DTO` projekti struktuuri, controllerite kasutust ja valideerimismustreid.
 
+- 2026-03-20 / finance UI raviplaani builder
+  - Paluti: lisada demo-UI-sse patsiendile treatment plani loomine ning parandada Finance vaate `Refresh decisions` viga.
+  - Tulemus: lisati Finance workspace'i raviplaani drafti koostamise vorm mitme itemi toega, ühendati see olemasoleva `treatmentplans` create endpointiga ning muudeti decisions refresh nii, et see sünkroniseerib ka sama patsiendi finance workspace'i.
+  - Kasitsi muudatused: muudatus kontrolliti `node --check`, `dotnet build` ja `dotnet test dental-clinic-platform.slnx --no-build` abil.
+
+- 2026-03-20 / invoice payment flow hardening
+  - Paluti: parandada olukord, kus invoice payment submit ei töötanud usaldusväärselt.
+  - Tulemus: finance UI hakkab valitud invoice id-d salvestama kohe invoice klikil ning payment submit kasutab detailvaate või state'i kinnitatud invoice konteksti.
+  - Kasitsi muudatused: kontrolliti JavaScripti süntaksit ning jooksutati uuesti build/testid.
+
+- 2026-03-20 / treatment type UI resources vaates
+  - Paluti: lahendada olukord, kus treatment plan itemite loomiseks vajalikud treatment type flow'd olid backendis olemas, kuid demo-UI-s puudusid.
+  - Tulemus: Resources vaates lisati treatment type create/edit/delete vorm ja tabel ning need seoti appointment/finance valikute sünkroniseerimisega.
+  - Kasitsi muudatused: kontrolliti frontend wiring üle ning verifitseeriti muudatus build/testidega.
+
+- 2026-03-20 / refresh decisions EF translation fix
+  - Paluti: parandada `Refresh decisions` viga, kus EF Core ei suutnud `OpenPlanItemResult.PatientName` järgi sortivat LINQ päringut SQL-i tõlkida.
+  - Tulemus: avatud plan itemite sortimine viidi DTO/record projektsioonist ettepoole anonüümse SQL-transleeritava kujuni ning `OpenPlanItemResult` mapitakse nüüd pärast `ToListAsync` in-memory.
+  - Kasitsi muudatused: unit testid jooksid edukalt; täis build oli lokaalselt blokeeritud, sest `WebApp` protsess hoidis assembly't lukus.
+
+- 2026-03-20 / record work plan item selection sync
+  - Paluti: teha nii, et appointmentide `Record worked teeth` vormis saaks valida raviplaani plan item'i ka pärast patsiendi otsuse salvestamist.
+  - Tulemus: `Refresh decisions` voog värskendab nüüd lisaks consent queue'le ja finance workspace'ile ka `treatmentPlans` state'i, mille pealt `Record worked teeth` plan item dropdown ehitatakse; accepted/deferred filter muudeti case-insensitive'iks.
+  - Kasitsi muudatused: kontrolliti muudetud `app-finance.js` faili süntaksit `node --check` abil.
+
 ## Promptide logi (kokkuvõte)
 
 - Master prompt: ehitada production-ready SaaS C#/.NET lahendus, järgides näidisprojekti stiili, loengumaterjale ja antud väljundstruktuuri.
@@ -71,6 +96,9 @@ AI-d kasutati:
 
 - Alam-prompt: korduvad “JÄTKA” käsud.
   - Mõju: lisati järgmised funktsionaalsed viilud (Patient/Appointment, Impersonation).
+
+- Alam-prompt: lisada UI-sse raviplaani loomine ja parandada refresh behavior Finance vaates.
+  - Mõju: valmis raviaplaani builder ning värskenduse loogika muudeti sama patsiendi konteksti suhtes järjepidevaks.
 
 ## Otsuste logi
 
@@ -118,6 +146,15 @@ AI-d kasutati:
 
 15. API-first backendile lisati eraldi demo-web UI `wwwroot` all.
 - Põhjus: hindamisel ja esitlusel on vaja kohe kasutatavat brauseri vaadet, mitte ainult Swaggerit.
+
+16. Finance workspace seoti raviplaani loomisega otse UI tasemel.
+- Põhjus: olemasolev backend toetas create flow'd, kuid demo-UI ei võimaldanud seda patsiendi töövoos kasutada.
+
+17. Plan decision refresh värskendab nüüd lisaks consent queue'le ka valitud patsiendi finance workspace'i.
+- Põhjus: sama vaate andmed peavad pärast plaani submit'i või otsuse muutmist jääma sünkrooni ega tohi jätta kasutajat vigase või vananenud seisuga.
+
+18. Plan decision refresh värskendab nüüd ka appointment clinical vormi jaoks kasutatavat treatment plan state'i.
+- Põhjus: `Record worked teeth` dropdown peab kohe pärast patsiendi otsust näitama valitavaid accepted/deferred plan item'e, ilma et kasutaja peaks eraldi täisvärskendust tegema.
 
 ## Riskid ja kontroll
 

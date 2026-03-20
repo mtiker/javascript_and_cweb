@@ -86,6 +86,12 @@
         }
     }
 
+    function syncFinancePlanBuilder() {
+        if (typeof app.syncFinancePlanBuilder === "function") {
+            app.syncFinancePlanBuilder();
+        }
+    }
+
     async function refreshAppointments(options) {
         if (typeof app.refreshAppointments === "function") {
             await app.refreshAppointments(options);
@@ -267,6 +273,67 @@
         await refreshTreatmentRooms({ silentToast: true });
     }
 
+    async function onTreatmentTypeSubmit(event) {
+        event.preventDefault();
+        requireTenant();
+
+        const form = event.currentTarget;
+        const treatmentTypeId = state.editingTreatmentTypeId;
+        const payload = {
+            name: form.name.value.trim(),
+            defaultDurationMinutes: Number(form.defaultDurationMinutes.value),
+            basePrice: Number(form.basePrice.value),
+            description: optional(form.description.value)
+        };
+
+        await withBusy(form, async () => {
+            const isEditing = Boolean(treatmentTypeId);
+            const data = await apiRequest(`/api/v1/${state.companySlug}/treatmenttypes${isEditing ? `/${treatmentTypeId}` : ""}`, {
+                method: isEditing ? "PUT" : "POST",
+                body: payload,
+                auth: true,
+                tag: isEditing ? "TREATMENT-TYPE/UPDATE" : "TREATMENT-TYPE/CREATE"
+            });
+
+            log(isEditing ? "TREATMENT-TYPE/UPDATE/SUCCESS" : "TREATMENT-TYPE/CREATE/SUCCESS", payload, data);
+            showToast(isEditing ? "Treatment type updated." : "Treatment type added.", "success");
+            resetTreatmentTypeForm();
+            await refreshTreatmentTypes({ silentErrors: true, trigger: form });
+        });
+    }
+
+    async function onTreatmentTypeDelete(treatmentTypeId) {
+        requireTenant();
+
+        const treatmentType = state.treatmentTypes.find((item) => item.id === treatmentTypeId) || null;
+        if (!treatmentType?.id) {
+            throw new Error("Select a treatment type before deleting.");
+        }
+
+        const treatmentTypeLabel = treatmentType.name || "this treatment type";
+        const confirmed = window.confirm(`Delete ${treatmentTypeLabel}?`);
+        if (!confirmed) {
+            return;
+        }
+
+        await withBusy(elements.treatmentTypeForm || elements.treatmentTypesBody, async () => {
+            await apiRequest(`/api/v1/${state.companySlug}/treatmenttypes/${treatmentType.id}`, {
+                method: "DELETE",
+                auth: true,
+                tag: "TREATMENT-TYPE/DELETE"
+            });
+
+            log("TREATMENT-TYPE/DELETE/SUCCESS", { id: treatmentType.id }, { message: "Deleted" });
+            showToast(`Deleted ${treatmentTypeLabel}.`, "success");
+        });
+
+        if (state.editingTreatmentTypeId === treatmentType.id) {
+            resetTreatmentTypeForm();
+        }
+
+        await refreshTreatmentTypes({ silentErrors: true, trigger: elements.treatmentTypeForm || elements.treatmentTypesBody });
+    }
+
     async function refreshTreatmentTypes(options = {}) {
         requireTenant();
 
@@ -288,10 +355,14 @@
 
             state.treatmentTypes = types;
             refreshAppointmentClinicalOptions();
+            renderTreatmentTypes(types);
+            syncFinancePlanBuilder();
         } catch (error) {
             if (silentErrors) {
                 state.treatmentTypes = [];
                 refreshAppointmentClinicalOptions();
+                renderTreatmentTypes([]);
+                syncFinancePlanBuilder();
                 return;
             }
 
@@ -322,6 +393,7 @@
             renderDentists([]);
             renderDentistProfile(null);
             renderTreatmentRooms([]);
+            renderTreatmentTypes([]);
             rerenderAppointments();
             renderFinanceWorkspace(null);
             renderFinanceInvoiceDetail(null);
@@ -332,7 +404,6 @@
         }
 
         await refreshResources({ silentToast: true, silentErrors: true, trigger: options.trigger });
-        await refreshTreatmentTypes({ silentErrors: true, trigger: options.trigger });
         await refreshAppointments({ silentToast: true, silentErrors: true, trigger: options.trigger });
         await refreshTreatmentPlans({ silentErrors: true, trigger: options.trigger });
 
@@ -371,6 +442,7 @@
 
         await refreshDentists({ trigger, silentToast: true, silentErrors });
         await refreshTreatmentRooms({ trigger, silentToast: true, silentErrors });
+        await refreshTreatmentTypes({ trigger, silentErrors });
 
         if (!silentToast) {
             showToast("Clinical resources refreshed.", "info");
@@ -597,6 +669,67 @@
         syncAppointmentSelectOptions();
     }
 
+    function renderTreatmentTypes(types) {
+        if (!elements.treatmentTypesBody) {
+            return;
+        }
+
+        state.treatmentTypes = Array.isArray(types) ? types : [];
+        clearElement(elements.treatmentTypesBody);
+
+        if (state.treatmentTypes.length === 0) {
+            if (state.editingTreatmentTypeId) {
+                resetTreatmentTypeForm();
+            }
+            renderTreatmentTypesEmptyState();
+            syncFinancePlanBuilder();
+            return;
+        }
+
+        const canManageTreatmentTypes = canManageTreatmentTypesUi();
+
+        state.treatmentTypes.forEach((treatmentType) => {
+            const row = document.createElement("tr");
+            row.appendChild(createCell(treatmentType.name || "-"));
+            row.appendChild(createCell(`${treatmentType.defaultDurationMinutes ?? 0} min`));
+            row.appendChild(createCell((Number(treatmentType.basePrice) || 0).toFixed(2)));
+            row.appendChild(createCell(treatmentType.description || "-"));
+            row.appendChild(createCell(treatmentType.id || "-", "cell--id"));
+
+            const actionsCell = createCell("");
+            actionsCell.classList.add("text-right", "table-actions");
+
+            const editButton = document.createElement("button");
+            editButton.type = "button";
+            editButton.className = "btn btn--secondary btn--sm";
+            editButton.textContent = "Edit";
+            editButton.disabled = !canManageTreatmentTypes;
+            editButton.addEventListener("click", () => {
+                populateTreatmentTypeForm(treatmentType);
+            });
+            actionsCell.appendChild(editButton);
+
+            const deleteButton = document.createElement("button");
+            deleteButton.type = "button";
+            deleteButton.className = "btn btn--destructive btn--sm";
+            deleteButton.textContent = "Delete";
+            deleteButton.disabled = !canManageTreatmentTypes;
+            deleteButton.addEventListener("click", () => {
+                void onTreatmentTypeDelete(treatmentType.id);
+            });
+            actionsCell.appendChild(deleteButton);
+
+            row.appendChild(actionsCell);
+            elements.treatmentTypesBody.appendChild(row);
+        });
+
+        if (state.editingTreatmentTypeId && !state.treatmentTypes.some((item) => item.id === state.editingTreatmentTypeId)) {
+            resetTreatmentTypeForm();
+        }
+
+        syncFinancePlanBuilder();
+    }
+
     function renderDentistProfile(profile, options = {}) {
         state.dentistProfile = profile || null;
 
@@ -742,6 +875,48 @@
         }
     }
 
+    function populateTreatmentTypeForm(treatmentType) {
+        if (!(elements.treatmentTypeForm instanceof HTMLFormElement) || !treatmentType) {
+            return;
+        }
+
+        state.editingTreatmentTypeId = treatmentType.id;
+        elements.treatmentTypeForm.name.value = treatmentType.name || "";
+        elements.treatmentTypeForm.defaultDurationMinutes.value = String(treatmentType.defaultDurationMinutes ?? 45);
+        elements.treatmentTypeForm.basePrice.value = (Number(treatmentType.basePrice) || 0).toFixed(2);
+        elements.treatmentTypeForm.description.value = treatmentType.description || "";
+
+        if (elements.treatmentTypeSubmitButton) {
+            elements.treatmentTypeSubmitButton.textContent = "Save treatment type";
+        }
+
+        if (elements.treatmentTypeCancelButton) {
+            elements.treatmentTypeCancelButton.hidden = false;
+        }
+
+        focusElementIfPossible(elements.treatmentTypeForm.name);
+    }
+
+    function resetTreatmentTypeForm() {
+        state.editingTreatmentTypeId = null;
+
+        if (!(elements.treatmentTypeForm instanceof HTMLFormElement)) {
+            return;
+        }
+
+        elements.treatmentTypeForm.reset();
+        elements.treatmentTypeForm.defaultDurationMinutes.value = "45";
+        elements.treatmentTypeForm.basePrice.value = "145";
+
+        if (elements.treatmentTypeSubmitButton) {
+            elements.treatmentTypeSubmitButton.textContent = "Add treatment type";
+        }
+
+        if (elements.treatmentTypeCancelButton) {
+            elements.treatmentTypeCancelButton.hidden = true;
+        }
+    }
+
     function syncDentistProfileAfterDentistListRefresh(dentists) {
         if (!state.dentistProfile?.id) {
             return;
@@ -843,6 +1018,22 @@
         elements.treatmentRoomsBody.appendChild(row);
     }
 
+    function renderTreatmentTypesEmptyState() {
+        if (!elements.treatmentTypesBody) {
+            return;
+        }
+
+        const row = document.createElement("tr");
+        const cell = document.createElement("td");
+        const content = document.createElement("div");
+        cell.colSpan = 6;
+        content.className = "empty-state";
+        content.textContent = "No treatment types loaded.";
+        cell.appendChild(content);
+        row.appendChild(cell);
+        elements.treatmentTypesBody.appendChild(row);
+    }
+
     function resolveDentistName(dentistId) {
         const dentist = resolveDentist(dentistId) || state.dentistDirectory[dentistId] || null;
         return dentist?.displayName || dentist?.licenseNumber || dentistId || "-";
@@ -879,14 +1070,23 @@
         );
     }
 
+    function canManageTreatmentTypesUi() {
+        return Boolean(
+            state.companySlug
+            && hasCompanyRole("CompanyOwner", "CompanyAdmin", "CompanyManager")
+        );
+    }
+
     Object.assign(app, {
         canAccessResourcesUi,
         canManageResourcesUi,
+        canManageTreatmentTypesUi,
         closeDentistProfile,
         onDentistCreateSubmit,
         onDentistProfileDelete,
         onDentistProfileSubmit,
         onTreatmentRoomCreateSubmit,
+        onTreatmentTypeSubmit,
         openDentistProfile,
         refreshClinicalViews,
         refreshDentistProfile,
@@ -897,7 +1097,9 @@
         renderDentistProfile,
         renderDentists,
         renderTreatmentRooms,
+        renderTreatmentTypes,
         resetTreatmentRoomForm,
+        resetTreatmentTypeForm,
         resolveDentist,
         resolveDentistName,
         resolveRoomLabel,

@@ -213,7 +213,7 @@ public class TreatmentPlanService(AppDbContext dbContext, ITenantAccessService t
     {
         await EnsureManageAccessAsync(userId, cancellationToken);
 
-        return await dbContext.PlanItems
+        var openItems = await dbContext.PlanItems
             .AsNoTracking()
             .Where(entity => entity.Decision == PlanItemDecision.Pending)
             .Join(
@@ -230,18 +230,34 @@ public class TreatmentPlanService(AppDbContext dbContext, ITenantAccessService t
                 dbContext.TreatmentTypes.AsNoTracking(),
                 pair => pair.item.TreatmentTypeId,
                 treatmentType => treatmentType.Id,
-                (pair, treatmentType) => new OpenPlanItemResult(
-                    pair.plan.Id,
-                    pair.item.Id,
-                    pair.patient.Id,
-                    ((pair.patient.FirstName ?? string.Empty) + " " + (pair.patient.LastName ?? string.Empty)).Trim(),
-                    treatmentType.Name,
+                (pair, treatmentType) => new
+                {
+                    PlanId = pair.plan.Id,
+                    PlanItemId = pair.item.Id,
+                    PatientId = pair.patient.Id,
+                    pair.patient.FirstName,
+                    pair.patient.LastName,
+                    TreatmentTypeName = treatmentType.Name,
                     pair.item.Sequence,
-                    pair.item.Urgency.ToString(),
-                    pair.item.EstimatedPrice))
-            .OrderBy(item => item.PatientName)
+                    pair.item.Urgency,
+                    pair.item.EstimatedPrice
+                })
+            .OrderBy(item => item.LastName ?? string.Empty)
+            .ThenBy(item => item.FirstName ?? string.Empty)
             .ThenBy(item => item.Sequence)
             .ToListAsync(cancellationToken);
+
+        return openItems
+            .Select(item => new OpenPlanItemResult(
+                item.PlanId,
+                item.PlanItemId,
+                item.PatientId,
+                $"{item.FirstName ?? string.Empty} {item.LastName ?? string.Empty}".Trim(),
+                item.TreatmentTypeName,
+                item.Sequence,
+                item.Urgency.ToString(),
+                item.EstimatedPrice))
+            .ToList();
     }
 
     public async Task<PlanDecisionResult> RecordPlanItemDecisionAsync(
