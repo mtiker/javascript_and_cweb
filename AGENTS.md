@@ -34,6 +34,7 @@ Use Conventional Commits with subject/assignment scope:
 - Keep root `README.md` as repository map and workflow rules.
 - Keep per-assignment `README.md` inside each assignment folder.
 - Log AI assistance in `docs/ai-prompts.md`.
+- With every implemented change, verify that related documentation stays in sync, including relevant `README.md` files and `docs/ai-prompts.md`.
 
 ## Course Source Priority
 
@@ -55,6 +56,7 @@ Use Conventional Commits with subject/assignment scope:
   - safe DOM writes (`textContent`, no unsafe HTML insertion)
   - defensive error handling
   - secure-by-default browser settings where practical (for example CSP)
+- Require tests for implemented changes whenever the codebase supports them, covering both positive and negative scenarios.
 
 ## Integration Rule
 

@@ -1,16 +1,14 @@
-using App.DAL.EF;
-using App.DAL.EF.Tenant;
+using App.BLL.Contracts.Finance;
 using App.BLL.Services;
+using App.DAL.EF.Tenant;
 using App.Domain;
-using App.Domain.Entities;
-using App.Domain.Enums;
 using App.DTO.v1;
 using App.DTO.v1.PaymentPlans;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using WebApp.Helpers;
 
 namespace WebApp.ApiControllers.Tenant;
 
@@ -19,24 +17,20 @@ namespace WebApp.ApiControllers.Tenant;
 [ApiController]
 [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = RoleNames.CompanyOwner + "," + RoleNames.CompanyAdmin + "," + RoleNames.CompanyManager)]
 public class PaymentPlansController(
-    AppDbContext dbContext,
-    ITenantProvider tenantProvider,
-    ISubscriptionPolicyService subscriptionPolicyService) : ControllerBase
+    IPaymentPlanService paymentPlanService,
+    ITenantProvider tenantProvider) : ControllerBase
 {
     [HttpGet]
     [ProducesResponseType(typeof(IReadOnlyCollection<PaymentPlanResponse>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<IReadOnlyCollection<PaymentPlanResponse>>> List([FromRoute] string companySlug, CancellationToken cancellationToken)
+    public async Task<ActionResult<IReadOnlyCollection<PaymentPlanResponse>>> List(
+        [FromRoute] string companySlug,
+        [FromQuery] Guid? invoiceId,
+        CancellationToken cancellationToken)
     {
         if (!TenantMatches(companySlug)) return Forbid();
-        await subscriptionPolicyService.EnsureTierAtLeastAsync("PaymentPlans", SubscriptionTier.Standard, cancellationToken);
 
-        var plans = await dbContext.PaymentPlans
-            .AsNoTracking()
-            .OrderByDescending(entity => entity.StartsAtUtc)
-            .Select(entity => ToResponse(entity))
-            .ToListAsync(cancellationToken);
-
-        return Ok(plans);
+        var plans = await paymentPlanService.ListAsync(User.UserId(), invoiceId, cancellationToken);
+        return Ok(plans.Select(ToResponse).ToList());
     }
 
     [HttpGet("{paymentPlanId:guid}")]
@@ -48,16 +42,8 @@ public class PaymentPlansController(
         CancellationToken cancellationToken)
     {
         if (!TenantMatches(companySlug)) return Forbid();
-        await subscriptionPolicyService.EnsureTierAtLeastAsync("PaymentPlans", SubscriptionTier.Standard, cancellationToken);
 
-        var plan = await dbContext.PaymentPlans
-            .AsNoTracking()
-            .SingleOrDefaultAsync(entity => entity.Id == paymentPlanId, cancellationToken);
-        if (plan == null)
-        {
-            return NotFound(new Message("Payment plan not found."));
-        }
-
+        var plan = await paymentPlanService.GetAsync(User.UserId(), paymentPlanId, cancellationToken);
         return Ok(ToResponse(plan));
     }
 
@@ -70,36 +56,15 @@ public class PaymentPlansController(
         CancellationToken cancellationToken)
     {
         if (!TenantMatches(companySlug)) return Forbid();
-        await subscriptionPolicyService.EnsureTierAtLeastAsync("PaymentPlans", SubscriptionTier.Standard, cancellationToken);
 
-        var invoice = await dbContext.Invoices
-            .AsNoTracking()
-            .SingleOrDefaultAsync(entity => entity.Id == request.InvoiceId, cancellationToken);
-        if (invoice == null)
-        {
-            return BadRequest(new Message("Invoice does not exist in tenant."));
-        }
-
-        var existing = await dbContext.PaymentPlans
-            .AsNoTracking()
-            .AnyAsync(entity => entity.InvoiceId == request.InvoiceId, cancellationToken);
-        if (existing)
-        {
-            return BadRequest(new Message("Payment plan already exists for this invoice."));
-        }
-
-        var plan = new PaymentPlan
-        {
-            InvoiceId = request.InvoiceId,
-            InstallmentCount = request.InstallmentCount,
-            InstallmentAmount = request.InstallmentAmount,
-            StartsAtUtc = request.StartsAtUtc,
-            Status = PaymentPlanStatus.Active,
-            Terms = request.Terms.Trim()
-        };
-
-        dbContext.PaymentPlans.Add(plan);
-        await dbContext.SaveChangesAsync(cancellationToken);
+        var plan = await paymentPlanService.CreateAsync(
+            User.UserId(),
+            new CreatePaymentPlanCommand(
+                request.InvoiceId,
+                request.StartsAtUtc,
+                request.Terms,
+                request.Installments.Select(ToCommand).ToArray()),
+            cancellationToken);
 
         return Created(string.Empty, ToResponse(plan));
     }
@@ -115,26 +80,16 @@ public class PaymentPlansController(
         CancellationToken cancellationToken)
     {
         if (!TenantMatches(companySlug)) return Forbid();
-        await subscriptionPolicyService.EnsureTierAtLeastAsync("PaymentPlans", SubscriptionTier.Standard, cancellationToken);
-        if (!Enum.TryParse<PaymentPlanStatus>(request.Status, true, out var status))
-        {
-            return BadRequest(new Message("Invalid payment plan status value."));
-        }
 
-        var plan = await dbContext.PaymentPlans
-            .SingleOrDefaultAsync(entity => entity.Id == paymentPlanId, cancellationToken);
-        if (plan == null)
-        {
-            return NotFound(new Message("Payment plan not found."));
-        }
+        var plan = await paymentPlanService.UpdateAsync(
+            User.UserId(),
+            new UpdatePaymentPlanCommand(
+                paymentPlanId,
+                request.StartsAtUtc,
+                request.Terms,
+                request.Installments.Select(ToCommand).ToArray()),
+            cancellationToken);
 
-        plan.InstallmentCount = request.InstallmentCount;
-        plan.InstallmentAmount = request.InstallmentAmount;
-        plan.StartsAtUtc = request.StartsAtUtc;
-        plan.Status = status;
-        plan.Terms = request.Terms.Trim();
-
-        await dbContext.SaveChangesAsync(cancellationToken);
         return Ok(ToResponse(plan));
     }
 
@@ -144,17 +99,8 @@ public class PaymentPlansController(
     public async Task<IActionResult> Delete([FromRoute] string companySlug, [FromRoute] Guid paymentPlanId, CancellationToken cancellationToken)
     {
         if (!TenantMatches(companySlug)) return Forbid();
-        await subscriptionPolicyService.EnsureTierAtLeastAsync("PaymentPlans", SubscriptionTier.Standard, cancellationToken);
 
-        var plan = await dbContext.PaymentPlans
-            .SingleOrDefaultAsync(entity => entity.Id == paymentPlanId, cancellationToken);
-        if (plan == null)
-        {
-            return NotFound(new Message("Payment plan not found."));
-        }
-
-        dbContext.PaymentPlans.Remove(plan);
-        await dbContext.SaveChangesAsync(cancellationToken);
+        await paymentPlanService.DeleteAsync(User.UserId(), paymentPlanId, cancellationToken);
         return NoContent();
     }
 
@@ -163,17 +109,32 @@ public class PaymentPlansController(
         return string.Equals(tenantProvider.CompanySlug, companySlug, StringComparison.OrdinalIgnoreCase);
     }
 
-    private static PaymentPlanResponse ToResponse(PaymentPlan entity)
+    private static PaymentPlanInstallmentCommand ToCommand(PaymentPlanInstallmentRequest request)
+    {
+        return new PaymentPlanInstallmentCommand(request.DueDateUtc, request.Amount);
+    }
+
+    private static PaymentPlanResponse ToResponse(PaymentPlanResult entity)
     {
         return new PaymentPlanResponse
         {
             Id = entity.Id,
             InvoiceId = entity.InvoiceId,
-            InstallmentCount = entity.InstallmentCount,
-            InstallmentAmount = entity.InstallmentAmount,
             StartsAtUtc = entity.StartsAtUtc,
-            Status = entity.Status.ToString(),
-            Terms = entity.Terms
+            Status = entity.Status,
+            Terms = entity.Terms,
+            ScheduledAmount = entity.ScheduledAmount,
+            RemainingAmount = entity.RemainingAmount,
+            Installments = entity.Installments
+                .Select(installment => new PaymentPlanInstallmentResponse
+                {
+                    Id = installment.Id,
+                    DueDateUtc = installment.DueDateUtc,
+                    Amount = installment.Amount,
+                    Status = installment.Status,
+                    PaidAtUtc = installment.PaidAtUtc
+                })
+                .ToArray()
         };
     }
 }

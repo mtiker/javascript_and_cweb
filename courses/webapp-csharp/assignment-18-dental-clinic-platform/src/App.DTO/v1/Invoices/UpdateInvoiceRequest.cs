@@ -13,16 +13,10 @@ public class UpdateInvoiceRequest
     [MaxLength(64)]
     public string InvoiceNumber { get; set; } = default!;
 
-    [Range(0, 999999999)]
-    public decimal TotalAmount { get; set; }
-
-    [Range(0, 999999999)]
-    public decimal BalanceAmount { get; set; }
-
     [Required]
     public DateTime DueDateUtc { get; set; }
 
     [Required]
-    [MaxLength(32)]
-    public string Status { get; set; } = default!;
+    [MinLength(1)]
+    public List<InvoiceLineRequest> Lines { get; set; } = [];
 }

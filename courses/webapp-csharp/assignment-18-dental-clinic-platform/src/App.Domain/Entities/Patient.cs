@@ -14,4 +14,8 @@ public class Patient : TenantBaseEntity
     public ICollection<ToothRecord> ToothRecords { get; set; } = new List<ToothRecord>();
     public ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
     public ICollection<TreatmentPlan> TreatmentPlans { get; set; } = new List<TreatmentPlan>();
+    public ICollection<Treatment> Treatments { get; set; } = new List<Treatment>();
+    public ICollection<CostEstimate> CostEstimates { get; set; } = new List<CostEstimate>();
+    public ICollection<Invoice> Invoices { get; set; } = new List<Invoice>();
+    public ICollection<PatientInsurancePolicy> InsurancePolicies { get; set; } = new List<PatientInsurancePolicy>();
 }

@@ -330,7 +330,15 @@ public static partial class AppDataInit
 
         if (!context.TreatmentPlans.IgnoreQueryFilters().Any(entity => entity.CompanyId == companyId && entity.PatientId == liis.Id))
         {
-            var plan = new TreatmentPlan { CompanyId = companyId, PatientId = liis.Id, DentistId = dentist.Id, Status = TreatmentPlanStatus.PartiallyAccepted, ApprovedAtUtc = now.AddMonths(-10) };
+            var plan = new TreatmentPlan
+            {
+                CompanyId = companyId,
+                PatientId = liis.Id,
+                DentistId = dentist.Id,
+                Status = TreatmentPlanStatus.PartiallyAccepted,
+                SubmittedAtUtc = now.AddMonths(-10),
+                ApprovedAtUtc = now.AddMonths(-10)
+            };
             context.TreatmentPlans.Add(plan);
             context.PlanItems.AddRange(
             [
@@ -343,10 +351,52 @@ public static partial class AppDataInit
         await context.SaveChangesAsync(cancellationToken);
 
         var liisPlan = context.TreatmentPlans.IgnoreQueryFilters().First(entity => entity.CompanyId == companyId && entity.PatientId == liis.Id);
+        var liisPlanItems = context.PlanItems.IgnoreQueryFilters()
+            .Where(entity => entity.CompanyId == companyId && entity.TreatmentPlanId == liisPlan.Id)
+            .OrderBy(entity => entity.Sequence)
+            .ToList();
+
+        if (!context.PatientInsurancePolicies.IgnoreQueryFilters().Any(entity => entity.CompanyId == companyId && entity.PolicyNumber == "AOK-LIIS-001"))
+        {
+            context.PatientInsurancePolicies.Add(new PatientInsurancePolicy
+            {
+                CompanyId = companyId,
+                PatientId = liis.Id,
+                InsurancePlanId = insurancePlan.Id,
+                PolicyNumber = "AOK-LIIS-001",
+                MemberNumber = "MEM-49003150011",
+                GroupNumber = "GRP-AOK-01",
+                CoverageStart = DateOnly.FromDateTime(now.AddYears(-1)),
+                CoverageEnd = DateOnly.FromDateTime(now.AddYears(1)),
+                AnnualMaximum = 1150m,
+                Deductible = 0m,
+                CoveragePercent = 100m,
+                Status = PatientInsurancePolicyStatus.Active
+            });
+        }
+
+        await context.SaveChangesAsync(cancellationToken);
+
+        var liisPolicy = context.PatientInsurancePolicies.IgnoreQueryFilters()
+            .Single(entity => entity.CompanyId == companyId && entity.PolicyNumber == "AOK-LIIS-001");
 
         if (!context.CostEstimates.IgnoreQueryFilters().Any(entity => entity.CompanyId == companyId && entity.EstimateNumber == "EST-SMILE-2001"))
         {
-            context.CostEstimates.Add(new CostEstimate { CompanyId = companyId, PatientId = liis.Id, TreatmentPlanId = liisPlan.Id, InsurancePlanId = insurancePlan.Id, EstimateNumber = "EST-SMILE-2001", FormatCode = "DE-KV", TotalEstimatedAmount = 1570m, GeneratedAtUtc = now.AddMonths(-10).AddDays(2), Status = "Approved" });
+            context.CostEstimates.Add(new CostEstimate
+            {
+                CompanyId = companyId,
+                PatientId = liis.Id,
+                TreatmentPlanId = liisPlan.Id,
+                InsurancePlanId = insurancePlan.Id,
+                PatientInsurancePolicyId = liisPolicy.Id,
+                EstimateNumber = "EST-SMILE-2001",
+                FormatCode = "DE-KV",
+                TotalEstimatedAmount = 1570m,
+                CoverageAmount = 1150m,
+                PatientEstimatedAmount = 420m,
+                GeneratedAtUtc = now.AddMonths(-10).AddDays(2),
+                Status = CostEstimateStatus.Approved
+            });
         }
 
         await context.SaveChangesAsync(cancellationToken);
@@ -355,12 +405,42 @@ public static partial class AppDataInit
 
         if (!context.Invoices.IgnoreQueryFilters().Any(entity => entity.CompanyId == companyId && entity.InvoiceNumber == "INV-SMILE-1001"))
         {
-            context.Invoices.Add(new Invoice { CompanyId = companyId, PatientId = liis.Id, CostEstimateId = liisEstimate.Id, InvoiceNumber = "INV-SMILE-1001", TotalAmount = 1570m, BalanceAmount = 420m, DueDateUtc = now.AddDays(14), Status = InvoiceStatus.Issued });
+            var invoice = new Invoice
+            {
+                CompanyId = companyId,
+                PatientId = liis.Id,
+                CostEstimateId = liisEstimate.Id,
+                InvoiceNumber = "INV-SMILE-1001",
+                TotalAmount = 1570m,
+                BalanceAmount = 420m,
+                DueDateUtc = now.AddDays(14),
+                Status = InvoiceStatus.Issued
+            };
+
+            invoice.Lines.Add(new InvoiceLine { CompanyId = companyId, PlanItemId = liisPlanItems[0].Id, Description = "Root canal therapy", Quantity = 1m, UnitPrice = 520m, LineTotal = 520m, CoverageAmount = 420m, PatientAmount = 100m });
+            invoice.Lines.Add(new InvoiceLine { CompanyId = companyId, PlanItemId = liisPlanItems[1].Id, Description = "Definitive crown", Quantity = 1m, UnitPrice = 890m, LineTotal = 890m, CoverageAmount = 730m, PatientAmount = 160m });
+            invoice.Lines.Add(new InvoiceLine { CompanyId = companyId, PlanItemId = liisPlanItems[2].Id, Description = "Composite filling follow-up", Quantity = 1m, UnitPrice = 160m, LineTotal = 160m, CoverageAmount = 0m, PatientAmount = 160m });
+
+            context.Invoices.Add(invoice);
         }
 
         if (!context.Invoices.IgnoreQueryFilters().Any(entity => entity.CompanyId == companyId && entity.InvoiceNumber == "INV-SMILE-1002"))
         {
-            context.Invoices.Add(new Invoice { CompanyId = companyId, PatientId = marten.Id, InvoiceNumber = "INV-SMILE-1002", TotalAmount = 420m, BalanceAmount = 0m, DueDateUtc = now.AddDays(-45), Status = InvoiceStatus.Paid });
+            var invoice = new Invoice
+            {
+                CompanyId = companyId,
+                PatientId = marten.Id,
+                InvoiceNumber = "INV-SMILE-1002",
+                TotalAmount = 420m,
+                BalanceAmount = 0m,
+                DueDateUtc = now.AddDays(-45),
+                Status = InvoiceStatus.Paid
+            };
+
+            invoice.Lines.Add(new InvoiceLine { CompanyId = companyId, Description = "Emergency restorative visit", Quantity = 1m, UnitPrice = 420m, LineTotal = 420m, CoverageAmount = 0m, PatientAmount = 420m });
+            invoice.Payments.Add(new Payment { CompanyId = companyId, Amount = 420m, PaidAtUtc = now.AddDays(-42), Method = "Card", Reference = "SEED-PAY-1002", Notes = "Paid in full at front desk." });
+
+            context.Invoices.Add(invoice);
         }
 
         await context.SaveChangesAsync(cancellationToken);
@@ -368,7 +448,21 @@ public static partial class AppDataInit
         var installmentInvoice = context.Invoices.IgnoreQueryFilters().Single(entity => entity.CompanyId == companyId && entity.InvoiceNumber == "INV-SMILE-1001");
         if (!context.PaymentPlans.IgnoreQueryFilters().Any(entity => entity.CompanyId == companyId && entity.InvoiceId == installmentInvoice.Id))
         {
-            context.PaymentPlans.Add(new PaymentPlan { CompanyId = companyId, InvoiceId = installmentInvoice.Id, InstallmentCount = 4, InstallmentAmount = 105m, StartsAtUtc = now.Date.AddDays(7), Status = PaymentPlanStatus.Active, Terms = "Seed payment plan: four equal monthly installments for Liis Kask." });
+            var paymentPlan = new PaymentPlan
+            {
+                CompanyId = companyId,
+                InvoiceId = installmentInvoice.Id,
+                StartsAtUtc = now.Date.AddDays(7),
+                Status = PaymentPlanStatus.Active,
+                Terms = "Seed payment plan: four equal monthly installments for Liis Kask."
+            };
+
+            paymentPlan.Installments.Add(new PaymentPlanInstallment { CompanyId = companyId, DueDateUtc = now.Date.AddDays(7), Amount = 105m, Status = PaymentPlanInstallmentStatus.Scheduled });
+            paymentPlan.Installments.Add(new PaymentPlanInstallment { CompanyId = companyId, DueDateUtc = now.Date.AddDays(37), Amount = 105m, Status = PaymentPlanInstallmentStatus.Scheduled });
+            paymentPlan.Installments.Add(new PaymentPlanInstallment { CompanyId = companyId, DueDateUtc = now.Date.AddDays(67), Amount = 105m, Status = PaymentPlanInstallmentStatus.Scheduled });
+            paymentPlan.Installments.Add(new PaymentPlanInstallment { CompanyId = companyId, DueDateUtc = now.Date.AddDays(97), Amount = 105m, Status = PaymentPlanInstallmentStatus.Scheduled });
+
+            context.PaymentPlans.Add(paymentPlan);
         }
 
         await context.SaveChangesAsync(cancellationToken);
@@ -385,7 +479,15 @@ public static partial class AppDataInit
 
         if (!context.TreatmentPlans.IgnoreQueryFilters().Any(entity => entity.CompanyId == companyId && entity.PatientId == karin.Id))
         {
-            var plan = new TreatmentPlan { CompanyId = companyId, PatientId = karin.Id, DentistId = dentist.Id, Status = TreatmentPlanStatus.PartiallyAccepted, ApprovedAtUtc = now.AddMonths(-19) };
+            var plan = new TreatmentPlan
+            {
+                CompanyId = companyId,
+                PatientId = karin.Id,
+                DentistId = dentist.Id,
+                Status = TreatmentPlanStatus.PartiallyAccepted,
+                SubmittedAtUtc = now.AddMonths(-19),
+                ApprovedAtUtc = now.AddMonths(-19)
+            };
             context.TreatmentPlans.Add(plan);
             context.PlanItems.AddRange(
             [
@@ -398,14 +500,71 @@ public static partial class AppDataInit
         await context.SaveChangesAsync(cancellationToken);
 
         var karinPlan = context.TreatmentPlans.IgnoreQueryFilters().First(entity => entity.CompanyId == companyId && entity.PatientId == karin.Id);
+        var karinPlanItems = context.PlanItems.IgnoreQueryFilters()
+            .Where(entity => entity.CompanyId == companyId && entity.TreatmentPlanId == karinPlan.Id)
+            .OrderBy(entity => entity.Sequence)
+            .ToList();
+
+        if (!context.PatientInsurancePolicies.IgnoreQueryFilters().Any(entity => entity.CompanyId == companyId && entity.PolicyNumber == "HK-KARIN-001"))
+        {
+            context.PatientInsurancePolicies.Add(new PatientInsurancePolicy
+            {
+                CompanyId = companyId,
+                PatientId = karin.Id,
+                InsurancePlanId = insurancePlan.Id,
+                PolicyNumber = "HK-KARIN-001",
+                MemberNumber = "MEM-49111110010",
+                GroupNumber = "GRP-HK-01",
+                CoverageStart = DateOnly.FromDateTime(now.AddYears(-2)),
+                CoverageEnd = DateOnly.FromDateTime(now.AddYears(1)),
+                AnnualMaximum = 985m,
+                Deductible = 0m,
+                CoveragePercent = 100m,
+                Status = PatientInsurancePolicyStatus.Active
+            });
+        }
+
+        await context.SaveChangesAsync(cancellationToken);
+
+        var karinPolicy = context.PatientInsurancePolicies.IgnoreQueryFilters()
+            .Single(entity => entity.CompanyId == companyId && entity.PolicyNumber == "HK-KARIN-001");
+
         if (!context.CostEstimates.IgnoreQueryFilters().Any(entity => entity.CompanyId == companyId && entity.EstimateNumber == "EST-NORDIC-2001"))
         {
-            context.CostEstimates.Add(new CostEstimate { CompanyId = companyId, PatientId = karin.Id, TreatmentPlanId = karinPlan.Id, InsurancePlanId = insurancePlan.Id, EstimateNumber = "EST-NORDIC-2001", FormatCode = "EE-HAIGEKASSA", TotalEstimatedAmount = 1495m, GeneratedAtUtc = now.AddMonths(-19).AddDays(2), Status = "Sent" });
+            context.CostEstimates.Add(new CostEstimate
+            {
+                CompanyId = companyId,
+                PatientId = karin.Id,
+                TreatmentPlanId = karinPlan.Id,
+                InsurancePlanId = insurancePlan.Id,
+                PatientInsurancePolicyId = karinPolicy.Id,
+                EstimateNumber = "EST-NORDIC-2001",
+                FormatCode = "EE-HAIGEKASSA",
+                TotalEstimatedAmount = 1495m,
+                CoverageAmount = 985m,
+                PatientEstimatedAmount = 510m,
+                GeneratedAtUtc = now.AddMonths(-19).AddDays(2),
+                Status = CostEstimateStatus.Sent
+            });
         }
 
         if (!context.Invoices.IgnoreQueryFilters().Any(entity => entity.CompanyId == companyId && entity.InvoiceNumber == "INV-NORDIC-2001"))
         {
-            context.Invoices.Add(new Invoice { CompanyId = companyId, PatientId = karin.Id, InvoiceNumber = "INV-NORDIC-2001", TotalAmount = 510m, BalanceAmount = 0m, DueDateUtc = now.AddDays(-60), Status = InvoiceStatus.Paid });
+            var invoice = new Invoice
+            {
+                CompanyId = companyId,
+                PatientId = karin.Id,
+                InvoiceNumber = "INV-NORDIC-2001",
+                TotalAmount = 510m,
+                BalanceAmount = 0m,
+                DueDateUtc = now.AddDays(-60),
+                Status = InvoiceStatus.Paid
+            };
+
+            invoice.Lines.Add(new InvoiceLine { CompanyId = companyId, PlanItemId = karinPlanItems[0].Id, Description = "Root canal treatment", Quantity = 1m, UnitPrice = 510m, LineTotal = 510m, CoverageAmount = 0m, PatientAmount = 510m });
+            invoice.Payments.Add(new Payment { CompanyId = companyId, Amount = 510m, PaidAtUtc = now.AddDays(-58), Method = "BankTransfer", Reference = "SEED-PAY-2001", Notes = "Bank payment received." });
+
+            context.Invoices.Add(invoice);
         }
 
         await context.SaveChangesAsync(cancellationToken);

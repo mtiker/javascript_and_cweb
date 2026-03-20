@@ -1,15 +1,16 @@
-using App.DAL.EF;
+using App.BLL.Contracts.Finance;
+using App.BLL.Services;
 using App.DAL.EF.Tenant;
 using App.Domain;
-using App.Domain.Entities;
-using App.Domain.Enums;
 using App.DTO.v1;
 using App.DTO.v1.Invoices;
+using App.DTO.v1.PaymentPlans;
+using App.DTO.v1.Payments;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using WebApp.Helpers;
 
 namespace WebApp.ApiControllers.Tenant;
 
@@ -17,157 +18,131 @@ namespace WebApp.ApiControllers.Tenant;
 [Route("api/v{version:apiVersion}/{companySlug}/[controller]")]
 [ApiController]
 [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = RoleNames.CompanyOwner + "," + RoleNames.CompanyAdmin + "," + RoleNames.CompanyManager)]
-public class InvoicesController(AppDbContext dbContext, ITenantProvider tenantProvider) : ControllerBase
+public class InvoicesController(IInvoiceService invoiceService, ITenantProvider tenantProvider) : ControllerBase
 {
     [HttpGet]
     [ProducesResponseType(typeof(IReadOnlyCollection<InvoiceResponse>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<IReadOnlyCollection<InvoiceResponse>>> List([FromRoute] string companySlug, CancellationToken cancellationToken)
+    public async Task<ActionResult<IReadOnlyCollection<InvoiceResponse>>> List(
+        [FromRoute] string companySlug,
+        [FromQuery] Guid? patientId,
+        CancellationToken cancellationToken)
     {
         if (!TenantMatches(companySlug)) return Forbid();
 
-        var invoices = await dbContext.Invoices
-            .AsNoTracking()
-            .OrderByDescending(entity => entity.DueDateUtc)
-            .Select(entity => ToResponse(entity))
-            .ToListAsync(cancellationToken);
-
-        return Ok(invoices);
+        var invoices = await invoiceService.ListAsync(User.UserId(), patientId, cancellationToken);
+        return Ok(invoices.Select(ToSummaryResponse).ToList());
     }
 
     [HttpGet("{invoiceId:guid}")]
-    [ProducesResponseType(typeof(InvoiceResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(InvoiceDetailResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(Message), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<InvoiceResponse>> GetById([FromRoute] string companySlug, [FromRoute] Guid invoiceId, CancellationToken cancellationToken)
+    public async Task<ActionResult<InvoiceDetailResponse>> GetById(
+        [FromRoute] string companySlug,
+        [FromRoute] Guid invoiceId,
+        CancellationToken cancellationToken)
     {
         if (!TenantMatches(companySlug)) return Forbid();
 
-        var invoice = await dbContext.Invoices
-            .AsNoTracking()
-            .SingleOrDefaultAsync(entity => entity.Id == invoiceId, cancellationToken);
-        if (invoice == null)
-        {
-            return NotFound(new Message("Invoice not found."));
-        }
-
-        return Ok(ToResponse(invoice));
+        var invoice = await invoiceService.GetAsync(User.UserId(), invoiceId, cancellationToken);
+        return Ok(ToDetailResponse(invoice));
     }
 
     [HttpPost]
-    [ProducesResponseType(typeof(InvoiceResponse), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(InvoiceDetailResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(Message), StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<InvoiceResponse>> Create(
+    public async Task<ActionResult<InvoiceDetailResponse>> Create(
         [FromRoute] string companySlug,
         [FromBody] CreateInvoiceRequest request,
         CancellationToken cancellationToken)
     {
         if (!TenantMatches(companySlug)) return Forbid();
 
-        var patientExists = await dbContext.Patients
-            .AsNoTracking()
-            .AnyAsync(entity => entity.Id == request.PatientId, cancellationToken);
-        if (!patientExists)
-        {
-            return BadRequest(new Message("Patient does not exist in tenant."));
-        }
+        var invoice = await invoiceService.CreateAsync(
+            User.UserId(),
+            new CreateInvoiceCommand(
+                request.PatientId,
+                request.CostEstimateId,
+                request.InvoiceNumber,
+                request.DueDateUtc,
+                request.Lines.Select(ToCommand).ToArray()),
+            cancellationToken);
 
-        if (request.CostEstimateId.HasValue)
-        {
-            var estimateExists = await dbContext.CostEstimates
-                .AsNoTracking()
-                .AnyAsync(entity => entity.Id == request.CostEstimateId.Value, cancellationToken);
-            if (!estimateExists)
-            {
-                return BadRequest(new Message("Cost estimate does not exist in tenant."));
-            }
-        }
+        return CreatedAtAction(nameof(GetById), new { version = "1", companySlug, invoiceId = invoice.Id }, ToDetailResponse(invoice));
+    }
 
-        var invoiceNumber = request.InvoiceNumber.Trim();
-        var duplicateNumber = await dbContext.Invoices
-            .AsNoTracking()
-            .AnyAsync(entity => entity.InvoiceNumber == invoiceNumber, cancellationToken);
-        if (duplicateNumber)
-        {
-            return BadRequest(new Message("Invoice number already exists."));
-        }
+    [HttpPost("generate-from-procedures")]
+    [ProducesResponseType(typeof(InvoiceDetailResponse), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(Message), StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<InvoiceDetailResponse>> GenerateFromProcedures(
+        [FromRoute] string companySlug,
+        [FromBody] GenerateInvoiceFromProceduresRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (!TenantMatches(companySlug)) return Forbid();
 
-        var invoice = new Invoice
-        {
-            PatientId = request.PatientId,
-            CostEstimateId = request.CostEstimateId,
-            InvoiceNumber = invoiceNumber,
-            TotalAmount = request.TotalAmount,
-            BalanceAmount = request.BalanceAmount,
-            DueDateUtc = request.DueDateUtc,
-            Status = request.BalanceAmount <= 0 ? InvoiceStatus.Paid : InvoiceStatus.Issued
-        };
+        var invoice = await invoiceService.GenerateFromProceduresAsync(
+            User.UserId(),
+            new GenerateInvoiceFromProceduresCommand(
+                request.PatientId,
+                request.CostEstimateId,
+                request.InvoiceNumber,
+                request.DueDateUtc,
+                request.TreatmentIds.ToArray()),
+            cancellationToken);
 
-        dbContext.Invoices.Add(invoice);
-        await dbContext.SaveChangesAsync(cancellationToken);
+        return CreatedAtAction(nameof(GetById), new { version = "1", companySlug, invoiceId = invoice.Id }, ToDetailResponse(invoice));
+    }
 
-        return Created(string.Empty, ToResponse(invoice));
+    [HttpPost("{invoiceId:guid}/payments")]
+    [ProducesResponseType(typeof(PaymentResponse), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(Message), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(Message), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<PaymentResponse>> AddPayment(
+        [FromRoute] string companySlug,
+        [FromRoute] Guid invoiceId,
+        [FromBody] CreatePaymentRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (!TenantMatches(companySlug)) return Forbid();
+
+        var payment = await invoiceService.AddPaymentAsync(
+            User.UserId(),
+            invoiceId,
+            new CreatePaymentCommand(
+                request.Amount,
+                request.PaidAtUtc,
+                request.Method,
+                request.Reference,
+                request.Notes),
+            cancellationToken);
+
+        return Created(string.Empty, ToPaymentResponse(payment));
     }
 
     [HttpPut("{invoiceId:guid}")]
-    [ProducesResponseType(typeof(InvoiceResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(InvoiceDetailResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(Message), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(Message), StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<InvoiceResponse>> Update(
+    public async Task<ActionResult<InvoiceDetailResponse>> Update(
         [FromRoute] string companySlug,
         [FromRoute] Guid invoiceId,
         [FromBody] UpdateInvoiceRequest request,
         CancellationToken cancellationToken)
     {
         if (!TenantMatches(companySlug)) return Forbid();
-        if (!Enum.TryParse<InvoiceStatus>(request.Status, true, out var status))
-        {
-            return BadRequest(new Message("Invalid invoice status value."));
-        }
 
-        var invoice = await dbContext.Invoices
-            .SingleOrDefaultAsync(entity => entity.Id == invoiceId, cancellationToken);
-        if (invoice == null)
-        {
-            return NotFound(new Message("Invoice not found."));
-        }
+        var invoice = await invoiceService.UpdateAsync(
+            User.UserId(),
+            new UpdateInvoiceCommand(
+                invoiceId,
+                request.PatientId,
+                request.CostEstimateId,
+                request.InvoiceNumber,
+                request.DueDateUtc,
+                request.Lines.Select(ToCommand).ToArray()),
+            cancellationToken);
 
-        var patientExists = await dbContext.Patients
-            .AsNoTracking()
-            .AnyAsync(entity => entity.Id == request.PatientId, cancellationToken);
-        if (!patientExists)
-        {
-            return BadRequest(new Message("Patient does not exist in tenant."));
-        }
-
-        if (request.CostEstimateId.HasValue)
-        {
-            var estimateExists = await dbContext.CostEstimates
-                .AsNoTracking()
-                .AnyAsync(entity => entity.Id == request.CostEstimateId.Value, cancellationToken);
-            if (!estimateExists)
-            {
-                return BadRequest(new Message("Cost estimate does not exist in tenant."));
-            }
-        }
-
-        var invoiceNumber = request.InvoiceNumber.Trim();
-        var duplicateNumber = await dbContext.Invoices
-            .AsNoTracking()
-            .AnyAsync(entity => entity.InvoiceNumber == invoiceNumber && entity.Id != invoiceId, cancellationToken);
-        if (duplicateNumber)
-        {
-            return BadRequest(new Message("Invoice number already exists."));
-        }
-
-        invoice.PatientId = request.PatientId;
-        invoice.CostEstimateId = request.CostEstimateId;
-        invoice.InvoiceNumber = invoiceNumber;
-        invoice.TotalAmount = request.TotalAmount;
-        invoice.BalanceAmount = request.BalanceAmount;
-        invoice.DueDateUtc = request.DueDateUtc;
-        invoice.Status = status;
-
-        await dbContext.SaveChangesAsync(cancellationToken);
-        return Ok(ToResponse(invoice));
+        return Ok(ToDetailResponse(invoice));
     }
 
     [HttpDelete("{invoiceId:guid}")]
@@ -177,15 +152,7 @@ public class InvoicesController(AppDbContext dbContext, ITenantProvider tenantPr
     {
         if (!TenantMatches(companySlug)) return Forbid();
 
-        var invoice = await dbContext.Invoices
-            .SingleOrDefaultAsync(entity => entity.Id == invoiceId, cancellationToken);
-        if (invoice == null)
-        {
-            return NotFound(new Message("Invoice not found."));
-        }
-
-        dbContext.Invoices.Remove(invoice);
-        await dbContext.SaveChangesAsync(cancellationToken);
+        await invoiceService.DeleteAsync(User.UserId(), invoiceId, cancellationToken);
         return NoContent();
     }
 
@@ -194,7 +161,18 @@ public class InvoicesController(AppDbContext dbContext, ITenantProvider tenantPr
         return string.Equals(tenantProvider.CompanySlug, companySlug, StringComparison.OrdinalIgnoreCase);
     }
 
-    private static InvoiceResponse ToResponse(Invoice entity)
+    private static InvoiceLineCommand ToCommand(InvoiceLineRequest entity)
+    {
+        return new InvoiceLineCommand(
+            entity.TreatmentId,
+            entity.PlanItemId,
+            entity.Description,
+            entity.Quantity,
+            entity.UnitPrice,
+            entity.CoverageAmount);
+    }
+
+    private static InvoiceResponse ToSummaryResponse(InvoiceSummaryResult entity)
     {
         return new InvoiceResponse
         {
@@ -203,9 +181,77 @@ public class InvoicesController(AppDbContext dbContext, ITenantProvider tenantPr
             CostEstimateId = entity.CostEstimateId,
             InvoiceNumber = entity.InvoiceNumber,
             TotalAmount = entity.TotalAmount,
+            CoverageAmount = entity.CoverageAmount,
+            PatientResponsibilityAmount = entity.PatientResponsibilityAmount,
+            PaidAmount = entity.PaidAmount,
             BalanceAmount = entity.BalanceAmount,
             DueDateUtc = entity.DueDateUtc,
-            Status = entity.Status.ToString()
+            Status = entity.Status
+        };
+    }
+
+    private static InvoiceDetailResponse ToDetailResponse(InvoiceDetailResult entity)
+    {
+        return new InvoiceDetailResponse
+        {
+            Id = entity.Id,
+            PatientId = entity.PatientId,
+            CostEstimateId = entity.CostEstimateId,
+            InvoiceNumber = entity.InvoiceNumber,
+            TotalAmount = entity.TotalAmount,
+            CoverageAmount = entity.CoverageAmount,
+            PatientResponsibilityAmount = entity.PatientResponsibilityAmount,
+            PaidAmount = entity.PaidAmount,
+            BalanceAmount = entity.BalanceAmount,
+            DueDateUtc = entity.DueDateUtc,
+            Status = entity.Status,
+            Lines = entity.Lines.Select(line => new InvoiceLineResponse
+            {
+                Id = line.Id,
+                TreatmentId = line.TreatmentId,
+                PlanItemId = line.PlanItemId,
+                Description = line.Description,
+                Quantity = line.Quantity,
+                UnitPrice = line.UnitPrice,
+                LineTotal = line.LineTotal,
+                CoverageAmount = line.CoverageAmount,
+                PatientAmount = line.PatientAmount
+            }).ToArray(),
+            Payments = entity.Payments.Select(ToPaymentResponse).ToArray(),
+            PaymentPlan = entity.PaymentPlan == null
+                ? null
+                : new PaymentPlanResponse
+                {
+                    Id = entity.PaymentPlan.Id,
+                    InvoiceId = entity.PaymentPlan.InvoiceId,
+                    StartsAtUtc = entity.PaymentPlan.StartsAtUtc,
+                    Status = entity.PaymentPlan.Status,
+                    Terms = entity.PaymentPlan.Terms,
+                    ScheduledAmount = entity.PaymentPlan.ScheduledAmount,
+                    RemainingAmount = entity.PaymentPlan.RemainingAmount,
+                    Installments = entity.PaymentPlan.Installments.Select(installment => new PaymentPlanInstallmentResponse
+                    {
+                        Id = installment.Id,
+                        DueDateUtc = installment.DueDateUtc,
+                        Amount = installment.Amount,
+                        Status = installment.Status,
+                        PaidAtUtc = installment.PaidAtUtc
+                    }).ToArray()
+                }
+        };
+    }
+
+    private static PaymentResponse ToPaymentResponse(PaymentResult entity)
+    {
+        return new PaymentResponse
+        {
+            Id = entity.Id,
+            InvoiceId = entity.InvoiceId,
+            Amount = entity.Amount,
+            PaidAtUtc = entity.PaidAtUtc,
+            Method = entity.Method,
+            Reference = entity.Reference,
+            Notes = entity.Notes
         };
     }
 }

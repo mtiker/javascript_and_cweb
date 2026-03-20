@@ -7,6 +7,9 @@ public class InvoiceResponse
     public Guid? CostEstimateId { get; set; }
     public string InvoiceNumber { get; set; } = default!;
     public decimal TotalAmount { get; set; }
+    public decimal CoverageAmount { get; set; }
+    public decimal PatientResponsibilityAmount { get; set; }
+    public decimal PaidAmount { get; set; }
     public decimal BalanceAmount { get; set; }
     public DateTime DueDateUtc { get; set; }
     public string Status { get; set; } = default!;

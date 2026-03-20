@@ -16,4 +16,6 @@ public class Invoice : TenantBaseEntity
     public Patient? Patient { get; set; }
     public CostEstimate? CostEstimate { get; set; }
     public PaymentPlan? PaymentPlan { get; set; }
+    public ICollection<InvoiceLine> Lines { get; set; } = new List<InvoiceLine>();
+    public ICollection<Payment> Payments { get; set; } = new List<Payment>();
 }

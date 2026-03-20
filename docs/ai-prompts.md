@@ -96,3 +96,45 @@ Record AI-assisted development evidence here.
 - Prompt: Harden onboarding security by removing anonymous tenant registration and requiring system-role authorization; update tests and docs accordingly.
 - AI output used: Added authorization on onboarding POST, updated integration tests to authenticate a system admin before onboarding, and aligned UI/docs text with new access rule.
 - Changes made manually: Verified endpoint auth behavior and adjusted walkthrough/docs wording for system-role-first onboarding flow.
+
+- Date: 2026-03-17
+- Subject: webapp-csharp
+- Assignment: assignment-18-dental-clinic-platform
+- Prompt: Create a very detailed project-specific study material for `App.DAL.EF`, explaining the purpose of the DAL/EF layer, each file in the folder, where it is used, and how the important functions behave.
+- AI output used: Added a dedicated `App.DAL.EF` study material document, linked it from the assignment README, and summarized tenant filtering, soft delete, audit logging, migrations, and seed data flow.
+- Changes made manually: Reviewed the generated explanation against the actual project structure and kept the wording aligned with the repository documentation style.
+
+- Date: 2026-03-17
+- Subject: webapp-csharp
+- Assignment: assignment-18-dental-clinic-platform
+- Prompt: Create detailed study material for `App.BLL`, explaining the BLL layer generally and documenting every file in the folder, including purpose, behavior, usage locations, and how functions work.
+- AI output used: Added `docs/app-bll-study-guide.md` and updated the assignment README docs map.
+- Changes made manually: Reviewed the material against the current BLL, controller, middleware, and tenant-flow code so the explanations match the current project state.
+
+- Date: 2026-03-17
+- Subject: webapp-csharp
+- Assignment: assignment-18-dental-clinic-platform
+- Prompt: Move remaining finance and treatment-plan CRUD business logic out of controllers into the BLL service layer and align the BLL study guide with the refactor.
+- AI output used: Added BLL contracts and services for treatment plans, finance workspace, cost estimates, invoices, and payment plans; refactored tenant controllers to use those services; updated the App.BLL study guide wording.
+- Changes made manually: Verified solution build and test pass after the refactor and checked that API response shapes remained compatible with the existing frontend.
+
+- Date: 2026-03-17
+- Subject: webapp-csharp
+- Assignment: assignment-18-dental-clinic-platform
+- Prompt: Extend service-layer test coverage around finance and treatment-plan flows after the BLL refactor.
+- AI output used: Added targeted unit tests for treatment plan create/update/open-items flows and for finance services covering cost estimates, invoices, payment plans, and finance workspace aggregation.
+- Changes made manually: Ran the full solution test suite with a fresh build to confirm the new tests compile and pass against the current service implementations.
+
+- Date: 2026-03-19
+- Subject: webapp-csharp
+- Assignment: assignment-18-dental-clinic-platform
+- Prompt: Create a project-specific `App.Domain` study guide in the same style as the existing `App.BLL` and `App.DAL.EF` guides.
+- AI output used: Added `docs/app-domain-guide.md` covering the domain layer overview, common abstractions, identity models, enums/helpers, and all domain entities with usage context.
+- Changes made manually: Reviewed the guide against the current `App.Domain` folder contents and kept the scope limited to documentation plus AI usage logging.
+
+- Date: 2026-03-20
+- Subject: webapp-csharp
+- Assignment: assignment-18-dental-clinic-platform
+- Prompt: Create a project-specific `App.DTO` study guide in the same style as the existing `App.Domain`, `App.DAL.EF`, and `App.BLL` guides.
+- AI output used: Added `docs/app-dto-guide.md`, linked it from the assignment README, and documented the DTO layer purpose, versioned folder structure, validation patterns, controller mapping flow, and representative DTO groups.
+- Changes made manually: Cross-checked the guide against the current `App.DTO` folders, request/response classes, and controller usage so the explanation matches the real project structure.

@@ -330,13 +330,35 @@ public class PatientService(
             .ToListAsync(cancellationToken);
 
         var invoiceIds = invoices.Select(entity => entity.Id).ToArray();
+        var invoiceLines = invoiceIds.Length == 0
+            ? new List<InvoiceLine>()
+            : await dbContext.InvoiceLines
+                .Where(entity => invoiceIds.Contains(entity.InvoiceId))
+                .ToListAsync(cancellationToken);
+        var payments = invoiceIds.Length == 0
+            ? new List<Payment>()
+            : await dbContext.Payments
+                .Where(entity => invoiceIds.Contains(entity.InvoiceId))
+                .ToListAsync(cancellationToken);
         var paymentPlans = invoiceIds.Length == 0
             ? new List<PaymentPlan>()
             : await dbContext.PaymentPlans
                 .Where(entity => invoiceIds.Contains(entity.InvoiceId))
                 .ToListAsync(cancellationToken);
+        var paymentPlanIds = paymentPlans.Select(entity => entity.Id).ToArray();
+        var paymentPlanInstallments = paymentPlanIds.Length == 0
+            ? new List<PaymentPlanInstallment>()
+            : await dbContext.PaymentPlanInstallments
+                .Where(entity => paymentPlanIds.Contains(entity.PaymentPlanId))
+                .ToListAsync(cancellationToken);
+        var patientInsurancePolicies = await dbContext.PatientInsurancePolicies
+            .Where(entity => entity.PatientId == patientId)
+            .ToListAsync(cancellationToken);
 
         dbContext.ToothRecords.RemoveRange(toothRecords);
+        dbContext.InvoiceLines.RemoveRange(invoiceLines);
+        dbContext.Payments.RemoveRange(payments);
+        dbContext.PaymentPlanInstallments.RemoveRange(paymentPlanInstallments);
         dbContext.Treatments.RemoveRange(treatments);
         dbContext.Appointments.RemoveRange(appointments);
         dbContext.Xrays.RemoveRange(xrays);
@@ -344,6 +366,7 @@ public class PatientService(
         dbContext.TreatmentPlans.RemoveRange(treatmentPlans);
         dbContext.CostEstimates.RemoveRange(costEstimates);
         dbContext.PaymentPlans.RemoveRange(paymentPlans);
+        dbContext.PatientInsurancePolicies.RemoveRange(patientInsurancePolicies);
         dbContext.Invoices.RemoveRange(invoices);
     }
 

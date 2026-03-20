@@ -75,6 +75,7 @@ public class AppointmentsController(IAppointmentService appointmentService, ITen
 
             items.Add(new RecordAppointmentClinicalItemCommand(
                 item.TreatmentTypeId,
+                item.PlanItemId,
                 item.ToothNumber,
                 condition,
                 item.Price,

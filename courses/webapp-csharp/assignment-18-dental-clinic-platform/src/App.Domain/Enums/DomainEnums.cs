@@ -79,3 +79,28 @@ public enum PaymentPlanStatus
     Defaulted = 2,
     Cancelled = 3
 }
+
+public enum PaymentPlanInstallmentStatus
+{
+    Scheduled = 0,
+    Paid = 1,
+    Overdue = 2,
+    Cancelled = 3
+}
+
+public enum PatientInsurancePolicyStatus
+{
+    Draft = 0,
+    Active = 1,
+    Expired = 2,
+    Cancelled = 3
+}
+
+public enum CostEstimateStatus
+{
+    Draft = 0,
+    Prepared = 1,
+    Sent = 2,
+    Approved = 3,
+    Archived = 4
+}

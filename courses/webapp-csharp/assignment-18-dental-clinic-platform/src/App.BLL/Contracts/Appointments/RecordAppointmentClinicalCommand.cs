@@ -10,6 +10,7 @@ public sealed record RecordAppointmentClinicalCommand(
 
 public sealed record RecordAppointmentClinicalItemCommand(
     Guid TreatmentTypeId,
+    Guid? PlanItemId,
     int ToothNumber,
     ToothConditionStatus Condition,
     decimal? Price,

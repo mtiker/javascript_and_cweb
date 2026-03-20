@@ -2,47 +2,54 @@
 
 ## Üldpilt
 
-Rakendus järgib layered/N-tier mustrit, sama suunda nagu näidisprojektis:
+Rakendus järgib layered/N-tier lähenemist, kuid mitte täiesti "puhtal" kujul. Keerukamad use-case'id on BLL teenustes, lihtsamad CRUD controllerid kasutavad kohati `AppDbContext`-i otse.
 
 - `App.Domain`: domeeni entiteedid, enumid, rollikonstandid
-- `App.DAL.EF`: EF Core `AppDbContext`, tenant query filtrid, seeding
-- `App.BLL`: use-case teenused (onboarding, treatment plan decision, patient, appointment, tenant access, impersonation context)
+- `App.DAL.EF`: EF Core `AppDbContext`, tenant query filtrid, migratsioonid, seeding
+- `App.BLL`: keerukamad use-case teenused
 - `App.DTO`: API sisend/väljund mudelid
-- `WebApp`: API controllerid, middleware, auth setup, DI, swagger
+- `WebApp`: API controllerid, middleware, auth setup, DI, swagger ja staatiline UI `wwwroot` all
 - `WebApp.Tests`: unit + integration testid
 
 ## Kihtide piirid
 
-- Äriloogika on BLL-is, mitte controlleris.
-- Controllerid teevad request/response mapingu ja auth/route käsitluse.
-- EF päringud ja persistence detailid on DAL-is.
-- DTO-d ei sisalda persistence loogikat.
+- keerukam äriloogika elab BLL-is
+- osa lihtsamaid CRUD vooge on controller + `AppDbContext` põhised
+- controllerid vastutavad authi, route'i, request/response mappingu ja kerge valideerimise eest
+- tenant isolatsioon ei ole ainult controllerites, vaid peamiselt `AppDbContext` query filtrites
+- DTO-d ei sisalda persistence loogikat
 
-## Olulisemad disainiotsused (ADR-stiilis)
+## Olulisemad disainiotsused
 
 1. Shared schema multi-tenancy (`CompanyId`)
-- Põhjus: kiire MVP, madalam operatiivkulu, selge migratsioonitee.
+- Põhjus: assignmenti mahu jaoks lihtne hallata ja laiendada.
 
 2. Tenant isolation DbContext query filtritega
-- Põhjus: süsteemne kaitse, et vältida cross-tenant lekkeid.
+- Põhjus: vähendab cross-tenant lekete riski ka siis, kui controlleris või teenuses midagi ununeb.
 
 3. Path-based tenant routing middlewarega
-- Põhjus: vastab nõudele `/{companySlug}` ja seob tenant context'i requestiga.
+- Põhjus: tenant kontekst seotakse URL-ist loetava `companySlug`-iga.
 
 4. Soft delete tenant-ärientiteetidel
-- Põhjus: andmete taastatavus, auditeeritavus, vastab nõudele.
+- Põhjus: taastatavus, audit ja ohutum kustutamine.
 
-5. Audit log SaveChanges tasemel
-- Põhjus: keskne muutuste logimine, sõltumata controllerist.
+5. Audit log `SaveChangesAsync` tasemel
+- Põhjus: keskne jälg nii teenuse- kui ka controlleripõhiste muudatuste jaoks.
 
 6. Identity + JWT
-- Põhjus: rollipõhine autoriseerimine ja API-first kasutus.
+- Põhjus: rollipõhine autoriseerimine ja mitme tenant-membershipi tugi.
 
-7. Appointment overlap kontroll BLL-is
-- Põhjus: vältida topeltbroneeringuid sama arsti või toa jaoks.
+7. Appointment scheduling ja clinical-record workflow BLL-is
+- Põhjus: konfliktikontroll, hambakaardi uuendus ja treatmentite loomine on seotud ärireeglid.
 
-8. Impersonation ainult SystemAdmin rollile
-- Põhjus: kõrgendatud turvarisk, vaja range piiranguid + auditit.
+8. Treatment plan ja finance workflow teenustesse
+- Põhjus: plaanid, hinnangud, arved, maksed ja payment planid vajavad koondatud reegleid.
+
+9. Impersonation ainult `SystemAdmin` rollile
+- Põhjus: kõrgendatud turvarisk, vaja põhjendust, claim'e ja auditit.
+
+10. Staatiline UI `wwwroot` all
+- Põhjus: assignmenti demo ja käsitsi testimine on kohe brauseris kasutatav.
 
 ## Dependency suund
 
@@ -51,15 +58,34 @@ Rakendus järgib layered/N-tier mustrit, sama suunda nagu näidisprojektis:
 - `App.DAL.EF` -> `App.Domain`
 - `App.Domain` -> (ei sõltu rakenduse teistest kihtidest)
 
+## Requesti voog
+
+1. Request jõuab `TenantResolutionMiddleware`-i.
+2. Middleware leiab `companySlug` põhjal aktiivse tenanti ja täidab `ITenantProvider` konteksti.
+3. Controller kontrollib authi ja route'i.
+4. Keerukamates voogudes kutsub controller BLL teenust; lihtsamates voogudes teeb otse `AppDbContext` päringu.
+5. `AppDbContext` rakendab tenant filtreid, auditit ja soft delete'i.
+6. Vea korral vormistab `GlobalExceptionMiddleware` vastuse `ProblemDetails`-ina.
+
 ## Kriitilised komponendid
 
-- Tenant resolution: `WebApp/Middleware/TenantResolutionMiddleware.cs`
-- Tenant filter: `App.DAL.EF/AppDbContext.cs`
-- Error handling: `WebApp/Middleware/GlobalExceptionMiddleware.cs`
-- Auth setup: `WebApp/Setup/IdentitySetupExtensions.cs`
-- Onboarding use-case: `App.BLL/Services/CompanyOnboardingService.cs`
-- Treatment plan decision use-case: `App.BLL/Services/TreatmentPlanService.cs`
-- Patient use-case: `App.BLL/Services/PatientService.cs`
-- Appointment use-case: `App.BLL/Services/AppointmentService.cs`
-- Impersonation context resolver: `App.BLL/Services/ImpersonationService.cs`
-- Impersonation endpoint (token + audit): `WebApp/ApiControllers/System/ImpersonationController.cs`
+- UI shell + route fallback: `WebApp/wwwroot/index.html`, `WebApp/wwwroot/js/*.js`
+- tenant resolution: `WebApp/Middleware/TenantResolutionMiddleware.cs`
+- tenant filter ja audit: `App.DAL.EF/AppDbContext.cs`
+- error handling: `WebApp/Middleware/GlobalExceptionMiddleware.cs`
+- auth setup: `WebApp/Setup/IdentitySetupExtensions.cs`
+- onboarding: `App.BLL/Services/CompanyOnboardingService.cs`
+- patients: `App.BLL/Services/PatientService.cs`
+- appointments: `App.BLL/Services/AppointmentService.cs`
+- treatment plans: `App.BLL/Services/TreatmentPlanService.cs`
+- finance: `App.BLL/Services/CostEstimateService.cs`, `InvoiceService.cs`, `PaymentPlanService.cs`, `FinanceWorkspaceService.cs`
+- impersonation: `App.BLL/Services/ImpersonationService.cs`
+
+## Arhitektuuri aus hinnang
+
+See projekt ei suru kogu loogikat vägisi BLL-i. Praegune seis on praktiline hybrid:
+
+- kõrgema riskiga ja mitut entiteeti siduvad vood on BLL teenustes
+- lihtsam CRUD on kohati controllerites
+
+Assignmenti jaoks on see mõistlik kompromiss, sest tenant isolatsioon ja turvakriitilised reeglid on siiski tsentraalselt kaitstud.

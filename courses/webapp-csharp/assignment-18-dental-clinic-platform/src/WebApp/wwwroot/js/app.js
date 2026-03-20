@@ -12,7 +12,7 @@
         patients: "/app/patients",
         resources: "/app/resources",
         appointments: "/app/appointments",
-        plans: "/app/plans",
+        plans: "/app/finance",
         team: "/app/team",
         settings: "/app/settings",
         logs: "/app/logs"
@@ -26,7 +26,7 @@
         patients: "Patients",
         resources: "Resources",
         appointments: "Schedule",
-        plans: "Plans",
+        plans: "Finance",
         team: "Team",
         settings: "Settings",
         logs: "API Logs"
@@ -34,6 +34,7 @@
     const routeScreenMap = Object.fromEntries(
         Object.entries(screenRouteMap).map(([screenId, route]) => [normalizeRoute(route), screenId])
     );
+    routeScreenMap["/app/plans"] = "plans";
     const validScreens = new Set(Object.keys(screenRouteMap));
     const permanentToothGroups = [
         [18, 17, 16, 15, 14, 13, 12, 11],
@@ -72,28 +73,32 @@
 	        dentists: [],
         dentistDirectory: {},
         treatmentRooms: [],
-        treatmentTypes: [],
-        appointments: [],
-        openPlanItems: [],
-        companyUsers: [],
-        companySettings: null,
-        subscription: null,
-        costEstimates: [],
+	        treatmentTypes: [],
+        treatmentPlans: [],
+	        appointments: [],
+	        openPlanItems: [],
+	        companyUsers: [],
+	        companySettings: null,
+	        subscription: null,
+	        costEstimates: [],
+        financeWorkspace: null,
+        financePatientId: "",
+        financeInvoiceDetail: null,
+        financeSelectedInvoiceId: "",
         systemAnalytics: null,
         featureFlags: [],
-        supportCompanies: [],
-        supportTickets: [],
-        billingSubscriptions: [],
-        billingInvoices: []
-    };
-
-    let pendingDelete = {
-        id: "",
-        label: ""
-    };
+	        supportCompanies: [],
+	        supportTickets: [],
+	        billingSubscriptions: [],
+	        billingInvoices: [],
+	        pendingDelete: {
+	            id: "",
+	            label: ""
+	        }
+	    };
 
     const logEntries = [];
-    const elements = {
+	    const elements = {
         authPill: document.getElementById("auth-pill"),
         companyPill: document.getElementById("company-pill"),
         appRoot: document.getElementById("app-root"),
@@ -138,6 +143,7 @@
         refreshResourcesButton: document.getElementById("refresh-resources-btn"),
         refreshAppointmentsButton: document.getElementById("refresh-appointments-btn"),
         refreshPlanItemsButton: document.getElementById("refresh-plan-items-btn"),
+        refreshFinanceButton: document.getElementById("refresh-finance-btn"),
         refreshPlatformButton: document.getElementById("refresh-platform-btn"),
         refreshSupportButton: document.getElementById("refresh-support-btn"),
         refreshBillingButton: document.getElementById("refresh-billing-btn"),
@@ -207,8 +213,32 @@
         appointmentPatientSelect: document.getElementById("appointmentPatientId"),
         appointmentDentistSelect: document.getElementById("appointmentDentistId"),
         appointmentRoomSelect: document.getElementById("appointmentRoomId"),
-        planItemSelection: document.getElementById("planItemSelection"),
-        estimatePatientSelect: document.getElementById("estimatePatientId"),
+	        planItemSelection: document.getElementById("planItemSelection"),
+	        estimatePatientSelect: document.getElementById("estimatePatientId"),
+        financePatientSelect: document.getElementById("financePatientId"),
+        financeSummary: document.getElementById("finance-summary"),
+        financePlanSelect: document.getElementById("financePlanId"),
+        financePlanStatus: document.getElementById("financePlanStatus"),
+        financePlanSubmitButton: document.getElementById("finance-plan-submit-btn"),
+        financePlanItemsBody: document.getElementById("finance-plan-items-body"),
+        financePolicyForm: document.getElementById("finance-policy-form"),
+        financePolicyResetButton: document.getElementById("finance-policy-reset-btn"),
+        financePolicyInsurancePlanSelect: document.getElementById("financePolicyInsurancePlanId"),
+        financePoliciesBody: document.getElementById("finance-policies-body"),
+        financeEstimatesBody: document.getElementById("finance-estimates-body"),
+        financeInvoiceGenerateForm: document.getElementById("finance-invoice-generate-form"),
+        financeInvoiceEstimateSelect: document.getElementById("financeInvoiceEstimateId"),
+        financeProceduresBody: document.getElementById("finance-procedures-body"),
+        financeInvoicesBody: document.getElementById("finance-invoices-body"),
+        financeInvoiceDetailSummary: document.getElementById("finance-invoice-detail-summary"),
+        financeInvoiceLinesBody: document.getElementById("finance-invoice-lines-body"),
+        financePaymentForm: document.getElementById("finance-payment-form"),
+        financePaymentsBody: document.getElementById("finance-payments-body"),
+        financePaymentPlanForm: document.getElementById("finance-payment-plan-form"),
+        financePaymentPlanInstallments: document.getElementById("finance-payment-plan-installments"),
+        financeInstallmentsBody: document.getElementById("finance-installments-body"),
+        financeAddInstallmentButton: document.getElementById("finance-add-installment-btn"),
+        paymentPlanInstallmentTemplate: document.getElementById("payment-plan-installment-template"),
         companyUserForm: document.getElementById("company-user-form"),
         companyRoleSwitchForm: document.getElementById("company-role-switch-form"),
         companyRoleSwitchSelect: document.getElementById("companyRoleSwitchRole"),
@@ -218,43 +248,23 @@
         loadingBar: document.getElementById("global-loading"),
         toastRegion: document.getElementById("toast-region"),
         patientDeleteDialog: document.getElementById("patient-delete-dialog"),
-        patientDeleteText: document.getElementById("patient-delete-text"),
-        confirmDeleteButton: document.getElementById("confirm-delete-btn")
-    };
-
-    bindEvents();
-    initializeTheme();
-    initializeTabs();
-    renderSession();
-    renderPatients([]);
-    renderPatientProfile(null);
-    renderDentists([]);
-    renderDentistProfile(null);
-    renderTreatmentRooms([]);
-    renderAppointments([]);
-    renderOpenPlanItems([]);
-    renderCompanyUsers([]);
-    renderCompanySettings(null);
-    renderSubscription(null);
-    renderFeatureFlags([]);
-    renderSupportCompanies([]);
-    renderSupportTickets([]);
-    renderBillingSubscriptions([]);
-    renderBillingInvoices([]);
-    resetAppointmentClinicalForm();
-    setSyncStatus("Idle", "neutral");
-    log("SYSTEM/READY", null, { message: "UI initialized." });
-
-    if (state.jwt) {
-        (async () => {
-            try {
-                await refreshAllViewsForCurrentSession({ silentToast: true, silentSyncStatus: true });
-            } catch (error) {
-                setSyncStatus("Sync failed", "danger");
-                reportError(error);
-            }
-        })();
-    }
+	        patientDeleteText: document.getElementById("patient-delete-text"),
+	        confirmDeleteButton: document.getElementById("confirm-delete-btn")
+	    };
+	    const moduleRegistrations = Array.isArray(window.__dentalAppModules) ? window.__dentalAppModules : [];
+	    const app = {
+	        state,
+	        elements,
+	        screenRouteMap,
+	        screenTitleMap,
+	        routeScreenMap,
+	        validScreens,
+	        permanentToothGroups,
+	        permanentToothNumbers,
+	        toothChartRows,
+	        svgNamespace,
+	        toothConditionOptions
+	    };
 
     function bindEvents() {
         bindAsyncSubmit(elements.gatewayLoginForm, onGatewayLoginSubmit);
@@ -270,10 +280,14 @@
         bindAsyncSubmit(elements.treatmentRoomForm, onTreatmentRoomCreateSubmit);
         bindAsyncSubmit(elements.appointmentForm, onAppointmentCreateSubmit);
         bindAsyncSubmit(elements.appointmentClinicalForm, onAppointmentClinicalSubmit);
-        bindAsyncSubmit(elements.planDecisionForm, onPlanDecisionSubmit);
-        bindAsyncSubmit(elements.costEstimateForm, onCostEstimateSubmit);
-        bindAsyncSubmit(elements.legalEstimateForm, onLegalEstimateSubmit);
-        bindAsyncSubmit(elements.featureFlagForm, onFeatureFlagSubmit);
+	        bindAsyncSubmit(elements.planDecisionForm, onPlanDecisionSubmit);
+	        bindAsyncSubmit(elements.costEstimateForm, onCostEstimateSubmit);
+	        bindAsyncSubmit(elements.legalEstimateForm, onLegalEstimateSubmit);
+        bindAsyncSubmit(elements.financePolicyForm, onFinancePolicySubmit);
+        bindAsyncSubmit(elements.financeInvoiceGenerateForm, onFinanceInvoiceGenerateSubmit);
+        bindAsyncSubmit(elements.financePaymentForm, onFinancePaymentSubmit);
+        bindAsyncSubmit(elements.financePaymentPlanForm, onFinancePaymentPlanSubmit);
+	        bindAsyncSubmit(elements.featureFlagForm, onFeatureFlagSubmit);
         bindAsyncSubmit(elements.companyActivationForm, onCompanyActivationSubmit);
         bindAsyncSubmit(elements.supportTicketForm, onSupportTicketSubmit);
         bindAsyncSubmit(elements.billingSubscriptionForm, onBillingSubscriptionSubmit);
@@ -312,8 +326,17 @@
         bindAsyncClick(elements.refreshAppointmentsButton, async () => {
             await refreshAppointments({ trigger: elements.refreshAppointmentsButton });
         });
-        bindAsyncClick(elements.refreshPlanItemsButton, async () => {
-            await refreshOpenPlanItems({ trigger: elements.refreshPlanItemsButton });
+	        bindAsyncClick(elements.refreshPlanItemsButton, async () => {
+	            await refreshOpenPlanItems({ trigger: elements.refreshPlanItemsButton });
+	        });
+        bindAsyncClick(elements.refreshFinanceButton, async () => {
+            await refreshFinanceWorkspace({ trigger: elements.refreshFinanceButton });
+        });
+        bindAsyncClick(elements.financePlanSubmitButton, async () => {
+            await onFinancePlanSubmit();
+        });
+        bindSyncClick(elements.financePolicyResetButton, () => {
+            resetFinancePolicyForm();
         });
         bindAsyncClick(elements.refreshPlatformButton, async () => {
             await refreshPlatformData({ trigger: elements.refreshPlatformButton });
@@ -333,8 +356,20 @@
         bindAsyncClick(elements.refreshSubscriptionButton, async () => {
             await refreshTenantSubscription({ trigger: elements.refreshSubscriptionButton });
         });
-        bindSyncClick(elements.appointmentClinicalAddRowButton, () => {
-            addAppointmentClinicalEntryRow();
+	        bindSyncClick(elements.appointmentClinicalAddRowButton, () => {
+	            addAppointmentClinicalEntryRow();
+	        });
+        bindSyncClick(elements.financeAddInstallmentButton, () => {
+            addFinanceInstallmentRow();
+        });
+        bindSyncChange(elements.financePatientSelect, () => {
+            void onFinancePatientChange();
+        });
+        bindSyncChange(elements.financePlanSelect, () => {
+            renderFinancePlanReview();
+        });
+        bindSyncChange(elements.appointmentClinicalAppointmentSelect, () => {
+            renderAppointmentClinicalSelectOptions();
         });
 	        bindSyncInput(elements.dentistProfileAppointmentSearch, () => {
 	            renderDentistProfileAppointments();
@@ -377,43 +412,6 @@
         window.addEventListener("popstate", () => {
             activateScreen(getRequestedScreen(), { updatePath: false });
         });
-    }
-
-    function bindAsyncSubmit(form, handler) {
-        if (!form) return;
-        form.addEventListener("submit", async (event) => {
-            try {
-                await handler(event);
-            } catch (error) {
-                reportError(error);
-            }
-        });
-    }
-
-    function bindAsyncClick(element, handler) {
-        if (!element) return;
-        element.addEventListener("click", async (event) => {
-            try {
-                await handler(event);
-            } catch (error) {
-                reportError(error);
-            }
-        });
-    }
-
-    function bindSyncClick(element, handler) {
-        if (!element) return;
-        element.addEventListener("click", handler);
-    }
-
-    function bindSyncInput(element, handler) {
-        if (!element) return;
-        element.addEventListener("input", handler);
-    }
-
-    function bindSyncChange(element, handler) {
-        if (!element) return;
-        element.addEventListener("change", handler);
     }
 
     function initializeTheme() {
@@ -494,1702 +492,6 @@
         document.title = `${screenTitle} | ${baseTitle}`;
     }
 
-    async function onOnboardingSubmit(event) {
-        event.preventDefault();
-        requireSystemRole("SystemAdmin", "SystemSupport");
-
-        const form = event.currentTarget;
-        const payload = {
-            companyName: form.companyName.value.trim(),
-            companySlug: form.companySlug.value.trim().toLowerCase(),
-            ownerEmail: form.ownerEmail.value.trim(),
-            ownerPassword: form.ownerPassword.value,
-            countryCode: form.countryCode.value.trim().toUpperCase()
-        };
-
-        await withBusy(form, async () => {
-            const data = await apiRequest("/api/v1/system/onboarding/registercompany", {
-                method: "POST",
-                body: payload,
-                auth: true,
-                tag: "ONBOARDING"
-            });
-
-            log("ONBOARDING/SUCCESS", payload, data);
-            showToast("Company onboarding completed.", "success");
-            form.reset();
-            form.countryCode.value = "EE";
-            activateScreen("auth");
-        });
-    }
-
-    async function onGatewayLoginSubmit(event) {
-        event.preventDefault();
-        const form = event.currentTarget;
-        await performLogin(form.email.value.trim(), form.password.value, form, "GATEWAY");
-    }
-
-    async function onLoginSubmit(event) {
-        event.preventDefault();
-        const form = event.currentTarget;
-        await performLogin(form.email.value.trim(), form.password.value, form, "ACCESS");
-    }
-
-    async function performLogin(email, password, form, sourceTag) {
-        const payload = { email, password };
-
-        await withBusy(form, async () => {
-            const data = await apiRequest("/api/v1/account/login", {
-                method: "POST",
-                body: payload,
-                auth: false,
-                tag: `LOGIN/${sourceTag}`
-            });
-
-            applyJwtResponse(data);
-            renderSession();
-            log("LOGIN/SUCCESS", { email: payload.email, source: sourceTag }, data);
-            showToast("Signed in successfully.", "success");
-            await refreshAllViewsForCurrentSession({ silentToast: true, silentSyncStatus: true });
-            activateScreen(resolveLandingScreen());
-        });
-    }
-
-    async function onSwitchSubmit(event) {
-        event.preventDefault();
-        requireJwt();
-
-        const form = event.currentTarget;
-        const payload = {
-            companySlug: form.companySlug.value.trim().toLowerCase()
-        };
-
-        await withBusy(form, async () => {
-            const data = await apiRequest("/api/v1/account/switchcompany", {
-                method: "POST",
-                body: payload,
-                auth: true,
-                tag: "SWITCH"
-            });
-
-            applyJwtResponse(data);
-            renderSession();
-            log("SWITCH/SUCCESS", payload, data);
-            showToast(`Tenant switched to ${state.companySlug}.`, "success");
-            await refreshAllViewsForCurrentSession({ silentToast: true, silentSyncStatus: true });
-            activateScreen(resolveLandingScreen());
-        });
-    }
-
-    async function onForgotPasswordSubmit(event) {
-        event.preventDefault();
-        const form = event.currentTarget;
-        const payload = {
-            email: form.email.value.trim()
-        };
-
-        await withBusy(form, async () => {
-            const data = await apiRequest("/api/v1/account/forgotpassword", {
-                method: "POST",
-                body: payload,
-                auth: false,
-                tag: "ACCOUNT/FORGOT-PASSWORD"
-            });
-
-            if (data.resetToken && elements.resetPasswordForm) {
-                elements.resetPasswordForm.email.value = payload.email;
-                elements.resetPasswordForm.resetToken.value = data.resetToken;
-            }
-
-            log("ACCOUNT/FORGOT-PASSWORD/SUCCESS", payload, {
-                tokenReturned: Boolean(data.resetToken)
-            });
-            showToast(data.resetToken
-                ? "Reset token generated (development mode)."
-                : "If account exists, reset instructions are available.",
-            "info");
-        });
-    }
-
-    async function onResetPasswordSubmit(event) {
-        event.preventDefault();
-        const form = event.currentTarget;
-        const payload = {
-            email: form.email.value.trim(),
-            resetToken: form.resetToken.value.trim(),
-            newPassword: form.newPassword.value
-        };
-
-        await withBusy(form, async () => {
-            const data = await apiRequest("/api/v1/account/resetpassword", {
-                method: "POST",
-                body: payload,
-                auth: false,
-                tag: "ACCOUNT/RESET-PASSWORD"
-            });
-
-            log("ACCOUNT/RESET-PASSWORD/SUCCESS", { email: payload.email }, data);
-            showToast("Password reset completed.", "success");
-            form.reset();
-        });
-    }
-
-    async function onPatientCreateSubmit(event) {
-        event.preventDefault();
-        requireTenant();
-
-        const form = event.currentTarget;
-        const payload = {
-            firstName: form.firstName.value.trim(),
-            lastName: form.lastName.value.trim(),
-            dateOfBirth: form.dateOfBirth.value || null,
-            personalCode: optional(form.personalCode.value),
-            email: optional(form.email.value),
-            phone: optional(form.phone.value)
-        };
-
-        await withBusy(form, async () => {
-            await apiRequest(`/api/v1/${state.companySlug}/patients`, {
-                method: "POST",
-                body: payload,
-                auth: true,
-                tag: "PATIENT/CREATE"
-            });
-
-            showToast("Patient created.", "success");
-            form.reset();
-            await refreshPatients({ silentToast: true, silentSyncStatus: true });
-        });
-    }
-
-    async function onPatientProfileSubmit(event) {
-        event.preventDefault();
-        requireTenant();
-
-        const patientId = state.patientProfile?.id;
-        if (!patientId) {
-            throw new Error("Open a patient profile before saving changes.");
-        }
-
-        const form = event.currentTarget;
-        const payload = {
-            firstName: form.firstName.value.trim(),
-            lastName: form.lastName.value.trim(),
-            dateOfBirth: form.dateOfBirth.value || null,
-            personalCode: optional(form.personalCode.value),
-            email: optional(form.email.value),
-            phone: optional(form.phone.value)
-        };
-
-        await withBusy(form, async () => {
-            await apiRequest(`/api/v1/${state.companySlug}/patients/${patientId}`, {
-                method: "PUT",
-                body: payload,
-                auth: true,
-                tag: "PATIENT/UPDATE"
-            });
-
-            showToast("Patient profile updated.", "success");
-            await refreshPatients({ silentToast: true, silentSyncStatus: true });
-            await refreshPatientProfile({ patientId, silentToast: true, trigger: form });
-        });
-    }
-
-    async function onDentistCreateSubmit(event) {
-        event.preventDefault();
-        requireTenant();
-
-        const form = event.currentTarget;
-        const payload = {
-            displayName: form.displayName.value.trim(),
-            licenseNumber: form.licenseNumber.value.trim(),
-            specialty: optional(form.specialty.value)
-        };
-
-        await withBusy(form, async () => {
-            const data = await apiRequest(`/api/v1/${state.companySlug}/dentists`, {
-                method: "POST",
-                body: payload,
-                auth: true,
-                tag: "DENTIST/CREATE"
-            });
-
-            log("DENTIST/CREATE/SUCCESS", payload, data);
-            showToast("Dentist added.", "success");
-            form.reset();
-            await refreshDentists({ silentToast: true });
-        });
-    }
-
-    async function onDentistProfileSubmit(event) {
-        event.preventDefault();
-        requireTenant();
-
-        const dentistId = state.dentistProfile?.id;
-        if (!dentistId) {
-            throw new Error("Open a dentist profile before saving changes.");
-        }
-
-        const form = event.currentTarget;
-        const payload = {
-            displayName: form.displayName.value.trim(),
-            licenseNumber: form.licenseNumber.value.trim(),
-            specialty: optional(form.specialty.value)
-        };
-
-        await withBusy(form, async () => {
-            const data = await apiRequest(`/api/v1/${state.companySlug}/dentists/${dentistId}`, {
-                method: "PUT",
-                body: payload,
-                auth: true,
-                tag: "DENTIST/UPDATE"
-            });
-
-            rememberDentists([data]);
-            log("DENTIST/UPDATE/SUCCESS", { id: dentistId }, data);
-            showToast("Dentist profile updated.", "success");
-            await refreshDentists({ silentToast: true, trigger: form });
-            renderAppointments(state.appointments);
-
-            const refreshedDentist = resolveDentist(dentistId) || data;
-            renderDentistProfile(refreshedDentist, { preserveFilters: true });
-        });
-    }
-
-    async function onDentistProfileDelete() {
-        requireTenant();
-
-        const dentist = state.dentistProfile;
-        if (!dentist?.id) {
-            throw new Error("Open a dentist profile before deleting.");
-        }
-
-        const dentistLabel = dentist.displayName || dentist.licenseNumber || "this dentist";
-        const confirmed = window.confirm(`Delete ${dentistLabel}?`);
-        if (!confirmed) {
-            return;
-        }
-
-        await withBusy(elements.dentistProfileDeleteButton, async () => {
-            await apiRequest(`/api/v1/${state.companySlug}/dentists/${dentist.id}`, {
-                method: "DELETE",
-                auth: true,
-                tag: "DENTIST/DELETE"
-            });
-
-            log("DENTIST/DELETE/SUCCESS", { id: dentist.id }, { message: "Deleted" });
-            showToast(`Deleted ${dentistLabel}.`, "success");
-        });
-
-        await refreshDentists({ silentToast: true, trigger: elements.dentistProfileDeleteButton });
-        renderAppointments(state.appointments);
-        closeDentistProfile();
-    }
-
-	    async function onTreatmentRoomCreateSubmit(event) {
-	        event.preventDefault();
-	        requireTenant();
-
-	        const form = event.currentTarget;
-	        const roomId = state.editingTreatmentRoomId;
-	        const payload = {
-	            name: form.name.value.trim(),
-	            code: form.code.value.trim().toUpperCase(),
-	            isActiveRoom: Boolean(form.isActiveRoom.checked)
-	        };
-
-	        await withBusy(form, async () => {
-	            const isEditing = Boolean(roomId);
-	            const data = await apiRequest(`/api/v1/${state.companySlug}/treatmentrooms${isEditing ? `/${roomId}` : ""}`, {
-	                method: isEditing ? "PUT" : "POST",
-	                body: payload,
-	                auth: true,
-	                tag: isEditing ? "TREATMENT-ROOM/UPDATE" : "TREATMENT-ROOM/CREATE"
-	            });
-
-	            log(isEditing ? "TREATMENT-ROOM/UPDATE/SUCCESS" : "TREATMENT-ROOM/CREATE/SUCCESS", payload, data);
-	            showToast(isEditing ? "Treatment room updated." : "Treatment room added.", "success");
-	            resetTreatmentRoomForm();
-	            await refreshTreatmentRooms({ silentToast: true });
-	        });
-	    }
-
-	    async function onTreatmentRoomDelete(roomId) {
-	        requireTenant();
-
-	        const room = resolveTreatmentRoom(roomId);
-	        if (!room?.id) {
-	            throw new Error("Select a treatment room before deleting.");
-	        }
-
-	        const roomLabel = room.name || room.code || "this room";
-	        const confirmed = window.confirm(`Delete ${roomLabel}?`);
-	        if (!confirmed) {
-	            return;
-	        }
-
-	        await withBusy(elements.treatmentRoomForm || elements.treatmentRoomsBody, async () => {
-	            await apiRequest(`/api/v1/${state.companySlug}/treatmentrooms/${room.id}`, {
-	                method: "DELETE",
-	                auth: true,
-	                tag: "TREATMENT-ROOM/DELETE"
-	            });
-
-	            log("TREATMENT-ROOM/DELETE/SUCCESS", { id: room.id }, { message: "Deleted" });
-	            showToast(`Deleted ${roomLabel}.`, "success");
-	        });
-
-	        if (state.editingTreatmentRoomId === room.id) {
-	            resetTreatmentRoomForm();
-	        }
-
-	        await refreshTreatmentRooms({ silentToast: true });
-	    }
-
-    async function onAppointmentCreateSubmit(event) {
-        event.preventDefault();
-        requireTenant();
-
-        const form = event.currentTarget;
-        const payload = {
-            patientId: form.patientId.value,
-            dentistId: form.dentistId.value,
-            treatmentRoomId: form.treatmentRoomId.value,
-            startAtUtc: toUtcIso(form.startAtLocal.value),
-            endAtUtc: toUtcIso(form.endAtLocal.value),
-            notes: optional(form.notes.value)
-        };
-
-        await withBusy(form, async () => {
-            const data = await apiRequest(`/api/v1/${state.companySlug}/appointments`, {
-                method: "POST",
-                body: payload,
-                auth: true,
-                tag: "APPOINTMENT/CREATE"
-            });
-
-            log("APPOINTMENT/CREATE/SUCCESS", payload, data);
-            showToast("Appointment created.", "success");
-            form.reset();
-            await refreshAppointments({ silentToast: true });
-        });
-    }
-
-    async function onAppointmentClinicalSubmit(event) {
-        event.preventDefault();
-        requireTenant();
-
-        const form = event.currentTarget;
-        const appointmentId = form.appointmentId.value;
-        if (!appointmentId) {
-            throw new Error("Select an appointment first.");
-        }
-
-        const rows = Array.from(elements.appointmentClinicalItems?.querySelectorAll(".clinical-entry") ?? []);
-        if (rows.length === 0) {
-            throw new Error("Add at least one tooth entry.");
-        }
-
-        const items = rows.map((row) => {
-            const toothNumber = row.querySelector('[data-clinical-field="toothNumber"]')?.value || "";
-            const treatmentTypeId = row.querySelector('[data-clinical-field="treatmentTypeId"]')?.value || "";
-            const condition = row.querySelector('[data-clinical-field="condition"]')?.value || "";
-            const priceRaw = row.querySelector('[data-clinical-field="price"]')?.value || "";
-            const notes = row.querySelector('[data-clinical-field="notes"]')?.value || "";
-
-            if (!toothNumber || !treatmentTypeId || !condition) {
-                throw new Error("Complete tooth, treatment type, and status for each clinical entry.");
-            }
-
-            return {
-                toothNumber: Number(toothNumber),
-                treatmentTypeId,
-                condition,
-                price: priceRaw === "" ? null : Number(priceRaw),
-                notes: optional(notes)
-            };
-        });
-
-        const payload = {
-            performedAtUtc: toUtcIso(form.performedAtLocal.value),
-            markAppointmentCompleted: Boolean(form.markCompleted.checked),
-            items
-        };
-
-        await withBusy(form, async () => {
-            await apiRequest(`/api/v1/${state.companySlug}/appointments/${appointmentId}/clinical-record`, {
-                method: "POST",
-                body: payload,
-                auth: true,
-                tag: "APPOINTMENT/CLINICAL-RECORD"
-            });
-
-            const appointment = state.appointments.find((item) => item.id === appointmentId) || null;
-            showToast(`${items.length} tooth entr${items.length === 1 ? "y" : "ies"} recorded.`, "success");
-            resetAppointmentClinicalForm({ appointmentId });
-            await refreshAppointments({ silentToast: true });
-
-            if (appointment && state.patientProfile?.id === appointment.patientId) {
-                await refreshPatientProfile({ patientId: appointment.patientId, silentToast: true, trigger: form });
-            }
-        });
-    }
-
-    async function onPlanDecisionSubmit(event) {
-        event.preventDefault();
-        requireTenant();
-
-        const form = event.currentTarget;
-        const selection = form.planItemSelection.value;
-        const [planId, planItemId] = selection.split("|");
-        if (!planId || !planItemId) {
-            throw new Error("Select a pending plan item first.");
-        }
-
-        const payload = {
-            planId,
-            planItemId,
-            decision: form.decision.value,
-            notes: optional(form.notes.value)
-        };
-
-        await withBusy(form, async () => {
-            const data = await apiRequest(`/api/v1/${state.companySlug}/treatmentplans/recorditemdecision`, {
-                method: "POST",
-                body: payload,
-                auth: true,
-                tag: "TREATMENT-PLAN/DECISION"
-            });
-
-            log("TREATMENT-PLAN/DECISION/SUCCESS", payload, data);
-            showToast("Plan item decision saved.", "success");
-            form.notes.value = "";
-            await refreshOpenPlanItems({ silentToast: true });
-        });
-    }
-
-    async function onCostEstimateSubmit(event) {
-        event.preventDefault();
-        requireTenant();
-
-        const form = event.currentTarget;
-        const payload = {
-            patientId: form.patientId.value,
-            treatmentPlanId: form.treatmentPlanId.value.trim(),
-            insurancePlanId: optional(form.insurancePlanId.value),
-            estimateNumber: form.estimateNumber.value.trim(),
-            formatCode: form.formatCode.value.trim().toUpperCase(),
-            totalEstimatedAmount: Number(form.totalEstimatedAmount.value)
-        };
-
-        await withBusy(form, async () => {
-            const data = await apiRequest(`/api/v1/${state.companySlug}/costestimates`, {
-                method: "POST",
-                body: payload,
-                auth: true,
-                tag: "COST-ESTIMATE/CREATE"
-            });
-
-            log("COST-ESTIMATE/CREATE/SUCCESS", payload, data);
-            showToast("Cost estimate created.", "success");
-            if (elements.legalEstimateForm) {
-                elements.legalEstimateForm.costEstimateId.value = data.id || "";
-            }
-            await refreshCostEstimates({ silentToast: true });
-        });
-    }
-
-    async function onLegalEstimateSubmit(event) {
-        event.preventDefault();
-        requireTenant();
-
-        const form = event.currentTarget;
-        const estimateId = form.costEstimateId.value.trim();
-        if (!estimateId) {
-            throw new Error("Cost estimate ID is required.");
-        }
-
-        const countryCode = optional(form.countryCode.value)?.toUpperCase();
-        const query = countryCode ? `?countryCode=${encodeURIComponent(countryCode)}` : "";
-
-        await withBusy(form, async () => {
-            const data = await apiRequest(`/api/v1/${state.companySlug}/costestimates/${estimateId}/legal${query}`, {
-                method: "GET",
-                auth: true,
-                tag: "COST-ESTIMATE/LEGAL"
-            });
-
-            log("COST-ESTIMATE/LEGAL/SUCCESS", { estimateId, countryCode }, data);
-            renderLegalEstimateOutput(data.generatedText || "No legal output generated.");
-            showToast(`Legal preview generated (${data.documentType || "Document"}).`, "success");
-        });
-    }
-
-    async function onFeatureFlagSubmit(event) {
-        event.preventDefault();
-        requireSystemRole("SystemAdmin");
-
-        const form = event.currentTarget;
-        const payload = {
-            key: form.key.value.trim(),
-            enabled: Boolean(form.enabled.checked)
-        };
-
-        await withBusy(form, async () => {
-            const data = await apiRequest("/api/v1/system/platform/featureflags", {
-                method: "PUT",
-                body: payload,
-                auth: true,
-                tag: "PLATFORM/FEATURE-FLAG"
-            });
-
-            renderFeatureFlags(Array.isArray(data) ? data : []);
-            showToast("Feature flag updated.", "success");
-        });
-    }
-
-    async function onCompanyActivationSubmit(event) {
-        event.preventDefault();
-        requireSystemRole("SystemAdmin");
-
-        const form = event.currentTarget;
-        const companyId = form.companyId.value.trim();
-        if (!companyId) {
-            throw new Error("Company ID is required.");
-        }
-
-        await withBusy(form, async () => {
-            await apiRequest(`/api/v1/system/platform/companies/${companyId}/activation`, {
-                method: "PUT",
-                body: {
-                    isActive: Boolean(form.isActive.checked)
-                },
-                auth: true,
-                tag: "PLATFORM/COMPANY-ACTIVATION"
-            });
-
-            showToast("Company activation updated.", "success");
-            await refreshPlatformData({ silentToast: true });
-            await refreshSupportData({ silentToast: true });
-            await refreshBillingData({ silentToast: true });
-        });
-    }
-
-    async function onSupportTicketSubmit(event) {
-        event.preventDefault();
-        requireSystemRole("SystemSupport", "SystemAdmin");
-
-        const form = event.currentTarget;
-        const payload = {
-            companySlug: form.companySlug.value.trim().toLowerCase(),
-            subject: form.subject.value.trim(),
-            details: form.details.value.trim()
-        };
-
-        await withBusy(form, async () => {
-            const data = await apiRequest("/api/v1/system/support/tickets", {
-                method: "POST",
-                body: payload,
-                auth: true,
-                tag: "SUPPORT/TICKET-CREATE"
-            });
-
-            log("SUPPORT/TICKET-CREATE/SUCCESS", payload, data);
-            showToast("Support ticket created.", "success");
-            form.reset();
-            await refreshSupportData({ silentToast: true });
-        });
-    }
-
-    async function onBillingSubscriptionSubmit(event) {
-        event.preventDefault();
-        requireSystemRole("SystemBilling", "SystemAdmin");
-
-        const form = event.currentTarget;
-        const subscriptionId = form.subscriptionId.value.trim();
-        if (!subscriptionId) {
-            throw new Error("Subscription ID is required.");
-        }
-
-        const payload = {
-            tier: form.tier.value,
-            status: form.status.value,
-            userLimit: Number(form.userLimit.value),
-            entityLimit: Number(form.entityLimit.value)
-        };
-
-        await withBusy(form, async () => {
-            const data = await apiRequest(`/api/v1/system/billing/subscriptions/${subscriptionId}`, {
-                method: "PUT",
-                body: payload,
-                auth: true,
-                tag: "BILLING/SUBSCRIPTION-UPDATE"
-            });
-
-            log("BILLING/SUBSCRIPTION-UPDATE/SUCCESS", payload, data);
-            showToast("Subscription updated.", "success");
-            await refreshBillingData({ silentToast: true });
-        });
-    }
-
-    async function onBillingInvoiceStatusSubmit(event) {
-        event.preventDefault();
-        requireSystemRole("SystemBilling", "SystemAdmin");
-
-        const form = event.currentTarget;
-        const invoiceId = form.invoiceId.value.trim();
-        if (!invoiceId) {
-            throw new Error("Invoice ID is required.");
-        }
-
-        await withBusy(form, async () => {
-            const data = await apiRequest(`/api/v1/system/billing/invoices/${invoiceId}/status`, {
-                method: "PUT",
-                body: { status: form.status.value },
-                auth: true,
-                tag: "BILLING/INVOICE-STATUS"
-            });
-
-            log("BILLING/INVOICE-STATUS/SUCCESS", { invoiceId, status: form.status.value }, data);
-            showToast("Invoice status updated.", "success");
-            await refreshBillingData({ silentToast: true });
-        });
-    }
-
-    async function onSubscriptionSubmit(event) {
-        event.preventDefault();
-        requireTenant();
-        if (!hasCompanyRole("CompanyOwner")) {
-            throw new Error("Only CompanyOwner can change subscription tier.");
-        }
-
-        const form = event.currentTarget;
-        const payload = {
-            tier: form.tier.value
-        };
-
-        await withBusy(form, async () => {
-            const data = await apiRequest(`/api/v1/${state.companySlug}/subscription`, {
-                method: "PUT",
-                body: payload,
-                auth: true,
-                tag: "TENANT/SUBSCRIPTION-UPDATE"
-            });
-
-            renderSubscription(data);
-            showToast("Subscription tier updated.", "success");
-        });
-    }
-
-    async function onCompanyUserUpsertSubmit(event) {
-        event.preventDefault();
-        requireTenant();
-
-        const form = event.currentTarget;
-        const payload = {
-            email: form.email.value.trim(),
-            roleName: form.roleName.value,
-            isActive: Boolean(form.isActive.checked),
-            temporaryPassword: optional(form.temporaryPassword.value)
-        };
-
-        await withBusy(form, async () => {
-            const data = await apiRequest(`/api/v1/${state.companySlug}/companyusers`, {
-                method: "POST",
-                body: payload,
-                auth: true,
-                tag: "COMPANY-USERS/UPSERT"
-            });
-
-            log("COMPANY-USERS/UPSERT/SUCCESS", { email: payload.email, roleName: payload.roleName }, data);
-            showToast("Membership saved.", "success");
-            form.temporaryPassword.value = "";
-            await refreshCompanyUsers({ silentToast: true });
-        });
-    }
-
-    async function onCompanyRoleSwitchSubmit(event) {
-        event.preventDefault();
-        requireTenant();
-
-        const form = event.currentTarget;
-        const roleName = form.roleName.value;
-        if (!roleName) {
-            throw new Error("Select a role first.");
-        }
-
-        await withBusy(form, async () => {
-            const data = await apiRequest("/api/v1/account/switchrole", {
-                method: "POST",
-                body: { roleName },
-                auth: true,
-                tag: "ACCOUNT/SWITCH-ROLE"
-            });
-
-            applyJwtResponse(data);
-            renderSession();
-            log("ACCOUNT/SWITCH-ROLE/SUCCESS", { roleName }, data);
-            showToast(`Active role switched to ${state.companyRole}.`, "success");
-            await refreshAllViewsForCurrentSession({ silentToast: true, silentSyncStatus: true, trigger: form });
-            activateScreen(resolveLandingScreen());
-        });
-    }
-
-    async function onCompanySettingsSubmit(event) {
-        event.preventDefault();
-        requireTenant();
-
-        const form = event.currentTarget;
-        const payload = {
-            countryCode: form.countryCode.value.trim().toUpperCase(),
-            currencyCode: form.currencyCode.value.trim().toUpperCase(),
-            timezone: form.timezone.value.trim(),
-            defaultXrayIntervalMonths: Number(form.defaultXrayIntervalMonths.value)
-        };
-
-        await withBusy(form, async () => {
-            const data = await apiRequest(`/api/v1/${state.companySlug}/companysettings`, {
-                method: "PUT",
-                body: payload,
-                auth: true,
-                tag: "COMPANY-SETTINGS/UPDATE"
-            });
-
-            log("COMPANY-SETTINGS/UPDATE/SUCCESS", payload, data);
-            showToast("Company settings saved.", "success");
-            renderCompanySettings(data);
-        });
-    }
-
-    async function onLogoutClick() {
-        await withBusy(elements.logoutButton, async () => {
-            if (state.jwt && state.refreshToken) {
-                try {
-                    await apiRequest("/api/v1/account/logout", {
-                        method: "POST",
-                        body: {
-                            jwt: state.jwt,
-                            refreshToken: state.refreshToken
-                        },
-                        auth: true,
-                        tag: "LOGOUT"
-                    });
-                } catch {
-                    // Server-side token may already be invalid; local session still needs to be cleared.
-                }
-            }
-
-            clearSession();
-            renderSession();
-            renderPatients([]);
-            renderPatientProfile(null);
-            renderDentists([]);
-            renderDentistProfile(null);
-            renderTreatmentRooms([]);
-            renderAppointments([]);
-            renderOpenPlanItems([]);
-            renderCompanyUsers([]);
-            renderCompanySettings(null);
-            renderSubscription(null);
-            renderPlatformAnalytics(null);
-            renderFeatureFlags([]);
-            renderSupportCompanies([]);
-            renderSupportTickets([]);
-            renderBillingSubscriptions([]);
-            renderBillingInvoices([]);
-            renderLegalEstimateOutput("No legal preview generated yet.");
-            resetAppointmentClinicalForm();
-            setSyncStatus("Idle", "neutral");
-            log("LOGOUT/SUCCESS", null, { message: "Session cleared." });
-            showToast("Logged out.", "info");
-            syncPublicEntryState();
-        });
-    }
-
-    async function refreshAllViewsForCurrentSession(options = {}) {
-        if (!state.jwt) {
-            return;
-        }
-
-        const silentToast = options.silentToast === true;
-        const silentSyncStatus = options.silentSyncStatus === true;
-
-        if (hasSystemRole("SystemAdmin")) {
-            await refreshPlatformData({ silentToast: true, trigger: options.trigger });
-            await refreshSupportData({ silentToast: true, trigger: options.trigger });
-            await refreshBillingData({ silentToast: true, trigger: options.trigger });
-        } else {
-            if (hasSystemRole("SystemSupport")) {
-                await refreshSupportData({ silentToast: true, trigger: options.trigger });
-            }
-            if (hasSystemRole("SystemBilling")) {
-                await refreshBillingData({ silentToast: true, trigger: options.trigger });
-            }
-        }
-
-        if (state.companySlug && state.companyRole) {
-            await refreshPatients({ silentToast: true, silentSyncStatus: true, trigger: options.trigger });
-            await refreshClinicalViews({ silentToast: true, trigger: options.trigger });
-            await refreshTenantAdminViews({ silentToast: true, trigger: options.trigger });
-            await refreshTenantSubscription({ silentToast: true, silentErrors: true, trigger: options.trigger });
-
-            if (state.patientProfile?.id) {
-                await refreshPatientProfile({ silentToast: true, trigger: options.trigger });
-            }
-        } else if (state.companySlug) {
-            setSyncStatus("Tenant selected without company access", "warning");
-        } else if (!hasAnySystemRole()) {
-            setSyncStatus("No active tenant", "warning");
-        }
-
-        if (!silentSyncStatus && state.companySlug && state.companyRole) {
-            setSyncStatus(`Synced ${formatTime(new Date())}`, "success");
-        }
-
-        if (!silentToast) {
-            showToast("Workspace refreshed.", "info");
-        }
-    }
-
-    async function refreshPatients(options = {}) {
-        requireTenant();
-
-        const {
-            trigger = elements.refreshPatientsButton,
-            silentToast = false,
-            silentSyncStatus = false
-        } = options;
-
-        renderPatientsSkeleton();
-        setSyncStatus("Syncing...", "warning");
-
-        try {
-            const patients = await withBusy(trigger, async () => {
-                const data = await apiRequest(`/api/v1/${state.companySlug}/patients`, {
-                    method: "GET",
-                    auth: true,
-                    tag: "PATIENT/LIST"
-                });
-
-                return Array.isArray(data) ? data : [];
-            });
-
-            state.patients = patients;
-            renderPatients(patients);
-            renderSession();
-            log("PATIENT/LIST/SUCCESS", null, patients);
-
-            if (!silentSyncStatus) {
-                setSyncStatus(`Synced ${formatTime(new Date())}`, "success");
-            } else {
-                setSyncStatus("Synced", "success");
-            }
-
-            if (!silentToast) {
-                showToast(`${patients.length} patient${patients.length === 1 ? "" : "s"} loaded.`, "info");
-            }
-        } catch (error) {
-            setSyncStatus("Sync failed", "danger");
-            throw error;
-        }
-    }
-
-    async function refreshPatientProfile(options = {}) {
-        requireTenant();
-
-        const patientId = options.patientId || state.patientProfile?.id;
-        if (!patientId) {
-            return;
-        }
-
-        const trigger = options.trigger || elements.patientProfileRefreshButton || elements.refreshPatientsButton;
-        const profile = await withBusy(trigger, async () => {
-            return await apiRequest(`/api/v1/${state.companySlug}/patients/${patientId}/profile`, {
-                method: "GET",
-                auth: true,
-                tag: "PATIENT/PROFILE"
-            });
-        });
-
-        renderPatientProfile(profile, {
-            selectedToothNumber: state.selectedPatientToothNumber
-        });
-
-        if (!options.silentToast) {
-            showToast("Patient profile loaded.", "info");
-        }
-    }
-
-    async function refreshTreatmentTypes(options = {}) {
-        requireTenant();
-
-        const {
-            trigger = elements.refreshAppointmentsButton,
-            silentErrors = false
-        } = options;
-
-        try {
-            const types = await withBusy(trigger, async () => {
-                const data = await apiRequest(`/api/v1/${state.companySlug}/treatmenttypes`, {
-                    method: "GET",
-                    auth: true,
-                    tag: "TREATMENT-TYPES/LIST"
-                });
-
-                return Array.isArray(data) ? data : [];
-            });
-
-            state.treatmentTypes = types;
-            renderAppointmentClinicalSelectOptions();
-        } catch (error) {
-            if (silentErrors) {
-                state.treatmentTypes = [];
-                renderAppointmentClinicalSelectOptions();
-                return;
-            }
-
-            throw error;
-        }
-    }
-
-    async function refreshClinicalViews(options = {}) {
-        if (!state.companySlug) {
-            return;
-        }
-
-        const canAccessResources = hasCompanyRole("CompanyOwner", "CompanyAdmin", "CompanyManager", "CompanyEmployee");
-        const canAccessPlanDecisions = hasCompanyRole("CompanyOwner", "CompanyAdmin", "CompanyManager");
-
-        if (!canAccessResources) {
-            state.dentistProfile = null;
-            state.dentists = [];
-            state.treatmentRooms = [];
-            state.treatmentTypes = [];
-            state.appointments = [];
-            state.openPlanItems = [];
-            renderDentists([]);
-            renderDentistProfile(null);
-            renderTreatmentRooms([]);
-            renderAppointments([]);
-            renderAppointmentClinicalSelectOptions();
-            resetAppointmentClinicalForm();
-            renderOpenPlanItems([]);
-            return;
-        }
-
-        await refreshResources({ silentToast: true, silentErrors: true, trigger: options.trigger });
-        await refreshTreatmentTypes({ silentErrors: true, trigger: options.trigger });
-        await refreshAppointments({ silentToast: true, silentErrors: true, trigger: options.trigger });
-
-        if (state.dentistProfile?.id) {
-            renderDentistProfile(resolveDentist(state.dentistProfile.id) || state.dentistProfile, { preserveFilters: true });
-        }
-
-        if (canAccessPlanDecisions) {
-            await refreshOpenPlanItems({ silentToast: true, silentErrors: true, trigger: options.trigger });
-            await refreshCostEstimates({ silentToast: true, silentErrors: true, trigger: options.trigger });
-        } else {
-            state.openPlanItems = [];
-            renderOpenPlanItems([]);
-            state.costEstimates = [];
-        }
-    }
-
-    async function refreshPlatformData(options = {}) {
-        const {
-            trigger = elements.refreshPlatformButton,
-            silentToast = false
-        } = options;
-
-        if (!hasSystemRole("SystemAdmin")) {
-            renderPlatformAnalytics(null);
-            renderFeatureFlags([]);
-            return;
-        }
-
-        await refreshPlatformAnalytics({ trigger, silentToast: true });
-        await refreshFeatureFlags({ trigger, silentToast: true });
-
-        if (!silentToast) {
-            showToast("Platform data refreshed.", "info");
-        }
-    }
-
-    async function refreshPlatformAnalytics(options = {}) {
-        const {
-            trigger = elements.refreshPlatformButton,
-            silentToast = false
-        } = options;
-
-        const analytics = await withBusy(trigger, async () => {
-            return await apiRequest("/api/v1/system/platform/analytics", {
-                method: "GET",
-                auth: true,
-                tag: "PLATFORM/ANALYTICS"
-            });
-        });
-
-        renderPlatformAnalytics(analytics);
-        if (!silentToast) {
-            showToast("Platform analytics loaded.", "info");
-        }
-    }
-
-    async function refreshFeatureFlags(options = {}) {
-        const {
-            trigger = elements.refreshPlatformButton,
-            silentToast = false
-        } = options;
-
-        const flags = await withBusy(trigger, async () => {
-            const data = await apiRequest("/api/v1/system/platform/featureflags", {
-                method: "GET",
-                auth: true,
-                tag: "PLATFORM/FEATURE-FLAGS"
-            });
-            return Array.isArray(data) ? data : [];
-        });
-
-        renderFeatureFlags(flags);
-        if (!silentToast) {
-            showToast("Feature flags loaded.", "info");
-        }
-    }
-
-    async function refreshSupportData(options = {}) {
-        const {
-            trigger = elements.refreshSupportButton,
-            silentToast = false
-        } = options;
-
-        if (!hasSystemRole("SystemSupport", "SystemAdmin")) {
-            renderSupportCompanies([]);
-            renderSupportTickets([]);
-            return;
-        }
-
-        await refreshSupportCompanies({ trigger, silentToast: true });
-        await refreshSupportTickets({ trigger, silentToast: true });
-
-        if (!silentToast) {
-            showToast("Support data refreshed.", "info");
-        }
-    }
-
-    async function refreshSupportCompanies(options = {}) {
-        const {
-            trigger = elements.refreshSupportButton,
-            silentToast = false
-        } = options;
-
-        const companies = await withBusy(trigger, async () => {
-            const data = await apiRequest("/api/v1/system/support/companies", {
-                method: "GET",
-                auth: true,
-                tag: "SUPPORT/COMPANIES"
-            });
-            return Array.isArray(data) ? data : [];
-        });
-
-        renderSupportCompanies(companies);
-        if (!silentToast) {
-            showToast("Support snapshots loaded.", "info");
-        }
-    }
-
-    async function refreshSupportTickets(options = {}) {
-        const {
-            trigger = elements.refreshSupportButton,
-            silentToast = false
-        } = options;
-
-        const tickets = await withBusy(trigger, async () => {
-            const data = await apiRequest("/api/v1/system/support/tickets", {
-                method: "GET",
-                auth: true,
-                tag: "SUPPORT/TICKETS"
-            });
-            return Array.isArray(data) ? data : [];
-        });
-
-        renderSupportTickets(tickets);
-        if (!silentToast) {
-            showToast("Support tickets loaded.", "info");
-        }
-    }
-
-    async function refreshBillingData(options = {}) {
-        const {
-            trigger = elements.refreshBillingButton,
-            silentToast = false
-        } = options;
-
-        if (!hasSystemRole("SystemBilling", "SystemAdmin")) {
-            renderBillingSubscriptions([]);
-            renderBillingInvoices([]);
-            return;
-        }
-
-        await refreshBillingSubscriptions({ trigger, silentToast: true });
-        await refreshBillingInvoices({ trigger, silentToast: true });
-
-        if (!silentToast) {
-            showToast("Billing data refreshed.", "info");
-        }
-    }
-
-    async function refreshBillingSubscriptions(options = {}) {
-        const {
-            trigger = elements.refreshBillingButton,
-            silentToast = false
-        } = options;
-
-        const subscriptions = await withBusy(trigger, async () => {
-            const data = await apiRequest("/api/v1/system/billing/subscriptions", {
-                method: "GET",
-                auth: true,
-                tag: "BILLING/SUBSCRIPTIONS"
-            });
-            return Array.isArray(data) ? data : [];
-        });
-
-        renderBillingSubscriptions(subscriptions);
-        if (!silentToast) {
-            showToast("Subscriptions loaded.", "info");
-        }
-    }
-
-    async function refreshBillingInvoices(options = {}) {
-        const {
-            trigger = elements.refreshBillingButton,
-            silentToast = false
-        } = options;
-
-        const invoices = await withBusy(trigger, async () => {
-            const data = await apiRequest("/api/v1/system/billing/invoices", {
-                method: "GET",
-                auth: true,
-                tag: "BILLING/INVOICES"
-            });
-            return Array.isArray(data) ? data : [];
-        });
-
-        renderBillingInvoices(invoices);
-        if (!silentToast) {
-            showToast("Invoices loaded.", "info");
-        }
-    }
-
-    async function refreshTenantSubscription(options = {}) {
-        requireTenant();
-
-        const {
-            trigger = elements.refreshSubscriptionButton,
-            silentToast = false,
-            silentErrors = false
-        } = options;
-
-        try {
-            const subscription = await withBusy(trigger, async () => {
-                return await apiRequest(`/api/v1/${state.companySlug}/subscription`, {
-                    method: "GET",
-                    auth: true,
-                    tag: "TENANT/SUBSCRIPTION"
-                });
-            });
-
-            renderSubscription(subscription);
-            if (!silentToast) {
-                showToast("Subscription loaded.", "info");
-            }
-        } catch (error) {
-            if (silentErrors) {
-                renderSubscription(null);
-                return;
-            }
-            throw error;
-        }
-    }
-
-    async function refreshCostEstimates(options = {}) {
-        requireTenant();
-
-        const {
-            trigger = elements.refreshPlanItemsButton,
-            silentToast = false,
-            silentErrors = false
-        } = options;
-
-        try {
-            const estimates = await withBusy(trigger, async () => {
-                const data = await apiRequest(`/api/v1/${state.companySlug}/costestimates`, {
-                    method: "GET",
-                    auth: true,
-                    tag: "COST-ESTIMATE/LIST"
-                });
-                return Array.isArray(data) ? data : [];
-            });
-
-            state.costEstimates = estimates;
-            if (!silentToast) {
-                showToast("Cost estimates loaded.", "info");
-            }
-        } catch (error) {
-            if (silentErrors) {
-                state.costEstimates = [];
-                return;
-            }
-            throw error;
-        }
-    }
-
-    async function refreshResources(options = {}) {
-        requireTenant();
-
-        const {
-            trigger = elements.refreshResourcesButton,
-            silentToast = false,
-            silentErrors = false
-        } = options;
-
-        await refreshDentists({ trigger, silentToast: true, silentErrors });
-        await refreshTreatmentRooms({ trigger, silentToast: true, silentErrors });
-
-        if (!silentToast) {
-            showToast("Clinical resources refreshed.", "info");
-        }
-    }
-
-    async function refreshDentistProfile(options = {}) {
-        requireTenant();
-
-        const dentistId = options.dentistId || state.dentistProfile?.id;
-        if (!dentistId) {
-            return;
-        }
-
-        const trigger = options.trigger || elements.dentistProfileRefreshButton || elements.refreshResourcesButton;
-        await refreshDentists({ trigger, silentToast: true });
-        await refreshAppointments({ trigger, silentToast: true, silentErrors: true });
-
-        const dentist = resolveDentist(dentistId);
-        if (!dentist) {
-            closeDentistProfile();
-            throw new Error("Dentist was not found.");
-        }
-
-        renderDentistProfile(dentist, { preserveFilters: true });
-
-        if (!options.silentToast) {
-            showToast("Dentist profile loaded.", "info");
-        }
-    }
-
-    async function refreshDentists(options = {}) {
-        requireTenant();
-
-        const {
-            trigger = elements.refreshResourcesButton,
-            silentToast = false,
-            silentErrors = false
-        } = options;
-
-        renderDentistsSkeleton();
-
-        try {
-            const dentists = await withBusy(trigger, async () => {
-                const data = await apiRequest(`/api/v1/${state.companySlug}/dentists`, {
-                    method: "GET",
-                    auth: true,
-                    tag: "DENTIST/LIST"
-                });
-                return Array.isArray(data) ? data : [];
-            });
-
-            rememberDentists(dentists);
-            state.dentists = dentists;
-            renderDentists(dentists);
-            syncDentistProfileAfterDentistListRefresh(dentists);
-            log("DENTIST/LIST/SUCCESS", null, dentists);
-
-            if (!silentToast) {
-                showToast(`${dentists.length} dentist${dentists.length === 1 ? "" : "s"} loaded.`, "info");
-            }
-        } catch (error) {
-            if (silentErrors) {
-                renderDentists([]);
-                return;
-            }
-            throw error;
-        }
-    }
-
-    async function refreshTreatmentRooms(options = {}) {
-        requireTenant();
-
-        const {
-            trigger = elements.refreshResourcesButton,
-            silentToast = false,
-            silentErrors = false
-        } = options;
-
-        renderTreatmentRoomsSkeleton();
-
-        try {
-            const rooms = await withBusy(trigger, async () => {
-                const data = await apiRequest(`/api/v1/${state.companySlug}/treatmentrooms`, {
-                    method: "GET",
-                    auth: true,
-                    tag: "TREATMENT-ROOM/LIST"
-                });
-                return Array.isArray(data) ? data : [];
-            });
-
-            state.treatmentRooms = rooms;
-            renderTreatmentRooms(rooms);
-            log("TREATMENT-ROOM/LIST/SUCCESS", null, rooms);
-
-            if (!silentToast) {
-                showToast(`${rooms.length} room${rooms.length === 1 ? "" : "s"} loaded.`, "info");
-            }
-        } catch (error) {
-            if (silentErrors) {
-                renderTreatmentRooms([]);
-                return;
-            }
-            throw error;
-        }
-    }
-
-    async function refreshAppointments(options = {}) {
-        requireTenant();
-
-        const {
-            trigger = elements.refreshAppointmentsButton,
-            silentToast = false,
-            silentErrors = false
-        } = options;
-
-        renderAppointmentsSkeleton();
-
-        try {
-            const appointments = await withBusy(trigger, async () => {
-                const data = await apiRequest(`/api/v1/${state.companySlug}/appointments`, {
-                    method: "GET",
-                    auth: true,
-                    tag: "APPOINTMENT/LIST"
-                });
-                return Array.isArray(data) ? data : [];
-            });
-
-            state.appointments = appointments;
-            renderAppointments(appointments);
-            if (state.dentistProfile?.id) {
-                renderDentistProfile(resolveDentist(state.dentistProfile.id) || state.dentistProfile, { preserveFilters: true });
-            }
-            log("APPOINTMENT/LIST/SUCCESS", null, appointments);
-
-            if (!silentToast) {
-                showToast(`${appointments.length} appointment${appointments.length === 1 ? "" : "s"} loaded.`, "info");
-            }
-        } catch (error) {
-            if (silentErrors) {
-                renderAppointments([]);
-                return;
-            }
-            throw error;
-        }
-    }
-
-    async function refreshOpenPlanItems(options = {}) {
-        requireTenant();
-
-        const {
-            trigger = elements.refreshPlanItemsButton,
-            silentToast = false,
-            silentErrors = false
-        } = options;
-
-        renderPlanItemsSkeleton();
-
-        try {
-            const items = await withBusy(trigger, async () => {
-                const data = await apiRequest(`/api/v1/${state.companySlug}/treatmentplans/openitems`, {
-                    method: "GET",
-                    auth: true,
-                    tag: "TREATMENT-PLAN/OPEN-ITEMS"
-                });
-                return Array.isArray(data) ? data : [];
-            });
-
-            state.openPlanItems = items;
-            renderOpenPlanItems(items);
-            log("TREATMENT-PLAN/OPEN-ITEMS/SUCCESS", null, items);
-
-            if (!silentToast) {
-                showToast(`${items.length} pending plan item${items.length === 1 ? "" : "s"} loaded.`, "info");
-            }
-        } catch (error) {
-            if (silentErrors) {
-                renderOpenPlanItems([]);
-                return;
-            }
-            throw error;
-        }
-    }
-
-    async function refreshTenantAdminViews(options = {}) {
-        if (!state.companySlug) {
-            return;
-        }
-
-        const isOwner = hasCompanyRole("CompanyOwner");
-        const isAdmin = hasCompanyRole("CompanyAdmin");
-
-        if (!isOwner && !isAdmin) {
-            state.companyUsers = [];
-            state.companySettings = null;
-            renderCompanyUsers([]);
-            renderCompanySettings(null);
-            return;
-        }
-
-        await refreshCompanyUsers({ silentToast: true, silentErrors: true, trigger: options.trigger });
-
-        if (isOwner) {
-            await refreshCompanySettings({ silentToast: true, silentErrors: true, trigger: options.trigger });
-        } else {
-            state.companySettings = null;
-            renderCompanySettings(null);
-        }
-    }
-
-    async function refreshCompanyUsers(options = {}) {
-        requireTenant();
-
-        const {
-            trigger = elements.refreshCompanyUsersButton,
-            silentToast = false,
-            silentErrors = false
-        } = options;
-
-        renderCompanyUsersSkeleton();
-
-        try {
-            const users = await withBusy(trigger, async () => {
-                const data = await apiRequest(`/api/v1/${state.companySlug}/companyusers`, {
-                    method: "GET",
-                    auth: true,
-                    tag: "COMPANY-USERS/LIST"
-                });
-                return Array.isArray(data) ? data : [];
-            });
-
-            state.companyUsers = users;
-            renderCompanyUsers(users);
-            log("COMPANY-USERS/LIST/SUCCESS", null, users);
-
-            if (!silentToast) {
-                showToast(`${users.length} membership${users.length === 1 ? "" : "s"} loaded.`, "info");
-            }
-        } catch (error) {
-            if (silentErrors) {
-                renderCompanyUsers([]);
-                return;
-            }
-            throw error;
-        }
-    }
-
-    async function refreshCompanySettings(options = {}) {
-        requireTenant();
-
-        const {
-            trigger = elements.refreshCompanySettingsButton,
-            silentToast = false,
-            silentErrors = false
-        } = options;
-
-        try {
-            const settings = await withBusy(trigger, async () => {
-                return await apiRequest(`/api/v1/${state.companySlug}/companysettings`, {
-                    method: "GET",
-                    auth: true,
-                    tag: "COMPANY-SETTINGS/GET"
-                });
-            });
-
-            state.companySettings = settings;
-            renderCompanySettings(settings);
-            log("COMPANY-SETTINGS/GET/SUCCESS", null, settings);
-
-            if (!silentToast) {
-                showToast("Company settings loaded.", "info");
-            }
-        } catch (error) {
-            if (silentErrors) {
-                renderCompanySettings(null);
-                return;
-            }
-            throw error;
-        }
-    }
-
-    function openDeleteDialog(patient) {
-        const id = String(patient.id || "");
-        if (!id) {
-            return;
-        }
-
-        const fullName = `${patient.firstName ?? ""} ${patient.lastName ?? ""}`.trim() || "this patient";
-        pendingDelete = { id, label: fullName };
-
-        if (!elements.patientDeleteDialog || typeof elements.patientDeleteDialog.showModal !== "function") {
-            const confirmed = window.confirm(`Delete ${fullName}?`);
-            if (confirmed) {
-                void confirmDelete();
-            }
-            return;
-        }
-
-        if (elements.patientDeleteText) {
-            elements.patientDeleteText.textContent = `Delete ${fullName}? This action cannot be undone.`;
-        }
-        elements.patientDeleteDialog.showModal();
-    }
-
-    async function onDeleteDialogClose() {
-        if (!elements.patientDeleteDialog) {
-            return;
-        }
-
-        if (elements.patientDeleteDialog.returnValue !== "confirm") {
-            pendingDelete = { id: "", label: "" };
-            return;
-        }
-
-        try {
-            await confirmDelete();
-        } catch (error) {
-            reportError(error);
-        }
-    }
-
-    async function confirmDelete() {
-        if (!pendingDelete.id) {
-            return;
-        }
-
-        const patientId = pendingDelete.id;
-        const patientLabel = pendingDelete.label;
-        const shouldCloseProfile = state.patientProfile?.id === patientId;
-        pendingDelete = { id: "", label: "" };
-
-        await withBusy(elements.confirmDeleteButton, async () => {
-            await apiRequest(`/api/v1/${state.companySlug}/patients/${patientId}`, {
-                method: "DELETE",
-                auth: true,
-                tag: "PATIENT/DELETE"
-            });
-            log("PATIENT/DELETE/SUCCESS", { id: patientId }, { message: "Deleted" });
-            showToast(`Deleted ${patientLabel}.`, "success");
-        });
-
-        await refreshPatients({ silentToast: true, silentSyncStatus: true });
-        if (shouldCloseProfile) {
-            closePatientProfile();
-        }
-    }
-
-    async function withBusy(target, action) {
-        const controls = collectControls(target);
-        setLoadingBar(true);
-        setControlsBusy(controls, true);
-        setContainerBusy(target, true);
-
-        try {
-            return await action();
-        } finally {
-            setControlsBusy(controls, false);
-            setContainerBusy(target, false);
-            setLoadingBar(false);
-        }
-    }
-
-    function collectControls(target) {
-        if (!target) return [];
-
-        if (target instanceof HTMLFormElement) {
-            return Array.from(target.querySelectorAll("button, input, select, textarea"));
-        }
-
-        if (target instanceof HTMLElement) {
-            return [target];
-        }
-
-        return [];
-    }
-
-    function setContainerBusy(target, isBusy) {
-        if (!(target instanceof HTMLElement)) {
-            return;
-        }
-
-        if (isBusy) {
-            target.setAttribute("aria-busy", "true");
-        } else {
-            target.removeAttribute("aria-busy");
-        }
-    }
-
-    function setControlsBusy(controls, isBusy) {
-        controls.forEach((control) => {
-            if (!(control instanceof HTMLElement)) {
-                return;
-            }
-
-            if (isBusy) {
-                control.dataset.previousDisabled = control.disabled ? "true" : "false";
-                control.disabled = true;
-            } else {
-                const wasDisabled = control.dataset.previousDisabled === "true";
-                control.disabled = wasDisabled;
-                delete control.dataset.previousDisabled;
-            }
-        });
-    }
-
-    function toggleFormControls(form, isEnabled) {
-        if (!(form instanceof HTMLFormElement)) {
-            return;
-        }
-
-        const controls = form.querySelectorAll("button, input, select, textarea");
-        controls.forEach((control) => {
-            if (!(control instanceof HTMLElement)) {
-                return;
-            }
-
-            if (isEnabled) {
-                if (control.dataset.lockedByRole === "true") {
-                    delete control.dataset.lockedByRole;
-                    control.disabled = false;
-                }
-            } else if (!control.disabled) {
-                control.dataset.lockedByRole = "true";
-                control.disabled = true;
-            }
-        });
-    }
-
-    function setLoadingBar(isActive) {
-        if (!elements.loadingBar) {
-            return;
-        }
-
-        elements.loadingBar.classList.toggle("is-active", isActive);
-    }
-
     async function apiRequest(url, options) {
         const requestOptions = {
             method: options.method || "GET",
@@ -2235,1611 +537,6 @@
         return rawBody.length === 0 ? {} : parsedBody;
     }
 
-    function renderSession() {
-        const isAuthenticated = Boolean(state.jwt);
-        const hasTenant = Boolean(state.companySlug);
-        const hasTenantAccess = Boolean(state.companySlug && state.companyRole);
-        const systemRoleLabel = state.systemRoles.length > 0 ? state.systemRoles.join(", ") : "";
-
-        if (elements.gatewayScreen) {
-            elements.gatewayScreen.hidden = isAuthenticated;
-        }
-        if (elements.appRoot) {
-            elements.appRoot.hidden = !isAuthenticated;
-        }
-        if (!isAuthenticated) {
-            syncPublicEntryState();
-        }
-
-        if (elements.authPill) {
-            elements.authPill.textContent = isAuthenticated ? "Signed in" : "Not signed in";
-            setBadgeVariant(elements.authPill, isAuthenticated ? "success" : "warning");
-        }
-
-        if (elements.companyPill) {
-            elements.companyPill.textContent = hasTenant ? `Tenant: ${state.companySlug}` : "No tenant";
-            setBadgeVariant(elements.companyPill, hasTenant ? "neutral" : "warning");
-        }
-
-        if (elements.sessionRole) {
-            elements.sessionRole.textContent = systemRoleLabel || state.companyRole || "None";
-        }
-
-        if (elements.sessionTenant) {
-            elements.sessionTenant.textContent = state.companySlug || "-";
-        }
-
-        if (elements.sessionExpiry) {
-            elements.sessionExpiry.textContent = state.expiresInSeconds > 0
-                ? `${state.expiresInSeconds}s`
-                : "Unknown";
-        }
-
-        if (elements.overviewAuth) {
-            elements.overviewAuth.textContent = isAuthenticated ? "Online" : "Offline";
-        }
-
-        if (elements.overviewTenant) {
-            elements.overviewTenant.textContent = state.companySlug || "-";
-        }
-
-        if (elements.overviewPatientCount) {
-            elements.overviewPatientCount.textContent = String(state.patients.length);
-        }
-
-        const allowedTabs = getAllowedTabs(isAuthenticated, hasTenantAccess);
-        applyTabVisibility(allowedTabs);
-
-        const canManagePlatform = hasSystemRole("SystemAdmin");
-        const canOnboardCompanies = hasSystemRole("SystemAdmin", "SystemSupport");
-        const canSupport = hasSystemRole("SystemSupport", "SystemAdmin");
-        const canBill = hasSystemRole("SystemBilling", "SystemAdmin");
-        const canAccessResources = hasTenantAccess && hasCompanyRole("CompanyOwner", "CompanyAdmin", "CompanyManager", "CompanyEmployee");
-        const canManageResources = hasTenantAccess && hasCompanyRole("CompanyOwner", "CompanyAdmin");
-        const canManagePatients = hasTenantAccess && hasCompanyRole("CompanyOwner", "CompanyAdmin", "CompanyManager", "CompanyEmployee");
-        const canManageAppointments = hasTenantAccess && hasCompanyRole("CompanyOwner", "CompanyAdmin", "CompanyManager", "CompanyEmployee");
-        const canRecordPlanDecisions = hasTenantAccess && hasCompanyRole("CompanyOwner", "CompanyAdmin", "CompanyManager");
-        const canManageUsers = hasTenantAccess && hasCompanyRole("CompanyOwner", "CompanyAdmin");
-        const canManageSettings = hasTenantAccess && hasCompanyRole("CompanyOwner");
-
-        if (elements.refreshPatientsButton) {
-            elements.refreshPatientsButton.disabled = !canManagePatients;
-        }
-        if (elements.patientProfileRefreshButton) {
-            elements.patientProfileRefreshButton.disabled = !canManagePatients;
-        }
-        if (elements.patientProfileDeleteButton) {
-            elements.patientProfileDeleteButton.disabled = !canManagePatients;
-        }
-        toggleFormControls(elements.patientForm, canManagePatients);
-        toggleFormControls(elements.patientProfileForm, canManagePatients);
-
-        if (elements.refreshResourcesButton) {
-            elements.refreshResourcesButton.disabled = !canAccessResources;
-        }
-        toggleFormControls(elements.dentistForm, canManageResources);
-        toggleFormControls(elements.dentistProfileForm, canManageResources);
-        toggleFormControls(elements.treatmentRoomForm, canManageResources);
-        if (elements.dentistProfileRefreshButton) {
-            elements.dentistProfileRefreshButton.disabled = !canAccessResources;
-        }
-        if (elements.dentistProfileDeleteButton) {
-            elements.dentistProfileDeleteButton.disabled = !canManageResources;
-        }
-
-        if (elements.refreshAppointmentsButton) {
-            elements.refreshAppointmentsButton.disabled = !canManageAppointments;
-        }
-        toggleFormControls(elements.appointmentForm, canManageAppointments);
-        toggleFormControls(elements.appointmentClinicalForm, canManageAppointments);
-        if (elements.appointmentClinicalAddRowButton) {
-            elements.appointmentClinicalAddRowButton.disabled = !canManageAppointments;
-        }
-
-        if (elements.refreshPlanItemsButton) {
-            elements.refreshPlanItemsButton.disabled = !canRecordPlanDecisions;
-        }
-        toggleFormControls(elements.planDecisionForm, canRecordPlanDecisions);
-        toggleFormControls(elements.costEstimateForm, canRecordPlanDecisions);
-        toggleFormControls(elements.legalEstimateForm, canRecordPlanDecisions);
-
-        if (elements.refreshCompanyUsersButton) {
-            elements.refreshCompanyUsersButton.disabled = !canManageUsers;
-        }
-        toggleFormControls(elements.companyUserForm, canManageUsers);
-        toggleFormControls(elements.companyRoleSwitchForm, hasTenantAccess);
-
-        if (elements.refreshCompanySettingsButton) {
-            elements.refreshCompanySettingsButton.disabled = !canManageSettings;
-        }
-        toggleFormControls(elements.companySettingsForm, canManageSettings);
-        toggleFormControls(elements.subscriptionForm, canManageSettings);
-
-        if (elements.refreshPlatformButton) {
-            elements.refreshPlatformButton.disabled = !canManagePlatform;
-        }
-        if (elements.refreshSupportButton) {
-            elements.refreshSupportButton.disabled = !canSupport;
-        }
-        if (elements.refreshBillingButton) {
-            elements.refreshBillingButton.disabled = !canBill;
-        }
-        toggleFormControls(elements.featureFlagForm, canManagePlatform);
-        toggleFormControls(elements.companyActivationForm, canManagePlatform);
-        toggleFormControls(elements.onboardingForm, canOnboardCompanies);
-        toggleFormControls(elements.supportTicketForm, canSupport);
-        toggleFormControls(elements.billingSubscriptionForm, canBill);
-        toggleFormControls(elements.billingInvoiceStatusForm, canBill);
-        if (elements.onboardingCard) {
-            elements.onboardingCard.hidden = !canOnboardCompanies;
-        }
-        if (elements.authGrid) {
-            elements.authGrid.classList.toggle("auth-grid--single", !canOnboardCompanies);
-        }
-
-        const requested = getRequestedScreen();
-        if (isAuthenticated && !allowedTabs.has(requested)) {
-            activateScreen(resolveLandingScreen());
-        }
-
-        saveSession();
-    }
-
-    function setBadgeVariant(element, variant) {
-        if (!element) return;
-
-        element.classList.remove("badge--neutral", "badge--success", "badge--warning", "badge--danger");
-        if (variant === "success") {
-            element.classList.add("badge--success");
-        } else if (variant === "warning") {
-            element.classList.add("badge--warning");
-        } else if (variant === "danger") {
-            element.classList.add("badge--danger");
-        } else {
-            element.classList.add("badge--neutral");
-        }
-    }
-
-    function setSyncStatus(text, variant) {
-        if (!elements.overviewSyncStatus) {
-            return;
-        }
-
-        elements.overviewSyncStatus.textContent = text;
-        setBadgeVariant(elements.overviewSyncStatus, variant);
-    }
-
-    function renderPlatformAnalytics(analytics) {
-        state.systemAnalytics = analytics;
-
-        if (elements.platformCompanyCount) {
-            elements.platformCompanyCount.textContent = String(analytics?.companyCount ?? 0);
-        }
-        if (elements.platformUserCount) {
-            elements.platformUserCount.textContent = String(analytics?.userCount ?? 0);
-        }
-        if (elements.platformInvoiceCount) {
-            elements.platformInvoiceCount.textContent = String(analytics?.invoiceCount ?? 0);
-        }
-    }
-
-    function renderFeatureFlags(flags) {
-        state.featureFlags = Array.isArray(flags) ? flags : [];
-
-        if (!elements.featureFlagsBody) {
-            return;
-        }
-
-        clearElement(elements.featureFlagsBody);
-        if (state.featureFlags.length === 0) {
-            const row = document.createElement("tr");
-            const cell = document.createElement("td");
-            cell.colSpan = 2;
-            const content = document.createElement("div");
-            content.className = "empty-state";
-            content.textContent = "No feature flags loaded.";
-            cell.appendChild(content);
-            row.appendChild(cell);
-            elements.featureFlagsBody.appendChild(row);
-            return;
-        }
-
-        state.featureFlags.forEach((flag) => {
-            const row = document.createElement("tr");
-            row.appendChild(createCell(flag.key || "-"));
-            const statusCell = document.createElement("td");
-            const badge = document.createElement("span");
-            badge.className = `badge ${flag.enabled ? "badge--success" : "badge--warning"}`;
-            badge.textContent = flag.enabled ? "Enabled" : "Disabled";
-            statusCell.appendChild(badge);
-            row.appendChild(statusCell);
-            elements.featureFlagsBody.appendChild(row);
-        });
-    }
-
-    function renderSupportCompanies(companies) {
-        state.supportCompanies = Array.isArray(companies) ? companies : [];
-        if (!elements.supportCompaniesBody) {
-            return;
-        }
-
-        clearElement(elements.supportCompaniesBody);
-        if (state.supportCompanies.length === 0) {
-            const row = document.createElement("tr");
-            const cell = document.createElement("td");
-            cell.colSpan = 5;
-            const content = document.createElement("div");
-            content.className = "empty-state";
-            content.textContent = "No snapshot data loaded.";
-            cell.appendChild(content);
-            row.appendChild(cell);
-            elements.supportCompaniesBody.appendChild(row);
-            return;
-        }
-
-        state.supportCompanies.forEach((company) => {
-            const row = document.createElement("tr");
-            row.appendChild(createCell(company.companyName || "-"));
-            row.appendChild(createCell(company.companySlug || "-"));
-            row.appendChild(createCell(String(company.activeUserCount ?? 0)));
-            row.appendChild(createCell(String(company.patientCount ?? 0)));
-            row.appendChild(createCell(String(company.openInvoiceCount ?? 0)));
-            elements.supportCompaniesBody.appendChild(row);
-        });
-    }
-
-    function renderSupportTickets(tickets) {
-        state.supportTickets = Array.isArray(tickets) ? tickets : [];
-        if (!elements.supportTicketsBody) {
-            return;
-        }
-
-        clearElement(elements.supportTicketsBody);
-        if (state.supportTickets.length === 0) {
-            const row = document.createElement("tr");
-            const cell = document.createElement("td");
-            cell.colSpan = 5;
-            const content = document.createElement("div");
-            content.className = "empty-state";
-            content.textContent = "No support tickets loaded.";
-            cell.appendChild(content);
-            row.appendChild(cell);
-            elements.supportTicketsBody.appendChild(row);
-            return;
-        }
-
-        state.supportTickets.forEach((ticket) => {
-            const row = document.createElement("tr");
-            row.appendChild(createCell(ticket.ticketId || "-"));
-            row.appendChild(createCell(ticket.companySlug || "-"));
-            row.appendChild(createCell(ticket.subject || "-"));
-            row.appendChild(createCell(ticket.status || "-"));
-            row.appendChild(createCell(formatDateTime(ticket.createdAtUtc)));
-            elements.supportTicketsBody.appendChild(row);
-        });
-    }
-
-    function renderBillingSubscriptions(subscriptions) {
-        state.billingSubscriptions = Array.isArray(subscriptions) ? subscriptions : [];
-        if (!elements.billingSubscriptionsBody) {
-            return;
-        }
-
-        clearElement(elements.billingSubscriptionsBody);
-        if (state.billingSubscriptions.length === 0) {
-            const row = document.createElement("tr");
-            const cell = document.createElement("td");
-            cell.colSpan = 6;
-            const content = document.createElement("div");
-            content.className = "empty-state";
-            content.textContent = "No subscriptions loaded.";
-            cell.appendChild(content);
-            row.appendChild(cell);
-            elements.billingSubscriptionsBody.appendChild(row);
-            return;
-        }
-
-        state.billingSubscriptions.forEach((subscription) => {
-            const row = document.createElement("tr");
-            row.appendChild(createCell(subscription.companySlug || "-"));
-            row.appendChild(createCell(subscription.tier || "-"));
-            row.appendChild(createCell(subscription.status || "-"));
-            row.appendChild(createCell(String(subscription.userLimit ?? 0)));
-            row.appendChild(createCell(String(subscription.entityLimit ?? 0)));
-            row.appendChild(createCell(subscription.subscriptionId || "-"));
-            elements.billingSubscriptionsBody.appendChild(row);
-        });
-    }
-
-    function renderBillingInvoices(invoices) {
-        state.billingInvoices = Array.isArray(invoices) ? invoices : [];
-        if (!elements.billingInvoicesBody) {
-            return;
-        }
-
-        clearElement(elements.billingInvoicesBody);
-        if (state.billingInvoices.length === 0) {
-            const row = document.createElement("tr");
-            const cell = document.createElement("td");
-            cell.colSpan = 7;
-            const content = document.createElement("div");
-            content.className = "empty-state";
-            content.textContent = "No invoices loaded.";
-            cell.appendChild(content);
-            row.appendChild(cell);
-            elements.billingInvoicesBody.appendChild(row);
-            return;
-        }
-
-        state.billingInvoices.forEach((invoice) => {
-            const row = document.createElement("tr");
-            row.appendChild(createCell(invoice.companySlug || "-"));
-            row.appendChild(createCell(invoice.invoiceNumber || "-"));
-            row.appendChild(createCell(formatMoney(invoice.totalAmount)));
-            row.appendChild(createCell(formatMoney(invoice.balanceAmount)));
-            row.appendChild(createCell(invoice.status || "-"));
-            row.appendChild(createCell(formatDateTime(invoice.dueDateUtc)));
-            row.appendChild(createCell(invoice.invoiceId || "-"));
-            elements.billingInvoicesBody.appendChild(row);
-        });
-    }
-
-    function renderSubscription(subscription) {
-        state.subscription = subscription;
-        if (!elements.subscriptionForm) {
-            return;
-        }
-
-        const tier = subscription?.tier || "Free";
-        elements.subscriptionForm.tier.value = tier;
-
-        if (elements.subscriptionPill) {
-            if (!subscription) {
-                elements.subscriptionPill.textContent = "No subscription loaded";
-                setBadgeVariant(elements.subscriptionPill, "warning");
-            } else {
-                elements.subscriptionPill.textContent = `${subscription.tier} | users: ${subscription.userLimit} | entities: ${subscription.entityLimit}`;
-                setBadgeVariant(elements.subscriptionPill, "neutral");
-            }
-        }
-    }
-
-    function renderLegalEstimateOutput(text) {
-        if (!elements.legalEstimateOutput) {
-            return;
-        }
-
-        elements.legalEstimateOutput.textContent = text || "No legal preview generated yet.";
-    }
-
-    function renderPatients(patients) {
-        if (!elements.patientsBody) {
-            return;
-        }
-
-        clearElement(elements.patientsBody);
-
-        if (!Array.isArray(patients) || patients.length === 0) {
-            renderPatientsEmptyState();
-            state.patients = [];
-            renderAppointmentSelectOptions();
-            return;
-        }
-
-        const canManagePatients = canManagePatientsUi();
-
-        patients.forEach((patient) => {
-            const row = document.createElement("tr");
-            row.appendChild(createCell(`${patient.firstName ?? ""} ${patient.lastName ?? ""}`.trim() || "-"));
-            row.appendChild(createCell(patient.dateOfBirth ?? "-"));
-            row.appendChild(createCell(patient.personalCode ?? "-"));
-            row.appendChild(createCell(patient.email ?? "-"));
-            row.appendChild(createCell(patient.phone ?? "-"));
-
-            const actionsCell = createCell("");
-            actionsCell.classList.add("text-right");
-            actionsCell.classList.add("table-actions");
-            const viewButton = createPatientActionButton("View", "btn btn--ghost btn--sm", () => {
-                void openPatientProfile(patient.id);
-            });
-            const editButton = createPatientActionButton("Edit", "btn btn--secondary btn--sm", () => {
-                void openPatientProfile(patient.id, { focusForm: true });
-            });
-            const deleteButton = createPatientActionButton("Delete", "btn btn--ghost btn--sm", () => {
-                openDeleteDialog(patient);
-            });
-            viewButton.disabled = !canManagePatients;
-            editButton.disabled = !canManagePatients;
-            deleteButton.disabled = !canManagePatients;
-            deleteButton.setAttribute("aria-label", `Delete patient ${patient.firstName ?? ""} ${patient.lastName ?? ""}`.trim());
-
-            actionsCell.appendChild(viewButton);
-            actionsCell.appendChild(editButton);
-            actionsCell.appendChild(deleteButton);
-            row.appendChild(actionsCell);
-            elements.patientsBody.appendChild(row);
-        });
-
-        state.patients = patients;
-        renderAppointmentSelectOptions();
-
-        if (state.patientProfile?.id && !patients.some((patient) => patient.id === state.patientProfile.id)) {
-            closePatientProfile();
-        }
-    }
-
-    function renderDentists(dentists) {
-        if (!elements.dentistsBody) {
-            return;
-        }
-
-        clearElement(elements.dentistsBody);
-
-        if (!Array.isArray(dentists) || dentists.length === 0) {
-            renderDentistsEmptyState();
-            state.dentists = [];
-            renderAppointmentSelectOptions();
-            return;
-        }
-
-        const canAccessResources = canAccessResourcesUi();
-        const canManageResources = canManageResourcesUi();
-
-        dentists.forEach((dentist) => {
-            const row = document.createElement("tr");
-            row.dataset.dentistId = dentist.id || "";
-            row.appendChild(createCell(dentist.displayName || "-"));
-            row.appendChild(createCell(dentist.licenseNumber || "-"));
-            row.appendChild(createCell(dentist.specialty || "-"));
-
-            const idCell = createCell(dentist.id || "-", "cell--id");
-            row.appendChild(idCell);
-
-            const actionsCell = createCell("");
-            actionsCell.classList.add("text-right", "table-actions");
-
-            const viewButton = createPatientActionButton("View", "btn btn--ghost btn--sm", () => {
-                void openDentistProfile(dentist.id);
-            });
-            const editButton = createPatientActionButton("Edit", "btn btn--secondary btn--sm", () => {
-                void openDentistProfile(dentist.id, { focusForm: true });
-            });
-
-            viewButton.disabled = !canAccessResources;
-            editButton.disabled = !canManageResources;
-
-            actionsCell.appendChild(viewButton);
-            actionsCell.appendChild(editButton);
-            row.appendChild(actionsCell);
-            elements.dentistsBody.appendChild(row);
-        });
-
-        state.dentists = dentists;
-        renderAppointmentSelectOptions();
-    }
-
-	    function renderTreatmentRooms(rooms) {
-	        if (!elements.treatmentRoomsBody) {
-	            return;
-	        }
-
-	        state.treatmentRooms = Array.isArray(rooms) ? rooms : [];
-
-	        clearElement(elements.treatmentRoomsBody);
-
-	        if (state.treatmentRooms.length === 0) {
-	            if (state.editingTreatmentRoomId) {
-	                resetTreatmentRoomForm();
-	            }
-	            renderTreatmentRoomsEmptyState();
-	            renderAppointmentSelectOptions();
-	            return;
-	        }
-
-	        const canManageResources = canManageResourcesUi();
-
-	        state.treatmentRooms.forEach((room) => {
-	            const row = document.createElement("tr");
-	            row.appendChild(createCell(room.name || "-"));
-	            row.appendChild(createCell(room.code || "-"));
-
-            const statusCell = document.createElement("td");
-            const statusBadge = document.createElement("span");
-            statusBadge.className = `badge ${room.isActiveRoom ? "badge--success" : "badge--warning"}`;
-            statusBadge.textContent = room.isActiveRoom ? "Active" : "Inactive";
-	            statusCell.appendChild(statusBadge);
-	            row.appendChild(statusCell);
-
-	            row.appendChild(createCell(room.id || "-", "cell--id"));
-	            const actionsCell = createCell("");
-	            actionsCell.classList.add("text-right", "table-actions");
-
-	            const editButton = document.createElement("button");
-	            editButton.type = "button";
-	            editButton.className = "btn btn--secondary btn--sm";
-	            editButton.textContent = "Edit";
-	            editButton.disabled = !canManageResources;
-	            editButton.addEventListener("click", () => {
-	                populateTreatmentRoomForm(room);
-	            });
-	            actionsCell.appendChild(editButton);
-
-	            const deleteButton = document.createElement("button");
-	            deleteButton.type = "button";
-	            deleteButton.className = "btn btn--destructive btn--sm";
-	            deleteButton.textContent = "Delete";
-	            deleteButton.disabled = !canManageResources;
-	            deleteButton.addEventListener("click", () => {
-	                void onTreatmentRoomDelete(room.id);
-	            });
-	            actionsCell.appendChild(deleteButton);
-	            row.appendChild(actionsCell);
-
-	            elements.treatmentRoomsBody.appendChild(row);
-	        });
-
-	        if (state.editingTreatmentRoomId && !state.treatmentRooms.some((room) => room.id === state.editingTreatmentRoomId)) {
-	            resetTreatmentRoomForm();
-	        }
-
-	        renderAppointmentSelectOptions();
-	    }
-
-	    function renderAppointments(appointments) {
-	        if (!elements.appointmentsBody) {
-	            return;
-	        }
-
-	        state.appointments = Array.isArray(appointments) ? appointments : [];
-	        updateAppointmentsToolbar();
-
-	        clearElement(elements.appointmentsBody);
-
-	        if (state.appointments.length === 0) {
-	            updateAppointmentsSummary([], [], false);
-	            renderAppointmentsEmptyState("No appointments loaded.");
-	            renderAppointmentClinicalSelectOptions();
-	            return;
-	        }
-
-	        const canManageAppointments = canManageAppointmentsUi();
-	        const filteredAppointments = getVisibleAppointments(state.appointments);
-
-	        if (filteredAppointments.length === 0) {
-	            renderAppointmentsEmptyState("No appointments match the current schedule filters.");
-	            renderAppointmentClinicalSelectOptions();
-	            return;
-	        }
-
-	        filteredAppointments.forEach((appointment) => {
-	            const row = document.createElement("tr");
-	            row.appendChild(createAppointmentPatientCell(appointment));
-	            row.appendChild(createAppointmentDentistCell(appointment));
-            row.appendChild(createAppointmentRoomCell(appointment));
-            row.appendChild(createAppointmentTimeCell(appointment.startAtUtc));
-            row.appendChild(createAppointmentTimeCell(appointment.endAtUtc));
-
-            const statusCell = document.createElement("td");
-            statusCell.className = "appointment-cell appointment-cell--status";
-            const statusBadge = document.createElement("span");
-            statusBadge.className = `badge ${getAppointmentStatusBadgeClass(appointment.status)}`;
-            statusBadge.textContent = formatAppointmentStatus(appointment.status);
-            statusCell.appendChild(statusBadge);
-            row.appendChild(statusCell);
-
-            const actionsCell = createCell("");
-            actionsCell.classList.add("text-right", "table-actions", "appointment-cell");
-            const recordButton = document.createElement("button");
-            recordButton.type = "button";
-            recordButton.className = "btn btn--secondary btn--sm";
-            recordButton.textContent = "Record work";
-            recordButton.disabled = !canManageAppointments;
-            recordButton.addEventListener("click", () => {
-                recordAppointmentWork(appointment.id);
-            });
-            actionsCell.appendChild(recordButton);
-            row.appendChild(actionsCell);
-
-	            elements.appointmentsBody.appendChild(row);
-	        });
-	        renderAppointmentClinicalSelectOptions();
-	    }
-
-    function renderPatientProfile(profile, options = {}) {
-        state.patientProfile = profile || null;
-
-        if (!elements.patientProfilePanel || !elements.patientsWorkspace) {
-            return;
-        }
-
-        if (!profile) {
-            elements.patientProfilePanel.hidden = true;
-            elements.patientsWorkspace.hidden = false;
-            state.selectedPatientToothNumber = null;
-            setText(elements.patientProfileName, "Select a patient");
-            setText(elements.patientProfileMeta, "Open a patient record to see the full tooth chart and treatment history.");
-            setText(elements.patientProfileIssueCount, "0");
-            setText(elements.patientProfileTreatmentCount, "0");
-            setText(elements.patientProfileDob, "-");
-            setText(elements.patientProfileCode, "-");
-            setText(elements.patientProfileEmail, "-");
-            setText(elements.patientProfilePhone, "-");
-
-            if (elements.patientProfileForm) {
-                elements.patientProfileForm.reset();
-            }
-
-            updatePatientToothHoverCard(null);
-
-            if (elements.patientToothChart) {
-                clearElement(elements.patientToothChart);
-                const emptyState = document.createElement("div");
-                emptyState.className = "empty-state";
-                emptyState.textContent = "Select a patient to load a dental chart.";
-                elements.patientToothChart.appendChild(emptyState);
-            }
-
-            renderSelectedPatientTooth(null);
-            return;
-        }
-
-        elements.patientsWorkspace.hidden = true;
-        elements.patientProfilePanel.hidden = false;
-
-        const teeth = Array.isArray(profile.teeth) ? profile.teeth : [];
-        const activeIssueCount = teeth.filter((tooth) => (tooth.condition || "Healthy") !== "Healthy").length;
-        const treatmentCount = teeth.reduce((sum, tooth) => sum + (Array.isArray(tooth.history) ? tooth.history.length : 0), 0);
-
-        setText(elements.patientProfileName, `${profile.firstName ?? ""} ${profile.lastName ?? ""}`.trim() || "Unnamed patient");
-        setText(
-            elements.patientProfileMeta,
-            `${activeIssueCount} active issue${activeIssueCount === 1 ? "" : "s"} - ${treatmentCount} recorded treatment${treatmentCount === 1 ? "" : "s"}`
-        );
-        setText(elements.patientProfileIssueCount, String(activeIssueCount));
-        setText(elements.patientProfileTreatmentCount, String(treatmentCount));
-        setText(elements.patientProfileDob, profile.dateOfBirth || "-");
-        setText(elements.patientProfileCode, profile.personalCode || "-");
-        setText(elements.patientProfileEmail, profile.email || "-");
-        setText(elements.patientProfilePhone, profile.phone || "-");
-
-        if (elements.patientProfileForm) {
-            elements.patientProfileForm.firstName.value = profile.firstName || "";
-            elements.patientProfileForm.lastName.value = profile.lastName || "";
-            elements.patientProfileForm.dateOfBirth.value = profile.dateOfBirth || "";
-            elements.patientProfileForm.personalCode.value = profile.personalCode || "";
-            elements.patientProfileForm.email.value = profile.email || "";
-            elements.patientProfileForm.phone.value = profile.phone || "";
-        }
-
-        const selectedTooth = resolveSelectedPatientTooth(profile, options.selectedToothNumber ?? state.selectedPatientToothNumber);
-        state.selectedPatientToothNumber = selectedTooth?.toothNumber ?? null;
-
-        renderPatientToothChart(teeth, state.selectedPatientToothNumber);
-        renderSelectedPatientTooth(selectedTooth);
-        updatePatientToothHoverCard(selectedTooth);
-
-        if (options.focusForm && elements.patientProfileForm?.firstName instanceof HTMLElement) {
-            focusElementIfPossible(elements.patientProfileForm.firstName);
-        }
-    }
-
-    function renderDentistProfile(profile, options = {}) {
-        state.dentistProfile = profile || null;
-
-        if (!elements.dentistProfilePanel || !elements.resourcesWorkspace) {
-            return;
-        }
-
-        if (!profile) {
-            elements.dentistProfilePanel.hidden = true;
-            elements.resourcesWorkspace.hidden = false;
-            setText(elements.dentistProfileName, "Select a dentist");
-            setText(elements.dentistProfileMeta, "Open a dentist to review details and appointment activity.");
-            setText(elements.dentistProfileAppointmentCount, "0");
-            setText(elements.dentistProfileUpcomingCount, "0");
-            setText(elements.dentistProfilePastCount, "0");
-            setText(elements.dentistProfileLicense, "-");
-            setText(elements.dentistProfileSpecialty, "-");
-            setText(elements.dentistProfileId, "-");
-            setText(elements.dentistProfileAppointmentsSummary, "Use search and the time filter to review this dentist's schedule history.");
-
-            if (elements.dentistProfileForm) {
-                elements.dentistProfileForm.reset();
-            }
-
-            resetDentistProfileFilters();
-            renderDentistProfileAppointments();
-            return;
-        }
-
-        rememberDentists([profile]);
-
-        if (!options.preserveFilters) {
-            resetDentistProfileFilters();
-        }
-
-        elements.resourcesWorkspace.hidden = true;
-        elements.dentistProfilePanel.hidden = false;
-
-        const appointments = getDentistAppointments(profile.id);
-        const upcomingCount = appointments.filter((appointment) => isUpcomingAppointment(appointment)).length;
-        const pastCount = appointments.length - upcomingCount;
-
-        setText(elements.dentistProfileName, profile.displayName || "Unnamed dentist");
-        setText(
-            elements.dentistProfileMeta,
-            `${appointments.length} appointment${appointments.length === 1 ? "" : "s"} recorded. ${upcomingCount} upcoming, ${pastCount} past.`
-        );
-        setText(elements.dentistProfileAppointmentCount, String(appointments.length));
-        setText(elements.dentistProfileUpcomingCount, String(upcomingCount));
-        setText(elements.dentistProfilePastCount, String(pastCount));
-        setText(elements.dentistProfileLicense, profile.licenseNumber || "-");
-        setText(elements.dentistProfileSpecialty, profile.specialty || "-");
-        setText(elements.dentistProfileId, profile.id || "-");
-
-        if (elements.dentistProfileForm) {
-            elements.dentistProfileForm.displayName.value = profile.displayName || "";
-            elements.dentistProfileForm.licenseNumber.value = profile.licenseNumber || "";
-            elements.dentistProfileForm.specialty.value = profile.specialty || "";
-        }
-
-        renderDentistProfileAppointments();
-
-        if (options.focusForm && elements.dentistProfileForm?.displayName instanceof HTMLElement) {
-            focusElementIfPossible(elements.dentistProfileForm.displayName);
-        }
-    }
-
-    function renderDentistProfileAppointments() {
-        if (!elements.dentistProfileAppointmentsBody) {
-            return;
-        }
-
-        clearElement(elements.dentistProfileAppointmentsBody);
-
-        const dentist = state.dentistProfile;
-        if (!dentist?.id) {
-            renderDentistProfileAppointmentsEmptyState("Open a dentist profile to inspect appointments.");
-            return;
-        }
-
-        const allAppointments = getDentistAppointments(dentist.id);
-        const searchTerm = (elements.dentistProfileAppointmentSearch?.value || "").trim().toLowerCase();
-        const timeFilter = elements.dentistProfileAppointmentFilter?.value || "all";
-        const filteredAppointments = allAppointments.filter((appointment) => {
-            const matchesTimeFilter = timeFilter === "all"
-                || (timeFilter === "upcoming" && isUpcomingAppointment(appointment))
-                || (timeFilter === "past" && !isUpcomingAppointment(appointment));
-
-            if (!matchesTimeFilter) {
-                return false;
-            }
-
-            if (!searchTerm) {
-                return true;
-            }
-
-            const patientName = resolvePatientName(appointment.patientId);
-            const roomLabel = resolveRoomLabel(appointment.treatmentRoomId);
-            const haystack = [
-                patientName,
-                roomLabel,
-                appointment.status,
-                appointment.notes,
-                formatDateTime(appointment.startAtUtc),
-                formatDateTime(appointment.endAtUtc)
-            ]
-                .filter(Boolean)
-                .join(" ")
-                .toLowerCase();
-
-            return haystack.includes(searchTerm);
-        });
-
-        if (elements.dentistProfileAppointmentsSummary) {
-            const filterLabel = timeFilter === "upcoming"
-                ? "upcoming appointments"
-                : timeFilter === "past"
-                    ? "past appointments"
-                    : "appointments";
-            elements.dentistProfileAppointmentsSummary.textContent = filteredAppointments.length === allAppointments.length
-                ? `${filteredAppointments.length} ${filterLabel} shown for this dentist.`
-                : `${filteredAppointments.length} of ${allAppointments.length} ${filterLabel} shown for this dentist.`;
-        }
-
-        if (filteredAppointments.length === 0) {
-            renderDentistProfileAppointmentsEmptyState("No appointments match the current dentist filter.");
-            return;
-        }
-
-        filteredAppointments.forEach((appointment) => {
-            const row = document.createElement("tr");
-            row.appendChild(createCell(resolvePatientName(appointment.patientId)));
-            row.appendChild(createCell(resolveRoomLabel(appointment.treatmentRoomId)));
-            row.appendChild(createContentCell(createAppointmentTimeCell(appointment.startAtUtc).firstChild));
-            row.appendChild(createContentCell(createAppointmentTimeCell(appointment.endAtUtc).firstChild));
-
-            const statusCell = document.createElement("td");
-            const statusBadge = document.createElement("span");
-            statusBadge.className = `badge ${getAppointmentStatusBadgeClass(appointment.status)}`;
-            statusBadge.textContent = formatAppointmentStatus(appointment.status);
-            statusCell.appendChild(statusBadge);
-            row.appendChild(statusCell);
-
-            row.appendChild(createCell(appointment.notes || "-"));
-            elements.dentistProfileAppointmentsBody.appendChild(row);
-        });
-    }
-
-    function renderDentistProfileAppointmentsEmptyState(message) {
-        if (!elements.dentistProfileAppointmentsBody) {
-            return;
-        }
-
-        const row = document.createElement("tr");
-        const cell = document.createElement("td");
-        cell.colSpan = 6;
-
-        const content = document.createElement("div");
-        content.className = "empty-state";
-        content.textContent = message;
-
-        cell.appendChild(content);
-        row.appendChild(cell);
-        elements.dentistProfileAppointmentsBody.appendChild(row);
-    }
-
-    function renderPatientToothChart(teeth, selectedToothNumber) {
-        if (!elements.patientToothChart) {
-            return;
-        }
-
-        clearElement(elements.patientToothChart);
-
-        const toothMap = new Map((Array.isArray(teeth) ? teeth : []).map((tooth) => [Number(tooth.toothNumber), tooth]));
-        const selectedTooth = selectedToothNumber ? toothMap.get(Number(selectedToothNumber)) || null : null;
-
-        toothChartRows.forEach(({ arch, teeth: toothNumbers }) => {
-            const archSection = document.createElement("section");
-            archSection.className = `tooth-chart__arch tooth-chart__arch--${arch}`;
-            archSection.setAttribute("aria-label", arch === "upper" ? "Upper jaw" : "Lower jaw");
-
-            const archLabel = document.createElement("div");
-            archLabel.className = "tooth-chart__arch-label";
-            archLabel.textContent = arch === "upper" ? "Upper arch" : "Lower arch";
-            archSection.appendChild(archLabel);
-
-            const row = document.createElement("div");
-            row.className = `tooth-chart__row tooth-chart__row--${arch}`;
-
-            toothNumbers.forEach((toothNumber) => {
-                const tooth = toothMap.get(toothNumber) || {
-                    toothNumber,
-                    condition: "Healthy",
-                    notes: null,
-                    history: []
-                };
-
-                row.appendChild(createPatientToothButton({
-                    tooth,
-                    arch,
-                    selectedTooth,
-                    selectedToothNumber,
-                    teeth
-                }));
-            });
-
-            archSection.appendChild(row);
-            elements.patientToothChart.appendChild(archSection);
-        });
-    }
-
-    function createPatientToothButton({ tooth, arch, selectedTooth, selectedToothNumber, teeth }) {
-        const tone = getToothConditionTone(tooth.condition);
-        const toothNumber = Number(tooth.toothNumber);
-        const visual = getToothVisualSpec(toothNumber, arch);
-        const previewText = buildToothPreviewText(tooth);
-
-        const button = document.createElement("button");
-        button.type = "button";
-        button.className = `tooth-button tooth-button--${arch} tooth-button--${tone} tooth-button--${visual.kind}`;
-        button.style.setProperty("--tooth-width", `${visual.width}rem`);
-        button.style.setProperty("--tooth-height", `${visual.height}rem`);
-        if (selectedToothNumber === toothNumber) {
-            button.classList.add("is-selected");
-        }
-
-        button.title = previewText;
-        button.setAttribute("aria-label", `Tooth ${toothNumber}. ${previewText}`);
-        button.addEventListener("mouseenter", () => updatePatientToothHoverCard(tooth));
-        button.addEventListener("focus", () => updatePatientToothHoverCard(tooth));
-        button.addEventListener("mouseleave", () => updatePatientToothHoverCard(selectedTooth));
-        button.addEventListener("blur", () => updatePatientToothHoverCard(selectedTooth));
-        button.addEventListener("click", () => {
-            state.selectedPatientToothNumber = toothNumber;
-            renderPatientToothChart(teeth, toothNumber);
-            renderSelectedPatientTooth(tooth);
-            updatePatientToothHoverCard(tooth);
-        });
-
-        const visualWrapper = document.createElement("span");
-        visualWrapper.className = "tooth-button__visual";
-        visualWrapper.setAttribute("aria-hidden", "true");
-        visualWrapper.appendChild(createToothSvg({ toothNumber, arch, kind: visual.kind, tone }));
-        button.appendChild(visualWrapper);
-
-        const meta = document.createElement("span");
-        meta.className = "tooth-button__meta";
-
-        const number = document.createElement("span");
-        number.className = "tooth-button__number";
-        number.textContent = String(toothNumber);
-        meta.appendChild(number);
-
-        const status = document.createElement("span");
-        status.className = "tooth-button__status";
-        status.textContent = formatConditionLabel(tooth.condition);
-        meta.appendChild(status);
-
-        button.appendChild(meta);
-        return button;
-    }
-
-    function getToothVisualSpec(toothNumber, arch) {
-        const position = Number(String(toothNumber).slice(-1));
-        const isUpper = arch === "upper";
-
-        if (position === 1) {
-            return {
-                kind: "incisor-central",
-                width: 2.45,
-                height: isUpper ? 5.9 : 7.4
-            };
-        }
-
-        if (position === 2) {
-            return {
-                kind: "incisor-lateral",
-                width: 2.2,
-                height: isUpper ? 5.5 : 7
-            };
-        }
-
-        if (position === 3) {
-            return {
-                kind: "canine",
-                width: 2.25,
-                height: isUpper ? 6.6 : 7.9
-            };
-        }
-
-        if (position === 4 || position === 5) {
-            return {
-                kind: "premolar",
-                width: position === 4 ? 2.75 : 2.95,
-                height: isUpper ? 5.7 : 7.3
-            };
-        }
-
-        return {
-            kind: "molar",
-            width: position === 8 ? 3.3 : 3.5,
-            height: isUpper ? 5.2 : 7.1
-        };
-    }
-
-    function createToothSvg({ toothNumber, arch, kind, tone }) {
-        const svg = createSvgElement("svg");
-        svg.setAttribute("class", `tooth-button__svg tooth-button__svg--${arch}`);
-        svg.setAttribute("viewBox", "0 0 100 160");
-        svg.setAttribute("role", "presentation");
-        svg.setAttribute("focusable", "false");
-
-        const defs = createSvgElement("defs");
-        const bodyGradient = createSvgElement("linearGradient");
-        const bodyGradientId = `tooth-body-${toothNumber}`;
-        bodyGradient.setAttribute("id", bodyGradientId);
-        bodyGradient.setAttribute("x1", "18%");
-        bodyGradient.setAttribute("y1", "0%");
-        bodyGradient.setAttribute("x2", "86%");
-        bodyGradient.setAttribute("y2", "100%");
-        appendGradientStop(bodyGradient, "0%", tone === "missing" ? "#c7d0da" : "#ffffff");
-        appendGradientStop(bodyGradient, "52%", tone === "missing" ? "#aeb8c3" : "#f5f9fd");
-        appendGradientStop(bodyGradient, "100%", tone === "missing" ? "#7f8b97" : "#d9e3ec");
-        defs.appendChild(bodyGradient);
-
-        const glossGradient = createSvgElement("radialGradient");
-        const glossGradientId = `tooth-gloss-${toothNumber}`;
-        glossGradient.setAttribute("id", glossGradientId);
-        glossGradient.setAttribute("cx", "26%");
-        glossGradient.setAttribute("cy", arch === "upper" ? "18%" : "12%");
-        glossGradient.setAttribute("r", "68%");
-        appendGradientStop(glossGradient, "0%", "#ffffff", 0.92);
-        appendGradientStop(glossGradient, "45%", "#ffffff", 0.2);
-        appendGradientStop(glossGradient, "100%", "#ffffff", 0);
-        defs.appendChild(glossGradient);
-
-        svg.appendChild(defs);
-
-        const silhouettePath = getToothSilhouettePath(kind, arch);
-        const groovePath = getToothGroovePath(kind, arch);
-
-        const body = createSvgElement("path");
-        body.setAttribute("class", "tooth-button__body");
-        body.setAttribute("d", silhouettePath);
-        body.setAttribute("fill", `url(#${bodyGradientId})`);
-        svg.appendChild(body);
-
-        const gloss = createSvgElement("path");
-        gloss.setAttribute("class", "tooth-button__gloss");
-        gloss.setAttribute("d", silhouettePath);
-        gloss.setAttribute("fill", `url(#${glossGradientId})`);
-        svg.appendChild(gloss);
-
-        if (groovePath) {
-            const groove = createSvgElement("path");
-            groove.setAttribute("class", "tooth-button__groove");
-            groove.setAttribute("d", groovePath);
-            svg.appendChild(groove);
-        }
-
-        if (tone === "missing") {
-            const mark = createSvgElement("path");
-            mark.setAttribute("class", "tooth-button__missing-mark");
-            mark.setAttribute("d", arch === "upper" ? "M18 24 L82 132 M82 24 L18 132" : "M18 20 L82 144 M82 20 L18 144");
-            svg.appendChild(mark);
-        }
-
-        return svg;
-    }
-
-    function appendGradientStop(gradient, offset, color, opacity = 1) {
-        const stop = createSvgElement("stop");
-        stop.setAttribute("offset", offset);
-        stop.setAttribute("stop-color", color);
-        if (opacity !== 1) {
-            stop.setAttribute("stop-opacity", String(opacity));
-        }
-        gradient.appendChild(stop);
-    }
-
-    function createSvgElement(tagName) {
-        return document.createElementNS(svgNamespace, tagName);
-    }
-
-    function getToothSilhouettePath(kind, arch) {
-        if (arch === "upper") {
-            if (kind === "molar") {
-                return "M12 118 C10 88 14 56 20 30 C24 14 34 10 42 18 C46 6 54 6 58 18 C66 10 76 14 80 30 C86 56 90 88 88 118 C76 138 24 138 12 118 Z";
-            }
-
-            if (kind === "premolar") {
-                return "M18 124 C16 94 20 56 26 28 C30 12 40 10 48 20 C54 8 64 12 68 28 C74 56 78 94 76 124 C66 140 28 140 18 124 Z";
-            }
-
-            if (kind === "canine") {
-                return "M28 134 C20 112 22 78 28 40 C32 18 42 4 50 4 C58 4 68 18 72 40 C78 78 80 112 72 134 C64 142 36 142 28 134 Z";
-            }
-
-            if (kind === "incisor-lateral") {
-                return "M24 134 C18 116 18 82 22 44 C26 18 34 10 50 10 C66 10 74 18 78 44 C82 82 82 116 76 134 C68 142 32 142 24 134 Z";
-            }
-
-            return "M22 136 C16 120 16 84 22 42 C26 16 36 8 50 8 C64 8 74 16 78 42 C84 84 84 120 78 136 C70 144 30 144 22 136 Z";
-        }
-
-        if (kind === "molar") {
-            return "M10 28 C10 12 22 6 38 10 C46 4 54 4 62 10 C78 6 90 12 90 28 C90 48 82 60 76 72 C70 84 72 104 76 130 C78 144 74 152 68 152 C62 152 58 144 56 134 C52 112 52 92 50 78 C48 92 48 112 44 134 C42 144 38 152 32 152 C26 152 22 144 24 130 C28 104 30 84 24 72 C18 60 10 48 10 28 Z";
-        }
-
-        if (kind === "premolar") {
-            return "M20 28 C20 12 32 8 50 10 C68 8 80 12 80 28 C80 48 72 62 62 78 C56 88 58 112 60 136 C60 148 56 154 50 154 C44 154 40 148 40 136 C42 112 44 88 38 78 C28 62 20 48 20 28 Z";
-        }
-
-        if (kind === "canine") {
-            return "M28 24 C30 12 38 6 50 6 C62 6 70 12 72 24 C76 44 70 62 62 80 C56 94 56 118 56 140 C56 150 54 156 50 156 C46 156 44 150 44 140 C44 118 44 94 38 80 C30 62 24 44 28 24 Z";
-        }
-
-        if (kind === "incisor-lateral") {
-            return "M30 22 C32 12 40 8 50 8 C60 8 68 12 70 22 C72 40 66 58 60 74 C56 90 56 112 54 136 C54 148 52 154 50 154 C48 154 46 148 46 136 C44 112 44 90 40 74 C34 58 28 40 30 22 Z";
-        }
-
-        return "M32 22 C34 12 40 8 50 8 C60 8 66 12 68 22 C70 40 64 58 58 74 C54 90 54 114 52 140 C52 150 50 156 50 156 C50 156 48 150 48 140 C46 114 46 90 42 74 C36 58 30 40 32 22 Z";
-    }
-
-    function getToothGroovePath(kind, arch) {
-        if (arch === "upper") {
-            if (kind === "molar") {
-                return "M24 36 C32 26 42 22 50 30 C58 22 68 26 76 36 M32 44 C38 54 44 74 46 112 M68 44 C62 54 56 74 54 112";
-            }
-
-            if (kind === "premolar") {
-                return "M32 34 C38 28 44 26 50 30 C56 26 62 28 68 34 M50 30 C50 54 50 82 50 118";
-            }
-
-            return "M50 18 C48 40 48 80 50 126";
-        }
-
-        if (kind === "molar") {
-            return "M24 30 C32 24 42 20 50 28 C58 20 68 24 76 30 M50 30 C50 60 50 96 50 132";
-        }
-
-        if (kind === "premolar") {
-            return "M36 26 C40 22 46 20 50 24 C54 20 60 22 64 26 M50 26 C50 56 50 96 50 138";
-        }
-
-        return "M50 14 C50 40 50 84 50 142";
-    }
-
-    function renderSelectedPatientTooth(tooth) {
-        setText(elements.patientSelectedToothTitle, tooth ? `Tooth ${tooth.toothNumber}` : "Tooth history");
-        setText(
-            elements.patientSelectedToothSummary,
-            tooth
-                ? `${formatConditionLabel(tooth.condition)} - ${tooth.lastTreatmentAtUtc ? `last treatment ${formatDateTime(tooth.lastTreatmentAtUtc)}` : "no treatment history yet"}`
-                : "Select a tooth to inspect status changes and previous treatments."
-        );
-
-        if (!elements.patientSelectedToothHistory) {
-            return;
-        }
-
-        clearElement(elements.patientSelectedToothHistory);
-
-        if (!tooth) {
-            const emptyState = document.createElement("div");
-            emptyState.className = "empty-state";
-            emptyState.textContent = "Select a tooth to inspect its full history.";
-            elements.patientSelectedToothHistory.appendChild(emptyState);
-            return;
-        }
-
-        const dropdown = document.createElement("details");
-        dropdown.className = "tooth-history-dropdown";
-        dropdown.open = true;
-
-        const summary = document.createElement("summary");
-        summary.textContent = `${Array.isArray(tooth.history) ? tooth.history.length : 0} history entr${tooth.history?.length === 1 ? "y" : "ies"}`;
-        dropdown.appendChild(summary);
-
-        const content = document.createElement("div");
-        content.className = "tooth-history-dropdown__content";
-
-        const statusNote = document.createElement("div");
-        statusNote.className = "tooth-history-current";
-        statusNote.textContent = tooth.notes
-            ? `Current status note: ${tooth.notes}`
-            : "No current tooth note recorded.";
-        content.appendChild(statusNote);
-
-        if (!Array.isArray(tooth.history) || tooth.history.length === 0) {
-            const emptyState = document.createElement("div");
-            emptyState.className = "empty-state";
-            emptyState.textContent = "No treatment history recorded for this tooth yet.";
-            content.appendChild(emptyState);
-        } else {
-            tooth.history.forEach((entry) => {
-                const item = document.createElement("article");
-                item.className = "tooth-history-entry";
-
-                const head = document.createElement("div");
-                head.className = "tooth-history-entry__head";
-                head.textContent = `${entry.treatmentTypeName || "Treatment"} - ${formatDateTime(entry.performedAtUtc)}`;
-                item.appendChild(head);
-
-                const meta = document.createElement("p");
-                meta.className = "text-muted";
-                meta.textContent = entry.notes
-                    ? `${entry.notes} - ${formatMoney(entry.price)}`
-                    : `Recorded price: ${formatMoney(entry.price)}`;
-                item.appendChild(meta);
-
-                content.appendChild(item);
-            });
-        }
-
-        dropdown.appendChild(content);
-        elements.patientSelectedToothHistory.appendChild(dropdown);
-    }
-
-    async function openPatientProfile(patientId, options = {}) {
-        if (!patientId) {
-            return;
-        }
-
-        await refreshPatientProfile({
-            patientId,
-            trigger: options.trigger || elements.refreshPatientsButton,
-            silentToast: true
-        });
-
-        if (options.focusForm && elements.patientProfileForm?.firstName instanceof HTMLElement) {
-            focusElementIfPossible(elements.patientProfileForm.firstName);
-        }
-    }
-
-    function closePatientProfile() {
-        renderPatientProfile(null);
-    }
-
-    async function openDentistProfile(dentistId, options = {}) {
-        if (!dentistId) {
-            return;
-        }
-
-        const trigger = options.trigger || elements.refreshResourcesButton;
-        if (!resolveDentist(dentistId)) {
-            await refreshDentists({ trigger, silentToast: true });
-        }
-
-        if (state.appointments.length === 0) {
-            await refreshAppointments({ trigger, silentToast: true, silentErrors: true });
-        }
-
-        const dentist = resolveDentist(dentistId);
-        if (!dentist) {
-            throw new Error("Dentist was not found.");
-        }
-
-        renderDentistProfile(dentist, {
-            focusForm: options.focusForm === true,
-            preserveFilters: options.preserveFilters === true
-        });
-    }
-
-    function closeDentistProfile() {
-        renderDentistProfile(null);
-    }
-
-    function resolveSelectedPatientTooth(profile, preferredToothNumber) {
-        const teeth = Array.isArray(profile?.teeth) ? profile.teeth : [];
-        if (teeth.length === 0) {
-            return null;
-        }
-
-        if (preferredToothNumber) {
-            const explicitMatch = teeth.find((tooth) => Number(tooth.toothNumber) === Number(preferredToothNumber));
-            if (explicitMatch) {
-                return explicitMatch;
-            }
-        }
-
-        return teeth.find((tooth) => Array.isArray(tooth.history) && tooth.history.length > 0)
-            || teeth.find((tooth) => tooth.condition && tooth.condition !== "Healthy")
-            || teeth[0];
-    }
-
-    function updatePatientToothHoverCard(tooth) {
-        if (!elements.patientToothHoverCard) {
-            return;
-        }
-
-        elements.patientToothHoverCard.textContent = tooth
-            ? `Tooth ${tooth.toothNumber}: ${buildToothPreviewText(tooth)}`
-            : "Hover over a tooth to preview its latest condition.";
-    }
-
-    function buildToothPreviewText(tooth) {
-        if (!tooth) {
-            return "No tooth selected.";
-        }
-
-        const latestTreatmentLabel = tooth.lastTreatmentAtUtc
-            ? `${tooth.lastTreatmentTypeName || "Treatment"} on ${formatDateTime(tooth.lastTreatmentAtUtc)}`
-            : "No treatment recorded";
-
-        const detail = tooth.lastTreatmentNotes || tooth.notes || "No procedure notes recorded.";
-        return `${formatConditionLabel(tooth.condition)}. Last treatment: ${latestTreatmentLabel}. ${detail}`;
-    }
-
-    function resetDentistProfileFilters() {
-        if (elements.dentistProfileAppointmentSearch instanceof HTMLInputElement) {
-            elements.dentistProfileAppointmentSearch.value = "";
-        }
-        if (elements.dentistProfileAppointmentFilter instanceof HTMLSelectElement) {
-            elements.dentistProfileAppointmentFilter.value = "all";
-        }
-    }
-
-    function getDentistAppointments(dentistId) {
-        if (!dentistId) {
-            return [];
-        }
-
-        return state.appointments
-            .filter((appointment) => appointment.dentistId === dentistId)
-            .sort((left, right) => new Date(left.startAtUtc).getTime() - new Date(right.startAtUtc).getTime());
-    }
-
-	    function isUpcomingAppointment(appointment) {
-	        const endTime = new Date(appointment?.endAtUtc || appointment?.startAtUtc).getTime();
-	        return !Number.isNaN(endTime) && endTime >= Date.now();
-	    }
-
-	    function getVisibleAppointments(appointments) {
-	        const showPastAppointments = elements.appointmentsPastToggleButton?.dataset.showPast === "true";
-	        const statusFilter = normalizeAppointmentStatusFilter(elements.appointmentStatusFilter?.value || "all");
-	        const searchTerm = (elements.appointmentSearch?.value || "").trim().toLowerCase();
-
-	        const visibleAppointments = appointments.filter((appointment) => {
-	            if (!showPastAppointments && !isUpcomingAppointment(appointment)) {
-	                return false;
-	            }
-
-	            if (statusFilter !== "all" && normalizeAppointmentStatusFilter(appointment.status) !== statusFilter) {
-	                return false;
-	            }
-
-	            if (!searchTerm) {
-	                return true;
-	            }
-
-	            const haystack = [
-	                resolvePatientName(appointment.patientId),
-	                resolveDentistName(appointment.dentistId),
-	                resolveRoomLabel(appointment.treatmentRoomId),
-	                appointment.notes,
-	                formatAppointmentStatus(appointment.status),
-	                formatDateTime(appointment.startAtUtc),
-	                formatDateTime(appointment.endAtUtc)
-	            ]
-	                .filter(Boolean)
-	                .join(" ")
-	                .toLowerCase();
-
-	            return haystack.includes(searchTerm);
-	        });
-
-	        updateAppointmentsSummary(appointments, visibleAppointments, showPastAppointments);
-	        return visibleAppointments;
-	    }
-
-	    function updateAppointmentsToolbar() {
-	        if (!elements.appointmentsPastToggleButton) {
-	            return;
-	        }
-
-	        const showPastAppointments = elements.appointmentsPastToggleButton.dataset.showPast === "true";
-	        elements.appointmentsPastToggleButton.textContent = showPastAppointments
-	            ? "Hide past appointments"
-	            : "Show past appointments";
-	    }
-
-	    function updateAppointmentsSummary(allAppointments, visibleAppointments, showPastAppointments) {
-	        if (!elements.appointmentsSummary) {
-	            return;
-	        }
-
-	        if (!Array.isArray(allAppointments) || allAppointments.length === 0) {
-	            elements.appointmentsSummary.textContent = "No appointments loaded for the active tenant yet.";
-	            return;
-	        }
-
-	        const upcomingCount = allAppointments.filter((appointment) => isUpcomingAppointment(appointment)).length;
-	        const pastCount = allAppointments.length - upcomingCount;
-	        const statusFilter = normalizeAppointmentStatusFilter(elements.appointmentStatusFilter?.value || "all");
-	        const searchTerm = (elements.appointmentSearch?.value || "").trim();
-	        const scopeLabel = showPastAppointments ? "appointments" : "ongoing and upcoming appointments";
-	        const filterBits = [];
-
-	        if (statusFilter !== "all") {
-	            filterBits.push(`${formatAppointmentStatus(statusFilter)} only`);
-	        }
-
-	        if (searchTerm) {
-	            filterBits.push(`search "${searchTerm}"`);
-	        }
-
-	        const filterLabel = filterBits.length > 0 ? ` Filtered by ${filterBits.join(" and ")}.` : "";
-	        elements.appointmentsSummary.textContent =
-	            `${visibleAppointments.length} of ${allAppointments.length} ${scopeLabel} shown. ${upcomingCount} ongoing or upcoming, ${pastCount} past.${filterLabel}`;
-	    }
-
-	    function normalizeAppointmentStatusFilter(value) {
-	        return String(value || "all")
-	            .trim()
-	            .toLowerCase()
-	            .replace(/[\s_-]+/g, "");
-	    }
-
-	    function populateTreatmentRoomForm(room) {
-	        if (!(elements.treatmentRoomForm instanceof HTMLFormElement) || !room) {
-	            return;
-	        }
-
-	        state.editingTreatmentRoomId = room.id;
-	        elements.treatmentRoomForm.name.value = room.name || "";
-	        elements.treatmentRoomForm.code.value = room.code || "";
-	        elements.treatmentRoomForm.isActiveRoom.checked = Boolean(room.isActiveRoom);
-
-	        if (elements.treatmentRoomSubmitButton) {
-	            elements.treatmentRoomSubmitButton.textContent = "Save room";
-	        }
-
-	        if (elements.treatmentRoomCancelButton) {
-	            elements.treatmentRoomCancelButton.hidden = false;
-	        }
-
-	        focusElementIfPossible(elements.treatmentRoomForm.name);
-	    }
-
-	    function resetTreatmentRoomForm() {
-	        state.editingTreatmentRoomId = null;
-
-	        if (!(elements.treatmentRoomForm instanceof HTMLFormElement)) {
-	            return;
-	        }
-
-	        elements.treatmentRoomForm.reset();
-	        elements.treatmentRoomForm.isActiveRoom.checked = true;
-
-	        if (elements.treatmentRoomSubmitButton) {
-	            elements.treatmentRoomSubmitButton.textContent = "Add room";
-	        }
-
-	        if (elements.treatmentRoomCancelButton) {
-	            elements.treatmentRoomCancelButton.hidden = true;
-	        }
-	    }
-
-	    function syncDentistProfileAfterDentistListRefresh(dentists) {
-        if (!state.dentistProfile?.id) {
-            return;
-        }
-
-        const freshDentist = (Array.isArray(dentists) ? dentists : []).find((item) => item.id === state.dentistProfile.id) || null;
-        if (!freshDentist) {
-            closeDentistProfile();
-            return;
-        }
-
-        renderDentistProfile(freshDentist, { preserveFilters: true });
-    }
-
-    function rememberDentists(dentists) {
-        (Array.isArray(dentists) ? dentists : []).forEach((dentist) => {
-            if (!dentist?.id) {
-                return;
-            }
-
-            state.dentistDirectory[dentist.id] = {
-                id: dentist.id,
-                displayName: dentist.displayName || "",
-                licenseNumber: dentist.licenseNumber || "",
-                specialty: dentist.specialty || null
-            };
-        });
-    }
-
-    function createPatientActionButton(label, className, onClick) {
-        const button = document.createElement("button");
-        button.type = "button";
-        button.className = className;
-        button.textContent = label;
-        button.addEventListener("click", onClick);
-        return button;
-    }
-
-    function createEntityLinkButton(title, meta, onClick) {
-        const button = document.createElement("button");
-        button.type = "button";
-        button.className = "entity-link";
-        button.addEventListener("click", onClick);
-
-        const titleElement = document.createElement("span");
-        titleElement.className = "entity-link__title";
-        titleElement.textContent = title;
-        button.appendChild(titleElement);
-
-        if (meta) {
-            const metaElement = document.createElement("span");
-            metaElement.className = "entity-link__meta";
-            metaElement.textContent = meta;
-            button.appendChild(metaElement);
-        }
-
-        return button;
-    }
-
-    function recordAppointmentWork(appointmentId) {
-        if (!appointmentId || !(elements.appointmentClinicalForm instanceof HTMLFormElement)) {
-            return;
-        }
-
-        resetAppointmentClinicalForm({ appointmentId });
-        activateScreen("appointments");
-        focusElementIfPossible(elements.appointmentClinicalForm.appointmentId);
-        elements.appointmentClinicalForm.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-
-    function renderOpenPlanItems(items) {
-        if (!elements.planItemsBody) {
-            return;
-        }
-
-        clearElement(elements.planItemsBody);
-        updatePlanItemSelection(items);
-
-        if (!Array.isArray(items) || items.length === 0) {
-            renderOpenPlanItemsEmptyState();
-            state.openPlanItems = [];
-            return;
-        }
-
-        items.forEach((item) => {
-            const row = document.createElement("tr");
-            row.appendChild(createCell(item.patientName || "-"));
-            row.appendChild(createCell(item.planId || "-"));
-            row.appendChild(createCell(item.planItemId || "-"));
-            row.appendChild(createCell(item.treatmentTypeName || "-"));
-            row.appendChild(createCell(item.urgency || "-"));
-            row.appendChild(createCell(formatMoney(item.estimatedPrice)));
-            elements.planItemsBody.appendChild(row);
-        });
-
-        state.openPlanItems = items;
-    }
-
-    function renderDentistsSkeleton() {
-        if (!elements.dentistsBody) {
-            return;
-        }
-
-        clearElement(elements.dentistsBody);
-        for (let rowIndex = 0; rowIndex < 3; rowIndex += 1) {
-            const row = document.createElement("tr");
-            for (let cellIndex = 0; cellIndex < 5; cellIndex += 1) {
-                const cell = document.createElement("td");
-                const skeleton = document.createElement("div");
-                skeleton.className = "skeleton";
-                skeleton.style.width = `${55 + (cellIndex * 8)}%`;
-                cell.appendChild(skeleton);
-                row.appendChild(cell);
-            }
-            elements.dentistsBody.appendChild(row);
-        }
-    }
-
-    function renderTreatmentRoomsSkeleton() {
-        if (!elements.treatmentRoomsBody) {
-            return;
-        }
-
-        clearElement(elements.treatmentRoomsBody);
-        for (let rowIndex = 0; rowIndex < 3; rowIndex += 1) {
-            const row = document.createElement("tr");
-            for (let cellIndex = 0; cellIndex < 4; cellIndex += 1) {
-                const cell = document.createElement("td");
-                const skeleton = document.createElement("div");
-                skeleton.className = "skeleton";
-                skeleton.style.width = `${50 + (cellIndex * 10)}%`;
-                cell.appendChild(skeleton);
-                row.appendChild(cell);
-            }
-            elements.treatmentRoomsBody.appendChild(row);
-        }
-    }
-
-    function renderAppointmentsSkeleton() {
-        if (!elements.appointmentsBody) {
-            return;
-        }
-
-        clearElement(elements.appointmentsBody);
-        for (let rowIndex = 0; rowIndex < 3; rowIndex += 1) {
-            const row = document.createElement("tr");
-            for (let cellIndex = 0; cellIndex < 7; cellIndex += 1) {
-                const cell = document.createElement("td");
-                const skeleton = document.createElement("div");
-                skeleton.className = "skeleton";
-                skeleton.style.width = `${50 + (cellIndex * 7)}%`;
-                cell.appendChild(skeleton);
-                row.appendChild(cell);
-            }
-            elements.appointmentsBody.appendChild(row);
-        }
-    }
-
     function renderPlanItemsSkeleton() {
         if (!elements.planItemsBody) {
             return;
@@ -3860,294 +557,6 @@
         }
     }
 
-    function renderDentistsEmptyState() {
-        if (!elements.dentistsBody) {
-            return;
-        }
-
-        const row = document.createElement("tr");
-        const cell = document.createElement("td");
-        const content = document.createElement("div");
-        cell.colSpan = 5;
-        content.className = "empty-state";
-        content.textContent = "No dentists loaded.";
-        cell.appendChild(content);
-        row.appendChild(cell);
-        elements.dentistsBody.appendChild(row);
-    }
-
-	    function renderTreatmentRoomsEmptyState() {
-	        if (!elements.treatmentRoomsBody) {
-	            return;
-	        }
-
-	        const row = document.createElement("tr");
-	        const cell = document.createElement("td");
-	        const content = document.createElement("div");
-	        cell.colSpan = 5;
-	        content.className = "empty-state";
-	        content.textContent = "No treatment rooms loaded.";
-	        cell.appendChild(content);
-	        row.appendChild(cell);
-	        elements.treatmentRoomsBody.appendChild(row);
-	    }
-
-	    function renderAppointmentsEmptyState(message = "No appointments loaded.") {
-	        if (!elements.appointmentsBody) {
-	            return;
-	        }
-
-	        const row = document.createElement("tr");
-	        const cell = document.createElement("td");
-	        const content = document.createElement("div");
-	        cell.colSpan = 7;
-	        content.className = "empty-state";
-	        content.textContent = message;
-	        cell.appendChild(content);
-	        row.appendChild(cell);
-	        elements.appointmentsBody.appendChild(row);
-	    }
-
-    function renderOpenPlanItemsEmptyState() {
-        if (!elements.planItemsBody) {
-            return;
-        }
-
-        const row = document.createElement("tr");
-        const cell = document.createElement("td");
-        const content = document.createElement("div");
-        cell.colSpan = 6;
-        content.className = "empty-state";
-        content.textContent = "No pending plan items loaded.";
-        cell.appendChild(content);
-        row.appendChild(cell);
-        elements.planItemsBody.appendChild(row);
-    }
-
-    function renderAppointmentSelectOptions() {
-        const patientOptions = state.patients.map((patient) => ({
-                value: patient.id,
-                label: `${patient.firstName ?? ""} ${patient.lastName ?? ""}`.trim() || "Unnamed patient"
-            }));
-
-        setSelectOptions(
-            elements.appointmentPatientSelect,
-            patientOptions,
-            "Select patient"
-        );
-
-        setSelectOptions(
-            elements.estimatePatientSelect,
-            patientOptions,
-            "Select patient"
-        );
-
-        setSelectOptions(
-            elements.appointmentDentistSelect,
-            state.dentists.map((dentist) => ({
-                value: dentist.id,
-                label: dentist.displayName || dentist.licenseNumber || "Unnamed dentist"
-            })),
-            "Select dentist"
-        );
-
-        setSelectOptions(
-            elements.appointmentRoomSelect,
-            state.treatmentRooms
-                .filter((room) => room.isActiveRoom)
-                .map((room) => ({
-                    value: room.id,
-                    label: `${room.code || room.name || "Room"}${room.name ? ` - ${room.name}` : ""}`
-                })),
-            "Select room"
-        );
-
-        renderAppointmentClinicalSelectOptions();
-    }
-
-    function renderAppointmentClinicalSelectOptions() {
-        setSelectOptions(
-            elements.appointmentClinicalAppointmentSelect,
-            state.appointments.map((appointment) => ({
-                value: appointment.id,
-                label: `${resolvePatientName(appointment.patientId)} - ${formatDateTime(appointment.startAtUtc)} - ${appointment.status || "Scheduled"}`
-            })),
-            "Select appointment"
-        );
-
-        const rows = Array.from(elements.appointmentClinicalItems?.querySelectorAll(".clinical-entry") ?? []);
-        rows.forEach((row) => {
-            populateAppointmentClinicalRow(row);
-        });
-        updateAppointmentClinicalRemoveButtons();
-    }
-
-    function resetAppointmentClinicalForm(options = {}) {
-        if (!(elements.appointmentClinicalForm instanceof HTMLFormElement)) {
-            return;
-        }
-
-        elements.appointmentClinicalForm.reset();
-
-        if (elements.appointmentClinicalItems) {
-            clearElement(elements.appointmentClinicalItems);
-        }
-
-        addAppointmentClinicalEntryRow();
-
-        if (elements.appointmentClinicalPerformedAtInput) {
-            elements.appointmentClinicalPerformedAtInput.value = formatDateTimeLocalInput(new Date());
-        }
-
-        if (elements.appointmentClinicalMarkCompleted) {
-            elements.appointmentClinicalMarkCompleted.checked = true;
-        }
-
-        if (elements.appointmentClinicalAppointmentSelect) {
-            elements.appointmentClinicalAppointmentSelect.value = options.appointmentId || "";
-        }
-    }
-
-    function addAppointmentClinicalEntryRow(initialValues = {}) {
-        if (!elements.appointmentClinicalItems || !(elements.appointmentClinicalItemTemplate instanceof HTMLTemplateElement)) {
-            return;
-        }
-
-        const row = elements.appointmentClinicalItemTemplate.content.firstElementChild?.cloneNode(true);
-        if (!(row instanceof HTMLElement)) {
-            return;
-        }
-
-        const removeButton = row.querySelector('[data-clinical-action="remove"]');
-        if (removeButton instanceof HTMLButtonElement) {
-            removeButton.addEventListener("click", () => {
-                row.remove();
-                if ((elements.appointmentClinicalItems?.children.length || 0) === 0) {
-                    addAppointmentClinicalEntryRow();
-                }
-                updateAppointmentClinicalRemoveButtons();
-            });
-        }
-
-        const typeSelect = row.querySelector('[data-clinical-field="treatmentTypeId"]');
-        const priceInput = row.querySelector('[data-clinical-field="price"]');
-        if (typeSelect instanceof HTMLSelectElement && priceInput instanceof HTMLInputElement) {
-            typeSelect.addEventListener("change", () => {
-                const treatmentType = state.treatmentTypes.find((item) => item.id === typeSelect.value);
-                if (treatmentType && !priceInput.value) {
-                    priceInput.value = String(treatmentType.basePrice ?? 0);
-                }
-            });
-        }
-
-        elements.appointmentClinicalItems.appendChild(row);
-        populateAppointmentClinicalRow(row, initialValues);
-        updateAppointmentClinicalRemoveButtons();
-    }
-
-    function populateAppointmentClinicalRow(row, initialValues = {}) {
-        const toothSelect = row.querySelector('[data-clinical-field="toothNumber"]');
-        const treatmentTypeSelect = row.querySelector('[data-clinical-field="treatmentTypeId"]');
-        const conditionSelect = row.querySelector('[data-clinical-field="condition"]');
-        const priceInput = row.querySelector('[data-clinical-field="price"]');
-        const notesInput = row.querySelector('[data-clinical-field="notes"]');
-
-        setSelectOptions(
-            toothSelect,
-            permanentToothNumbers.map((toothNumber) => ({
-                value: String(toothNumber),
-                label: `Tooth ${toothNumber}`
-            })),
-            "Select tooth"
-        );
-
-        setSelectOptions(
-            treatmentTypeSelect,
-            state.treatmentTypes.map((type) => ({
-                value: type.id,
-                label: `${type.name || "Treatment"}${type.basePrice !== undefined ? ` - ${formatMoney(type.basePrice)}` : ""}`
-            })),
-            "Select treatment"
-        );
-
-        setSelectOptions(
-            conditionSelect,
-            toothConditionOptions.map((condition) => ({
-                value: condition,
-                label: formatConditionLabel(condition)
-            })),
-            "Select status"
-        );
-
-        if (toothSelect instanceof HTMLSelectElement) {
-            toothSelect.value = initialValues.toothNumber ? String(initialValues.toothNumber) : toothSelect.value;
-        }
-
-        if (treatmentTypeSelect instanceof HTMLSelectElement) {
-            treatmentTypeSelect.value = initialValues.treatmentTypeId || treatmentTypeSelect.value;
-        }
-
-        if (conditionSelect instanceof HTMLSelectElement) {
-            conditionSelect.value = initialValues.condition || conditionSelect.value || toothConditionOptions[0];
-        }
-
-        if (priceInput instanceof HTMLInputElement) {
-            priceInput.value = initialValues.price ?? "";
-        }
-
-        if (notesInput instanceof HTMLTextAreaElement) {
-            notesInput.value = initialValues.notes || "";
-        }
-    }
-
-    function updateAppointmentClinicalRemoveButtons() {
-        const rows = Array.from(elements.appointmentClinicalItems?.querySelectorAll(".clinical-entry") ?? []);
-        rows.forEach((row) => {
-            const removeButton = row.querySelector('[data-clinical-action="remove"]');
-            if (removeButton instanceof HTMLButtonElement) {
-                removeButton.disabled = rows.length <= 1;
-            }
-        });
-    }
-
-    function updatePlanItemSelection(items) {
-        setSelectOptions(
-            elements.planItemSelection,
-            (Array.isArray(items) ? items : []).map((item) => ({
-                value: `${item.planId}|${item.planItemId}`,
-                label: `${item.patientName || "Unknown patient"} - ${item.treatmentTypeName || "Treatment"} - ${item.urgency || "Urgency"}`
-            })),
-            "Select plan item"
-        );
-    }
-
-    function setSelectOptions(selectElement, options, placeholder) {
-        if (!(selectElement instanceof HTMLSelectElement)) {
-            return;
-        }
-
-        const previousValue = selectElement.value;
-        clearElement(selectElement);
-
-        const placeholderOption = document.createElement("option");
-        placeholderOption.value = "";
-        placeholderOption.textContent = placeholder;
-        selectElement.appendChild(placeholderOption);
-
-        options.forEach((option) => {
-            const element = document.createElement("option");
-            element.value = option.value;
-            element.textContent = option.label;
-            selectElement.appendChild(element);
-        });
-
-        if (previousValue && options.some((option) => option.value === previousValue)) {
-            selectElement.value = previousValue;
-        } else {
-            selectElement.value = "";
-        }
-    }
-
     function resolvePatientName(patientId) {
         const patient = resolvePatient(patientId);
         if (!patient) {
@@ -4157,216 +566,8 @@
         return `${patient.firstName ?? ""} ${patient.lastName ?? ""}`.trim() || patient.id;
     }
 
-    function resolveDentistName(dentistId) {
-        const dentist = resolveDentist(dentistId) || state.dentistDirectory[dentistId] || null;
-        return dentist?.displayName || dentist?.licenseNumber || dentistId || "-";
-    }
-
-    function resolveRoomLabel(roomId) {
-        const room = resolveTreatmentRoom(roomId);
-        if (!room) {
-            return roomId || "-";
-        }
-
-        return `${room.code || "-"}${room.name ? ` (${room.name})` : ""}`;
-    }
-
     function resolvePatient(patientId) {
         return state.patients.find((item) => item.id === patientId) || null;
-    }
-
-    function resolveDentist(dentistId) {
-        return state.dentists.find((item) => item.id === dentistId) || null;
-    }
-
-    function resolveTreatmentRoom(roomId) {
-        return state.treatmentRooms.find((item) => item.id === roomId) || null;
-    }
-
-    function renderCompanyUsers(users) {
-        if (!elements.companyUsersBody) {
-            return;
-        }
-
-        clearElement(elements.companyUsersBody);
-
-        if (!Array.isArray(users) || users.length === 0) {
-            renderCompanyUsersEmptyState();
-            state.companyUsers = [];
-            renderCompanyRoleSwitchOptions([]);
-            return;
-        }
-
-        users.forEach((membership) => {
-            const row = document.createElement("tr");
-            row.appendChild(createCell(membership.email || "-"));
-            row.appendChild(createCell(membership.roleName || "-"));
-
-            const statusCell = document.createElement("td");
-            const statusBadge = document.createElement("span");
-            statusBadge.className = `badge ${membership.isActive ? "badge--success" : "badge--warning"}`;
-            statusBadge.textContent = membership.isActive ? "Active" : "Inactive";
-            statusCell.appendChild(statusBadge);
-            row.appendChild(statusCell);
-
-            row.appendChild(createCell(formatDateTime(membership.assignedAtUtc)));
-            elements.companyUsersBody.appendChild(row);
-        });
-
-        state.companyUsers = users;
-        renderCompanyRoleSwitchOptions(users);
-    }
-
-    function renderCompanyUsersSkeleton() {
-        if (!elements.companyUsersBody) {
-            return;
-        }
-
-        clearElement(elements.companyUsersBody);
-
-        for (let rowIndex = 0; rowIndex < 3; rowIndex += 1) {
-            const row = document.createElement("tr");
-            for (let cellIndex = 0; cellIndex < 4; cellIndex += 1) {
-                const cell = document.createElement("td");
-                const skeleton = document.createElement("div");
-                skeleton.className = "skeleton";
-                skeleton.style.width = `${55 + (cellIndex * 8)}%`;
-                cell.appendChild(skeleton);
-                row.appendChild(cell);
-            }
-            elements.companyUsersBody.appendChild(row);
-        }
-    }
-
-    function renderCompanyUsersEmptyState() {
-        if (!elements.companyUsersBody) {
-            return;
-        }
-
-        const row = document.createElement("tr");
-        const cell = document.createElement("td");
-        const content = document.createElement("div");
-        cell.colSpan = 4;
-        content.className = "empty-state";
-        content.textContent = "No memberships loaded.";
-        cell.appendChild(content);
-        row.appendChild(cell);
-        elements.companyUsersBody.appendChild(row);
-    }
-
-    function renderCompanyRoleSwitchOptions(users) {
-        const memberships = Array.isArray(users) ? users : [];
-        const currentUserId = getCurrentUserIdFromJwt();
-        const currentUserEmail = getCurrentUserEmailFromJwt();
-        const ownMemberships = memberships
-            .filter((membership) => membership.isActive)
-            .filter((membership) =>
-                (currentUserId && membership.appUserId === currentUserId)
-                || (currentUserEmail && membership.email?.toLowerCase() === currentUserEmail.toLowerCase()))
-            .sort((left, right) => String(left.roleName || "").localeCompare(String(right.roleName || "")));
-
-        setSelectOptions(
-            elements.companyRoleSwitchSelect,
-            ownMemberships.map((membership) => ({
-                value: membership.roleName,
-                label: membership.roleName
-            })),
-            "Select role"
-        );
-
-        if (elements.companyRoleSwitchSelect instanceof HTMLSelectElement && state.companyRole) {
-            const hasCurrentRole = ownMemberships.some((membership) => membership.roleName === state.companyRole);
-            if (hasCurrentRole) {
-                elements.companyRoleSwitchSelect.value = state.companyRole;
-            }
-        }
-
-        if (elements.companyRoleSwitchHelp) {
-            if (ownMemberships.length === 0) {
-                elements.companyRoleSwitchHelp.textContent = "No additional active memberships for the current signed-in user were found in this company.";
-            } else if (ownMemberships.length === 1) {
-                elements.companyRoleSwitchHelp.textContent = "Your account currently has one active membership in this company, so there is nothing else to switch to.";
-            } else {
-                elements.companyRoleSwitchHelp.textContent = "Switching updates the active company role in your current JWT for this company only. Your other memberships stay stored and can be selected again later.";
-            }
-        }
-    }
-
-    function renderCompanySettings(settings) {
-        if (!elements.companySettingsForm) {
-            return;
-        }
-
-        const form = elements.companySettingsForm;
-        const countryCode = settings?.countryCode || "EE";
-        const currencyCode = settings?.currencyCode || "EUR";
-        const timezone = settings?.timezone || "Europe/Tallinn";
-        const interval = Number(settings?.defaultXrayIntervalMonths || 12);
-
-        form.countryCode.value = countryCode;
-        form.currencyCode.value = currencyCode;
-        form.timezone.value = timezone;
-        form.defaultXrayIntervalMonths.value = String(interval);
-
-        state.companySettings = settings;
-    }
-
-    function renderPatientsSkeleton() {
-        if (!elements.patientsBody) {
-            return;
-        }
-
-        clearElement(elements.patientsBody);
-
-        for (let rowIndex = 0; rowIndex < 3; rowIndex += 1) {
-            const row = document.createElement("tr");
-            for (let cellIndex = 0; cellIndex < 6; cellIndex += 1) {
-                const cell = document.createElement("td");
-                const skeleton = document.createElement("div");
-                skeleton.className = "skeleton";
-                skeleton.style.width = cellIndex === 5 ? "4rem" : `${40 + (cellIndex * 8)}%`;
-                cell.appendChild(skeleton);
-                row.appendChild(cell);
-            }
-            elements.patientsBody.appendChild(row);
-        }
-    }
-
-    function renderPatientsEmptyState() {
-        if (!elements.patientsBody) {
-            return;
-        }
-
-        const row = document.createElement("tr");
-        const cell = document.createElement("td");
-        const content = document.createElement("div");
-
-        cell.colSpan = 6;
-        content.className = "empty-state";
-        content.textContent = "No patient data yet.";
-        cell.appendChild(content);
-        row.appendChild(cell);
-        elements.patientsBody.appendChild(row);
-    }
-
-    function setText(element, text) {
-        if (element) {
-            element.textContent = text;
-        }
-    }
-
-    function formatConditionLabel(condition) {
-        return String(condition || "Unknown").replace(/([a-z])([A-Z])/g, "$1 $2");
-    }
-
-    function getToothConditionTone(condition) {
-        const value = String(condition || "Healthy");
-        if (value === "Caries") return "caries";
-        if (value === "Filled") return "filled";
-        if (value === "Crown") return "crown";
-        if (value === "RootCanal") return "rootcanal";
-        if (value === "Missing") return "missing";
-        return "healthy";
     }
 
     function canManagePatientsUi() {
@@ -4376,172 +577,11 @@
         );
     }
 
-    function canAccessResourcesUi() {
-        return Boolean(
-            state.companySlug
-            && hasCompanyRole("CompanyOwner", "CompanyAdmin", "CompanyManager", "CompanyEmployee")
-        );
-    }
-
-    function canManageResourcesUi() {
-        return Boolean(
-            state.companySlug
-            && hasCompanyRole("CompanyOwner", "CompanyAdmin")
-        );
-    }
-
     function canManageAppointmentsUi() {
         return Boolean(
             state.companySlug
             && hasCompanyRole("CompanyOwner", "CompanyAdmin", "CompanyManager", "CompanyEmployee")
         );
-    }
-
-    function formatDateTimeLocalInput(value) {
-        const parsed = value instanceof Date ? value : new Date(value);
-        if (Number.isNaN(parsed.getTime())) {
-            return "";
-        }
-
-        const pad = (part) => String(part).padStart(2, "0");
-        return `${parsed.getFullYear()}-${pad(parsed.getMonth() + 1)}-${pad(parsed.getDate())}T${pad(parsed.getHours())}:${pad(parsed.getMinutes())}`;
-    }
-
-    function focusElementIfPossible(element) {
-        if (element instanceof HTMLElement && typeof element.focus === "function") {
-            element.focus({ preventScroll: false });
-        }
-    }
-
-    function createCell(text, className = "") {
-        const cell = document.createElement("td");
-        if (className) {
-            cell.className = className;
-        }
-        cell.textContent = text;
-        return cell;
-    }
-
-    function createContentCell(content, className = "") {
-        const cell = document.createElement("td");
-        if (className) {
-            cell.className = className;
-        }
-        if (content instanceof Node) {
-            cell.appendChild(content);
-        } else {
-            cell.textContent = String(content ?? "");
-        }
-        return cell;
-    }
-
-    function createAppointmentPatientCell(appointment) {
-        const patient = resolvePatient(appointment.patientId);
-        const title = resolvePatientName(appointment.patientId);
-        const meta = patient?.personalCode || "Open patient record";
-        const button = createEntityLinkButton(title, meta, () => {
-            if (!appointment.patientId) {
-                return;
-            }
-
-            activateScreen("patients");
-            void openPatientProfile(appointment.patientId);
-        });
-        button.setAttribute("aria-label", `Open patient record for ${title}`);
-        return createContentCell(button, "appointment-cell appointment-cell--person");
-    }
-
-    function createAppointmentDentistCell(appointment) {
-        const dentist = resolveDentist(appointment.dentistId);
-        const title = resolveDentistName(appointment.dentistId);
-        const meta = dentist?.specialty || "Open dentist profile";
-        const button = createEntityLinkButton(title, meta, () => {
-            openDentistFromAppointment(appointment.dentistId);
-        });
-        button.setAttribute("aria-label", `Open dentist profile for ${title}`);
-        return createContentCell(button, "appointment-cell appointment-cell--person");
-    }
-
-    function createAppointmentRoomCell(appointment) {
-        const room = resolveTreatmentRoom(appointment.treatmentRoomId);
-        const wrapper = document.createElement("div");
-        wrapper.className = "appointment-card";
-
-        const title = document.createElement("span");
-        title.className = "appointment-card__title";
-        title.textContent = room?.code || appointment.treatmentRoomId || "-";
-        wrapper.appendChild(title);
-
-        const meta = document.createElement("span");
-        meta.className = "appointment-card__meta";
-        meta.textContent = room?.name || "Treatment room";
-        wrapper.appendChild(meta);
-
-        return createContentCell(wrapper, "appointment-cell appointment-cell--room");
-    }
-
-    function createAppointmentTimeCell(value) {
-        const parsed = value ? new Date(value) : null;
-        const wrapper = document.createElement("div");
-        wrapper.className = "appointment-time";
-
-        const date = document.createElement("span");
-        date.className = "appointment-time__date";
-        date.textContent = parsed && !Number.isNaN(parsed.getTime())
-            ? parsed.toLocaleDateString([], { day: "2-digit", month: "short", year: "numeric" })
-            : "-";
-        wrapper.appendChild(date);
-
-        const clock = document.createElement("span");
-        clock.className = "appointment-time__clock";
-        clock.textContent = parsed && !Number.isNaN(parsed.getTime())
-            ? formatTime(parsed)
-            : "-";
-        wrapper.appendChild(clock);
-
-        return createContentCell(wrapper, "appointment-cell appointment-cell--time");
-    }
-
-    function openDentistFromAppointment(dentistId) {
-        if (!dentistId) {
-            return;
-        }
-
-        activateScreen("resources");
-        void openDentistProfile(dentistId);
-    }
-
-	    function formatAppointmentStatus(status) {
-	        const normalized = normalizeAppointmentStatusFilter(status);
-	        if (normalized === "confirmed") {
-	            return "Confirmed";
-	        }
-	        if (normalized === "completed") {
-	            return "Completed";
-	        }
-	        if (normalized === "cancelled") {
-	            return "Cancelled";
-	        }
-	        return "Scheduled";
-	    }
-
-    function getAppointmentStatusBadgeClass(status) {
-        if (status === "Completed") {
-            return "badge--success";
-        }
-        if (status === "Cancelled") {
-            return "badge--danger";
-        }
-        if (status === "Confirmed") {
-            return "badge--accent";
-        }
-        return "badge--warning";
-    }
-
-    function clearElement(element) {
-        while (element.firstChild) {
-            element.removeChild(element.firstChild);
-        }
     }
 
     function applyJwtResponse(data) {
@@ -4553,10 +593,10 @@
         state.systemRoles = extractSystemRolesFromJwt(state.jwt);
     }
 
-    function clearSession() {
-        state.jwt = "";
-        state.refreshToken = "";
-        state.expiresInSeconds = 0;
+	    function clearSession() {
+	        state.jwt = "";
+	        state.refreshToken = "";
+	        state.expiresInSeconds = 0;
         state.companySlug = "";
         state.companyRole = "";
         state.systemRoles = [];
@@ -4567,13 +607,27 @@
         state.dentists = [];
         state.dentistDirectory = {};
         state.treatmentRooms = [];
-        state.treatmentTypes = [];
-        state.appointments = [];
-        state.openPlanItems = [];
-        state.companyUsers = [];
-        state.companySettings = null;
-        saveSession();
-    }
+	        state.treatmentTypes = [];
+	        state.appointments = [];
+	        state.openPlanItems = [];
+	        state.companyUsers = [];
+	        state.companySettings = null;
+	        state.subscription = null;
+	        state.costEstimates = [];
+	        state.treatmentPlans = [];
+	        state.financeWorkspace = null;
+	        state.financePatientId = "";
+	        state.financeInvoiceDetail = null;
+	        state.financeSelectedInvoiceId = "";
+	        state.systemAnalytics = null;
+	        state.featureFlags = [];
+	        state.supportCompanies = [];
+	        state.supportTickets = [];
+	        state.billingSubscriptions = [];
+	        state.billingInvoices = [];
+	        state.pendingDelete = { id: "", label: "" };
+	        saveSession();
+	    }
 
     function requireJwt() {
         if (!state.jwt) {
@@ -4815,41 +869,6 @@
         }
     }
 
-    function formatTime(value) {
-        return value.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-    }
-
-    function formatDateTime(value) {
-        if (!value) {
-            return "-";
-        }
-
-        const parsed = new Date(value);
-        if (Number.isNaN(parsed.getTime())) {
-            return "-";
-        }
-
-        return parsed.toLocaleString();
-    }
-
-    function toUtcIso(localDateTimeValue) {
-        const parsed = new Date(localDateTimeValue);
-        if (Number.isNaN(parsed.getTime())) {
-            throw new Error("Invalid date/time value.");
-        }
-
-        return parsed.toISOString();
-    }
-
-    function formatMoney(value) {
-        const parsed = Number(value);
-        if (!Number.isFinite(parsed)) {
-            return "-";
-        }
-
-        return parsed.toFixed(2);
-    }
-
     function extractSystemRolesFromJwt(jwt) {
         const payload = decodeJwtPayload(jwt);
         if (!payload) {
@@ -4965,8 +984,207 @@
         }));
     }
 
-    function optional(value) {
-        const trimmed = (value || "").trim();
-        return trimmed.length === 0 ? null : trimmed;
-    }
-})();
+	    function optional(value) {
+	        const trimmed = (value || "").trim();
+	        return trimmed.length === 0 ? null : trimmed;
+	    }
+
+	    Object.assign(app, {
+	        state,
+	        elements,
+	        activateScreen,
+	        apiRequest,
+	        applyJwtResponse,
+	        applyTabVisibility,
+	        canManagePatientsUi,
+	        clearSession,
+	        getCurrentUserEmailFromJwt,
+	        getCurrentUserIdFromJwt,
+	        getAllowedTabs,
+	        getRequestedScreen,
+	        hasAnySystemRole,
+	        hasCompanyRole,
+	        hasSystemRole,
+	        log,
+	        optional,
+	        permanentToothNumbers,
+	        renderPlanItemsSkeleton,
+	        reportError,
+	        requireJwt,
+	        requireSystemRole,
+	        requireTenant,
+	        resolvePatientName,
+	        resolvePatient,
+	        resolveLandingScreen,
+	        saveSession,
+	        showToast,
+	        syncPublicEntryState,
+	        toothConditionOptions
+	    });
+
+	    moduleRegistrations.forEach((registerModule) => {
+	        if (typeof registerModule === "function") {
+	            registerModule(app);
+	        }
+	    });
+
+	    const {
+	        closePatientProfile,
+	        closeDentistProfile,
+	        bindAsyncClick,
+	        bindAsyncSubmit,
+	        bindSyncChange,
+	        bindSyncClick,
+	        bindSyncInput,
+	        clearElement,
+	        createCell,
+	        createContentCell,
+	        createEntityLinkButton,
+	        createPatientActionButton,
+	        formatConditionLabel,
+	        formatDateTime,
+	        formatDateTimeLocalInput,
+	        formatMoney,
+	        formatTime,
+	        focusElementIfPossible,
+	        onDeleteDialogClose,
+	        onForgotPasswordSubmit,
+	        onGatewayLoginSubmit,
+	        onLoginSubmit,
+	        onLogoutClick,
+	        onOnboardingSubmit,
+	        onResetPasswordSubmit,
+	        onSwitchSubmit,
+	        onDentistCreateSubmit,
+	        onDentistProfileDelete,
+	        onDentistProfileSubmit,
+	        onPatientCreateSubmit,
+	        onPatientProfileSubmit,
+	        onTreatmentRoomCreateSubmit,
+	        onAppointmentCreateSubmit,
+	        onAppointmentClinicalSubmit,
+	        onPlanDecisionSubmit,
+	        onCostEstimateSubmit,
+	        onLegalEstimateSubmit,
+	        onFinancePatientChange,
+	        onFinancePlanSubmit,
+	        onFinancePolicySubmit,
+	        onFinanceInvoiceGenerateSubmit,
+	        onFinancePaymentSubmit,
+	        onFinancePaymentPlanSubmit,
+	        openDeleteDialog,
+	        openDentistProfile,
+	        openPatientProfile,
+	        onFeatureFlagSubmit,
+	        onCompanyActivationSubmit,
+	        onSupportTicketSubmit,
+	        onBillingSubscriptionSubmit,
+	        onBillingInvoiceStatusSubmit,
+	        onSubscriptionSubmit,
+	        onCompanyUserUpsertSubmit,
+	        onCompanyRoleSwitchSubmit,
+	        onCompanySettingsSubmit,
+	        refreshAppointments,
+	        refreshAllViewsForCurrentSession,
+	        refreshClinicalViews,
+	        refreshDentistProfile,
+	        refreshPatientProfile,
+	        refreshPatients,
+	        refreshResources,
+	        refreshTreatmentRooms,
+	        refreshTreatmentTypes,
+	        refreshTreatmentPlans,
+	        refreshCostEstimates,
+	        refreshOpenPlanItems,
+	        refreshFinanceWorkspace,
+	        refreshPlatformData,
+	        refreshSupportData,
+	        refreshBillingData,
+	        refreshTenantAdminViews,
+	        refreshCompanyUsers,
+	        refreshCompanySettings,
+	        refreshTenantSubscription,
+	        renderAppointments,
+	        renderDentistProfile,
+	        renderDentists,
+	        renderDentistProfileAppointments,
+	        getDentistAppointments,
+	        isUpcomingAppointment,
+	        renderAppointmentSelectOptions,
+	        renderPatientProfile,
+	        renderPatients,
+	        renderTreatmentRooms,
+	        renderOpenPlanItems,
+	        syncFinancePatientSelect,
+	        renderFinanceWorkspace,
+	        renderFinancePlanReview,
+	        renderFinanceInvoiceDetail,
+	        resetFinancePolicyForm,
+	        addFinanceInstallmentRow,
+	        resetFinancePaymentPlanForm,
+	        renderAppointmentClinicalSelectOptions,
+	        renderLegalEstimateOutput,
+	        resetAppointmentClinicalForm,
+	        resetTreatmentRoomForm,
+	        addAppointmentClinicalEntryRow,
+	        renderCompanyUsers,
+	        renderCompanySettings,
+	        renderSubscription,
+	        renderPlatformAnalytics,
+	        renderFeatureFlags,
+	        renderSupportCompanies,
+	        renderSupportTickets,
+	        renderBillingSubscriptions,
+	        renderBillingInvoices,
+	        renderSession,
+	        resolveDentist,
+	        resolveDentistName,
+	        resolveRoomLabel,
+	        resolveTreatmentRoom,
+	        setBadgeVariant,
+	        setSelectOptions,
+	        setSyncStatus,
+	        setText,
+	        toUtcIso,
+	        toggleFormControls,
+	        withBusy
+	    } = app;
+
+	    bindEvents();
+	    initializeTheme();
+	    initializeTabs();
+	    renderSession();
+	    renderPatients([]);
+	    renderPatientProfile(null);
+	    renderDentists([]);
+	    renderDentistProfile(null);
+	    renderTreatmentRooms([]);
+	    renderAppointments([]);
+	    renderOpenPlanItems([]);
+	    renderCompanyUsers([]);
+	    renderCompanySettings(null);
+	    renderSubscription(null);
+	    renderFeatureFlags([]);
+	    renderSupportCompanies([]);
+	    renderSupportTickets([]);
+	    renderBillingSubscriptions([]);
+	    renderBillingInvoices([]);
+	    resetAppointmentClinicalForm();
+	    resetFinancePolicyForm();
+	    resetFinancePaymentPlanForm();
+	    renderFinanceWorkspace(null);
+	    renderFinanceInvoiceDetail(null);
+	    setSyncStatus("Idle", "neutral");
+	    log("SYSTEM/READY", null, { message: "UI initialized." });
+
+	    if (state.jwt) {
+	        (async () => {
+	            try {
+	                await refreshAllViewsForCurrentSession({ silentToast: true, silentSyncStatus: true });
+	            } catch (error) {
+	                setSyncStatus("Sync failed", "danger");
+	                reportError(error);
+	            }
+	        })();
+	    }
+	})();

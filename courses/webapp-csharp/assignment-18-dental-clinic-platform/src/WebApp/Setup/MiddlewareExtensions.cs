@@ -22,7 +22,10 @@ public static class MiddlewareExtensions
         app.UseMiddleware<GlobalExceptionMiddleware>();
         app.UseMiddleware<TenantResolutionMiddleware>();
 
-        app.UseHttpsRedirection();
+        if (!app.Environment.IsDevelopment())
+        {
+            app.UseHttpsRedirection();
+        }
         app.UseDefaultFiles();
         app.UseStaticFiles();
 

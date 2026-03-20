@@ -126,6 +126,29 @@ public class AppointmentService(AppDbContext dbContext, ITenantAccessService ten
             throw new ValidationAppException("One or more treatment types do not exist in current company.");
         }
 
+        var planItemIds = command.Items
+            .Where(entity => entity.PlanItemId.HasValue)
+            .Select(entity => entity.PlanItemId!.Value)
+            .Distinct()
+            .ToArray();
+
+        var planItems = planItemIds.Length == 0
+            ? new Dictionary<Guid, AppointmentPlanItemLookup>()
+            : await dbContext.PlanItems
+                .AsNoTracking()
+                .Where(entity => planItemIds.Contains(entity.Id))
+                .Join(
+                    dbContext.TreatmentPlans.AsNoTracking(),
+                    item => item.TreatmentPlanId,
+                    plan => plan.Id,
+                    (item, plan) => new AppointmentPlanItemLookup(item.Id, item.TreatmentTypeId, plan.PatientId))
+                .ToDictionaryAsync(entity => entity.Id, cancellationToken);
+
+        if (planItems.Count != planItemIds.Length)
+        {
+            throw new ValidationAppException("One or more plan items do not exist in current company.");
+        }
+
         var toothNumbers = command.Items
             .Select(entity => entity.ToothNumber)
             .Distinct()
@@ -138,6 +161,20 @@ public class AppointmentService(AppDbContext dbContext, ITenantAccessService ten
         foreach (var item in command.Items)
         {
             var treatmentType = treatmentTypes[item.TreatmentTypeId];
+            if (item.PlanItemId.HasValue)
+            {
+                var planItem = planItems[item.PlanItemId.Value];
+                if (planItem.PatientId != appointment.PatientId)
+                {
+                    throw new ValidationAppException("Plan item does not belong to the same patient as the appointment.");
+                }
+
+                if (planItem.TreatmentTypeId != item.TreatmentTypeId)
+                {
+                    throw new ValidationAppException("Plan item treatment type must match the recorded clinical procedure.");
+                }
+            }
+
             var record = GetOrCreateToothRecord(toothRecords, appointment.PatientId, item);
 
             record.Condition = item.Condition;
@@ -147,6 +184,7 @@ public class AppointmentService(AppDbContext dbContext, ITenantAccessService ten
             {
                 PatientId = appointment.PatientId,
                 TreatmentTypeId = item.TreatmentTypeId,
+                PlanItemId = item.PlanItemId,
                 AppointmentId = appointment.Id,
                 DentistId = appointment.DentistId,
                 ToothNumber = item.ToothNumber,
@@ -218,6 +256,8 @@ public class AppointmentService(AppDbContext dbContext, ITenantAccessService ten
             }
         }
     }
+
+    private sealed record AppointmentPlanItemLookup(Guid Id, Guid TreatmentTypeId, Guid PatientId);
 
     private static AppointmentResult ToResult(Appointment entity)
     {

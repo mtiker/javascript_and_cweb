@@ -40,9 +40,13 @@ public class AppDbContext(
     public DbSet<PlanItem> PlanItems { get; set; } = default!;
     public DbSet<Xray> Xrays { get; set; } = default!;
     public DbSet<InsurancePlan> InsurancePlans { get; set; } = default!;
+    public DbSet<PatientInsurancePolicy> PatientInsurancePolicies { get; set; } = default!;
     public DbSet<CostEstimate> CostEstimates { get; set; } = default!;
     public DbSet<Invoice> Invoices { get; set; } = default!;
+    public DbSet<InvoiceLine> InvoiceLines { get; set; } = default!;
+    public DbSet<Payment> Payments { get; set; } = default!;
     public DbSet<PaymentPlan> PaymentPlans { get; set; } = default!;
+    public DbSet<PaymentPlanInstallment> PaymentPlanInstallments { get; set; } = default!;
     public DbSet<Dentist> Dentists { get; set; } = default!;
     public DbSet<TreatmentRoom> TreatmentRooms { get; set; } = default!;
 
@@ -111,14 +115,37 @@ public class AppDbContext(
         builder.Entity<PlanItem>().HasIndex(entity => new { entity.CompanyId, entity.TreatmentPlanId, entity.Sequence }).IsUnique();
         builder.Entity<TreatmentRoom>().HasIndex(entity => new { entity.CompanyId, entity.Code }).IsUnique();
         builder.Entity<Invoice>().HasIndex(entity => new { entity.CompanyId, entity.InvoiceNumber }).IsUnique();
+        builder.Entity<Treatment>().HasIndex(entity => new { entity.CompanyId, entity.PlanItemId });
+        builder.Entity<PatientInsurancePolicy>().HasIndex(entity => new { entity.CompanyId, entity.PatientId, entity.PolicyNumber }).IsUnique();
+        builder.Entity<InvoiceLine>().HasIndex(entity => new { entity.CompanyId, entity.InvoiceId });
+        builder.Entity<InvoiceLine>().HasIndex(entity => new { entity.CompanyId, entity.TreatmentId });
+        builder.Entity<InvoiceLine>().HasIndex(entity => new { entity.CompanyId, entity.PlanItemId });
+        builder.Entity<Payment>().HasIndex(entity => new { entity.CompanyId, entity.InvoiceId, entity.PaidAtUtc });
+        builder.Entity<PaymentPlanInstallment>().HasIndex(entity => new { entity.CompanyId, entity.PaymentPlanId, entity.DueDateUtc });
+
+        builder.Entity<PaymentPlan>()
+            .HasOne(entity => entity.Invoice)
+            .WithOne(entity => entity.PaymentPlan)
+            .HasForeignKey<PaymentPlan>(entity => entity.InvoiceId);
 
         builder.Entity<TreatmentType>().Property(entity => entity.BasePrice).HasPrecision(12, 2);
         builder.Entity<Treatment>().Property(entity => entity.Price).HasPrecision(12, 2);
         builder.Entity<PlanItem>().Property(entity => entity.EstimatedPrice).HasPrecision(12, 2);
+        builder.Entity<PatientInsurancePolicy>().Property(entity => entity.AnnualMaximum).HasPrecision(12, 2);
+        builder.Entity<PatientInsurancePolicy>().Property(entity => entity.Deductible).HasPrecision(12, 2);
+        builder.Entity<PatientInsurancePolicy>().Property(entity => entity.CoveragePercent).HasPrecision(5, 2);
         builder.Entity<CostEstimate>().Property(entity => entity.TotalEstimatedAmount).HasPrecision(12, 2);
+        builder.Entity<CostEstimate>().Property(entity => entity.CoverageAmount).HasPrecision(12, 2);
+        builder.Entity<CostEstimate>().Property(entity => entity.PatientEstimatedAmount).HasPrecision(12, 2);
         builder.Entity<Invoice>().Property(entity => entity.TotalAmount).HasPrecision(12, 2);
         builder.Entity<Invoice>().Property(entity => entity.BalanceAmount).HasPrecision(12, 2);
-        builder.Entity<PaymentPlan>().Property(entity => entity.InstallmentAmount).HasPrecision(12, 2);
+        builder.Entity<InvoiceLine>().Property(entity => entity.Quantity).HasPrecision(12, 2);
+        builder.Entity<InvoiceLine>().Property(entity => entity.UnitPrice).HasPrecision(12, 2);
+        builder.Entity<InvoiceLine>().Property(entity => entity.LineTotal).HasPrecision(12, 2);
+        builder.Entity<InvoiceLine>().Property(entity => entity.CoverageAmount).HasPrecision(12, 2);
+        builder.Entity<InvoiceLine>().Property(entity => entity.PatientAmount).HasPrecision(12, 2);
+        builder.Entity<Payment>().Property(entity => entity.Amount).HasPrecision(12, 2);
+        builder.Entity<PaymentPlanInstallment>().Property(entity => entity.Amount).HasPrecision(12, 2);
 
         ConfigureTenantFilter<CompanySettings>(builder);
         ConfigureTenantFilter<Subscription>(builder);
@@ -133,9 +160,13 @@ public class AppDbContext(
         ConfigureTenantSoftDeleteFilter<PlanItem>(builder);
         ConfigureTenantSoftDeleteFilter<Xray>(builder);
         ConfigureTenantSoftDeleteFilter<InsurancePlan>(builder);
+        ConfigureTenantSoftDeleteFilter<PatientInsurancePolicy>(builder);
         ConfigureTenantSoftDeleteFilter<CostEstimate>(builder);
         ConfigureTenantSoftDeleteFilter<Invoice>(builder);
+        ConfigureTenantSoftDeleteFilter<InvoiceLine>(builder);
+        ConfigureTenantSoftDeleteFilter<Payment>(builder);
         ConfigureTenantSoftDeleteFilter<PaymentPlan>(builder);
+        ConfigureTenantSoftDeleteFilter<PaymentPlanInstallment>(builder);
         ConfigureTenantSoftDeleteFilter<Dentist>(builder);
         ConfigureTenantSoftDeleteFilter<TreatmentRoom>(builder);
     }

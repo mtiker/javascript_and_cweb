@@ -10,7 +10,7 @@ public class CreateCostEstimateRequest
     [Required]
     public Guid TreatmentPlanId { get; set; }
 
-    public Guid? InsurancePlanId { get; set; }
+    public Guid? PatientInsurancePolicyId { get; set; }
 
     [Required]
     [MaxLength(64)]
@@ -19,7 +19,4 @@ public class CreateCostEstimateRequest
     [Required]
     [MaxLength(32)]
     public string FormatCode { get; set; } = default!;
-
-    [Range(0, 999999999)]
-    public decimal TotalEstimatedAmount { get; set; }
 }

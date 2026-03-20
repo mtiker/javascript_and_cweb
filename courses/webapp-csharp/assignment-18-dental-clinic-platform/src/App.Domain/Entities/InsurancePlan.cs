@@ -10,4 +10,7 @@ public class InsurancePlan : TenantBaseEntity
     public CoverageType CoverageType { get; set; }
     public bool IsActivePlan { get; set; } = true;
     public string? ClaimSubmissionEndpoint { get; set; }
+
+    public ICollection<PatientInsurancePolicy> PatientPolicies { get; set; } = new List<PatientInsurancePolicy>();
+    public ICollection<CostEstimate> CostEstimates { get; set; } = new List<CostEstimate>();
 }

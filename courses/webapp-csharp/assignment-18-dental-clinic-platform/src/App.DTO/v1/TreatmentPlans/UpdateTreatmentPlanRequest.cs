@@ -8,8 +8,5 @@ public class UpdateTreatmentPlanRequest
 
     public Guid? DentistId { get; set; }
 
-    [MaxLength(32)]
-    public string? Status { get; set; }
-
     public ICollection<TreatmentPlanItemRequest>? Items { get; set; }
 }

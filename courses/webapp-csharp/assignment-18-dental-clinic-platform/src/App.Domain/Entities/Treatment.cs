@@ -6,6 +6,7 @@ public class Treatment : TenantBaseEntity
 {
     public Guid PatientId { get; set; }
     public Guid TreatmentTypeId { get; set; }
+    public Guid? PlanItemId { get; set; }
     public Guid? AppointmentId { get; set; }
     public Guid? DentistId { get; set; }
     public int? ToothNumber { get; set; }
@@ -15,6 +16,8 @@ public class Treatment : TenantBaseEntity
 
     public Patient? Patient { get; set; }
     public TreatmentType? TreatmentType { get; set; }
+    public PlanItem? PlanItem { get; set; }
     public Appointment? Appointment { get; set; }
     public Dentist? Dentist { get; set; }
+    public ICollection<InvoiceLine> InvoiceLines { get; set; } = new List<InvoiceLine>();
 }

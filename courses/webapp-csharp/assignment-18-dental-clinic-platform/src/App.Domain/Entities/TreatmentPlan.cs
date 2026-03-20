@@ -8,6 +8,7 @@ public class TreatmentPlan : TenantBaseEntity
     public Guid PatientId { get; set; }
     public Guid? DentistId { get; set; }
     public TreatmentPlanStatus Status { get; set; } = TreatmentPlanStatus.Draft;
+    public DateTime? SubmittedAtUtc { get; set; }
     public DateTime? ApprovedAtUtc { get; set; }
 
     public Patient? Patient { get; set; }

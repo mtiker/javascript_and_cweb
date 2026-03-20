@@ -19,6 +19,8 @@ public class RecordAppointmentClinicalItemRequest
     [Required]
     public Guid TreatmentTypeId { get; set; }
 
+    public Guid? PlanItemId { get; set; }
+
     [Range(11, 48)]
     public int ToothNumber { get; set; }
 

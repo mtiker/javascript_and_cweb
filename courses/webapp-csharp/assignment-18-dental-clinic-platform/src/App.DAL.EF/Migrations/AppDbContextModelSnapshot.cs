@@ -222,6 +222,10 @@ namespace App.DAL.EF.Migrations
                     b.Property<Guid>("CompanyId")
                         .HasColumnType("uuid");
 
+                    b.Property<decimal>("CoverageAmount")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
@@ -254,12 +258,18 @@ namespace App.DAL.EF.Migrations
                     b.Property<Guid?>("ModifiedByUserId")
                         .HasColumnType("uuid");
 
+                    b.Property<decimal>("PatientEstimatedAmount")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
                     b.Property<Guid>("PatientId")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<Guid?>("PatientInsurancePolicyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
 
                     b.Property<decimal>("TotalEstimatedAmount")
                         .HasPrecision(12, 2)
@@ -273,6 +283,8 @@ namespace App.DAL.EF.Migrations
                     b.HasIndex("InsurancePlanId");
 
                     b.HasIndex("PatientId");
+
+                    b.HasIndex("PatientInsurancePolicyId");
 
                     b.HasIndex("TreatmentPlanId");
 
@@ -439,6 +451,83 @@ namespace App.DAL.EF.Migrations
                     b.ToTable("Invoices");
                 });
 
+            modelBuilder.Entity("App.Domain.Entities.InvoiceLine", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CompanyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("CoverageAmount")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("DeletedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("InvoiceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<decimal>("LineTotal")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("PatientAmount")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.Property<Guid?>("PlanItemId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Quantity")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.Property<Guid?>("TreatmentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("UnitPrice")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InvoiceId");
+
+                    b.HasIndex("PlanItemId");
+
+                    b.HasIndex("TreatmentId");
+
+                    b.HasIndex("CompanyId", "InvoiceId");
+
+                    b.HasIndex("CompanyId", "PlanItemId");
+
+                    b.HasIndex("CompanyId", "TreatmentId");
+
+                    b.ToTable("InvoiceLines");
+                });
+
             modelBuilder.Entity("App.Domain.Entities.Patient", b =>
                 {
                     b.Property<Guid>("Id")
@@ -491,6 +580,138 @@ namespace App.DAL.EF.Migrations
                     b.ToTable("Patients");
                 });
 
+            modelBuilder.Entity("App.Domain.Entities.PatientInsurancePolicy", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("AnnualMaximum")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.Property<Guid>("CompanyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly?>("CoverageEnd")
+                        .HasColumnType("date");
+
+                    b.Property<decimal>("CoveragePercent")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("numeric(5,2)");
+
+                    b.Property<DateOnly>("CoverageStart")
+                        .HasColumnType("date");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Deductible")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.Property<DateTime?>("DeletedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("GroupNumber")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("InsurancePlanId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("MemberNumber")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("PatientId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("PolicyNumber")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InsurancePlanId");
+
+                    b.HasIndex("PatientId");
+
+                    b.HasIndex("CompanyId", "PatientId", "PolicyNumber")
+                        .IsUnique();
+
+                    b.ToTable("PatientInsurancePolicies");
+                });
+
+            modelBuilder.Entity("App.Domain.Entities.Payment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.Property<Guid>("CompanyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("DeletedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("InvoiceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Method")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("PaidAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Reference")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InvoiceId");
+
+                    b.HasIndex("CompanyId", "InvoiceId", "PaidAtUtc");
+
+                    b.ToTable("Payments");
+                });
+
             modelBuilder.Entity("App.Domain.Entities.PaymentPlan", b =>
                 {
                     b.Property<Guid>("Id")
@@ -508,13 +729,6 @@ namespace App.DAL.EF.Migrations
 
                     b.Property<DateTime?>("DeletedAtUtc")
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<decimal>("InstallmentAmount")
-                        .HasPrecision(12, 2)
-                        .HasColumnType("numeric(12,2)");
-
-                    b.Property<int>("InstallmentCount")
-                        .HasColumnType("integer");
 
                     b.Property<Guid>("InvoiceId")
                         .HasColumnType("uuid");
@@ -544,6 +758,58 @@ namespace App.DAL.EF.Migrations
                         .IsUnique();
 
                     b.ToTable("PaymentPlans");
+                });
+
+            modelBuilder.Entity("App.Domain.Entities.PaymentPlanInstallment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.Property<Guid>("CompanyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("DeletedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("DueDateUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("PaidAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("PaymentPlanId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PaymentPlanId");
+
+                    b.HasIndex("CompanyId", "PaymentPlanId", "DueDateUtc");
+
+                    b.ToTable("PaymentPlanInstallments");
                 });
 
             modelBuilder.Entity("App.Domain.Entities.PlanItem", b =>
@@ -735,6 +1001,9 @@ namespace App.DAL.EF.Migrations
                     b.Property<DateTime>("PerformedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<Guid?>("PlanItemId")
+                        .HasColumnType("uuid");
+
                     b.Property<decimal>("Price")
                         .HasPrecision(12, 2)
                         .HasColumnType("numeric(12,2)");
@@ -753,7 +1022,11 @@ namespace App.DAL.EF.Migrations
 
                     b.HasIndex("PatientId");
 
+                    b.HasIndex("PlanItemId");
+
                     b.HasIndex("TreatmentTypeId");
+
+                    b.HasIndex("CompanyId", "PlanItemId");
 
                     b.ToTable("Treatments");
                 });
@@ -796,6 +1069,9 @@ namespace App.DAL.EF.Migrations
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");
+
+                    b.Property<DateTime?>("SubmittedAtUtc")
+                        .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
@@ -1251,15 +1527,20 @@ namespace App.DAL.EF.Migrations
             modelBuilder.Entity("App.Domain.Entities.CostEstimate", b =>
                 {
                     b.HasOne("App.Domain.Entities.InsurancePlan", "InsurancePlan")
-                        .WithMany()
+                        .WithMany("CostEstimates")
                         .HasForeignKey("InsurancePlanId")
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("App.Domain.Entities.Patient", "Patient")
-                        .WithMany()
+                        .WithMany("CostEstimates")
                         .HasForeignKey("PatientId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("App.Domain.Entities.PatientInsurancePolicy", "PatientInsurancePolicy")
+                        .WithMany("CostEstimates")
+                        .HasForeignKey("PatientInsurancePolicyId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("App.Domain.Entities.TreatmentPlan", "TreatmentPlan")
                         .WithMany()
@@ -1270,6 +1551,8 @@ namespace App.DAL.EF.Migrations
                     b.Navigation("InsurancePlan");
 
                     b.Navigation("Patient");
+
+                    b.Navigation("PatientInsurancePolicy");
 
                     b.Navigation("TreatmentPlan");
                 });
@@ -1292,7 +1575,7 @@ namespace App.DAL.EF.Migrations
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("App.Domain.Entities.Patient", "Patient")
-                        .WithMany()
+                        .WithMany("Invoices")
                         .HasForeignKey("PatientId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
@@ -1300,6 +1583,61 @@ namespace App.DAL.EF.Migrations
                     b.Navigation("CostEstimate");
 
                     b.Navigation("Patient");
+                });
+
+            modelBuilder.Entity("App.Domain.Entities.InvoiceLine", b =>
+                {
+                    b.HasOne("App.Domain.Entities.Invoice", "Invoice")
+                        .WithMany("Lines")
+                        .HasForeignKey("InvoiceId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("App.Domain.Entities.PlanItem", "PlanItem")
+                        .WithMany("InvoiceLines")
+                        .HasForeignKey("PlanItemId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("App.Domain.Entities.Treatment", "Treatment")
+                        .WithMany("InvoiceLines")
+                        .HasForeignKey("TreatmentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Invoice");
+
+                    b.Navigation("PlanItem");
+
+                    b.Navigation("Treatment");
+                });
+
+            modelBuilder.Entity("App.Domain.Entities.PatientInsurancePolicy", b =>
+                {
+                    b.HasOne("App.Domain.Entities.InsurancePlan", "InsurancePlan")
+                        .WithMany("PatientPolicies")
+                        .HasForeignKey("InsurancePlanId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("App.Domain.Entities.Patient", "Patient")
+                        .WithMany("InsurancePolicies")
+                        .HasForeignKey("PatientId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("InsurancePlan");
+
+                    b.Navigation("Patient");
+                });
+
+            modelBuilder.Entity("App.Domain.Entities.Payment", b =>
+                {
+                    b.HasOne("App.Domain.Entities.Invoice", "Invoice")
+                        .WithMany("Payments")
+                        .HasForeignKey("InvoiceId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Invoice");
                 });
 
             modelBuilder.Entity("App.Domain.Entities.PaymentPlan", b =>
@@ -1311,6 +1649,17 @@ namespace App.DAL.EF.Migrations
                         .IsRequired();
 
                     b.Navigation("Invoice");
+                });
+
+            modelBuilder.Entity("App.Domain.Entities.PaymentPlanInstallment", b =>
+                {
+                    b.HasOne("App.Domain.Entities.PaymentPlan", "PaymentPlan")
+                        .WithMany("Installments")
+                        .HasForeignKey("PaymentPlanId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("PaymentPlan");
                 });
 
             modelBuilder.Entity("App.Domain.Entities.PlanItem", b =>
@@ -1367,10 +1716,15 @@ namespace App.DAL.EF.Migrations
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("App.Domain.Entities.Patient", "Patient")
-                        .WithMany()
+                        .WithMany("Treatments")
                         .HasForeignKey("PatientId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("App.Domain.Entities.PlanItem", "PlanItem")
+                        .WithMany("Treatments")
+                        .HasForeignKey("PlanItemId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("App.Domain.Entities.TreatmentType", "TreatmentType")
                         .WithMany()
@@ -1383,6 +1737,8 @@ namespace App.DAL.EF.Migrations
                     b.Navigation("Dentist");
 
                     b.Navigation("Patient");
+
+                    b.Navigation("PlanItem");
 
                     b.Navigation("TreatmentType");
                 });
@@ -1497,18 +1853,59 @@ namespace App.DAL.EF.Migrations
                     b.Navigation("Appointments");
                 });
 
+            modelBuilder.Entity("App.Domain.Entities.InsurancePlan", b =>
+                {
+                    b.Navigation("CostEstimates");
+
+                    b.Navigation("PatientPolicies");
+                });
+
             modelBuilder.Entity("App.Domain.Entities.Invoice", b =>
                 {
+                    b.Navigation("Lines");
+
                     b.Navigation("PaymentPlan");
+
+                    b.Navigation("Payments");
                 });
 
             modelBuilder.Entity("App.Domain.Entities.Patient", b =>
                 {
                     b.Navigation("Appointments");
 
+                    b.Navigation("CostEstimates");
+
+                    b.Navigation("InsurancePolicies");
+
+                    b.Navigation("Invoices");
+
                     b.Navigation("ToothRecords");
 
                     b.Navigation("TreatmentPlans");
+
+                    b.Navigation("Treatments");
+                });
+
+            modelBuilder.Entity("App.Domain.Entities.PatientInsurancePolicy", b =>
+                {
+                    b.Navigation("CostEstimates");
+                });
+
+            modelBuilder.Entity("App.Domain.Entities.PaymentPlan", b =>
+                {
+                    b.Navigation("Installments");
+                });
+
+            modelBuilder.Entity("App.Domain.Entities.PlanItem", b =>
+                {
+                    b.Navigation("InvoiceLines");
+
+                    b.Navigation("Treatments");
+                });
+
+            modelBuilder.Entity("App.Domain.Entities.Treatment", b =>
+                {
+                    b.Navigation("InvoiceLines");
                 });
 
             modelBuilder.Entity("App.Domain.Entities.TreatmentPlan", b =>

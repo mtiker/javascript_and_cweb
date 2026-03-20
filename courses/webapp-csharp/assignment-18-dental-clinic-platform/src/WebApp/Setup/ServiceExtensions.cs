@@ -16,6 +16,10 @@ public static class ServiceExtensions
         services.AddScoped<ISubscriptionPolicyService, SubscriptionPolicyService>();
         services.AddScoped<ITenantAccessService, TenantAccessService>();
         services.AddScoped<ITreatmentPlanService, TreatmentPlanService>();
+        services.AddScoped<IFinanceWorkspaceService, FinanceWorkspaceService>();
+        services.AddScoped<ICostEstimateService, CostEstimateService>();
+        services.AddScoped<IInvoiceService, InvoiceService>();
+        services.AddScoped<IPaymentPlanService, PaymentPlanService>();
         services.AddScoped<IImpersonationService, ImpersonationService>();
         services.AddScoped<IPatientService, PatientService>();
         services.AddScoped<IAppointmentService, AppointmentService>();

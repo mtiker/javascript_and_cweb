@@ -2,268 +2,261 @@
 
 Base path: `/api/v1`
 
+## Üldreeglid
+
+- identity route'id kasutavad mustrit `/api/v1/account/{action}`
+- system route'id kasutavad mustrit `/api/v1/system/...`
+- tenant route'id kasutavad mustrit `/api/v1/{companySlug}/...`
+- tenant endpointidel peab route'is olev `companySlug` klappima aktiivse tenant-kontekstiga
+- vead tagastatakse kas `ProblemDetails` või lihtsa `Message` payloadina sõltuvalt controllerist
+
 ## Auth / Identity
 
-### POST `/api/v1/account/register`
+### Avalikud endpointid
 
-Request:
+- `POST /api/v1/account/register`
+- `POST /api/v1/account/login`
+- `POST /api/v1/account/forgotpassword`
+- `POST /api/v1/account/resetpassword`
+- `POST /api/v1/account/renewrefreshtoken`
 
-```json
-{
-  "email": "user@example.com",
-  "password": "Strong.Pass.123!"
-}
-```
+### JWT-ga kaitstud endpointid
 
-Response `200`:
+- `POST /api/v1/account/switchcompany`
+- `POST /api/v1/account/switchrole`
+- `POST /api/v1/account/logout`
 
-```json
-{
-  "jwt": "...",
-  "refreshToken": "...",
-  "expiresInSeconds": 1200,
-  "activeCompanyId": null,
-  "activeCompanySlug": null,
-  "activeCompanyRole": null
-}
-```
+## System API
 
-### POST `/api/v1/account/login`
+### Onboarding
 
-Sama request kuju nagu register.
-Tagastab JWT + refresh tokeni ja kui olemas, aktiivse company konteksti.
+Auth: `SystemAdmin`, `SystemSupport`
 
-### POST `/api/v1/account/renewrefreshtoken`
+- `POST /api/v1/system/onboarding/registercompany`
+- `GET /api/v1/system/onboarding/companies`
 
-Request:
-
-```json
-{
-  "jwt": "expired-or-near-expired-jwt",
-  "refreshToken": "refresh-token"
-}
-```
-
-### POST `/api/v1/account/logout`
-
-Auth: Bearer
-
-Request:
-
-```json
-{
-  "jwt": "current-jwt",
-  "refreshToken": "refresh-token"
-}
-```
-
-### POST `/api/v1/account/switchcompany`
-
-Auth: Bearer
-
-Request:
-
-```json
-{
-  "companySlug": "acme"
-}
-```
-
-Tagastab uue JWT, kus company claimid viitavad valitud tenantile.
-
-## System
-
-### POST `/api/v1/system/onboarding/registercompany`
-
-Auth: `SystemAdmin` või `SystemSupport`
-
-Security note: endpoint on praegu role-protected. Kui tenant provisioning peab olema ainult tsentraalne backoffice tegevus, ahenda lubatud rollid `SystemAdmin`-iks või liiguta flow invite/approval workflow taha.
-
-Request:
-
-```json
-{
-  "companyName": "Acme Dental",
-  "companySlug": "acme",
-  "ownerEmail": "owner@acme.test",
-  "ownerPassword": "Strong.Pass.123!",
-  "countryCode": "DE"
-}
-```
-
-Response `200`:
-
-```json
-{
-  "companyId": "...",
-  "ownerUserId": "...",
-  "companySlug": "acme",
-  "subscriptionTier": "Free"
-}
-```
-
-### GET `/api/v1/system/onboarding/companies`
-
-Auth: `SystemAdmin` või `SystemSupport`
-
-Tagastab ettevõtete loendi.
-
-### POST `/api/v1/system/impersonation/start`
+### Impersonation
 
 Auth: `SystemAdmin`
 
-Request:
+- `POST /api/v1/system/impersonation/start`
 
-```json
-{
-  "targetUserEmail": "user@tenant.test",
-  "companySlug": "acme",
-  "reason": "Support session for appointment troubleshooting"
-}
-```
+### Platform
 
-Response `200`:
+Auth: `SystemAdmin`
 
-```json
-{
-  "jwt": "...",
-  "refreshToken": "...",
-  "expiresInSeconds": 1200,
-  "activeCompanyId": "...",
-  "activeCompanySlug": "acme",
-  "activeCompanyRole": "CompanyEmployee",
-  "impersonatedByUserId": "...",
-  "impersonationReason": "Support session for appointment troubleshooting",
-  "targetUserId": "...",
-  "targetUserEmail": "user@tenant.test"
-}
-```
+- `GET /api/v1/system/platform/analytics`
+- `GET /api/v1/system/platform/featureflags`
+- `PUT /api/v1/system/platform/featureflags`
+- `PUT /api/v1/system/platform/companies/{companyId}/activation`
 
-JWT sisaldab lisaclaime:
+### Support
 
-- `isImpersonated=true`
-- `impersonatedByUserId`
-- `impersonationReason`
+Auth: `SystemAdmin`, `SystemSupport`
 
-## Tenant
+- `GET /api/v1/system/support/companies`
+- `GET /api/v1/system/support/companies/{companySlug}`
+- `GET /api/v1/system/support/tickets`
+- `POST /api/v1/system/support/tickets`
 
-### POST `/api/v1/{companySlug}/treatmentplans/recorditemdecision`
+### Billing
 
-Auth: `CompanyOwner|CompanyAdmin|CompanyManager`
+Auth: `SystemAdmin`, `SystemBilling`
 
-Request:
+- `GET /api/v1/system/billing/subscriptions`
+- `PUT /api/v1/system/billing/subscriptions/{subscriptionId}`
+- `GET /api/v1/system/billing/invoices`
+- `PUT /api/v1/system/billing/invoices/{invoiceId}/status`
 
-```json
-{
-  "planId": "...",
-  "planItemId": "...",
-  "decision": "Accepted",
-  "notes": "urgent accepted"
-}
-```
+## Tenant API
 
-`decision` väärtused: `Pending`, `Accepted`, `Deferred`, `Rejected` (case-insensitive).
+### Patients
 
-Response `200`:
+Auth: `CompanyOwner`, `CompanyAdmin`, `CompanyManager`, `CompanyEmployee`
 
-```json
-{
-  "planId": "...",
-  "planItemId": "...",
-  "planStatus": "PartiallyAccepted",
-  "itemDecision": "Accepted"
-}
-```
+- `GET /api/v1/{companySlug}/patients`
+- `GET /api/v1/{companySlug}/patients/{patientId}`
+- `GET /api/v1/{companySlug}/patients/{patientId}/profile`
+- `POST /api/v1/{companySlug}/patients`
+- `PUT /api/v1/{companySlug}/patients/{patientId}`
+- `DELETE /api/v1/{companySlug}/patients/{patientId}`
 
-### GET `/api/v1/{companySlug}/patients`
+### Appointments
 
-Auth: `CompanyOwner|CompanyAdmin|CompanyManager|CompanyEmployee`
+Auth: `CompanyOwner`, `CompanyAdmin`, `CompanyManager`, `CompanyEmployee`
 
-Tagastab aktiivsete (mitte soft-deleted) patsientide loendi.
+- `GET /api/v1/{companySlug}/appointments`
+- `POST /api/v1/{companySlug}/appointments`
+- `POST /api/v1/{companySlug}/appointments/{appointmentId}/clinical-record`
 
-### GET `/api/v1/{companySlug}/patients/{patientId}`
-
-Auth: `CompanyOwner|CompanyAdmin|CompanyManager|CompanyEmployee`
-
-Tagastab ühe patsiendi detaili.
-
-### POST `/api/v1/{companySlug}/patients`
-
-Auth: `CompanyOwner|CompanyAdmin|CompanyManager|CompanyEmployee`
-
-Request:
-
-```json
-{
-  "firstName": "Marta",
-  "lastName": "Kask",
-  "dateOfBirth": "1992-02-12",
-  "personalCode": "4900212XXXX",
-  "email": "marta@example.com",
-  "phone": "+3725551234"
-}
-```
-
-Response `201`:
-
-```json
-{
-  "id": "...",
-  "firstName": "Marta",
-  "lastName": "Kask",
-  "dateOfBirth": "1992-02-12",
-  "personalCode": "4900212XXXX",
-  "email": "marta@example.com",
-  "phone": "+3725551234"
-}
-```
-
-### PUT `/api/v1/{companySlug}/patients/{patientId}`
-
-Auth: `CompanyOwner|CompanyAdmin|CompanyManager|CompanyEmployee`
-
-Sama payload-kuju nagu create.
-
-### DELETE `/api/v1/{companySlug}/patients/{patientId}`
-
-Auth: `CompanyOwner|CompanyAdmin|CompanyManager|CompanyEmployee`
-
-Teostab soft delete.
-
-### GET `/api/v1/{companySlug}/appointments`
-
-Auth: `CompanyOwner|CompanyAdmin|CompanyManager|CompanyEmployee`
-
-Tagastab appointmentide loendi.
-
-### POST `/api/v1/{companySlug}/appointments`
-
-Auth: `CompanyOwner|CompanyAdmin|CompanyManager|CompanyEmployee`
-
-Request:
-
-```json
-{
-  "patientId": "...",
-  "dentistId": "...",
-  "treatmentRoomId": "...",
-  "startAtUtc": "2026-03-05T10:00:00Z",
-  "endAtUtc": "2026-03-05T10:30:00Z",
-  "notes": "Initial check"
-}
-```
-
-Valideerimine:
+`POST /appointments` valideerib vähemalt:
 
 - `startAtUtc < endAtUtc`
-- sama arsti ajavahemik ei tohi kattuda
-- sama ruumi ajavahemik ei tohi kattuda
+- sama arsti aja kattuvus
+- sama ruumi aja kattuvus
+
+### Treatment plans
+
+Read auth: `CompanyOwner`, `CompanyAdmin`, `CompanyManager`, `CompanyEmployee`
+
+Write auth: `CompanyOwner`, `CompanyAdmin`, `CompanyManager`
+
+- `GET /api/v1/{companySlug}/treatmentplans`
+- `GET /api/v1/{companySlug}/treatmentplans/{planId}`
+- `POST /api/v1/{companySlug}/treatmentplans`
+- `PUT /api/v1/{companySlug}/treatmentplans/{planId}`
+- `POST /api/v1/{companySlug}/treatmentplans/{planId}/submit`
+- `DELETE /api/v1/{companySlug}/treatmentplans/{planId}`
+- `GET /api/v1/{companySlug}/treatmentplans/openitems`
+- `POST /api/v1/{companySlug}/treatmentplans/recorditemdecision`
+
+### Finance workspace
+
+Auth: `CompanyOwner`, `CompanyAdmin`, `CompanyManager`, `CompanyEmployee`
+
+- `GET /api/v1/{companySlug}/finance/workspace/{patientId}`
+
+### Cost estimates
+
+Auth: `CompanyOwner`, `CompanyAdmin`, `CompanyManager`
+
+- `GET /api/v1/{companySlug}/costestimates`
+- `POST /api/v1/{companySlug}/costestimates`
+- `GET /api/v1/{companySlug}/costestimates/{costEstimateId}/legal`
+
+### Invoices
+
+Auth: `CompanyOwner`, `CompanyAdmin`, `CompanyManager`
+
+- `GET /api/v1/{companySlug}/invoices`
+- `GET /api/v1/{companySlug}/invoices/{invoiceId}`
+- `POST /api/v1/{companySlug}/invoices`
+- `POST /api/v1/{companySlug}/invoices/generate-from-procedures`
+- `POST /api/v1/{companySlug}/invoices/{invoiceId}/payments`
+- `PUT /api/v1/{companySlug}/invoices/{invoiceId}`
+- `DELETE /api/v1/{companySlug}/invoices/{invoiceId}`
+
+### Payment plans
+
+Auth: `CompanyOwner`, `CompanyAdmin`, `CompanyManager`
+
+- `GET /api/v1/{companySlug}/paymentplans`
+- `GET /api/v1/{companySlug}/paymentplans/{paymentPlanId}`
+- `POST /api/v1/{companySlug}/paymentplans`
+- `PUT /api/v1/{companySlug}/paymentplans/{paymentPlanId}`
+- `DELETE /api/v1/{companySlug}/paymentplans/{paymentPlanId}`
+
+### Dentists
+
+Read auth: `CompanyOwner`, `CompanyAdmin`, `CompanyManager`, `CompanyEmployee`
+
+Write auth: `CompanyOwner`, `CompanyAdmin`
+
+- `GET /api/v1/{companySlug}/dentists`
+- `POST /api/v1/{companySlug}/dentists`
+- `PUT /api/v1/{companySlug}/dentists/{dentistId}`
+- `DELETE /api/v1/{companySlug}/dentists/{dentistId}`
+
+### Treatment rooms
+
+Read auth: `CompanyOwner`, `CompanyAdmin`, `CompanyManager`, `CompanyEmployee`
+
+Write auth: `CompanyOwner`, `CompanyAdmin`
+
+- `GET /api/v1/{companySlug}/treatmentrooms`
+- `POST /api/v1/{companySlug}/treatmentrooms`
+- `PUT /api/v1/{companySlug}/treatmentrooms/{roomId}`
+- `DELETE /api/v1/{companySlug}/treatmentrooms/{roomId}`
+
+### Treatment types
+
+Read auth: `CompanyOwner`, `CompanyAdmin`, `CompanyManager`, `CompanyEmployee`
+
+Write auth: `CompanyOwner`, `CompanyAdmin`, `CompanyManager`
+
+- `GET /api/v1/{companySlug}/treatmenttypes`
+- `POST /api/v1/{companySlug}/treatmenttypes`
+- `PUT /api/v1/{companySlug}/treatmenttypes/{treatmentTypeId}`
+- `DELETE /api/v1/{companySlug}/treatmenttypes/{treatmentTypeId}`
+
+### Tooth records
+
+Auth: `CompanyOwner`, `CompanyAdmin`, `CompanyManager`, `CompanyEmployee`
+
+- `GET /api/v1/{companySlug}/toothrecords`
+- `POST /api/v1/{companySlug}/toothrecords`
+- `DELETE /api/v1/{companySlug}/toothrecords/{toothRecordId}`
+
+### X-rays
+
+Auth: `CompanyOwner`, `CompanyAdmin`, `CompanyManager`, `CompanyEmployee`
+
+- `GET /api/v1/{companySlug}/xrays`
+- `POST /api/v1/{companySlug}/xrays`
+- `DELETE /api/v1/{companySlug}/xrays/{xrayId}`
+
+### Insurance plans
+
+Read auth: `CompanyOwner`, `CompanyAdmin`, `CompanyManager`, `CompanyEmployee`
+
+Write auth: `CompanyOwner`, `CompanyAdmin`
+
+- `GET /api/v1/{companySlug}/insuranceplans`
+- `POST /api/v1/{companySlug}/insuranceplans`
+- `PUT /api/v1/{companySlug}/insuranceplans/{insurancePlanId}`
+- `DELETE /api/v1/{companySlug}/insuranceplans/{insurancePlanId}`
+
+### Patient insurance policies
+
+Auth: `CompanyOwner`, `CompanyAdmin`, `CompanyManager`
+
+- `GET /api/v1/{companySlug}/patientinsurancepolicies`
+- `GET /api/v1/{companySlug}/patientinsurancepolicies/{policyId}`
+- `POST /api/v1/{companySlug}/patientinsurancepolicies`
+- `PUT /api/v1/{companySlug}/patientinsurancepolicies/{policyId}`
+- `DELETE /api/v1/{companySlug}/patientinsurancepolicies/{policyId}`
+
+### Company users
+
+Auth: `CompanyOwner`, `CompanyAdmin`
+
+- `GET /api/v1/{companySlug}/companyusers`
+- `POST /api/v1/{companySlug}/companyusers`
+
+### Company settings
+
+Auth: `CompanyOwner`
+
+- `GET /api/v1/{companySlug}/companysettings`
+- `PUT /api/v1/{companySlug}/companysettings`
+
+### Subscription
+
+Read auth: `CompanyOwner`, `CompanyAdmin`
+
+Write auth: `CompanyOwner`
+
+- `GET /api/v1/{companySlug}/subscription`
+- `PUT /api/v1/{companySlug}/subscription`
 
 ## Error responses
 
-Vigade korral tagastatakse `ProblemDetails` (`application/problem+json`), sh:
+Kõrgema taseme teenuse- ja middleware vead tulevad üldjuhul `ProblemDetails` kujul:
 
-- `status`
-- `title`
-- `detail`
-- `traceId`
+```json
+{
+  "type": "https://httpstatuses.com/400",
+  "title": "Validation failed",
+  "status": 400,
+  "detail": "Company slug is already in use.",
+  "traceId": "00-..."
+}
+```
+
+Osad controllerid tagastavad lihtsustatud vastuse:
+
+```json
+{
+  "message": "Company not found."
+}
+```

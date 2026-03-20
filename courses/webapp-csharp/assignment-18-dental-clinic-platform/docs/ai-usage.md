@@ -53,6 +53,11 @@ AI-d kasutati:
   - Tulemus: lisati `wwwroot` põhine UI (`index.html`, `css/app.css`, `js/app.js`) onboarding/login/switch-company/patient CRUD voogudega.
   - Käsitsi muudatused: middleware täiendati `UseDefaultFiles()`-ga, et `/` avaks kohe UI.
 
+- 2026-03-20 / App.DTO oppematerjal
+  - Paluti: teha `App.DTO` kohta juhend samas stiilis nagu olemasolevad `App.Domain`, `App.DAL.EF` ja `App.BLL` materjalid.
+  - Tulemus: lisati `docs/app-dto-guide.md` ning README dokumentatsiooni loendisse viide uuele juhendile.
+  - Kasitsi muudatused: kontrolliti juhendi sisu vastu tegelikku `App.DTO` projekti struktuuri, controllerite kasutust ja valideerimismustreid.
+
 ## Promptide logi (kokkuvõte)
 
 - Master prompt: ehitada production-ready SaaS C#/.NET lahendus, järgides näidisprojekti stiili, loengumaterjale ja antud väljundstruktuuri.

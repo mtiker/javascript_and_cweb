@@ -2,15 +2,26 @@
 
 ## Testide tüübid
 
-- Unit testid
-  - `UnitTestTreatmentPlanService`
-  - `UnitTestTenantAccessService`
-  - `UnitTestAppointmentService`
-- Integration testid
-  - `IntegrationTestIdentity`
-  - `IntegrationTestOnboarding`
-  - `IntegrationTestTenantOperations`
-  - `IntegrationTestImpersonation`
+### Integration testid
+
+- `IntegrationTestIdentity`
+- `IntegrationTestOnboarding`
+- `IntegrationTestTenantOperations`
+- `IntegrationTestImpersonation`
+
+### Unit testid
+
+- `UnitTestTenantAccessService`
+- `UnitTestPatientService`
+- `UnitTestAppointmentService`
+- `UnitTestTreatmentPlanService`
+- `UnitTestFinanceServices`
+- `UnitTestTenantApiServiceControllers`
+- `UnitTestTenantApiDbControllers`
+
+## Testide maht
+
+Praeguses repos on 47 testijuhtu (`[Fact]`), mis katavad nii teenusekihi kui ka HTTP/controllerite taseme.
 
 ## Käivitamine
 
@@ -20,30 +31,29 @@ Lahenduse kaustast:
 dotnet test dental-clinic-platform.slnx
 ```
 
-## Viimane tulemus
+## Mida testid katavad
 
-- `Passed: 8`
-- `Failed: 0`
-- `Skipped: 0`
+- account register/login/forgot-password HTTP vood
+- onboarding flow ja loodud tenant-andmed
+- tenant patient CRUD integration flow
+- tenant appointment create/list flow
+- impersonation flow ja audit log kirje
+- tenant role check ja forbidden juht
+- patsiendi loomise, uuendamise, profiili ja limitite reeglid
+- appointment overlap ja clinical-record valideerimine
+- treatment plan CRUD/workflow reeglid
+- finance arvutus- ja workflow loogika
+- tenant controllerite mapping, auth guardid ja vastused
 
-## Mis on kaetud
+## Mida ei kata täielikult
 
-- treatment plan decision äriloogika
-- tenant role check (forbidden case)
-- appointment overlap valideerimine (unit)
-- account register/login flow (HTTP kaudu)
-- onboarding flow (HTTP kaudu, `SystemAdmin` authiga) + andmete püsivus
-- tenant patient CRUD flow (integration)
-- tenant appointment create/list flow (integration)
-- system admin impersonation flow + audit kirje (integration)
+- kõikide endpointide täis integration suite
+- production PostgreSQL smoke test CI-s
+- UI/browser automation
+- väliste integratsioonide laadne käitumine, sest neid selles assignmentis sisuliselt ei ole
 
-## Mis ei ole veel kaetud
+## Testimisstrateegia
 
-- refresh/logout negatiivsed servajuhud
-- kõikide dental-entiteetide CRUD vood
-- keerukad insurance/payment plan stsenaariumid
-- migration smoke test päris PostgreSQL vastu CI-s
-
-## Miks
-
-Praegune testikiht katab kriitilise vertical slice'i (auth + tenant + patient + appointment + treatment-plan decision + impersonation).
+- keerukamad ärireeglid on valdavalt unit-testitud teenusekihis
+- kriitilised otsast-lõpuni vood on integration-testitud `WebApplicationFactory` abil
+- osa lihtsamatest DbContext/controller voogudest on kaetud controlleri taseme unit-testidega

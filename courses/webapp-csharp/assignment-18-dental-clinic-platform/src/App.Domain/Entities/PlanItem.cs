@@ -16,4 +16,6 @@ public class PlanItem : TenantBaseEntity
 
     public TreatmentPlan? TreatmentPlan { get; set; }
     public TreatmentType? TreatmentType { get; set; }
+    public ICollection<Treatment> Treatments { get; set; } = new List<Treatment>();
+    public ICollection<InvoiceLine> InvoiceLines { get; set; } = new List<InvoiceLine>();
 }
