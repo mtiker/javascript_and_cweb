@@ -29,6 +29,14 @@ Browser-based task management utility built with pure JavaScript.
 1. Prefer running via a static server (for example VS Code Live Server), because the app now uses ES module entry points.
 2. Open `index.html` and confirm it loads `src/main.js`.
 
+## Verification
+
+1. Run `npm test` from this folder for the local regression checks.
+2. Run `npm run coverage` to print the built-in Node coverage report for the current tests.
+3. Open the app in a browser and verify both empty states:
+   - no tasks in storage
+   - filters/search hide existing tasks
+
 ## Usage
 
 1. Fill the form and click `Add Task` (or command `add`).
@@ -37,6 +45,7 @@ Browser-based task management utility built with pure JavaScript.
 4. Use `Delete Selected` or row `Delete`.
 5. Use command deck inputs and `filter` / `search`.
 6. Use `list` to clear filters and show all tasks.
+7. When filters or search hide all records, the table shows a filtered-empty message instead of the first-run empty state.
 
 ## Validation Rules
 

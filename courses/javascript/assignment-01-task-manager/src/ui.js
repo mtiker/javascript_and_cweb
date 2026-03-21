@@ -10,12 +10,29 @@ function emptyFilters() {
   };
 }
 
+export function resolveEmptyStateMessage({ totalTasks, visibleCount, filters, query }) {
+  if (visibleCount > 0) {
+    return "";
+  }
+
+  if (totalTasks === 0) {
+    return "No tasks yet. Add your first task above.";
+  }
+
+  if (hasAnyFilter(filters) || normalizeText(query)) {
+    return "No tasks match the current filters or search.";
+  }
+
+  return "No tasks available in the current view.";
+}
+
 export class TaskManagerUI {
   constructor(service, doc = document) {
     this.service = service;
     this.doc = doc;
     this.state = {
       busy: false,
+      totalTaskCount: 0,
       selectedTaskId: null,
       visibleTasks: [],
       filters: emptyFilters(),
@@ -220,6 +237,7 @@ export class TaskManagerUI {
 
   async refreshView() {
     let tasks = await this.service.listTasks();
+    const totalTaskCount = tasks.length;
 
     if (hasAnyFilter(this.state.filters)) {
       tasks = await this.service.filterTasks(this.state.filters, tasks);
@@ -229,6 +247,7 @@ export class TaskManagerUI {
       tasks = await this.service.searchTasks(this.state.query, tasks);
     }
 
+    this.state.totalTaskCount = totalTaskCount;
     this.state.visibleTasks = tasks;
     this.renderTasks(tasks);
   }
@@ -294,6 +313,13 @@ export class TaskManagerUI {
 
   renderTasks(tasks) {
     this.elements.tableBody.textContent = "";
+    const emptyMessage = resolveEmptyStateMessage({
+      totalTasks: this.state.totalTaskCount,
+      visibleCount: tasks.length,
+      filters: this.state.filters,
+      query: this.state.query
+    });
+    this.elements.emptyState.textContent = emptyMessage;
     this.elements.emptyState.style.display = tasks.length > 0 ? "none" : "block";
 
     tasks.forEach((task) => {

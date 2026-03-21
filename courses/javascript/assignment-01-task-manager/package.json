@@ -1,0 +1,10 @@
+{
+  "name": "assignment-01-task-manager",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test --test-isolation=none tests/*.test.mjs",
+    "coverage": "node --test --test-isolation=none --experimental-test-coverage tests/*.test.mjs"
+  }
+}
