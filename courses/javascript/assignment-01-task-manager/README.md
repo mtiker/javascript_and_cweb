@@ -2,6 +2,8 @@
 
 Browser-based task management utility built with pure JavaScript.
 
+Deployment for the VPS/docker part of this app is documented in `../assignment-03-ci-cd-1/README.md`. The current production plan exposes this app on VPS host port `81`.
+
 ## Assignment Coverage
 
 - No framework, pure HTML/CSS/JS

@@ -19,6 +19,12 @@ This keeps unrelated assignments from building when only one assignment changes.
   docs/
     ci-cd.md
   courses/
+    javascript/
+      assignment-03-ci-cd-1/
+        .gitlab-ci.yml
+        docker-compose.prod.yml
+        dockerfiles/
+        scripts/deploy.sh
     webapp-csharp/
       assignment-18-dental-clinic-platform/
         .gitlab-ci.yml
@@ -62,6 +68,38 @@ Current repository setup uses a single runner tag:
 
 If you later split responsibilities across multiple runners, you can move back to specialized tags such as separate build, Docker, and deploy runners.
 
+## JavaScript Assignment 03 Deployment Model
+
+`courses/javascript/assignment-03-ci-cd-1` is the deployable delivery layer for the first two JavaScript assignments:
+
+- `docker-compose.prod.yml` starts two nginx containers on the VPS
+- Assignment 01 is exposed on host port `81`
+- Assignment 02 is exposed on host port `82`
+- each image is built from its source assignment folder with an assignment-specific Dockerfile
+- `scripts/deploy.sh` is the deployment entrypoint used by the GitLab deploy job
+
+The assignment pipeline runs:
+
+- Assignment 01 regression tests in a `node:20-alpine` container
+- Assignment 02 `npm ci`, strict TypeScript validation, and regression tests in a `node:20-alpine` container
+- Docker Compose image build validation
+- deployment on the default branch or tags only
+
+## JavaScript Assignment 03 Variables
+
+For JavaScript Assignment 03 deployment, these values can be configured as GitLab CI/CD variables or on the VPS runner host:
+
+- `JAVASCRIPT_A01_PORT` to override the default host port `81`
+- `JAVASCRIPT_A02_PORT` to override the default host port `82`
+- `JAVASCRIPT_A01_IMAGE` to override the Assignment 01 image name
+- `JAVASCRIPT_A02_IMAGE` to override the Assignment 02 image name
+- `COMPOSE_PROJECT_NAME` to override the default Docker Compose project name `javascript-assignment-03`
+
+The JavaScript Assignment 03 proxy mappings are:
+
+- `https://mtiker-js-js.proxy.itcollege.ee` => `http://192.168.181.122:81`
+- `https://mtiker-js-ts.proxy.itcollege.ee` => `http://192.168.181.122:82`
+
 ## Assignment 18 Deployment Model
 
 `courses/webapp-csharp/assignment-18-dental-clinic-platform` is treated as a self-contained deployable app:
@@ -99,6 +137,10 @@ At minimum, `JWT__Key` must be set. `CORS_ALLOWED_ORIGIN` now defaults to `https
 
 The intended behavior is:
 
+- a change only under `assignment-01`, `assignment-02`, or JavaScript `assignment-03` triggers only the JavaScript Assignment 03 pipeline
+- JavaScript Assignment 01 is served successfully on host port `81`
+- JavaScript Assignment 02 is served successfully on host port `82`
+- the JavaScript deploy script smoke-checks both local host ports after container startup
 - a change only under `assignment-18` triggers only the Assignment 18 pipeline
 - a change only in root documentation does not trigger Assignment 18 build/test/deploy jobs
 - a Docker or deployment-script change triggers the Docker build job

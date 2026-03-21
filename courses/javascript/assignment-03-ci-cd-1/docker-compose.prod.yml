@@ -1,0 +1,28 @@
+services:
+  assignment01:
+    image: ${JAVASCRIPT_A01_IMAGE:-javascript-assignment-01-task-manager:local}
+    build:
+      context: ../assignment-01-task-manager
+      dockerfile: ../assignment-03-ci-cd-1/dockerfiles/assignment-01.Dockerfile
+    restart: unless-stopped
+    ports:
+      - "${JAVASCRIPT_A01_PORT:-81}:80"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+
+  assignment02:
+    image: ${JAVASCRIPT_A02_IMAGE:-javascript-assignment-02-ts-task-manager:local}
+    build:
+      context: ../assignment-02-ts-task-manager
+      dockerfile: ../assignment-03-ci-cd-1/dockerfiles/assignment-02.Dockerfile
+    restart: unless-stopped
+    ports:
+      - "${JAVASCRIPT_A02_PORT:-82}:80"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 6

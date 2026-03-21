@@ -2,6 +2,8 @@
 
 TypeScript migration of Assignment 1 with strict typing and new features.
 
+Deployment for the VPS/docker part of this app is documented in `../assignment-03-ci-cd-1/README.md`. The current production plan exposes this app on VPS host port `82`.
+
 ## Objective Coverage
 
 - Full TypeScript conversion with `strict` mode

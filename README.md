@@ -1,11 +1,24 @@
 # School Monorepo
 
+Martin Tikerpäe  
+UNI-ID: `mtiker`  
+Code: `232786IADB`
+
 ## Structure
 
 - `courses/javascript`: JavaScript subject assignments
+- `courses/javascript/assignment-03-ci-cd-1`: Docker + GitLab CI/CD deployment for JavaScript assignments 01 and 02
 - `courses/webapp-csharp`: Web App in C# subject assignments
 - `shared`: reusable code/assets moved here when both subjects need them
 - `docs`: prompts, checklists, and submission notes
+
+## Public Deployments
+
+- JavaScript Assignment 01 public URL: `https://mtiker-js-js.proxy.itcollege.ee`
+- JavaScript Assignment 01 proxy target: `http://192.168.181.122:81`
+- JavaScript Assignment 02 public URL: `https://mtiker-js-ts.proxy.itcollege.ee`
+- JavaScript Assignment 02 proxy target: `http://192.168.181.122:82`
+- Web App C# Assignment 18 public URL: `https://mtiker-cweb-a3.proxy.itcollege.ee`
 
 ## Naming Rules
 
@@ -28,6 +41,7 @@
 - Assignment-specific CI files live inside the assignment they belong to.
 - Docker-related files should stay beside the deployable assignment, not in the monorepo root unless they are truly shared.
 - Runner host configuration stays outside version control; document runner tags and deployment expectations in `docs/ci-cd.md`.
+- JavaScript Assignment 03 deploys Assignment 01 on host port `81` and Assignment 02 on host port `82`.
 
 Examples:
 - `feat(javascript/a01): add task CRUD`

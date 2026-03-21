@@ -18,4 +18,5 @@ variables:
   ASSIGNMENT_18_PATH: courses/webapp-csharp/assignment-18-dental-clinic-platform
 
 include:
+  - local: "courses/javascript/assignment-03-ci-cd-1/.gitlab-ci.yml"
   - local: "courses/webapp-csharp/assignment-18-dental-clinic-platform/.gitlab-ci.yml"

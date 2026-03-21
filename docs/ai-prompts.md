@@ -17,6 +17,26 @@ Record AI-assisted development evidence here.
 ## Entries
 
 - Date: 2026-03-21
+- Subject: javascript
+- Assignment: assignment-03-ci-cd-1
+- Prompt: Replace the JavaScript deployment placeholders with the real proxy hostnames and internal VPS targets for ports 81 and 82.
+- Files affected: `README.md`, `docs/ci-cd.md`, `docs/ai-prompts.md`, `courses/javascript/assignment-03-ci-cd-1/README.md`
+- AI output used: Updated the repository and assignment deployment documentation to the concrete proxy URLs `mtiker-js-js.proxy.itcollege.ee` and `mtiker-js-ts.proxy.itcollege.ee` with VPS target `192.168.181.122` on ports `81` and `82`.
+- What AI got wrong / needed correction: No major correction was needed once the real proxy mappings were provided.
+- Changes made manually: Confirmed the mappings supplied by the user and applied them consistently in both the root and assignment-level deployment docs.
+- Alternatives considered: Leaving placeholders in place until after a manual browser check, but the provided mappings were specific enough to document directly.
+
+- Date: 2026-03-21
+- Subject: javascript
+- Assignment: assignment-03-ci-cd-1
+- Prompt: Build the JavaScript CI/CD assignment so the first pure JS app and the TypeScript app deploy to the VPS as Dockerized nginx containers, with Assignment 01 on host port 81 and Assignment 02 on host port 82, and keep the monorepo documentation in sync.
+- Files affected: `.gitlab-ci.yml`, `README.md`, `docs/ci-cd.md`, `docs/ai-prompts.md`, `courses/javascript/assignment-01-task-manager/.dockerignore`, `courses/javascript/assignment-01-task-manager/README.md`, `courses/javascript/assignment-02-ts-task-manager/.dockerignore`, `courses/javascript/assignment-02-ts-task-manager/README.md`, `courses/javascript/assignment-03-ci-cd-1/.gitlab-ci.yml`, `courses/javascript/assignment-03-ci-cd-1/docker-compose.prod.yml`, `courses/javascript/assignment-03-ci-cd-1/dockerfiles/assignment-01.Dockerfile`, `courses/javascript/assignment-03-ci-cd-1/dockerfiles/assignment-02.Dockerfile`, `courses/javascript/assignment-03-ci-cd-1/scripts/deploy.sh`, `courses/javascript/assignment-03-ci-cd-1/README.md`
+- AI output used: Added a dedicated JavaScript deployment assignment, root pipeline include, two Dockerized nginx services, runner-based CI jobs, deployment smoke checks, and synchronized deployment documentation for the repo and both source assignments.
+- What AI got wrong / needed correction: The first Dockerfile draft tried to copy a shared nginx config from outside the Docker build context, which is invalid, so the nginx config was moved into the image build steps instead.
+- Changes made manually: Confirmed the repository already had no reliable JavaScript proxy hostname recorded, so the docs keep explicit placeholder public URLs while documenting the verified internal port targets `81` and `82`.
+- Alternatives considered: Serving both apps from one nginx container and path prefixes, but separate services on ports `81` and `82` match the planned VPS layout more directly and are easier to explain in defense.
+
+- Date: 2026-03-21
 - Subject: repository-rules
 - Assignment: n/a
 - Prompt: Add the repository owner's identity block to the top of the root README and extend `AGENTS.md` so deployed assignments must show their live URL at the beginning of the assignment README when reachable from a third device.
