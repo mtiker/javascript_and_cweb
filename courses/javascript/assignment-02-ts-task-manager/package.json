@@ -6,7 +6,9 @@
   "scripts": {
     "build": "tsc --project tsconfig.json",
     "watch": "tsc --project tsconfig.json --watch",
-    "check": "tsc --noEmit --project tsconfig.json"
+    "check": "tsc --noEmit --project tsconfig.json",
+    "test": "npm run build && node --test --test-isolation=none tests/*.test.mjs",
+    "coverage": "npm run build && node --test --test-isolation=none --experimental-test-coverage tests/*.test.mjs"
   },
   "devDependencies": {
     "typescript": "^5.7.3"

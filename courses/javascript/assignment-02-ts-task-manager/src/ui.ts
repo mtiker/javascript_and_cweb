@@ -454,7 +454,7 @@ export class TaskManagerUI {
     this.elements.emptyState.style.display = tasks.length > 0 ? "none" : "block";
 
     for (const task of tasks) {
-      const fragment = this.elements.rowTemplate.content.cloneNode(true);
+      const fragment = this.elements.rowTemplate.content.cloneNode(true) as DocumentFragment;
       const row = fragment.querySelector("tr") as HTMLTableRowElement | null;
       if (!row) {
         continue;

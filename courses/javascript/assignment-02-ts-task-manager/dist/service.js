@@ -73,7 +73,7 @@ export class TaskService {
         this.assertNoDependencyCycles(tasks);
         if (before.status !== "done" && after.status === "done") {
             const nextTask = this.buildNextRecurringTask(after);
-            if (nextTask) {
+            if (nextTask && !this.hasEquivalentTask(tasks, nextTask)) {
                 tasks.push(nextTask);
             }
         }
@@ -176,6 +176,28 @@ export class TaskService {
             createdAt: now,
             updatedAt: now
         };
+    }
+    hasEquivalentTask(tasks, candidate) {
+        return tasks.some((task) => {
+            return (task.id !== candidate.id &&
+                task.title === candidate.title &&
+                task.description === candidate.description &&
+                task.status === candidate.status &&
+                task.priority === candidate.priority &&
+                task.category === candidate.category &&
+                task.dueDate === candidate.dueDate &&
+                this.sameValues(task.tags, candidate.tags) &&
+                this.sameValues(task.dependencies, candidate.dependencies) &&
+                task.recurrence.frequency === candidate.recurrence.frequency &&
+                task.recurrence.interval === candidate.recurrence.interval &&
+                task.recurrence.endDate === candidate.recurrence.endDate);
+        });
+    }
+    sameValues(left, right) {
+        if (left.length !== right.length) {
+            return false;
+        }
+        return left.every((value, index) => value === right[index]);
     }
     ensureDependenciesExist(tasks, dependencyIds, selfId = null) {
         const ids = new Set(tasks.map((task) => task.id));

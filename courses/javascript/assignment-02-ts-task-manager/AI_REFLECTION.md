@@ -13,18 +13,19 @@ Assignment: 02 (TypeScript Migration + Enhancement)
 
 ## What Did Not Work Well
 
-- Environment did not have `tsc` available, so compile-time verification was not executable here.
+- PowerShell execution policy can block `npm`, so Windows verification may need `npm.cmd`.
 - Browser module setup requires `dist/` build output; opening without compile step can look broken.
-- Strict mode with `noUncheckedIndexedAccess` adds extra friction unless null/undefined handling is done carefully.
+- Strict mode with `noUncheckedIndexedAccess` and DOM template typing required extra cleanup before `tsc` could pass.
 
 ## What Was Adjusted
 
 - Added explicit build instructions and strict `tsconfig.json`.
 - Added defensive parsing for storage and stronger validation boundaries.
 - Kept runtime errors visible in UI status line and technical details in console.
+- Added automated regression tests and coverage scripts for recurrence, dependency-cycle protection, and date calculation.
 
 ## Next Iteration Improvements
 
-- Add unit tests for dependency cycle detection and recurrence generation.
-- Add CI step to run `tsc --noEmit` automatically.
+- Add CI step to run `npm run check`, `npm test`, and coverage automatically.
 - Add export/import JSON backup feature for task data portability.
+- Add browser-level interaction tests once the course moves to a fuller frontend toolchain.

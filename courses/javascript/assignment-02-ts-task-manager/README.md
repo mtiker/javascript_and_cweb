@@ -24,10 +24,13 @@ TypeScript migration of Assignment 1 with strict typing and new features.
 ## Build and Run
 
 1. Open this folder in terminal.
-2. If TypeScript tooling is available, install dependencies and rebuild `dist/` with `npm install` and `npx tsc`.
-3. Serve this folder with a static server (for example VS Code Live Server).
-4. Open `index.html` and confirm `dist/main.js` is loaded.
-5. Treat `src/` as the source of truth and `dist/` as committed browser output.
+2. Install dependencies with `npm install`.
+3. Run `npm run check` to validate the strict TypeScript source.
+4. Run `npm run build` to rebuild `dist/`.
+5. Run `npm test` for regression checks or `npm run coverage` for the built-in Node coverage report.
+6. Serve this folder with a static server (for example VS Code Live Server).
+7. Open `index.html` and confirm `dist/main.js` is loaded.
+8. Treat `src/` as the source of truth and `dist/` as committed browser output.
 
 ## Command Coverage
 
@@ -49,12 +52,25 @@ TypeScript migration of Assignment 1 with strict typing and new features.
 - Recurrence:
   - when a recurring task is completed, next task is generated automatically
   - supports frequency + interval + optional recurrence end date
+  - repeated edits on the same completed task do not create duplicate next occurrences
 - Statistics:
   - total
   - completed
   - blocked
   - overdue
   - completion rate
+
+## Verification Focus
+
+- `npm run check`
+- `npm run build`
+- `npm test`
+- `npm run coverage`
+- Manual browser smoke test for:
+  - recurrence generation
+  - dependency blocking
+  - search/filter/sort combinations
+  - statistics updates
 
 ## Security Notes
 

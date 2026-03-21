@@ -1,5 +1,11 @@
 function parseIsoDate(value) {
-    const [year, month, day] = value.split("-").map(Number);
+    const [yearText = "", monthText = "", dayText = ""] = value.split("-");
+    const year = Number.parseInt(yearText, 10);
+    const month = Number.parseInt(monthText, 10);
+    const day = Number.parseInt(dayText, 10);
+    if ([year, month, day].some((part) => Number.isNaN(part))) {
+        throw new Error(`Invalid ISO date: ${value}`);
+    }
     return { year, month, day };
 }
 function formatUtcDate(date) {
@@ -30,7 +36,7 @@ export function isValidDateOnly(value) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
         return false;
     }
-    const [year, month, day] = value.split("-").map(Number);
+    const { year, month, day } = parseIsoDate(value);
     const date = new Date(Date.UTC(year, month - 1, day));
     return (date.getUTCFullYear() === year &&
         date.getUTCMonth() === month - 1 &&

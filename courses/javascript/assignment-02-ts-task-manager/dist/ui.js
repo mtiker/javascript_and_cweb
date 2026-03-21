@@ -31,9 +31,9 @@ function recurrenceText(task) {
 }
 export class TaskManagerUI {
     constructor(service, doc = document) {
+        this.searchTimer = null;
         this.service = service;
         this.doc = doc;
-        this.searchTimer = null;
         this.elements = this.collectElements();
         this.state = {
             busy: false,

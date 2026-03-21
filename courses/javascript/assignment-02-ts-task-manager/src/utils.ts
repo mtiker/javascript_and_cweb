@@ -1,7 +1,15 @@
 import { RecurrenceRule } from "./types.js";
 
 function parseIsoDate(value: string): { year: number; month: number; day: number } {
-  const [year, month, day] = value.split("-").map(Number);
+  const [yearText = "", monthText = "", dayText = ""] = value.split("-");
+  const year = Number.parseInt(yearText, 10);
+  const month = Number.parseInt(monthText, 10);
+  const day = Number.parseInt(dayText, 10);
+
+  if ([year, month, day].some((part) => Number.isNaN(part))) {
+    throw new Error(`Invalid ISO date: ${value}`);
+  }
+
   return { year, month, day };
 }
 
@@ -43,7 +51,7 @@ export function isValidDateOnly(value: string): boolean {
     return false;
   }
 
-  const [year, month, day] = value.split("-").map(Number);
+  const { year, month, day } = parseIsoDate(value);
   const date = new Date(Date.UTC(year, month - 1, day));
 
   return (
