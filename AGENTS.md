@@ -33,6 +33,7 @@ Use Conventional Commits with subject/assignment scope:
 
 - Keep root `README.md` as repository map and workflow rules.
 - Keep per-assignment `README.md` inside each assignment folder.
+- If an assignment is deployed and reachable from a third device/network, place its live URL at the beginning of that assignment `README.md`.
 - Log meaningful AI assistance in `docs/ai-prompts.md`.
 - Each AI log entry should include, where relevant:
   - date
@@ -59,6 +60,7 @@ Documentation must be:
 When implementing or changing features, keep in sync where relevant:
 - root `README.md`
 - assignment-level `README.md`
+- deployed assignment URL at the start of the assignment `README.md` when public third-device access exists
 - setup steps
 - run/test instructions
 - architectural notes
