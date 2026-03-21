@@ -1,5 +1,7 @@
 ﻿# Dental Clinic Platform (SaaS) - Assignment 18
 
+Public URL: `https://mtiker-cweb-a3.proxy.itcollege.ee`
+
 ## Projekti eesmärk
 
 See lahendus on multi-tenant SaaS platvorm hambakliinikutele. Iga kliinik töötab samas rakenduses, kuid omaette tenant-kontekstis, kus hallatakse patsiente, raviplaane, visiite, ressursse, kindlustust ja arveldust.
@@ -271,6 +273,7 @@ Detailsem ülevaade: [docs/testing.md](docs/testing.md)
 - `App.DAL.EF` õppematerjal: [docs/app-dal-ef-guide.md](docs/app-dal-ef-guide.md)
 - `App.BLL` õppematerjal: [docs/app-bll-study-guide.md](docs/app-bll-study-guide.md)
 - `App.DTO` õppematerjal: [docs/app-dto-guide.md](docs/app-dto-guide.md)
+- Docker/deploy õppematerjal: [docs/docker-deploy-study-guide.md](docs/docker-deploy-study-guide.md)
 - AI kasutuse logi: [docs/ai-usage.md](docs/ai-usage.md)
 - monorepo CI/CD juhend: [../../../docs/ci-cd.md](../../../docs/ci-cd.md)
 

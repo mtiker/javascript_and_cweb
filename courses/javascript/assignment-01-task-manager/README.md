@@ -1,5 +1,7 @@
 # JavaScript Assignment 01 - Task Manager
 
+Public URL: `https://mtiker-js-js.proxy.itcollege.ee`
+
 Browser-based task management utility built with pure JavaScript.
 
 Deployment for the VPS/docker part of this app is documented in `../assignment-03-ci-cd-1/README.md`. The current production plan exposes this app on VPS host port `81`.

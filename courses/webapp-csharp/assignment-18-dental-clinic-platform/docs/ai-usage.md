@@ -13,6 +13,11 @@ AI-d kasutati:
 
 ## Töövoo logi (kronoloogiline)
 
+- 2026-03-21 / Docker-deploy oppematerjal
+  - Paluti: teha Assignment 18 kohta kaitsmiseks pohjalik Docker/deploy study guide, mis seletab lahti projekti tegelikud failid ja vajadusel ka rea-realt.
+  - Tulemus: lisati `docs/docker-deploy-study-guide.md`, mis katab `Dockerfile`, `.dockerignore`, `docker-compose.yml`, `docker-compose.prod.yml`, `scripts/deploy.sh` ja `.gitlab-ci.yml` rollid, deploy voo ning kaitsmise kiirvastused.
+  - Kasitsi muudatused: juhend seoti olemasoleva assignmenti README dokumentatsiooni loendiga ning README algusesse lisati avalik production URL.
+
 - 2026-03-21 / deployment readiness review
   - Paluti: kontrollida assignmenti deploy-valmidus üle loengumaterjali põhjal ning parandada puuduvad Docker/production detailid.
   - Tulemus: lisati `.dockerignore`, ASP.NET Core `/health` endpoint, deployment smoke test, production CORS muutuja nõue ja täiendatud deploy script `--remove-orphans` + stabiilse compose project name toega.

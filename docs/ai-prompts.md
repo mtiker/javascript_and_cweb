@@ -18,6 +18,26 @@ Record AI-assisted development evidence here.
 
 - Date: 2026-03-21
 - Subject: javascript
+- Assignment: assignment-01-task-manager, assignment-02-ts-task-manager
+- Prompt: Make the deployed JavaScript assignment READMEs comply with the repository rule by placing each app's live public URL at the beginning of the assignment README.
+- Files affected: `courses/javascript/assignment-01-task-manager/README.md`, `courses/javascript/assignment-02-ts-task-manager/README.md`, `docs/ai-prompts.md`
+- AI output used: Added the concrete live URLs for the deployed Assignment 01 and Assignment 02 apps to the top of their assignment READMEs.
+- What AI got wrong / needed correction: The earlier deployment documentation only linked the apps to Assignment 03 and did not place the actual live URL at the start of each deployed assignment README.
+- Changes made manually: Reused the already confirmed proxy URLs `mtiker-js-js.proxy.itcollege.ee` and `mtiker-js-ts.proxy.itcollege.ee` so the assignment docs stay consistent with the deployment mapping.
+- Alternatives considered: Keeping the live URLs only in the deployment assignment README, but the repository rule explicitly requires them in each deployed assignment README.
+
+- Date: 2026-03-21
+- Subject: webapp-csharp
+- Assignment: assignment-18-dental-clinic-platform
+- Prompt: Create a defense-focused study guide for Assignment 18 Docker, Docker Compose, CI/CD, and deployment files, explaining the real project setup thoroughly and line by line where helpful.
+- Files affected: `courses/webapp-csharp/assignment-18-dental-clinic-platform/docs/docker-deploy-study-guide.md`, `courses/webapp-csharp/assignment-18-dental-clinic-platform/README.md`, `docs/ai-prompts.md`, `courses/webapp-csharp/assignment-18-dental-clinic-platform/docs/ai-usage.md`
+- AI output used: Added a project-specific Docker/deploy study guide covering the end-to-end deployment flow, line-by-line explanations for `Dockerfile`, Compose files, deploy script, `.dockerignore`, and the assignment CI pipeline, plus README linking.
+- What AI got wrong / needed correction: The first outline risked staying too generic, so the final material was anchored tightly to the exact Assignment 18 files, environment variables, and GitLab job flow.
+- Changes made manually: Reviewed the generated explanations against the current Docker, Compose, and CI files and added the live deployment URL to the assignment README for repository-rule compliance.
+- Alternatives considered: Explaining Docker and deploy only inside the README, but a dedicated study guide is easier to rehearse from and keeps the assignment overview README shorter.
+
+- Date: 2026-03-21
+- Subject: javascript
 - Assignment: assignment-03-ci-cd-1
 - Prompt: Replace the JavaScript deployment placeholders with the real proxy hostnames and internal VPS targets for ports 81 and 82.
 - Files affected: `README.md`, `docs/ci-cd.md`, `docs/ai-prompts.md`, `courses/javascript/assignment-03-ci-cd-1/README.md`
