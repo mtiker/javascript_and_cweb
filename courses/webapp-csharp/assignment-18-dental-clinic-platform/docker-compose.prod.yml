@@ -1,0 +1,45 @@
+services:
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-dental_saas}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    volumes:
+      - dental-clinic-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-dental_saas}"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+
+  web:
+    image: ${DENTAL_CLINIC_IMAGE:-dental-clinic-platform:local}
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      Cors__AllowedOrigins__0: ${CORS_ALLOWED_ORIGIN:-https://mtiker-cweb-a3.proxy.itcollege.ee}
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=${POSTGRES_DB:-dental_saas};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-postgres}
+      JWT__Key: ${JWT__Key:?JWT__Key must be set}
+      JWT__Issuer: ${JWT__Issuer:-DentalClinicSaaS}
+      JWT__Audience: ${JWT__Audience:-DentalClinicSaaS}
+      JWT__ExpiresInSeconds: ${JWT__ExpiresInSeconds:-1200}
+      JWT__RefreshTokenExpiresInSeconds: ${JWT__RefreshTokenExpiresInSeconds:-604800}
+      DataInitialization__MigrateDatabase: ${DATA_INIT_MIGRATE_DATABASE:-true}
+      DataInitialization__SeedIdentity: ${DATA_INIT_SEED_IDENTITY:-true}
+      DataInitialization__SeedData: ${DATA_INIT_SEED_DATA:-true}
+      Diagnostics__EnableDetailedErrors: "false"
+      Diagnostics__EnableSensitiveDataLogging: "false"
+    ports:
+      - "${WEBAPP_PORT:-8080}:8080"
+
+volumes:
+  dental-clinic-postgres-data:

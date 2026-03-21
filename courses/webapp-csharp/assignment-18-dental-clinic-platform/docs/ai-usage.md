@@ -13,6 +13,16 @@ AI-d kasutati:
 
 ## Töövoo logi (kronoloogiline)
 
+- 2026-03-21 / deployment readiness review
+  - Paluti: kontrollida assignmenti deploy-valmidus üle loengumaterjali põhjal ning parandada puuduvad Docker/production detailid.
+  - Tulemus: lisati `.dockerignore`, ASP.NET Core `/health` endpoint, deployment smoke test, production CORS muutuja nõue ja täiendatud deploy script `--remove-orphans` + stabiilse compose project name toega.
+  - Käsitsi muudatused: kontrolliti, et production CORS nõue oleks dokumentatsioonis, compose failis ja deploy skriptis ühtemoodi kirjas.
+
+- 2026-03-21 / production proxy CORS default
+  - Paluti: panna production CORS vaikimisi väärtuseks päris proxy host `mtiker-cweb-a3.proxy.itcollege.ee`.
+  - Tulemus: `docker-compose.prod.yml` kasutab nüüd vaikimisi `https://mtiker-cweb-a3.proxy.itcollege.ee`, deploy skript ei nõua enam eraldi CORS muutujat ning README/CI-CD docs viitavad samale aadressile.
+  - Käsitsi muudatused: säilitati võimalus `CORS_ALLOWED_ORIGIN` vajadusel keskkonnamuutujaga override'ida.
+
 - 2026-03-04 / FAAS 1
   - Paluti: analüüs + arhitektuur + andmemudel + endpoint disain.
   - Tulemus: nõuete kaart, küsimused/eeldused, architecture/data/api plaan.

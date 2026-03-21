@@ -1,0 +1,9 @@
+**/bin
+**/obj
+**/out
+**/.vscode
+**/.vs
+.dotnet
+.dotnet-cli
+.git
+*.log

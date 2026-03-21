@@ -8,6 +8,7 @@
 - `IntegrationTestOnboarding`
 - `IntegrationTestTenantOperations`
 - `IntegrationTestImpersonation`
+- `IntegrationTestDeployment`
 
 ### Unit testid
 
@@ -21,7 +22,7 @@
 
 ## Testide maht
 
-Praeguses repos on 47 testijuhtu (`[Fact]`), mis katavad nii teenusekihi kui ka HTTP/controllerite taseme.
+Praeguses repos on 61 testijuhtu (`[Fact]`), mis katavad nii teenusekihi kui ka HTTP/controllerite taseme.
 
 ## Käivitamine
 
@@ -34,6 +35,7 @@ dotnet test dental-clinic-platform.slnx
 ## Mida testid katavad
 
 - account register/login/forgot-password HTTP vood
+- `/health` deployment smoke endpoint
 - onboarding flow ja loodud tenant-andmed
 - tenant patient CRUD integration flow
 - tenant appointment create/list flow

@@ -8,17 +8,73 @@ Record AI-assisted development evidence here.
 - Subject:
 - Assignment:
 - Prompt:
+- Files affected:
 - AI output used:
+- What AI got wrong / needed correction:
 - Changes made manually:
+- Alternatives considered:
 
 ## Entries
+
+- Date: 2026-03-21
+- Subject: webapp-csharp
+- Assignment: assignment-18-dental-clinic-platform
+- Prompt: Review the Assignment 18 deployment readiness against the lecture expectations, fix concrete Docker and production configuration gaps, add a deploy smoke-check endpoint, and synchronize tests and documentation.
+- Files affected: `courses/webapp-csharp/assignment-18-dental-clinic-platform/.dockerignore`, `courses/webapp-csharp/assignment-18-dental-clinic-platform/src/WebApp/Program.cs`, `courses/webapp-csharp/assignment-18-dental-clinic-platform/src/WebApp/Setup/MiddlewareExtensions.cs`, `courses/webapp-csharp/assignment-18-dental-clinic-platform/tests/WebApp.Tests/Integration/IntegrationTestDeployment.cs`, `courses/webapp-csharp/assignment-18-dental-clinic-platform/docker-compose.prod.yml`, `courses/webapp-csharp/assignment-18-dental-clinic-platform/scripts/deploy.sh`, `courses/webapp-csharp/assignment-18-dental-clinic-platform/README.md`, `courses/webapp-csharp/assignment-18-dental-clinic-platform/docs/testing.md`, `docs/ci-cd.md`, `docs/ai-prompts.md`, `courses/webapp-csharp/assignment-18-dental-clinic-platform/docs/ai-usage.md`
+- AI output used: Identified missing production CORS wiring, missing Docker build-context filtering, and the lack of a health endpoint; added the endpoint, deployment guards, regression test, and synchronized deployment documentation.
+- What AI got wrong / needed correction: The first pass could have treated the existing Docker files as “good enough,” but a deeper review showed production would still fail without `Cors:AllowedOrigins`, so the deployment docs and compose file were tightened together.
+- Changes made manually: Reviewed the current CI layout, existing middleware behavior, and README claims so the fixes match the real monorepo setup and production startup path.
+- Alternatives considered: Leaving health verification to ad hoc Swagger/manual browser checks, but a dedicated `/health` endpoint is easier to automate, defend, and re-check after deployment.
+
+- Date: 2026-03-21
+- Subject: webapp-csharp
+- Assignment: assignment-18-dental-clinic-platform
+- Prompt: Set the production CORS default to the real proxy host `mtiker-cweb-a3.proxy.itcollege.ee` and align deployment documentation with that concrete URL.
+- Files affected: `courses/webapp-csharp/assignment-18-dental-clinic-platform/docker-compose.prod.yml`, `courses/webapp-csharp/assignment-18-dental-clinic-platform/scripts/deploy.sh`, `courses/webapp-csharp/assignment-18-dental-clinic-platform/README.md`, `docs/ci-cd.md`, `docs/ai-prompts.md`, `courses/webapp-csharp/assignment-18-dental-clinic-platform/docs/ai-usage.md`
+- AI output used: Replaced the strict required CORS env with a default proxy origin and synchronized the deploy docs to the actual production hostname.
+- What AI got wrong / needed correction: The earlier hard requirement for `CORS_ALLOWED_ORIGIN` was safe but unnecessarily strict once the real proxy hostname was known, so it was relaxed to a concrete default.
+- Changes made manually: Confirmed the exact proxy host provided by the user and kept the environment variable override path intact for future changes.
+- Alternatives considered: Keeping the value mandatory in CI/CD variables, but a correct default reduces deployment friction while still allowing overrides.
+
+- Date: 2026-03-21
+- Subject: webapp-csharp
+- Assignment: assignment-18-dental-clinic-platform
+- Prompt: Implement monorepo CI/CD and Docker layout so the root GitLab file only orchestrates assignment pipelines, Assignment 18 keeps its own Docker and pipeline files, deployment expectations are documented, and runner host config stays outside the repo.
+- Files affected: `.gitlab-ci.yml`, `docs/ci-cd.md`, `README.md`, `courses/webapp-csharp/assignment-18-dental-clinic-platform/.gitlab-ci.yml`, `courses/webapp-csharp/assignment-18-dental-clinic-platform/Dockerfile`, `courses/webapp-csharp/assignment-18-dental-clinic-platform/docker-compose.prod.yml`, `courses/webapp-csharp/assignment-18-dental-clinic-platform/scripts/deploy.sh`, `courses/webapp-csharp/assignment-18-dental-clinic-platform/README.md`, `docs/ai-prompts.md`
+- AI output used: Added a root orchestration pipeline, an Assignment 18 pipeline with `rules: changes`, a production Docker Compose file, a Dockerfile, a deploy script, and synchronized repository/assignment CI-CD documentation.
+- What AI got wrong / needed correction: The plan initially did not commit to whether deployment should build on the VPS or require a registry push, so the implementation was narrowed to a simpler VPS-side compose build while keeping the Docker build validation job in CI.
+- Changes made manually: Confirmed the assignment path, checked the existing local compose usage, and aligned the documentation with the current monorepo and runner-tag model.
+- Alternatives considered: Keeping all GitLab CI logic in the repository root, but that would make unrelated assignments trigger the wrong pipelines and would scale poorly as more assignments get their own CI/CD setup.
+
+- Date: 2026-03-21
+- Subject: repository-rules
+- Assignment: n/a
+- Prompt: Extend the repository rules so that if a task seems likely to exceed comfortable context size, the work must be done one layer at a time and the user must be warned that context compaction may drop details.
+- Files affected: `AGENTS.md`, `README.md`, `docs/ai-prompts.md`
+- AI output used: Added explicit context-management and layer-by-layer execution rules to `AGENTS.md` and reflected the same workflow expectation in the root `README.md`.
+- What AI got wrong / needed correction: The first strengthened ruleset did not yet explicitly tell the agent how to behave when context becomes tight, so that missing workflow rule was added separately.
+- Changes made manually: Kept the wording aligned with the existing planning and workflow sections so the new rule reads as part of the same operating model.
+- Alternatives considered: Leaving this behavior implicit under general planning rules, but that would make it too easy to forget exactly when large tasks should be split by layer.
+
+- Date: 2026-03-21
+- Subject: repository-rules
+- Assignment: n/a
+- Prompt: Review the official JavaScript, Web Applications with C#, and Programming in C# course materials and strengthen `AGENTS.md` so future work starts with the right architectural, testing, documentation, deployment, and defense-ready assumptions.
+- Files affected: `AGENTS.md`, `README.md`, `docs/ai-prompts.md`
+- AI output used: Expanded `AGENTS.md` with course-driven planning rules, subject-specific defaults, defense-readiness expectations, and stronger completion/evidence requirements; updated the root `README.md` workflow summary to reflect the same direction.
+- What AI got wrong / needed correction: The initial rule expansion still needed tighter alignment with course-specific AI evidence, cumulative assignment flow, and defense-ready expectations, so those details were refined manually.
+- Changes made manually: Verified the added rules against the current repository structure and kept the workflow guidance aligned with how assignments are organized in this monorepo.
+- Alternatives considered: Keeping `AGENTS.md` as a shorter generic quality checklist, but that would still leave too many course-specific omissions for later debugging and rework.
 
 - Date: 2026-02-25
 - Subject: javascript
 - Assignment: assignment-01-task-manager
 - Prompt: Build Assignment 1 task manager with CRUD, async handling, validation, and command support.
-- AI output used: Project scaffolding, modular JS architecture, command deck UI, storage/validation/service layers, README update.
-- Changes made manually: Requirement tuning for course flow and project naming.
+- Files affected: `courses/javascript/assignment-01-task-manager/index.html`, `courses/javascript/assignment-01-task-manager/styles.css`, `courses/javascript/assignment-01-task-manager/src/*`, `courses/javascript/assignment-01-task-manager/README.md`
+- AI output used: Project scaffolding, modular JS architecture, command deck UI, storage/validation/service layers, and README structure.
+- What AI got wrong / needed correction: The initial implementation needed follow-up tuning around validation feedback and did not yet distinguish the first-run empty state from a filtered-empty result.
+- Changes made manually: Requirement tuning for course flow, project naming, and the later UX correction around empty-state messaging.
+- Alternatives considered: Building a simpler single-file assignment, but the modular structure was easier to defend and extend into A2.
 
 - Date: 2026-02-25
 - Subject: repository-rules
@@ -31,8 +87,21 @@ Record AI-assisted development evidence here.
 - Subject: javascript
 - Assignment: assignment-02-ts-task-manager
 - Prompt: Migrate A1 to strict TypeScript and add recurring tasks, dependencies, statistics, search, sorting, and category-priority rules.
-- AI output used: Full TS project scaffold, typed architecture, generic utilities, and UI command integration.
-- Changes made manually: Validation rule tuning and assignment-specific wording.
+- Files affected: `courses/javascript/assignment-02-ts-task-manager/index.html`, `courses/javascript/assignment-02-ts-task-manager/styles.css`, `courses/javascript/assignment-02-ts-task-manager/src/*`, `courses/javascript/assignment-02-ts-task-manager/README.md`, `courses/javascript/assignment-02-ts-task-manager/AI_REFLECTION.md`
+- AI output used: Full TS project scaffold, typed architecture, generic utilities, service rules for dependencies/recurrence, statistics logic, and UI command integration.
+- What AI got wrong / needed correction: The first pass still needed stricter compile-time cleanup and later hardening to prevent duplicate recurring task generation on repeated completion edits.
+- Changes made manually: Validation rule tuning, assignment-specific wording, and follow-up verification work to make the strict TypeScript build pass cleanly.
+- Alternatives considered: Rebuilding A2 from scratch instead of migrating A1, but incremental migration preserved the assignment progression more clearly.
+
+- Date: 2026-03-21
+- Subject: javascript
+- Assignment: assignment-01-task-manager, assignment-02-ts-task-manager
+- Prompt: Audit JavaScript assignments 1 and 2 against the current repo rules, fix the most important gaps, make A2 pass strict TypeScript checks, add regression tests, and synchronize the documentation.
+- Files affected: `courses/javascript/assignment-01-task-manager/src/ui.js`, `courses/javascript/assignment-01-task-manager/package.json`, `courses/javascript/assignment-01-task-manager/tests/ui.test.mjs`, `courses/javascript/assignment-01-task-manager/README.md`, `courses/javascript/assignment-02-ts-task-manager/src/service.ts`, `courses/javascript/assignment-02-ts-task-manager/src/ui.ts`, `courses/javascript/assignment-02-ts-task-manager/src/utils.ts`, `courses/javascript/assignment-02-ts-task-manager/package.json`, `courses/javascript/assignment-02-ts-task-manager/tests/service.test.mjs`, `courses/javascript/assignment-02-ts-task-manager/README.md`, `courses/javascript/assignment-02-ts-task-manager/AI_REFLECTION.md`, `docs/ai-prompts.md`
+- AI output used: Code review findings, strict-mode fixes, duplicate-recurring guard, Node-based regression/coverage setup, and synchronized README/reflection updates.
+- What AI got wrong / needed correction: The first reviewed state treated some documentation and build gaps as isolated issues, but the final fix had to connect code, tests, and evidence together so the assignments stayed defense-ready.
+- Changes made manually: Verified the PowerShell/npm execution-policy workaround, checked A2 with `npm.cmd run check`, `npm.cmd run build`, and tests, and kept the AI log aligned with the stronger repo template.
+- Alternatives considered: Adding an external test framework such as Vitest, but the built-in Node test runner kept the solution dependency-light while still providing regression coverage and a coverage report.
 
 - Date: 2026-03-04
 - Subject: webapp-csharp

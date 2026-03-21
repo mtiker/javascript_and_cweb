@@ -1,0 +1,61 @@
+.assignment18_changes: &assignment18_changes
+  - courses/webapp-csharp/assignment-18-dental-clinic-platform/**/*
+  - .gitlab-ci.yml
+
+.assignment18_job: &assignment18_job
+  rules:
+    - changes: *assignment18_changes
+    - when: never
+
+.assignment18_deploy_job: &assignment18_deploy_job
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH || $CI_COMMIT_TAG'
+      changes: *assignment18_changes
+    - when: never
+
+assignment18_build:
+  stage: build
+  tags:
+    - dotnet
+  <<: *assignment18_job
+  before_script:
+    - cd courses/webapp-csharp/assignment-18-dental-clinic-platform
+  script:
+    - dotnet restore dental-clinic-platform.slnx
+    - dotnet build dental-clinic-platform.slnx --configuration Release --no-restore
+
+assignment18_test:
+  stage: test
+  tags:
+    - dotnet
+  needs:
+    - assignment18_build
+  <<: *assignment18_job
+  before_script:
+    - cd courses/webapp-csharp/assignment-18-dental-clinic-platform
+  script:
+    - dotnet test dental-clinic-platform.slnx --configuration Release --no-build
+
+assignment18_docker_build:
+  stage: package
+  tags:
+    - docker
+  needs:
+    - assignment18_test
+  <<: *assignment18_job
+  script:
+    - docker build --pull --tag "$CI_PROJECT_PATH_SLUG-assignment-18:$CI_COMMIT_SHORT_SHA" courses/webapp-csharp/assignment-18-dental-clinic-platform
+
+assignment18_deploy:
+  stage: deploy
+  tags:
+    - vps-deploy
+  needs:
+    - assignment18_docker_build
+  environment:
+    name: assignment-18-production
+  <<: *assignment18_deploy_job
+  script:
+    - cd courses/webapp-csharp/assignment-18-dental-clinic-platform
+    - chmod +x scripts/deploy.sh
+    - ./scripts/deploy.sh

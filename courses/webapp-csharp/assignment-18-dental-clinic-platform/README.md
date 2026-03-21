@@ -53,6 +53,7 @@ See lahendus on multi-tenant SaaS platvorm hambakliinikutele. Iga kliinik tööt
 - global exception middleware + `ProblemDetails`
 - Swagger + API versioning
 - Docker Compose + PowerShell skriptid lokaalseks käivituseks
+- monorepo GitLab CI/CD paigutus, kus assignmenti pipeline elab assignmenti kaustas ja root pipeline orkestreerib seda
 - unit ja integration testid
 
 ## Tehnoloogiad
@@ -151,11 +152,48 @@ docker compose up -d postgres
 dotnet run --project src/WebApp
 ```
 
+Liveness / smoke-check endpoint:
+
+- `http://localhost:5107/health`
+- `https://localhost:7245/health`
+
+## CI/CD ja deployment
+
+- monorepo root `.gitlab-ci.yml` ainult include'ib selle assignmenti pipeline'i
+- assignmenti-spetsiifiline GitLab CI fail asub `assignment-18-dental-clinic-platform/.gitlab-ci.yml`
+- `Dockerfile` jääb assignmenti juurkausta, sest build context on kogu assignment
+- `docker-compose.yml` on lokaalseks arenduseks
+- `docker-compose.prod.yml` on VPS deploy jaoks
+- `scripts/deploy.sh` on Linux/VPS deploy entrypoint GitLab deploy jobile
+
+Runneri hosti konfiguratsioon (`config.toml`, registration tokenid, SSH võtmed) ei kuulu reposse. Runner tagide ja monorepo paigutuse detailid on kirjas [docs/ci-cd.md](../../../docs/ci-cd.md).
+
+Production deploy eeldab vähemalt neid keskkonnamuutujaid:
+
+- `JWT__Key`
+- `CORS_ALLOWED_ORIGIN`
+- `POSTGRES_DB`
+- `POSTGRES_USER`
+- `POSTGRES_PASSWORD`
+- `WEBAPP_PORT`
+
+`CORS_ALLOWED_ORIGIN` peab viitama sinu proxy või deploy URL-ile. Praegune vaikimisi production väärtus on `https://mtiker-cweb-a3.proxy.itcollege.ee`.
+
+Käsitsi deploy kontroll VPS-is:
+
+```bash
+export JWT__Key="replace-with-long-random-secret"
+export CORS_ALLOWED_ORIGIN="https://mtiker-cweb-a3.proxy.itcollege.ee"
+docker compose -f docker-compose.prod.yml up -d --build
+curl http://127.0.0.1:8080/health
+```
+
 Vaikimisi launch profile'id:
 
 - HTTP: `http://localhost:5107`
 - HTTPS: `https://localhost:7245`
 - Swagger: `https://localhost:7245/swagger`
+- Health: `https://localhost:7245/health`
 
 ## Seed kasutajad
 
@@ -212,6 +250,7 @@ dotnet test dental-clinic-platform.slnx
 
 Praegune testikomplekt katab:
 
+- deployment smoke endpointi `/health`
 - auth ja onboarding integration flow'd
 - tenant patient/appointment HTTP vood
 - impersonation flow
@@ -231,6 +270,7 @@ Detailsem ülevaade: [docs/testing.md](docs/testing.md)
 - `App.BLL` õppematerjal: [docs/app-bll-study-guide.md](docs/app-bll-study-guide.md)
 - `App.DTO` õppematerjal: [docs/app-dto-guide.md](docs/app-dto-guide.md)
 - AI kasutuse logi: [docs/ai-usage.md](docs/ai-usage.md)
+- monorepo CI/CD juhend: [../../../docs/ci-cd.md](../../../docs/ci-cd.md)
 
 ## Turvalisus
 

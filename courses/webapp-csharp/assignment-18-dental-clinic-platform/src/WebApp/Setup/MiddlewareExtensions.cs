@@ -55,6 +55,7 @@ public static class MiddlewareExtensions
 
     public static WebApplication MapAppEndpoints(this WebApplication app)
     {
+        app.MapHealthChecks("/health");
         app.MapControllerRoute(name: "default", pattern: "{controller=Home}/{action=Index}/{id?}");
         app.MapControllers();
         app.MapRazorPages();

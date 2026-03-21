@@ -3,6 +3,7 @@ using WebApp.Setup;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddHealthChecks();
 builder.Services.AddAppDatabase(builder.Configuration, builder.Environment);
 builder.Services.AddAppIdentity(builder.Configuration);
 builder.Services.AddAppServices();
