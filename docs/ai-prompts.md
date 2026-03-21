@@ -17,6 +17,16 @@ Record AI-assisted development evidence here.
 ## Entries
 
 - Date: 2026-03-21
+- Subject: repository-rules
+- Assignment: n/a
+- Prompt: Add the repository owner's identity block to the top of the root README and extend `AGENTS.md` so deployed assignments must show their live URL at the beginning of the assignment README when reachable from a third device.
+- Files affected: `README.md`, `AGENTS.md`, `docs/ai-prompts.md`
+- AI output used: Updated the root README with the requested owner details and added an explicit assignment-README deploy-URL rule to the repository agent instructions.
+- What AI got wrong / needed correction: The first pass normalized the surname to ASCII as `Tikerpae`, but the requested exact name `Tikerpäe` was then restored in the root README.
+- Changes made manually: Verified the rule was placed in the documentation sections where future assignment README maintenance is already defined.
+- Alternatives considered: Keeping the deploy URL expectation implicit in general documentation hygiene, but an explicit rule is easier to enforce consistently.
+
+- Date: 2026-03-21
 - Subject: webapp-csharp
 - Assignment: assignment-18-dental-clinic-platform
 - Prompt: Review the Assignment 18 deployment readiness against the lecture expectations, fix concrete Docker and production configuration gaps, add a deploy smoke-check endpoint, and synchronize tests and documentation.
@@ -45,6 +55,16 @@ Record AI-assisted development evidence here.
 - What AI got wrong / needed correction: The earlier CI design assumed separate runner tags for build, Docker, and deploy, but the actual GitLab runner available for this project uses only `shared`.
 - Changes made manually: Confirmed the runner tag shown in GitLab and aligned both the assignment README and monorepo CI/CD guide with that real environment.
 - Alternatives considered: Retagging the runner with multiple specialized tags, but updating the pipeline to the existing `shared` runner was the fastest and lowest-friction fix.
+
+- Date: 2026-03-21
+- Subject: webapp-csharp
+- Assignment: assignment-18-dental-clinic-platform
+- Prompt: Update production Docker port mapping so the deployed app is exposed on host port 80, matching the likely university proxy target and avoiding proxy 502 responses.
+- Files affected: `courses/webapp-csharp/assignment-18-dental-clinic-platform/docker-compose.prod.yml`, `courses/webapp-csharp/assignment-18-dental-clinic-platform/README.md`, `docs/ci-cd.md`, `docs/ai-prompts.md`, `courses/webapp-csharp/assignment-18-dental-clinic-platform/docs/ai-usage.md`
+- AI output used: Changed the production port mapping default from host `8080` to host `80` and synchronized the deployment documentation and health-check example.
+- What AI got wrong / needed correction: The previous deployment default exposed the app on host port `8080`, which was likely incompatible with the existing proxy mapping that expected port `80`.
+- Changes made manually: Confirmed the container was healthy on the VPS and used that runtime evidence to narrow the issue to host/proxy port alignment rather than application startup.
+- Alternatives considered: Changing the proxy target to port `8080`, but updating the host port default to `80` fit the common proxy expectation more directly.
 
 - Date: 2026-03-21
 - Subject: webapp-csharp

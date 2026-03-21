@@ -82,7 +82,7 @@ For Assignment 18 production deployment, configure these values in GitLab CI/CD 
 - `POSTGRES_DB`
 - `POSTGRES_USER`
 - `POSTGRES_PASSWORD`
-- `WEBAPP_PORT`
+- `WEBAPP_PORT` if you need to override the default host port `80`
 - `JWT__Issuer`
 - `JWT__Audience`
 - `JWT__ExpiresInSeconds`

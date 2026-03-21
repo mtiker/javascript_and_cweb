@@ -187,7 +187,7 @@ Käsitsi deploy kontroll VPS-is:
 export JWT__Key="replace-with-long-random-secret"
 export CORS_ALLOWED_ORIGIN="https://mtiker-cweb-a3.proxy.itcollege.ee"
 docker compose -f docker-compose.prod.yml up -d --build
-curl http://127.0.0.1:8080/health
+curl http://127.0.0.1/health
 ```
 
 Vaikimisi launch profile'id:

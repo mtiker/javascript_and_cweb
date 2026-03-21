@@ -28,6 +28,11 @@ AI-d kasutati:
   - Tulemus: kõik Assignment 18 CI/CD jobid kasutavad nüüd tagi `shared` ning README/monorepo CI-CD juhend kirjeldavad sama runneri mudelit.
   - Käsitsi muudatused: kontrolliti GitLabis nähtavat runneri tagi ja viidi dokumentatsioon päriskeskkonnaga kooskõlla.
 
+- 2026-03-21 / production host port alignment
+  - Paluti: panna production deploy vaikimisi hosti porti `80`, sest rakendus töötas VPS-is, kuid proxy kaudu tuli `502`.
+  - Tulemus: `docker-compose.prod.yml` mapib nüüd vaikimisi `80:8080`, README health-check näide kasutab hosti porti `80` ning CI-CD dokumentatsioon kirjeldab `WEBAPP_PORT` muutujat override'ina.
+  - Käsitsi muudatused: runtime kontroll `docker ps` ja `curl /health` põhjal kitsendati probleem proxy/host pordi mittevastavusele.
+
 - 2026-03-04 / FAAS 1
   - Paluti: analüüs + arhitektuur + andmemudel + endpoint disain.
   - Tulemus: nõuete kaart, küsimused/eeldused, architecture/data/api plaan.
