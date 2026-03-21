@@ -56,13 +56,11 @@ Use `rules: changes` so those jobs run only when files under that assignment cha
 
 Runner setup files such as `config.toml`, registration tokens, service definitions, and SSH private keys must stay on the runner host or VPS. Do not commit them to the repository.
 
-Use runner tags consistently:
+Current repository setup uses a single runner tag:
 
-- `dotnet`: restore, build, test jobs
-- `docker`: Docker build jobs
-- `vps-deploy`: production deployment jobs on the VPS
+- `shared`: restore, build, test, Docker build, and deployment jobs
 
-Even if one machine currently handles all jobs, keep the tags separated so build and deploy can be split later without rewriting pipelines.
+If you later split responsibilities across multiple runners, you can move back to specialized tags such as separate build, Docker, and deploy runners.
 
 ## Assignment 18 Deployment Model
 

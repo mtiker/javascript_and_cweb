@@ -39,6 +39,16 @@ Record AI-assisted development evidence here.
 - Date: 2026-03-21
 - Subject: webapp-csharp
 - Assignment: assignment-18-dental-clinic-platform
+- Prompt: Change the Assignment 18 GitLab pipeline to use the actual runner tag `shared` instead of the earlier planned specialized tags.
+- Files affected: `courses/webapp-csharp/assignment-18-dental-clinic-platform/.gitlab-ci.yml`, `courses/webapp-csharp/assignment-18-dental-clinic-platform/README.md`, `docs/ci-cd.md`, `docs/ai-prompts.md`, `courses/webapp-csharp/assignment-18-dental-clinic-platform/docs/ai-usage.md`
+- AI output used: Replaced all Assignment 18 job tags with `shared` and synchronized the CI/CD documentation to match the real runner setup.
+- What AI got wrong / needed correction: The earlier CI design assumed separate runner tags for build, Docker, and deploy, but the actual GitLab runner available for this project uses only `shared`.
+- Changes made manually: Confirmed the runner tag shown in GitLab and aligned both the assignment README and monorepo CI/CD guide with that real environment.
+- Alternatives considered: Retagging the runner with multiple specialized tags, but updating the pipeline to the existing `shared` runner was the fastest and lowest-friction fix.
+
+- Date: 2026-03-21
+- Subject: webapp-csharp
+- Assignment: assignment-18-dental-clinic-platform
 - Prompt: Implement monorepo CI/CD and Docker layout so the root GitLab file only orchestrates assignment pipelines, Assignment 18 keeps its own Docker and pipeline files, deployment expectations are documented, and runner host config stays outside the repo.
 - Files affected: `.gitlab-ci.yml`, `docs/ci-cd.md`, `README.md`, `courses/webapp-csharp/assignment-18-dental-clinic-platform/.gitlab-ci.yml`, `courses/webapp-csharp/assignment-18-dental-clinic-platform/Dockerfile`, `courses/webapp-csharp/assignment-18-dental-clinic-platform/docker-compose.prod.yml`, `courses/webapp-csharp/assignment-18-dental-clinic-platform/scripts/deploy.sh`, `courses/webapp-csharp/assignment-18-dental-clinic-platform/README.md`, `docs/ai-prompts.md`
 - AI output used: Added a root orchestration pipeline, an Assignment 18 pipeline with `rules: changes`, a production Docker Compose file, a Dockerfile, a deploy script, and synchronized repository/assignment CI-CD documentation.

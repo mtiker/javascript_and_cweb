@@ -23,6 +23,11 @@ AI-d kasutati:
   - Tulemus: `docker-compose.prod.yml` kasutab nüüd vaikimisi `https://mtiker-cweb-a3.proxy.itcollege.ee`, deploy skript ei nõua enam eraldi CORS muutujat ning README/CI-CD docs viitavad samale aadressile.
   - Käsitsi muudatused: säilitati võimalus `CORS_ALLOWED_ORIGIN` vajadusel keskkonnamuutujaga override'ida.
 
+- 2026-03-21 / shared runner tag alignment
+  - Paluti: muuta Assignment 18 pipeline kasutama tegelikku GitLab runneri tagi `shared`.
+  - Tulemus: kõik Assignment 18 CI/CD jobid kasutavad nüüd tagi `shared` ning README/monorepo CI-CD juhend kirjeldavad sama runneri mudelit.
+  - Käsitsi muudatused: kontrolliti GitLabis nähtavat runneri tagi ja viidi dokumentatsioon päriskeskkonnaga kooskõlla.
+
 - 2026-03-04 / FAAS 1
   - Paluti: analüüs + arhitektuur + andmemudel + endpoint disain.
   - Tulemus: nõuete kaart, küsimused/eeldused, architecture/data/api plaan.

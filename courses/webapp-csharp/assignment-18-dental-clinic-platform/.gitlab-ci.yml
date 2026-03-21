@@ -16,7 +16,7 @@
 assignment18_build:
   stage: build
   tags:
-    - dotnet
+    - shared
   <<: *assignment18_job
   before_script:
     - cd courses/webapp-csharp/assignment-18-dental-clinic-platform
@@ -27,7 +27,7 @@ assignment18_build:
 assignment18_test:
   stage: test
   tags:
-    - dotnet
+    - shared
   needs:
     - assignment18_build
   <<: *assignment18_job
@@ -39,7 +39,7 @@ assignment18_test:
 assignment18_docker_build:
   stage: package
   tags:
-    - docker
+    - shared
   needs:
     - assignment18_test
   <<: *assignment18_job
@@ -49,7 +49,7 @@ assignment18_docker_build:
 assignment18_deploy:
   stage: deploy
   tags:
-    - vps-deploy
+    - shared
   needs:
     - assignment18_docker_build
   environment:

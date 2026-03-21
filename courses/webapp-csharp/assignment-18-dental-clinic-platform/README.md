@@ -168,6 +168,8 @@ Liveness / smoke-check endpoint:
 
 Runneri hosti konfiguratsioon (`config.toml`, registration tokenid, SSH võtmed) ei kuulu reposse. Runner tagide ja monorepo paigutuse detailid on kirjas [docs/ci-cd.md](../../../docs/ci-cd.md).
 
+Praegune GitLab pipeline eeldab, et sinu projektirunner kasutab tagi `shared`.
+
 Production deploy eeldab vähemalt neid keskkonnamuutujaid:
 
 - `JWT__Key`
