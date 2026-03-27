@@ -599,6 +599,12 @@ Osadeks:
       changes: *assignment18_changes
     - when: never
 
+stages:
+  - build
+  - test
+  - package
+  - deploy
+
 assignment18_build:
   stage: build
   tags:
@@ -673,6 +679,12 @@ assignment18_deploy:
 
 - deploy lubatakse ainult default branchilt voi tagi pealt;
 - feature branchilt automaatdeployd ei tehta.
+
+`stages`
+
+- defineerib selle child pipeline'i lubatud stage'id;
+- see on vajalik, sest root `.gitlab-ci.yml` stage'id ei kandu child pipeline'i automaatselt ule;
+- ilma `package` stage'ita lukkab GitLab `assignment18_docker_build` jobi tagasi juba pipeline'i loomisel.
 
 ## Build job
 

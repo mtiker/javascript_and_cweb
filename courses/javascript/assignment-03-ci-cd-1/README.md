@@ -58,6 +58,8 @@ assignment-03-ci-cd-1/
 
 The monorepo root pipeline starts this assignment as its own child pipeline, so failures in another assignment do not block these jobs from running.
 
+This assignment-local `.gitlab-ci.yml` also declares its own `stages:` list because GitLab child pipelines do not inherit stages from the monorepo root pipeline.
+
 Stages used inside this assignment pipeline:
 
 - `test`

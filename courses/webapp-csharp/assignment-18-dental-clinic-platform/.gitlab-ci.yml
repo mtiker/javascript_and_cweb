@@ -1,3 +1,9 @@
+stages:
+  - build
+  - test
+  - package
+  - deploy
+
 .assignment18_changes: &assignment18_changes
   - courses/webapp-csharp/assignment-18-dental-clinic-platform/**/*
   - .gitlab-ci.yml

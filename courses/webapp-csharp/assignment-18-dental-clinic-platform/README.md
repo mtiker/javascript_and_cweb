@@ -163,6 +163,7 @@ Liveness / smoke-check endpoint:
 
 - monorepo root `.gitlab-ci.yml` käivitab selle assignmenti jaoks eraldi child pipeline trigger job'i
 - assignmenti-spetsiifiline GitLab CI fail asub `assignment-18-dental-clinic-platform/.gitlab-ci.yml`
+- assignmenti child pipeline defineerib ise oma `build -> test -> package -> deploy` stage'id, sest root pipeline stage'id ei kandu child pipeline'i kaasa
 - `Dockerfile` jääb assignmenti juurkausta, sest build context on kogu assignment
 - `docker-compose.yml` on lokaalseks arenduseks
 - `docker-compose.prod.yml` on VPS deploy jaoks

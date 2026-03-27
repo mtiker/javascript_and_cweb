@@ -56,6 +56,9 @@ Each assignment-level `.gitlab-ci.yml` should describe only that assignment's ch
 - tests
 - Docker image build validation
 - deployment
+- the full `stages:` list needed by those jobs
+
+Child pipelines do not inherit `stages:` from the root `.gitlab-ci.yml`. If an assignment job uses a non-default stage such as `package`, that stage must be declared inside the assignment-local CI file or GitLab rejects the child pipeline as invalid YAML.
 
 Use `rules: changes` so those jobs run only when files under that assignment change.
 

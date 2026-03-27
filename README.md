@@ -40,6 +40,7 @@ Code: `232786IADB`
 - Root GitLab CI entrypoint lives in `.gitlab-ci.yml`.
 - Root pipeline triggers one child pipeline per assignment instead of combining all assignment jobs into one shared stage chain.
 - Assignment-specific CI files live inside the assignment they belong to.
+- Each child `.gitlab-ci.yml` must declare its own stages; child pipelines do not inherit the root pipeline stage list.
 - Docker-related files should stay beside the deployable assignment, not in the monorepo root unless they are truly shared.
 - Runner host configuration stays outside version control; document runner tags and deployment expectations in `docs/ci-cd.md`.
 - JavaScript Assignment 03 deploys Assignment 01 on host port `81` and Assignment 02 on host port `82`.

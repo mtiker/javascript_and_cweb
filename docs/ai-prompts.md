@@ -18,6 +18,16 @@ Record AI-assisted development evidence here.
 
 - Date: 2026-03-27
 - Subject: repository-ci
+- Assignment: monorepo child pipelines
+- Prompt: Fix the isolated assignment child pipelines after GitLab rejected `assignment18_docker_build` and `javascript_assignment03_docker_build` because the `package` stage was not declared inside the child pipeline configs.
+- Files affected: `README.md`, `docs/ci-cd.md`, `docs/ai-prompts.md`, `courses/javascript/assignment-03-ci-cd-1/.gitlab-ci.yml`, `courses/javascript/assignment-03-ci-cd-1/README.md`, `courses/webapp-csharp/assignment-18-dental-clinic-platform/.gitlab-ci.yml`, `courses/webapp-csharp/assignment-18-dental-clinic-platform/README.md`, `courses/webapp-csharp/assignment-18-dental-clinic-platform/docs/docker-deploy-study-guide.md`
+- AI output used: Added explicit `stages:` declarations to both assignment-local child pipeline configs and updated the repository and assignment CI documentation to explain that child pipelines do not inherit root pipeline stages.
+- What AI got wrong / needed correction: The earlier child-pipeline isolation change assumed the assignment configs would keep working without an explicit stage list, but GitLab validates each child pipeline independently and falls back to default stages when none are declared.
+- Changes made manually: Correlated the GitLab error with both assignment-local `.gitlab-ci.yml` files, confirmed only `package` was outside the default stage set, and documented the child-pipeline stage boundary where the repo already explains CI orchestration.
+- Alternatives considered: Renaming both Docker build jobs back to the default `build` stage, but keeping a dedicated `package` stage better reflects the real pipeline flow and only requires making the child configs self-contained.
+
+- Date: 2026-03-27
+- Subject: repository-ci
 - Assignment: monorepo root pipeline
 - Prompt: Restructure the GitLab monorepo pipeline so each assignment runs as its own child pipeline and one assignment failure does not stop unrelated assignments from running.
 - Files affected: `.gitlab-ci.yml`, `README.md`, `docs/ci-cd.md`, `docs/ai-prompts.md`, `courses/javascript/assignment-03-ci-cd-1/README.md`, `courses/webapp-csharp/assignment-18-dental-clinic-platform/README.md`
