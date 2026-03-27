@@ -13,6 +13,11 @@ AI-d kasutati:
 
 ## Töövoo logi (kronoloogiline)
 
+- 2026-03-21 / production sysadmin login fix
+  - Paluti: parandada live keskkonna olukord, kus `sysadmin` konto tagastas sisselogimisel `User/Password problem`.
+  - Tulemus: seed identity loogika oskab nüüd soovi korral olemasolevate demo/system kasutajate paroolid uuesti dokumenteeritud vaikeparoolile sünkida; production compose lülitab selle vaikimisi sisse.
+  - Käsitsi muudatused: lisati regressioonitest, mis tõestab, et olemasolev seed-kasutaja saab pärast uuesti seedimist korrektse parooli tagasi ilma andmebaasi kustutamata.
+
 - 2026-03-21 / Docker-deploy oppematerjal
   - Paluti: teha Assignment 18 kohta kaitsmiseks pohjalik Docker/deploy study guide, mis seletab lahti projekti tegelikud failid ja vajadusel ka rea-realt.
   - Tulemus: lisati `docs/docker-deploy-study-guide.md`, mis katab `Dockerfile`, `.dockerignore`, `docker-compose.yml`, `docker-compose.prod.yml`, `scripts/deploy.sh` ja `.gitlab-ci.yml` rollid, deploy voo ning kaitsmise kiirvastused.

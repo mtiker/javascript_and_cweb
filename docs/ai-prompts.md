@@ -17,6 +17,16 @@ Record AI-assisted development evidence here.
 ## Entries
 
 - Date: 2026-03-21
+- Subject: webapp-csharp
+- Assignment: assignment-18-dental-clinic-platform
+- Prompt: Fix the live Assignment 18 login issue where the deployed `sysadmin` account returned `User/Password problem`, by making seeded demo/system credentials recoverable without dropping the production database.
+- Files affected: `courses/webapp-csharp/assignment-18-dental-clinic-platform/src/App.DAL.EF/Seeding/AppDataInit.cs`, `courses/webapp-csharp/assignment-18-dental-clinic-platform/src/WebApp/Setup/AppDataInitExtensions.cs`, `courses/webapp-csharp/assignment-18-dental-clinic-platform/src/WebApp/appsettings.json`, `courses/webapp-csharp/assignment-18-dental-clinic-platform/docker-compose.prod.yml`, `courses/webapp-csharp/assignment-18-dental-clinic-platform/tests/WebApp.Tests/Unit/UnitTestIdentitySeed.cs`, `courses/webapp-csharp/assignment-18-dental-clinic-platform/README.md`, `courses/webapp-csharp/assignment-18-dental-clinic-platform/docs/testing.md`, `courses/webapp-csharp/assignment-18-dental-clinic-platform/docs/docker-deploy-study-guide.md`, `courses/webapp-csharp/assignment-18-dental-clinic-platform/docs/ai-usage.md`, `docs/ai-prompts.md`
+- AI output used: Added an opt-in seed-user password resync path, enabled it by default in production compose, added a regression test, and synchronized the assignment deployment/testing documentation.
+- What AI got wrong / needed correction: A simpler “just drop the database” fix would have been too destructive for a persistent production volume, so the final change preserves the data while only restoring the documented seed/demo credentials.
+- Changes made manually: Traced the failure to the existing seed behavior that only created users on first startup, then documented the new override so seed-password resets stay explicit and defendable.
+- Alternatives considered: Forcing `DropDatabase=true` on deploy, but resetting only the known seed/demo users is much safer and keeps tenant data intact.
+
+- Date: 2026-03-21
 - Subject: javascript
 - Assignment: assignment-01-task-manager, assignment-02-ts-task-manager
 - Prompt: Make the deployed JavaScript assignment READMEs comply with the repository rule by placing each app's live public URL at the beginning of the assignment README.
@@ -172,6 +182,16 @@ Record AI-assisted development evidence here.
 - What AI got wrong / needed correction: The first reviewed state treated some documentation and build gaps as isolated issues, but the final fix had to connect code, tests, and evidence together so the assignments stayed defense-ready.
 - Changes made manually: Verified the PowerShell/npm execution-policy workaround, checked A2 with `npm.cmd run check`, `npm.cmd run build`, and tests, and kept the AI log aligned with the stronger repo template.
 - Alternatives considered: Adding an external test framework such as Vitest, but the built-in Node test runner kept the solution dependency-light while still providing regression coverage and a coverage report.
+
+- Date: 2026-03-21
+- Subject: javascript
+- Assignment: assignment-03-ci-cd-1, assignment-01-task-manager, assignment-02-ts-task-manager
+- Prompt: Fix the GitLab pipeline after shell-runner jobs started failing with `node: bad option: --test-isolation=none` and later checkout permission errors caused by container-written `node_modules`.
+- Files affected: `.gitlab-ci.yml`, `.gitignore`, `courses/javascript/assignment-01-task-manager/package.json`, `courses/javascript/assignment-02-ts-task-manager/package.json`, `courses/javascript/assignment-03-ci-cd-1/.gitlab-ci.yml`, `courses/javascript/assignment-03-ci-cd-1/README.md`, `docs/ci-cd.md`, `docs/ai-prompts.md`
+- AI output used: Removed the unsupported Node test-runner flag from both JavaScript assignments, changed the Assignment 03 CI jobs to use read-only mounts and an in-container temp workspace, added a pipeline-specific clone path, and synchronized the CI/CD documentation.
+- What AI got wrong / needed correction: The first instinct was to focus on the C# deployment `502`, but the actual blocker was earlier JavaScript pipeline failures that prevented the deploy stage from running at all.
+- Changes made manually: Correlated the failing GitLab logs with the exact package scripts and shell-runner checkout behavior, then kept the fix compatible with the existing `node:20-alpine` image instead of switching the project to a different Node baseline.
+- Alternatives considered: Upgrading the CI image to a newer Node version that supports `--test-isolation=none`, but removing the fragile flag and preventing workspace pollution was the more stable shell-runner fix.
 
 - Date: 2026-03-04
 - Subject: webapp-csharp

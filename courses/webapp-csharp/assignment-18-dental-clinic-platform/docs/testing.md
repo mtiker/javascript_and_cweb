@@ -17,6 +17,7 @@
 - `UnitTestAppointmentService`
 - `UnitTestTreatmentPlanService`
 - `UnitTestFinanceServices`
+- `UnitTestIdentitySeed`
 - `UnitTestTenantApiServiceControllers`
 - `UnitTestTenantApiDbControllers`
 
@@ -36,6 +37,7 @@ dotnet test dental-clinic-platform.slnx
 
 - account register/login/forgot-password HTTP vood
 - `/health` deployment smoke endpoint
+- seeditud identity kasutajate rolli- ja parooli-sünkroniseerimine
 - onboarding flow ja loodud tenant-andmed
 - tenant patient CRUD integration flow
 - tenant appointment create/list flow

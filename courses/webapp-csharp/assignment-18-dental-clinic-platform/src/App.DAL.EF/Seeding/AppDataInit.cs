@@ -78,7 +78,10 @@ public static partial class AppDataInit
         context.Database.EnsureDeleted();
     }
 
-    public static async Task SeedIdentityAsync(UserManager<AppUser> userManager, RoleManager<AppRole> roleManager)
+    public static async Task SeedIdentityAsync(
+        UserManager<AppUser> userManager,
+        RoleManager<AppRole> roleManager,
+        bool resetSeedUserPasswords = false)
     {
         foreach (var roleName in InitialData.Roles)
         {
@@ -113,6 +116,10 @@ public static partial class AppDataInit
                     throw new ApplicationException($"User creation failed for '{email}'.");
                 }
             }
+            else
+            {
+                await SyncSeedUserAsync(userManager, user, email, password, resetSeedUserPasswords);
+            }
 
             foreach (var role in roles)
             {
@@ -127,6 +134,64 @@ public static partial class AppDataInit
                     throw new ApplicationException($"Assigning role '{role}' to '{email}' failed.");
                 }
             }
+        }
+    }
+
+    private static async Task SyncSeedUserAsync(
+        UserManager<AppUser> userManager,
+        AppUser user,
+        string email,
+        string password,
+        bool resetSeedUserPasswords)
+    {
+        var requiresUserUpdate = false;
+
+        if (!string.Equals(user.Email, email, StringComparison.OrdinalIgnoreCase))
+        {
+            user.Email = email;
+            requiresUserUpdate = true;
+        }
+
+        if (!string.Equals(user.UserName, email, StringComparison.OrdinalIgnoreCase))
+        {
+            user.UserName = email;
+            requiresUserUpdate = true;
+        }
+
+        if (!user.EmailConfirmed)
+        {
+            user.EmailConfirmed = true;
+            requiresUserUpdate = true;
+        }
+
+        if (requiresUserUpdate)
+        {
+            var updateResult = await userManager.UpdateAsync(user);
+            if (!updateResult.Succeeded)
+            {
+                throw new ApplicationException($"Updating seeded user '{email}' failed.");
+            }
+        }
+
+        if (!resetSeedUserPasswords || await userManager.CheckPasswordAsync(user, password))
+        {
+            return;
+        }
+
+        IdentityResult passwordResult;
+        if (await userManager.HasPasswordAsync(user))
+        {
+            var resetToken = await userManager.GeneratePasswordResetTokenAsync(user);
+            passwordResult = await userManager.ResetPasswordAsync(user, resetToken, password);
+        }
+        else
+        {
+            passwordResult = await userManager.AddPasswordAsync(user, password);
+        }
+
+        if (!passwordResult.Succeeded)
+        {
+            throw new ApplicationException($"Resetting seeded user password for '{email}' failed.");
         }
     }
 

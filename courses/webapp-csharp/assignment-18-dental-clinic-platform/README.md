@@ -183,6 +183,12 @@ Production deploy eeldab vähemalt neid keskkonnamuutujaid:
 
 `CORS_ALLOWED_ORIGIN` peab viitama sinu proxy või deploy URL-ile. Praegune vaikimisi production väärtus on `https://mtiker-cweb-a3.proxy.itcollege.ee`.
 
+Valikuline, kuid live demo jaoks oluline:
+
+- `DATA_INIT_RESET_SEED_USER_PASSWORDS`
+
+`docker-compose.prod.yml` seab sellele vaikimisi väärtuse `true`, et olemasolevas production andmebaasis olevate seed/demo kontode paroolid taastuksid deploy ajal README-s dokumenteeritud vaikeväärtusele. Kui tahad seed-kontode käsitsi muudetud paroole säilitada, sea see muutujaks `false`.
+
 Käsitsi deploy kontroll VPS-is:
 
 ```bash
@@ -218,6 +224,8 @@ Vaikimisi launch profile'id:
 - `multitenant.demo@dental-saas.local`
 
 `multitenant.demo@dental-saas.local` on mõeldud `switch-company` ja `switch-role` voogude testimiseks.
+
+Production deploy puhul taastatakse nende seed-kontode parool vaikimisi igal käivitumisel samale väärtusele (`Dental.Saas.101`), kui `DATA_INIT_RESET_SEED_USER_PASSWORDS` jääb `true`.
 
 ## UI route'id
 

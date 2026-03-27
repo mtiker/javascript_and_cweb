@@ -502,6 +502,12 @@ Oluline point:
 
 - kas seedida demo arandmed.
 
+### `DataInitialization__ResetSeedUserPasswords`
+
+- kui `true`, siis olemasolevate seed/demo kasutajate paroolid sünkroniseeritakse uuesti README-s kirjeldatud vaikeparoolile;
+- see on kasulik live deploy puhul, kus PostgreSQL volume jääb alles ja vana `sysadmin` hash muidu ei muutuks;
+- kui tahad käsitsi muudetud seed-kontode paroole säilitada, pane see `false`.
+
 ### `Diagnostics__EnableDetailedErrors: "false"`
 ### `Diagnostics__EnableSensitiveDataLogging: "false"`
 

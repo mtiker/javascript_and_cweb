@@ -41,7 +41,10 @@ public static class AppDataInitExtensions
         if (configuration.GetValue<bool>("DataInitialization:SeedIdentity"))
         {
             logger.LogInformation("SeedIdentity");
-            await AppDataInit.SeedIdentityAsync(userManager, roleManager);
+            await AppDataInit.SeedIdentityAsync(
+                userManager,
+                roleManager,
+                configuration.GetValue<bool>("DataInitialization:ResetSeedUserPasswords"));
         }
 
         if (configuration.GetValue<bool>("DataInitialization:SeedData"))

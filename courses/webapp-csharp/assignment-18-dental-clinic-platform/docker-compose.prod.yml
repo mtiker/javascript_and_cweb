@@ -36,6 +36,7 @@ services:
       DataInitialization__MigrateDatabase: ${DATA_INIT_MIGRATE_DATABASE:-true}
       DataInitialization__SeedIdentity: ${DATA_INIT_SEED_IDENTITY:-true}
       DataInitialization__SeedData: ${DATA_INIT_SEED_DATA:-true}
+      DataInitialization__ResetSeedUserPasswords: ${DATA_INIT_RESET_SEED_USER_PASSWORDS:-true}
       Diagnostics__EnableDetailedErrors: "false"
       Diagnostics__EnableSensitiveDataLogging: "false"
     ports:

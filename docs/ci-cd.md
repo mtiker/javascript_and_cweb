@@ -85,6 +85,12 @@ The assignment pipeline runs:
 - Docker Compose image build validation
 - deployment on the default branch or tags only
 
+To keep the shell runner stable:
+
+- the repository now uses a pipeline-specific `GIT_CLONE_PATH`, so stale workspaces from earlier jobs do not block new checkouts;
+- Assignment 01 tests mount the app read-only into the Node container;
+- Assignment 02 tests copy the app into a temporary in-container folder before running `npm ci`, so the runner checkout is not polluted with root-owned `node_modules`.
+
 ## JavaScript Assignment 03 Variables
 
 For JavaScript Assignment 03 deployment, these values can be configured as GitLab CI/CD variables or on the VPS runner host:
