@@ -78,7 +78,7 @@ The deploy job runs only on the default branch or tags.
 The test jobs intentionally avoid writing dependencies into the runner checkout:
 
 - Assignment 01 mounts the source folder read-only and runs the built-in Node test runner directly.
-- Assignment 02 starts in `/tmp`, creates `/tmp/app` as the mapped non-root user, then copies the source there before `npm ci`, `npm run check`, and `npm test`.
+- Assignment 02 starts in `/tmp`, creates `/tmp/app` and `/tmp/npm-cache` as the mapped non-root user, then copies the source there before `npm ci`, `npm run check`, and `npm test`.
 - This prevents root-owned `node_modules` leftovers from breaking later GitLab checkout steps on the shell runner.
 
 ## VPS Setup Notes

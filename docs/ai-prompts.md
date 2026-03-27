@@ -19,6 +19,16 @@ Record AI-assisted development evidence here.
 - Date: 2026-03-27
 - Subject: javascript
 - Assignment: assignment-03-ci-cd-1
+- Prompt: Fix the JavaScript Assignment 03 child pipeline again after the Assignment 02 test container started failing with `npm error path /.npm` because npm tried to use an unwritable cache directory under the mapped shell-runner UID.
+- Files affected: `courses/javascript/assignment-03-ci-cd-1/.gitlab-ci.yml`, `courses/javascript/assignment-03-ci-cd-1/README.md`, `docs/ci-cd.md`, `docs/ai-prompts.md`
+- AI output used: Updated the Assignment 02 CI test job to set `npm_config_cache=/tmp/npm-cache` and create that cache directory alongside `/tmp/app`, then synchronized the CI docs to explain the shell-runner npm-cache permission issue.
+- What AI got wrong / needed correction: The previous fix restored a writable work directory for copied source files, but npm still defaulted to `/.npm`, which is not writable for the mapped non-root UID inside the container.
+- Changes made manually: Traced the new GitLab log to npm’s cache behavior, kept the existing non-root container approach, and narrowed the follow-up fix to a writable temp cache path inside the same container.
+- Alternatives considered: Running npm as root or persisting a shared writable cache on the runner host, but an in-container `/tmp/npm-cache` keeps the job isolated and avoids new host-side state.
+
+- Date: 2026-03-27
+- Subject: javascript
+- Assignment: assignment-03-ci-cd-1
 - Prompt: Fix the JavaScript Assignment 03 child pipeline after the Assignment 02 test container started failing with `cp: can't create ... Permission denied` while copying the app into `/tmp/app` on the shell runner.
 - Files affected: `courses/javascript/assignment-03-ci-cd-1/.gitlab-ci.yml`, `courses/javascript/assignment-03-ci-cd-1/README.md`, `docs/ci-cd.md`, `docs/ai-prompts.md`
 - AI output used: Changed the Assignment 02 CI test job to start in `/tmp`, create `/tmp/app` as the mapped non-root user, then copy the workspace there before running `npm ci`, `npm run check`, and `npm test`; updated the CI docs to explain the shell-runner permission detail.

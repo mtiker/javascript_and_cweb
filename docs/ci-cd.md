@@ -99,7 +99,7 @@ To keep the shell runner stable:
 
 - do not set `GIT_CLONE_PATH` unless the runner host explicitly enables GitLab Runner `custom_build_dir`, because shell jobs fail during checkout otherwise;
 - Assignment 01 tests mount the app read-only into the Node container;
-- Assignment 02 tests start in `/tmp`, create their own `/tmp/app` work directory as the mapped non-root user, and then copy the app there before running `npm ci`, so the runner checkout is not polluted with root-owned `node_modules` and the temp directory stays writable on the shell runner.
+- Assignment 02 tests start in `/tmp`, create their own `/tmp/app` work directory and `/tmp/npm-cache` as the mapped non-root user, set `npm_config_cache=/tmp/npm-cache`, and then copy the app there before running `npm ci`, so the runner checkout is not polluted with root-owned `node_modules` and npm does not try to write into unwritable `/.npm` on the shell runner.
 
 ## JavaScript Assignment 03 Variables
 

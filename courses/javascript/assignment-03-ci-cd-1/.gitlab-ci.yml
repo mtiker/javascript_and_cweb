@@ -34,7 +34,7 @@ javascript_assignment03_a02_test:
     - shared
   <<: *javascript_assignment03_job
   script:
-    - docker run --rm --user "$(id -u):$(id -g)" -v "$CI_PROJECT_DIR/courses/javascript/assignment-02-ts-task-manager:/workspace:ro" -w /tmp node:20-alpine sh -lc "mkdir -p /tmp/app && cp -R /workspace/. /tmp/app && cd /tmp/app && npm ci && npm run check && npm test"
+    - docker run --rm --user "$(id -u):$(id -g)" -v "$CI_PROJECT_DIR/courses/javascript/assignment-02-ts-task-manager:/workspace:ro" -w /tmp -e npm_config_cache=/tmp/npm-cache node:20-alpine sh -lc "mkdir -p /tmp/app /tmp/npm-cache && cp -R /workspace/. /tmp/app && cd /tmp/app && npm ci && npm run check && npm test"
 
 javascript_assignment03_docker_build:
   stage: package
