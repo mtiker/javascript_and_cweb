@@ -5,11 +5,12 @@
 This repository uses a monorepo-friendly GitLab CI/CD structure:
 
 - the root `.gitlab-ci.yml` is the only GitLab entrypoint
+- the root pipeline triggers one child pipeline per assignment instead of merging all assignment jobs into one global stage flow
 - assignment-specific CI lives next to the assignment it builds or deploys
 - Docker files stay with the assignment they belong to
 - GitLab Runner host configuration stays outside the repository
 
-This keeps unrelated assignments from building when only one assignment changes.
+This keeps unrelated assignments from building when only one assignment changes and prevents one assignment's failed stage chain from blocking another assignment's pipeline from running.
 
 ## Current Layout
 
@@ -40,16 +41,16 @@ This keeps unrelated assignments from building when only one assignment changes.
 
 The root `.gitlab-ci.yml` should contain only monorepo orchestration concerns:
 
-- shared stages
+- shared orchestration stages
 - shared variables/defaults
 - top-level workflow rules
-- `include: local` statements for assignment pipelines
+- child-pipeline trigger jobs with `trigger: include`
 
 It should not contain assignment-specific build or deploy commands.
 
 ### Assignment pipeline
 
-Each assignment-level `.gitlab-ci.yml` should describe only that assignment's jobs, for example:
+Each assignment-level `.gitlab-ci.yml` should describe only that assignment's child pipeline jobs, for example:
 
 - restore/build
 - tests
@@ -57,6 +58,12 @@ Each assignment-level `.gitlab-ci.yml` should describe only that assignment's jo
 - deployment
 
 Use `rules: changes` so those jobs run only when files under that assignment change.
+
+The intended separation is:
+
+- root pipeline decides which assignment child pipelines should start;
+- each assignment child pipeline owns its own `build -> test -> package -> deploy` chain;
+- if Assignment A fails, Assignment B child pipeline can still start and run because they are no longer sharing one global root pipeline stage progression.
 
 ## Runner Model
 

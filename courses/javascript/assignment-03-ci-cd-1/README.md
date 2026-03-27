@@ -56,7 +56,9 @@ assignment-03-ci-cd-1/
 
 ## GitLab CI/CD
 
-Stages used by the monorepo root pipeline:
+The monorepo root pipeline starts this assignment as its own child pipeline, so failures in another assignment do not block these jobs from running.
+
+Stages used inside this assignment pipeline:
 
 - `test`
 - `package`

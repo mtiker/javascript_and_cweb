@@ -38,6 +38,7 @@ Code: `232786IADB`
 ## CI/CD Layout
 
 - Root GitLab CI entrypoint lives in `.gitlab-ci.yml`.
+- Root pipeline triggers one child pipeline per assignment instead of combining all assignment jobs into one shared stage chain.
 - Assignment-specific CI files live inside the assignment they belong to.
 - Docker-related files should stay beside the deployable assignment, not in the monorepo root unless they are truly shared.
 - Runner host configuration stays outside version control; document runner tags and deployment expectations in `docs/ci-cd.md`.

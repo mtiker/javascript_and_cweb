@@ -55,7 +55,7 @@ See lahendus on multi-tenant SaaS platvorm hambakliinikutele. Iga kliinik tööt
 - global exception middleware + `ProblemDetails`
 - Swagger + API versioning
 - Docker Compose + PowerShell skriptid lokaalseks käivituseks
-- monorepo GitLab CI/CD paigutus, kus assignmenti pipeline elab assignmenti kaustas ja root pipeline orkestreerib seda
+- monorepo GitLab CI/CD paigutus, kus assignmenti pipeline elab assignmenti kaustas ja root pipeline käivitab selle eraldi child pipeline'ina
 - unit ja integration testid
 
 ## Tehnoloogiad
@@ -161,7 +161,7 @@ Liveness / smoke-check endpoint:
 
 ## CI/CD ja deployment
 
-- monorepo root `.gitlab-ci.yml` ainult include'ib selle assignmenti pipeline'i
+- monorepo root `.gitlab-ci.yml` käivitab selle assignmenti jaoks eraldi child pipeline trigger job'i
 - assignmenti-spetsiifiline GitLab CI fail asub `assignment-18-dental-clinic-platform/.gitlab-ci.yml`
 - `Dockerfile` jääb assignmenti juurkausta, sest build context on kogu assignment
 - `docker-compose.yml` on lokaalseks arenduseks

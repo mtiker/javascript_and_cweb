@@ -1,8 +1,5 @@
 stages:
-  - build
-  - test
-  - package
-  - deploy
+  - orchestrate
 
 workflow:
   rules:
@@ -15,8 +12,33 @@ default:
 
 variables:
   GIT_STRATEGY: fetch
-  ASSIGNMENT_18_PATH: courses/webapp-csharp/assignment-18-dental-clinic-platform
 
-include:
-  - local: "courses/javascript/assignment-03-ci-cd-1/.gitlab-ci.yml"
-  - local: "courses/webapp-csharp/assignment-18-dental-clinic-platform/.gitlab-ci.yml"
+.javascript_assignment03_changes: &javascript_assignment03_changes
+  - courses/javascript/assignment-01-task-manager/**/*
+  - courses/javascript/assignment-02-ts-task-manager/**/*
+  - courses/javascript/assignment-03-ci-cd-1/**/*
+  - .gitlab-ci.yml
+
+.assignment18_changes: &assignment18_changes
+  - courses/webapp-csharp/assignment-18-dental-clinic-platform/**/*
+  - .gitlab-ci.yml
+
+javascript_assignment03_pipeline:
+  stage: orchestrate
+  trigger:
+    include:
+      - local: "courses/javascript/assignment-03-ci-cd-1/.gitlab-ci.yml"
+    strategy: depend
+  rules:
+    - changes: *javascript_assignment03_changes
+    - when: never
+
+assignment18_pipeline:
+  stage: orchestrate
+  trigger:
+    include:
+      - local: "courses/webapp-csharp/assignment-18-dental-clinic-platform/.gitlab-ci.yml"
+    strategy: depend
+  rules:
+    - changes: *assignment18_changes
+    - when: never

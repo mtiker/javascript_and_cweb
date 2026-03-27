@@ -19,6 +19,16 @@ Record AI-assisted development evidence here.
 - Date: 2026-03-27
 - Subject: repository-ci
 - Assignment: monorepo root pipeline
+- Prompt: Restructure the GitLab monorepo pipeline so each assignment runs as its own child pipeline and one assignment failure does not stop unrelated assignments from running.
+- Files affected: `.gitlab-ci.yml`, `README.md`, `docs/ci-cd.md`, `docs/ai-prompts.md`, `courses/javascript/assignment-03-ci-cd-1/README.md`, `courses/webapp-csharp/assignment-18-dental-clinic-platform/README.md`
+- AI output used: Replaced root-level `include` orchestration with assignment-specific child-pipeline trigger jobs, kept assignment-local CI files as the source of each assignment's internal job chain, and synchronized the repository CI documentation.
+- What AI got wrong / needed correction: A single shared root stage model looks simpler at first, but it still lets one assignment's earlier failure block unrelated later-stage jobs, so the final solution moved separation to the pipeline boundary instead of only tuning stages.
+- Changes made manually: Verified the existing assignment CI files were already self-contained enough to be used as child pipeline configs, then updated the docs that still described the old include-based orchestration model.
+- Alternatives considered: Keeping one combined pipeline and flattening all jobs into a shared DAG, but child pipelines make assignment isolation clearer, scale better as more assignments get CI, and are easier to explain in defense.
+
+- Date: 2026-03-27
+- Subject: repository-ci
+- Assignment: monorepo root pipeline
 - Prompt: Fix the GitLab pipeline startup failure `setting GIT_CLONE_PATH is not allowed, enable custom_build_dir feature` on the shell runner and keep the CI documentation in sync.
 - Files affected: `.gitlab-ci.yml`, `docs/ci-cd.md`, `docs/ai-prompts.md`
 - AI output used: Removed the unsupported root-level `GIT_CLONE_PATH` variable and updated the CI/CD guide to document that this variable only works when the runner host enables `custom_build_dir`.
