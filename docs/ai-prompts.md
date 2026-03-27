@@ -16,6 +16,16 @@ Record AI-assisted development evidence here.
 
 ## Entries
 
+- Date: 2026-03-27
+- Subject: repository-ci
+- Assignment: monorepo root pipeline
+- Prompt: Fix the GitLab pipeline startup failure `setting GIT_CLONE_PATH is not allowed, enable custom_build_dir feature` on the shell runner and keep the CI documentation in sync.
+- Files affected: `.gitlab-ci.yml`, `docs/ci-cd.md`, `docs/ai-prompts.md`
+- AI output used: Removed the unsupported root-level `GIT_CLONE_PATH` variable and updated the CI/CD guide to document that this variable only works when the runner host enables `custom_build_dir`.
+- What AI got wrong / needed correction: The earlier CI hardening assumed a runner configuration capability that is not enabled on the actual GitLab shell runner, so the pipeline failed before any job script could start.
+- Changes made manually: Confirmed the error occurs during GitLab checkout initialization rather than inside assignment scripts, then narrowed the fix to the root orchestration pipeline instead of changing assignment job logic.
+- Alternatives considered: Enabling `custom_build_dir` on the runner host, but that is a host-side admin change outside the repository and removing the unsupported variable is the fastest repository-level fix.
+
 - Date: 2026-03-21
 - Subject: webapp-csharp
 - Assignment: assignment-18-dental-clinic-platform

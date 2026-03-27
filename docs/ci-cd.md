@@ -87,7 +87,7 @@ The assignment pipeline runs:
 
 To keep the shell runner stable:
 
-- the repository now uses a pipeline-specific `GIT_CLONE_PATH`, so stale workspaces from earlier jobs do not block new checkouts;
+- do not set `GIT_CLONE_PATH` unless the runner host explicitly enables GitLab Runner `custom_build_dir`, because shell jobs fail during checkout otherwise;
 - Assignment 01 tests mount the app read-only into the Node container;
 - Assignment 02 tests copy the app into a temporary in-container folder before running `npm ci`, so the runner checkout is not polluted with root-owned `node_modules`.
 
