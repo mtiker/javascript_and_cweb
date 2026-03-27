@@ -17,6 +17,16 @@ Record AI-assisted development evidence here.
 ## Entries
 
 - Date: 2026-03-27
+- Subject: javascript
+- Assignment: assignment-03-ci-cd-1
+- Prompt: Fix the JavaScript Assignment 03 child pipeline after the Assignment 02 test container started failing with `cp: can't create ... Permission denied` while copying the app into `/tmp/app` on the shell runner.
+- Files affected: `courses/javascript/assignment-03-ci-cd-1/.gitlab-ci.yml`, `courses/javascript/assignment-03-ci-cd-1/README.md`, `docs/ci-cd.md`, `docs/ai-prompts.md`
+- AI output used: Changed the Assignment 02 CI test job to start in `/tmp`, create `/tmp/app` as the mapped non-root user, then copy the workspace there before running `npm ci`, `npm run check`, and `npm test`; updated the CI docs to explain the shell-runner permission detail.
+- What AI got wrong / needed correction: The earlier hardening correctly avoided polluting the runner checkout, but using `docker run -w /tmp/app` let Docker pre-create that directory with ownership that the mapped UID could not write to on the runner.
+- Changes made manually: Matched the GitLab log to the existing container command, narrowed the fix to the JavaScript Assignment 02 test job, and documented why the temp workdir now starts at `/tmp` instead of `/tmp/app`.
+- Alternatives considered: Running the container as root or writing directly into the runner checkout, but keeping the mapped host UID and an isolated temp workspace is safer for later Git checkout steps.
+
+- Date: 2026-03-27
 - Subject: repository-ci
 - Assignment: monorepo child pipelines
 - Prompt: Fix the isolated assignment child pipelines after GitLab rejected `assignment18_docker_build` and `javascript_assignment03_docker_build` because the `package` stage was not declared inside the child pipeline configs.
