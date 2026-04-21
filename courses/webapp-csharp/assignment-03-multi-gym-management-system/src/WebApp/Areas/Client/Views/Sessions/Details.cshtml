@@ -1,0 +1,80 @@
+@model SessionDetailPageViewModel
+@{
+    var statusMessage = TempData["StatusMessage"] as string;
+}
+
+<section class="panel">
+    <p class="eyebrow">@Model.CategoryName</p>
+    <h1>@Model.Session.Name</h1>
+    @if (!string.IsNullOrWhiteSpace(statusMessage))
+    {
+        <p class="status-message">@statusMessage</p>
+    }
+    <p>@Model.Session.Description</p>
+    <dl class="definition-list">
+        <dt>Starts</dt>
+        <dd>@Model.Session.StartAtUtc.ToLocalTime():g</dd>
+        <dt>Ends</dt>
+        <dd>@Model.Session.EndAtUtc.ToLocalTime():g</dd>
+        <dt>Capacity</dt>
+        <dd>@Model.Session.Capacity</dd>
+        <dt>Price</dt>
+        <dd>@Model.Session.BasePrice @Model.Session.CurrencyCode</dd>
+        <dt>Trainers</dt>
+        <dd>@(Model.TrainerNames.Count == 0 ? "No trainers assigned" : string.Join(", ", Model.TrainerNames))</dd>
+    </dl>
+
+    @if (Model.CanBook)
+    {
+        <form asp-action="Book" method="post" class="inline-form">
+            <input type="hidden" name="id" value="@Model.Session.Id" />
+            <label>
+                Payment reference
+                <input name="paymentReference" placeholder="Required when payment is due" />
+            </label>
+            <button type="submit">Book session</button>
+        </form>
+    }
+    else if (Model.CurrentBookingId.HasValue)
+    {
+        <p>Current booking status: <strong>@Model.CurrentBookingStatus</strong></p>
+        <form asp-action="CancelBooking" method="post" class="inline-form">
+            <input type="hidden" name="id" value="@Model.Session.Id" />
+            <input type="hidden" name="bookingId" value="@Model.CurrentBookingId" />
+            <button type="submit">Cancel booking</button>
+        </form>
+    }
+
+    <div class="link-strip">
+        <a asp-action="Index">Back to sessions</a>
+        <a asp-action="Roster" asp-route-id="@Model.Session.Id">Trainer roster</a>
+    </div>
+</section>
+
+<section class="page-grid">
+    <article class="panel">
+        <h2>Opening hours</h2>
+        <ul class="compact-list">
+            @foreach (var hours in Model.OpeningHours.OrderBy(item => item.Weekday))
+            {
+                <li>Day @hours.Weekday: @hours.OpensAt - @hours.ClosesAt</li>
+            }
+        </ul>
+    </article>
+    <article class="panel">
+        <h2>Exceptions</h2>
+        @if (Model.OpeningHourExceptions.Count == 0)
+        {
+            <p class="muted-text">No date-based exceptions are scheduled.</p>
+        }
+        else
+        {
+            <ul class="compact-list">
+                @foreach (var exception in Model.OpeningHourExceptions.OrderBy(item => item.ExceptionDate))
+                {
+                    <li>@exception.ExceptionDate: @(exception.IsClosed ? "Closed" : $"{exception.OpensAt} - {exception.ClosesAt}")</li>
+                }
+            </ul>
+        }
+    </article>
+</section>

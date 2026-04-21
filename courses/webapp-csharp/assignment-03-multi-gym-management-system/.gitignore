@@ -1,0 +1,11 @@
+bin/
+obj/
+.dotnet/
+.dotnet-cli/
+client/node_modules/
+client/dist/
+app-bll-build.log
+build-diag.log
+build-webapp.log
+codex-webapp-stderr.log
+codex-webapp-stdout.log

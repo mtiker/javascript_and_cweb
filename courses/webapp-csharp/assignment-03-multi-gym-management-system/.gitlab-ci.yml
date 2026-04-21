@@ -1,0 +1,78 @@
+stages:
+  - client
+  - build
+  - test
+  - package
+  - deploy
+
+.assignment03_changes: &assignment03_changes
+  - courses/webapp-csharp/assignment-03-multi-gym-management-system/**/*
+  - .gitlab-ci.yml
+
+.assignment03_job: &assignment03_job
+  rules:
+    - changes: *assignment03_changes
+    - when: never
+
+.assignment03_deploy_job: &assignment03_deploy_job
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH || $CI_COMMIT_TAG'
+      changes: *assignment03_changes
+    - when: never
+
+assignment03_client:
+  stage: client
+  tags:
+    - shared
+  <<: *assignment03_job
+  script:
+    - docker run --rm --user "$(id -u):$(id -g)" -v "$CI_PROJECT_DIR/courses/webapp-csharp/assignment-03-multi-gym-management-system/client:/workspace:ro" -w /tmp -e npm_config_cache=/tmp/npm-cache node:20-alpine sh -lc "mkdir -p /tmp/app /tmp/npm-cache && cp -R /workspace/. /tmp/app && cd /tmp/app && npm ci && npm test && npm run build"
+
+assignment03_build:
+  stage: build
+  tags:
+    - shared
+  needs:
+    - assignment03_client
+  <<: *assignment03_job
+  before_script:
+    - cd courses/webapp-csharp/assignment-03-multi-gym-management-system
+  script:
+    - dotnet restore multi-gym-management-system.slnx
+    - dotnet build multi-gym-management-system.slnx --configuration Release --no-restore
+
+assignment03_test:
+  stage: test
+  tags:
+    - shared
+  needs:
+    - assignment03_build
+  <<: *assignment03_job
+  before_script:
+    - cd courses/webapp-csharp/assignment-03-multi-gym-management-system
+  script:
+    - dotnet test multi-gym-management-system.slnx --configuration Release --no-build
+
+assignment03_docker_build:
+  stage: package
+  tags:
+    - shared
+  needs:
+    - assignment03_test
+  <<: *assignment03_job
+  script:
+    - docker build --pull --tag "$CI_PROJECT_PATH_SLUG-assignment-03:$CI_COMMIT_SHORT_SHA" courses/webapp-csharp/assignment-03-multi-gym-management-system
+
+assignment03_deploy:
+  stage: deploy
+  tags:
+    - shared
+  needs:
+    - assignment03_docker_build
+  environment:
+    name: assignment-03-production
+  <<: *assignment03_deploy_job
+  script:
+    - cd courses/webapp-csharp/assignment-03-multi-gym-management-system
+    - chmod +x scripts/deploy.sh
+    - ./scripts/deploy.sh

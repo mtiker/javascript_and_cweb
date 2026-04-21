@@ -1,0 +1,16 @@
+services:
+  assignment04:
+    image: ${JAVASCRIPT_A04_IMAGE:-javascript-assignment-04-vue-secure-todo:local}
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-https://taltech.akaver.com/api/v1}
+    restart: unless-stopped
+    ports:
+      - "${JAVASCRIPT_A04_PORT:-84}:80"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1/healthz || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 6

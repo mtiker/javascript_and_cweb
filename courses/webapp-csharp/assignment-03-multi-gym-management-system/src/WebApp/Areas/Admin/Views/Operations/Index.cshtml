@@ -1,0 +1,103 @@
+@model AdminOperationsPageViewModel
+
+<section class="panel">
+    <p class="eyebrow">Admin workspace</p>
+    <h1>Operations</h1>
+    <p>Active gym: <strong>@Model.GymCode</strong></p>
+</section>
+
+<section class="page-grid">
+    <article class="panel">
+        <h2>Opening hours</h2>
+        @if (Model.OpeningHours.Count == 0)
+        {
+            <p class="muted-text">No opening-hours template configured.</p>
+        }
+        else
+        {
+            <table class="data-table">
+                <thead>
+                <tr>
+                    <th>Weekday</th>
+                    <th>Opens</th>
+                    <th>Closes</th>
+                </tr>
+                </thead>
+                <tbody>
+                @foreach (var row in Model.OpeningHours)
+                {
+                    <tr>
+                        <td>@row.Weekday</td>
+                        <td>@row.OpensAt</td>
+                        <td>@row.ClosesAt</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        }
+    </article>
+
+    <article class="panel">
+        <h2>Equipment</h2>
+        @if (Model.Equipment.Count == 0)
+        {
+            <p class="muted-text">No equipment registered.</p>
+        }
+        else
+        {
+            <table class="data-table">
+                <thead>
+                <tr>
+                    <th>Asset tag</th>
+                    <th>Model</th>
+                    <th>Status</th>
+                </tr>
+                </thead>
+                <tbody>
+                @foreach (var item in Model.Equipment)
+                {
+                    <tr>
+                        <td>@item.AssetTag</td>
+                        <td>@item.ModelName</td>
+                        <td>@item.Status</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        }
+    </article>
+
+    <article class="panel">
+        <h2>Maintenance tasks</h2>
+        @if (Model.MaintenanceTasks.Count == 0)
+        {
+            <p class="muted-text">No maintenance tasks open for this gym.</p>
+        }
+        else
+        {
+            <table class="data-table">
+                <thead>
+                <tr>
+                    <th>Asset</th>
+                    <th>Type</th>
+                    <th>Status</th>
+                    <th>Assigned to</th>
+                    <th>Due</th>
+                </tr>
+                </thead>
+                <tbody>
+                @foreach (var task in Model.MaintenanceTasks)
+                {
+                    <tr>
+                        <td>@task.AssetTag</td>
+                        <td>@task.TaskType</td>
+                        <td>@task.Status</td>
+                        <td>@(task.AssignedTo ?? "Unassigned")</td>
+                        <td>@(task.DueAtUtc?.ToLocalTime().ToString("g") ?? "-")</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        }
+    </article>
+</section>

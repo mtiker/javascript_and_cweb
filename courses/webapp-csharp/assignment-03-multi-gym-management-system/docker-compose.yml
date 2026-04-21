@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: multi-gym-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: multi_gym_management_system
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - multi-gym-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d multi_gym_management_system"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+
+volumes:
+  multi-gym-postgres-data:

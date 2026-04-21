@@ -1,0 +1,26 @@
+@model IReadOnlyCollection<App.Domain.Entities.Gym>
+@inject IStringLocalizer<SharedResources> L
+<section class="panel">
+    <h1>@L["Gyms"]</h1>
+    <table class="data-table">
+        <thead>
+        <tr>
+            <th>Name</th>
+            <th>Code</th>
+            <th>City</th>
+            <th>Status</th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var gym in Model)
+        {
+            <tr>
+                <td>@gym.Name</td>
+                <td>@gym.Code</td>
+                <td>@gym.City</td>
+                <td>@(gym.IsActive ? "Active" : "Inactive")</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</section>

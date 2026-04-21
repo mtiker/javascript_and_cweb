@@ -1,0 +1,45 @@
+@model MaintenanceTaskDetailPageViewModel
+@using App.Domain.Enums
+@{
+    var statusMessage = TempData["StatusMessage"] as string;
+}
+
+<section class="panel">
+    <p class="eyebrow">Maintenance task</p>
+    <h1>@Model.Task.TaskType - @Model.EquipmentLabel</h1>
+    @if (!string.IsNullOrWhiteSpace(statusMessage))
+    {
+        <p class="status-message">@statusMessage</p>
+    }
+    <dl class="definition-list">
+        <dt>Status</dt>
+        <dd>@Model.Task.Status</dd>
+        <dt>Priority</dt>
+        <dd>@Model.Task.Priority</dd>
+        <dt>Due</dt>
+        <dd>@Model.Task.DueAtUtc?.ToLocalTime().ToString("g")</dd>
+        <dt>Started</dt>
+        <dd>@Model.Task.StartedAtUtc?.ToLocalTime().ToString("g")</dd>
+        <dt>Completed</dt>
+        <dd>@Model.Task.CompletedAtUtc?.ToLocalTime().ToString("g")</dd>
+    </dl>
+
+    <form asp-action="UpdateStatus" method="post" class="form">
+        <input type="hidden" name="id" value="@Model.Task.Id" />
+        <label>
+            Status
+            <select name="status">
+                <option value="@MaintenanceTaskStatus.Open">Open</option>
+                <option value="@MaintenanceTaskStatus.InProgress">In progress</option>
+                <option value="@MaintenanceTaskStatus.Done">Done</option>
+            </select>
+        </label>
+        <label>
+            Notes
+            <textarea name="notes">@Model.Notes</textarea>
+        </label>
+        <button type="submit">Save task status</button>
+    </form>
+
+    <a asp-action="Index">Back to maintenance</a>
+</section>

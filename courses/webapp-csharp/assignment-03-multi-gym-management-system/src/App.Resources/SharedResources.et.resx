@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="AppTitle" xml:space="preserve">
+    <value>Mitme jõusaali haldussüsteem</value>
+  </data>
+  <data name="Login" xml:space="preserve">
+    <value>Logi sisse</value>
+  </data>
+  <data name="Logout" xml:space="preserve">
+    <value>Logi välja</value>
+  </data>
+  <data name="Culture" xml:space="preserve">
+    <value>Keel</value>
+  </data>
+  <data name="Dashboard" xml:space="preserve">
+    <value>Töölaud</value>
+  </data>
+  <data name="Email" xml:space="preserve">
+    <value>E-post</value>
+  </data>
+  <data name="Password" xml:space="preserve">
+    <value>Parool</value>
+  </data>
+  <data name="Welcome" xml:space="preserve">
+    <value>Tere tulemast</value>
+  </data>
+  <data name="AdminArea" xml:space="preserve">
+    <value>Admini ala</value>
+  </data>
+  <data name="ClientArea" xml:space="preserve">
+    <value>Kasutaja ala</value>
+  </data>
+  <data name="Gyms" xml:space="preserve">
+    <value>Jõusaalid</value>
+  </data>
+  <data name="Sessions" xml:space="preserve">
+    <value>Treeningud</value>
+  </data>
+  <data name="Maintenance" xml:space="preserve">
+    <value>Hooldus</value>
+  </data>
+  <data name="Members" xml:space="preserve">
+    <value>Liikmed</value>
+  </data>
+  <data name="UpcomingSessions" xml:space="preserve">
+    <value>Tulevased treeningud</value>
+  </data>
+  <data name="MyBookings" xml:space="preserve">
+    <value>Minu broneeringud</value>
+  </data>
+  <data name="AssignedTasks" xml:space="preserve">
+    <value>Mulle määratud tööd</value>
+  </data>
+  <data name="SignInHint" xml:space="preserve">
+    <value>Kasuta eelnevalt lisatud demo kontosid või enda kasutajat.</value>
+  </data>
+  <data name="ErrorTitle" xml:space="preserve">
+    <value>Midagi läks valesti</value>
+  </data>
+  <data name="ErrorMessage" xml:space="preserve">
+    <value>Päringut ei saanud lõpule viia. Mine eelmisele lehele tagasi ja proovi uuesti.</value>
+  </data>
+</root>

@@ -1,0 +1,57 @@
+@model TrainerRosterPageViewModel
+@using App.Domain.Enums
+@{
+    var statusMessage = TempData["StatusMessage"] as string;
+}
+
+<section class="panel">
+    <p class="eyebrow">Trainer roster</p>
+    <h1>@Model.SessionName</h1>
+    <p>@Model.StartAtUtc.ToLocalTime():g</p>
+    @if (!string.IsNullOrWhiteSpace(statusMessage))
+    {
+        <p class="status-message">@statusMessage</p>
+    }
+
+    @if (Model.Bookings.Count == 0)
+    {
+        <p class="muted-text">No bookings for this session yet.</p>
+    }
+    else
+    {
+        <table class="data-table">
+            <thead>
+            <tr>
+                <th>Member</th>
+                <th>Status</th>
+                <th>Payment</th>
+                <th>Attendance</th>
+            </tr>
+            </thead>
+            <tbody>
+            @foreach (var booking in Model.Bookings)
+            {
+                <tr>
+                    <td>@booking.MemberName</td>
+                    <td>@booking.Status</td>
+                    <td>@booking.ChargedPrice @(booking.PaymentRequired ? "paid/required" : "included/free")</td>
+                    <td>
+                        <form asp-action="UpdateAttendance" method="post" class="inline-form">
+                            <input type="hidden" name="sessionId" value="@Model.SessionId" />
+                            <input type="hidden" name="bookingId" value="@booking.BookingId" />
+                            <select name="status">
+                                <option value="@BookingStatus.Booked">Booked</option>
+                                <option value="@BookingStatus.Attended">Attended</option>
+                                <option value="@BookingStatus.NoShow">No show</option>
+                                <option value="@BookingStatus.Cancelled">Cancelled</option>
+                            </select>
+                            <button type="submit">Save</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    }
+    <a asp-action="Details" asp-route-id="@Model.SessionId">Back to session</a>
+</section>

@@ -1,0 +1,36 @@
+@model WorkspaceSwitcherViewModel
+
+@if (Model.Gyms.Count > 1 || Model.RolesInActiveGym.Count > 1)
+{
+    <div class="workspace-switcher">
+        @if (Model.Gyms.Count > 1)
+        {
+            <form asp-area="" asp-controller="Home" asp-action="SwitchGym" method="post" class="workspace-form">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="returnUrl" value="@Model.ReturnUrl" />
+                <label for="gymCode">Gym</label>
+                <select id="gymCode" name="gymCode" onchange="this.form.submit()">
+                    @foreach (var gym in Model.Gyms)
+                    {
+                        <option value="@gym.Code" selected="@(gym.Code == Model.ActiveGymCode ? "selected" : null)">@gym.Name</option>
+                    }
+                </select>
+            </form>
+        }
+
+        @if (Model.RolesInActiveGym.Count > 1)
+        {
+            <form asp-area="" asp-controller="Home" asp-action="SwitchRole" method="post" class="workspace-form">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="returnUrl" value="@Model.ReturnUrl" />
+                <label for="roleName">Role</label>
+                <select id="roleName" name="roleName" onchange="this.form.submit()">
+                    @foreach (var roleName in Model.RolesInActiveGym)
+                    {
+                        <option value="@roleName" selected="@(roleName == Model.ActiveRole ? "selected" : null)">@roleName</option>
+                    }
+                </select>
+            </form>
+        }
+    </div>
+}

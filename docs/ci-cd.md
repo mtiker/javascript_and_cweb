@@ -26,6 +26,12 @@ This keeps unrelated assignments from building when only one assignment changes 
         docker-compose.prod.yml
         dockerfiles/
         scripts/deploy.sh
+      assignment-04-vue-secure-todo/
+        .gitlab-ci.yml
+        Dockerfile
+        docker-compose.prod.yml
+        nginx/default.conf
+        scripts/deploy.sh
     webapp-csharp/
       assignment-18-dental-clinic-platform/
         .gitlab-ci.yml
@@ -116,6 +122,77 @@ The JavaScript Assignment 03 proxy mappings are:
 - `https://mtiker-js-js.proxy.itcollege.ee` => `http://192.168.181.122:81`
 - `https://mtiker-js-ts.proxy.itcollege.ee` => `http://192.168.181.122:82`
 
+## JavaScript Assignment 04 Deployment Model
+
+`courses/javascript/assignment-04-vue-secure-todo` is a self-contained Vue 3 deployable frontend:
+
+- `Dockerfile` builds the Vite app and serves it with nginx
+- `docker-compose.prod.yml` exposes the app on host port `84` by default
+- `nginx/default.conf` keeps history-mode routing refresh-safe with `try_files`
+- `scripts/deploy.sh` starts the container and smoke-checks both `/healthz` and `/`
+
+The assignment pipeline runs:
+
+- `npm ci`
+- strict Vue/TypeScript validation
+- Vitest unit and component/integration tests
+- Docker Compose image build validation
+- deployment on the default branch or tags only
+
+To keep the shell runner stable:
+
+- the test job uses the same `/tmp/app` + `/tmp/npm-cache` copy strategy as JavaScript Assignment 03 instead of writing into the runner checkout
+- the Docker build runs from the assignment folder so Docker context and nginx config stay assignment-local
+
+## JavaScript Assignment 04 Variables
+
+For JavaScript Assignment 04 deployment, these values can be configured as GitLab CI/CD variables or on the VPS runner host:
+
+- `JAVASCRIPT_A04_PORT` to override the default host port `84`
+- `JAVASCRIPT_A04_IMAGE` to override the image name
+- `COMPOSE_PROJECT_NAME` to override the default Docker Compose project name `javascript-assignment-04`
+- `VITE_API_BASE_URL` to override the default backend base URL `https://taltech.akaver.com/api/v1` at Docker image build time
+
+The JavaScript Assignment 04 proxy mapping is:
+
+- `https://mtiker-js-vue.proxy.itcollege.ee` => `http://192.168.181.122:84`
+
+## Assignment 03 Multi-Gym Deployment Model
+
+`courses/webapp-csharp/assignment-03-multi-gym-management-system` is treated as a self-contained deployable app:
+
+- `Dockerfile` builds the ASP.NET Core application image and the React client
+- `docker-compose.yml` is for local development database startup
+- `docker-compose.prod.yml` is for VPS deployment with the app and PostgreSQL
+- `scripts/deploy.sh` is the deployment entrypoint used by the GitLab deploy job
+- the production React client is served by the backend at `/client`
+
+The deploy job is intentionally limited to the default branch or tags.
+
+The Assignment 03 proxy mapping is:
+
+- `https://mtiker-cweb-4.proxy.itcollege.ee` => `http://192.168.181.122:83`
+
+## Assignment 03 Multi-Gym Variables
+
+For Assignment 03 production deployment, configure these values in GitLab CI/CD variables or on the VPS runner host:
+
+- `JWT__Key`
+- `CORS_ALLOWED_ORIGIN` if you want to override the default `https://mtiker-cweb-4.proxy.itcollege.ee`
+- `POSTGRES_DB`
+- `POSTGRES_USER`
+- `POSTGRES_PASSWORD`
+- `WEBAPP_PORT` if you need to override the default host port `83`
+- `JWT__Issuer`
+- `JWT__Audience`
+- `JWT__AccessTokenMinutes`
+- `DATA_INIT_MIGRATE_DATABASE`
+- `DATA_INIT_SEED_DATA`
+- `MULTI_GYM_IMAGE` if you want a custom local image name
+- `COMPOSE_PROJECT_NAME` if you want a non-default Docker Compose project name
+
+At minimum, `JWT__Key` must be set. `CORS_ALLOWED_ORIGIN` defaults to `https://mtiker-cweb-4.proxy.itcollege.ee` for Assignment 03.
+
 ## Assignment 18 Deployment Model
 
 `courses/webapp-csharp/assignment-18-dental-clinic-platform` is treated as a self-contained deployable app:
@@ -154,9 +231,13 @@ At minimum, `JWT__Key` must be set. `CORS_ALLOWED_ORIGIN` now defaults to `https
 The intended behavior is:
 
 - a change only under `assignment-01`, `assignment-02`, or JavaScript `assignment-03` triggers only the JavaScript Assignment 03 pipeline
+- a change only under JavaScript `assignment-04` triggers only the JavaScript Assignment 04 pipeline
 - JavaScript Assignment 01 is served successfully on host port `81`
 - JavaScript Assignment 02 is served successfully on host port `82`
+- JavaScript Assignment 04 is served successfully on host port `84`
+- Web App C# Assignment 03 is served successfully on host port `83`
 - the JavaScript deploy script smoke-checks both local host ports after container startup
+- the JavaScript Assignment 04 deploy script smoke-checks `/healthz` and `/` after container startup
 - a change only under `assignment-18` triggers only the Assignment 18 pipeline
 - a change only in root documentation does not trigger Assignment 18 build/test/deploy jobs
 - a Docker or deployment-script change triggers the Docker build job

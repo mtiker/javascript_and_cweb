@@ -1,0 +1,11 @@
+**/bin
+**/obj
+**/out
+**/.vscode
+**/.vs
+.dotnet
+.dotnet-cli
+.git
+*.log
+client/node_modules
+client/dist

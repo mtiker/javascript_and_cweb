@@ -46,6 +46,8 @@ Use Conventional Commits with subject/assignment scope:
   - alternative solutions considered
   - ADR/ERD notes when relevant
 - With every implemented change, verify that related documentation stays in sync, including relevant `README.md` files and `docs/ai-prompts.md`.
+- If an assignment has an explicit plan, blueprint, or target-architecture document, update that document in the same change whenever scope, architecture, entities, roles, APIs, tests, deployment expectations, or delivery status change.
+- For `courses/webapp-csharp/assignment-03-multi-gym-management-system`, keep `docs/a3-saas-plan.md` aligned with implementation and README changes.
 
 ## Documentation Standard
 
@@ -100,14 +102,17 @@ When implementing or changing features, keep in sync where relevant:
 
 ### `courses/javascript`
 
-- Match the assignment phase rather than jumping ahead:
-  - A1: pure JavaScript, browser-based CRUD, storage, async handling, and validation.
-  - A2: strict TypeScript, custom types, generic utilities, search/sorting, recurring-task enhancements, relationship modeling, Zod runtime validation, and coverage reporting.
-  - A3: Vite + Vue 3 + TypeScript + Pinia + Vue Router, reusable components, responsive/mobile-first UI, local persistence, and drag-drop where relevant.
-  - A4: Vite + React + TypeScript, Router, state management, custom hooks, reusable components, error boundaries, memoization where appropriate, and loading states.
-  - A5: Docker, GitLab CI/CD, VPS deployment, multi-stage images, local/prod compose files, health checks, and deployment documentation.
-  - A6: NestJS + TypeScript + Prisma/TypeORM + migrations + Swagger + JWT + refresh tokens + integrated frontend auth + comprehensive testing.
-  - A7: Angular integrated with the backend, using modern Angular patterns such as standalone components, services, interceptors, route guards, and RxJS-based HTTP flows where relevant.
+- Match the current assignment phase rather than jumping ahead:
+  - A1: pure JavaScript, browser-based CRUD, browser storage, async handling, and validation.
+  - A2: strict TypeScript migration with custom types, at least 3 generic utilities, recurring-task/domain enhancements, relationship modeling, Zod runtime validation, and a test suite with coverage reporting.
+  - A3: Vite + Vue 3 + TypeScript + Pinia + Vue Router, reusable components, responsive/mobile-first UI, local persistence, drag-drop where relevant, and deployment-ready frontend structure.
+  - A4: Vite + React + TypeScript with React Router, Zustand or Context + `useReducer`, at least 3 custom hooks, at least 5 reusable components, protected-route patterns, error boundaries, memoization where appropriate, and loading states.
+  - A5: Docker, GitLab CI/CD, VPS deployment, multi-stage images, local/prod compose files, reverse-proxy/SSL concerns, health checks, and deployment documentation.
+  - A6: NestJS + TypeScript + PostgreSQL (or SQLite) with Prisma or TypeORM, migrations, Swagger, JWT + refresh token rotation, integrated Vue/React frontend auth, and comprehensive unit/component/integration/E2E testing.
+  - A7: Angular 17+ integrated with the backend, using standalone components, services, interceptors, route guards, RxJS-based HTTP flows, reactive forms, and Angular auth integration.
+- Treat A6-A7 as extended curriculum, not guaranteed baseline work:
+  - the official syllabus says Node.js/NestJS and/or Angular weeks may be dropped or condensed based on class progress
+  - if that happens, do not force backend/Angular work into the plan; instead strengthen the required React/full-app/demo/testing scope that remains
 - At least one framework implementation must behave like a full application, not a thin CRUD shell. Plan for:
   - aggregated dashboards or summary views
   - multi-step or workflow-style flows where appropriate
@@ -133,9 +138,15 @@ When implementing or changing features, keep in sync where relevant:
   - A3: Docker + CI/CD + VPS deployment
   - A4: modular monolith refactor of the same A2/A3 project
   - A5: extract one module into a simple microservice
+- Treat testing as cross-cutting from A1 onward:
+  - there is no separate testing assignment later
+  - unit, integration, and E2E coverage should be maintained and extended as the architecture evolves
 - Do not collapse A1 and A2 into one architecture. A1 is a separate foundational exercise; A2-A5 are cumulative on the same student project.
 - Treat A2 as blocked until the project proposal is approved when the course requires that prerequisite.
 - Preserve cumulative deliverables from earlier phases. Moving from A2 to A5 must not silently regress the client app, deployment, auth flow, or test coverage already required.
+- Treat A4-A5 as advanced curriculum that may be reduced if the teacher drops modular monolith and/or microservices:
+  - do not prematurely over-architect an A2/A3 project if the active course phase does not require it yet
+  - if advanced curriculum is reduced, keep the Clean Architecture + REST API + client + DevOps baseline polished and defense-ready instead
 - Use the course-aligned stack by default:
   - .NET 10
   - ASP.NET Core

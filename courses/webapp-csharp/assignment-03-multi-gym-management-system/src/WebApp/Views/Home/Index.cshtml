@@ -1,0 +1,26 @@
+@model LoginViewModel
+@inject IStringLocalizer<SharedResources> L
+<section class="hero-card">
+    <div>
+        <p class="eyebrow">@L["Welcome"]</p>
+        <h1>@L["AppTitle"]</h1>
+        <p>@L["SignInHint"]</p>
+    </div>
+    <form asp-action="Login" method="post" class="panel">
+        @Html.AntiForgeryToken()
+        <div asp-validation-summary="All" class="validation"></div>
+        <label asp-for="Email">@L["Email"]</label>
+        <input asp-for="Email" />
+        <label asp-for="Password">@L["Password"]</label>
+        <input asp-for="Password" />
+        <button type="submit">@L["Login"]</button>
+        <div class="seed-hint">
+            <div>`systemadmin@gym.local` / `Gym123!`</div>
+            <div>`admin@peakforge.local` / `Gym123!`</div>
+            <div>`multigym.admin@gym.local` / `Gym123!`</div>
+            <div>`member@peakforge.local` / `Gym123!`</div>
+            <div>`trainer@peakforge.local` / `Gym123!`</div>
+            <div>`caretaker@peakforge.local` / `Gym123!`</div>
+        </div>
+    </form>
+</section>

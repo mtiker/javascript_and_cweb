@@ -1,0 +1,42 @@
+@model AdminSessionsPageViewModel
+
+<section class="panel">
+    <p class="eyebrow">Admin workspace</p>
+    <h1>Sessions</h1>
+    <p>Active gym: <strong>@Model.GymCode</strong></p>
+</section>
+
+<section class="panel">
+    @if (Model.Sessions.Count == 0)
+    {
+        <p class="muted-text">No sessions scheduled for the active gym.</p>
+    }
+    else
+    {
+        <table class="data-table">
+            <thead>
+            <tr>
+                <th>Session</th>
+                <th>Time</th>
+                <th>Bookings</th>
+                <th>Capacity</th>
+                <th>Trainers</th>
+                <th>Status</th>
+            </tr>
+            </thead>
+            <tbody>
+            @foreach (var session in Model.Sessions)
+            {
+                <tr>
+                    <td>@session.Name</td>
+                    <td>@session.StartAtUtc.ToLocalTime():g - @session.EndAtUtc.ToLocalTime():t</td>
+                    <td>@session.BookingCount</td>
+                    <td>@session.Capacity</td>
+                    <td>@(string.IsNullOrWhiteSpace(session.TrainerNames) ? "No trainers assigned" : session.TrainerNames)</td>
+                    <td>@session.Status</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    }
+</section>

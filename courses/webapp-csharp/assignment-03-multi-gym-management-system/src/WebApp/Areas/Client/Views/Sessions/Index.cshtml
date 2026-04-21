@@ -1,0 +1,80 @@
+@model SessionsPageViewModel
+@inject IStringLocalizer<SharedResources> L
+<section class="panel">
+    <h1>@L["Sessions"]</h1>
+    <p>Gym: <strong>@Model.GymCode</strong></p>
+    @if (Model.Sessions.Count == 0)
+    {
+        <p class="muted-text">No sessions are currently scheduled.</p>
+    }
+    else
+    {
+        <table class="data-table">
+            <thead>
+            <tr>
+                <th>Name</th>
+                <th>Start</th>
+                <th>End</th>
+                <th>Status</th>
+                <th>Price</th>
+            </tr>
+            </thead>
+            <tbody>
+            @foreach (var session in Model.Sessions)
+            {
+                <tr>
+                    <td>@session.Name</td>
+                    <td>@session.StartAtUtc.ToLocalTime():g</td>
+                    <td>@session.EndAtUtc.ToLocalTime():g</td>
+                    <td>@session.Status</td>
+                    <td>@session.BasePrice @session.CurrencyCode</td>
+                    <td><a asp-action="Details" asp-route-id="@session.Id">Details</a></td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    }
+</section>
+
+<section class="page-grid">
+    <article class="panel">
+        <h2>Opening hours</h2>
+        @if (Model.OpeningHours.Count == 0)
+        {
+            <p class="muted-text">No weekly opening hours have been configured.</p>
+        }
+        else
+        {
+            <ul class="compact-list">
+                @foreach (var hours in Model.OpeningHours.OrderBy(item => item.Weekday))
+                {
+                    <li>Day @hours.Weekday: @hours.OpensAt - @hours.ClosesAt</li>
+                }
+            </ul>
+        }
+    </article>
+
+    <article class="panel">
+        <h2>Exceptions</h2>
+        @if (Model.OpeningHourExceptions.Count == 0)
+        {
+            <p class="muted-text">No date-based opening exceptions are scheduled.</p>
+        }
+        else
+        {
+            <ul class="compact-list">
+                @foreach (var exception in Model.OpeningHourExceptions.OrderBy(item => item.ExceptionDate))
+                {
+                    <li>
+                        @exception.ExceptionDate:
+                        @(exception.IsClosed ? "Closed" : $"{exception.OpensAt} - {exception.ClosesAt}")
+                        @if (!string.IsNullOrWhiteSpace(exception.Reason))
+                        {
+                            <span>- @exception.Reason</span>
+                        }
+                    </li>
+                }
+            </ul>
+        }
+    </article>
+</section>

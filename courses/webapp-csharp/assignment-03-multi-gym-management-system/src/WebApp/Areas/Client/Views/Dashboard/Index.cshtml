@@ -1,0 +1,65 @@
+@model ClientDashboardViewModel
+@inject IStringLocalizer<SharedResources> L
+<section class="dashboard-grid">
+    <article class="panel">
+        <h1>@L["ClientArea"]</h1>
+        <p>Active gym: <strong>@Model.ActiveGymCode</strong></p>
+        <p>Active role: <strong>@Model.ActiveRole</strong></p>
+    </article>
+    <article class="panel">
+        <h2>@L["UpcomingSessions"]</h2>
+        @if (Model.UpcomingSessions.Count == 0)
+        {
+            <p>No upcoming sessions.</p>
+        }
+        else
+        {
+            <ul class="compact-list">
+                @foreach (var session in Model.UpcomingSessions)
+                {
+                    <li>@session.Name - @session.StartAtUtc.ToLocalTime():g</li>
+                }
+            </ul>
+        }
+    </article>
+    <article class="panel">
+        <h2>@L["MyBookings"]</h2>
+        @if (Model.MyBookings.Count == 0)
+        {
+            <p>No bookings yet.</p>
+        }
+        else
+        {
+            <ul class="compact-list">
+                @foreach (var booking in Model.MyBookings)
+                {
+                    <li>@booking.TrainingSessionId - @booking.Status</li>
+                }
+            </ul>
+        }
+    </article>
+    <article class="panel">
+        <h2>@L["AssignedTasks"]</h2>
+        @if (Model.AssignedTasks.Count == 0)
+        {
+            <p>No assigned maintenance tasks.</p>
+        }
+        else
+        {
+            <ul class="compact-list">
+                @foreach (var task in Model.AssignedTasks)
+                {
+                    <li>@task.TaskType - @task.Status</li>
+                }
+            </ul>
+        }
+    </article>
+</section>
+<section class="panel">
+    <h2>Quick links</h2>
+    <div class="link-strip">
+        <a asp-area="Client" asp-controller="Profile" asp-action="Index">Profile</a>
+        <a asp-area="Client" asp-controller="Sessions" asp-action="Index">@L["Sessions"]</a>
+        <a asp-area="Client" asp-controller="Maintenance" asp-action="Index">@L["Maintenance"]</a>
+    </div>
+</section>

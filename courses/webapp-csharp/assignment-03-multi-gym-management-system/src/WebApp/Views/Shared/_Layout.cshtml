@@ -1,0 +1,40 @@
+@using System.Globalization
+@inject IStringLocalizer<SharedResources> L
+<!DOCTYPE html>
+<html lang="@CultureInfo.CurrentUICulture.Name">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@L["AppTitle"]</title>
+    <link rel="stylesheet" href="~/css/site.css" />
+</head>
+<body>
+    <header class="topbar">
+        <div>
+            <strong>@L["AppTitle"]</strong>
+        </div>
+        <nav class="topnav">
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index">@L["AdminArea"]</a>
+                <a asp-area="Client" asp-controller="Dashboard" asp-action="Index">@L["ClientArea"]</a>
+                <a asp-area="Client" asp-controller="Profile" asp-action="Index">Profile</a>
+            }
+        </nav>
+        <div class="topbar-actions">
+            <partial name="_CultureSwitcher" />
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <vc:workspace-switcher></vc:workspace-switcher>
+                <form asp-area="" asp-controller="Home" asp-action="Logout" method="post">
+                    @Html.AntiForgeryToken()
+                    <button type="submit">@L["Logout"]</button>
+                </form>
+            }
+        </div>
+    </header>
+    <main class="page-shell">
+        @RenderBody()
+    </main>
+</body>
+</html>

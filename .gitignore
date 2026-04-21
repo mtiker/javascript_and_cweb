@@ -1,2 +1,3 @@
 .codex-dotnet/
+.dotnet-cli/
 **/node_modules/

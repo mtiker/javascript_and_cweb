@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/App.BLL/App.BLL.csproj" />
+    <Project Path="src/App.DAL.EF/App.DAL.EF.csproj" />
+    <Project Path="src/App.Domain/App.Domain.csproj" />
+    <Project Path="src/App.DTO/App.DTO.csproj" />
+    <Project Path="src/App.Resources/App.Resources.csproj" />
+    <Project Path="src/WebApp/WebApp.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/WebApp.Tests/WebApp.Tests.csproj" />
+  </Folder>
+</Solution>

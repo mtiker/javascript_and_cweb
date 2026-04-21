@@ -1,0 +1,54 @@
+stages:
+  - test
+  - package
+  - deploy
+
+.javascript_assignment04_changes: &javascript_assignment04_changes
+  - courses/javascript/assignment-04-vue-secure-todo/**/*
+  - .gitlab-ci.yml
+
+.javascript_assignment04_job: &javascript_assignment04_job
+  rules:
+    - changes: *javascript_assignment04_changes
+    - when: never
+
+.javascript_assignment04_deploy_job: &javascript_assignment04_deploy_job
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH || $CI_COMMIT_TAG'
+      changes: *javascript_assignment04_changes
+    - when: never
+
+javascript_assignment04_test:
+  stage: test
+  tags:
+    - shared
+  <<: *javascript_assignment04_job
+  script:
+    - docker run --rm --user "$(id -u):$(id -g)" -v "$CI_PROJECT_DIR/courses/javascript/assignment-04-vue-secure-todo:/workspace:ro" -w /tmp -e npm_config_cache=/tmp/npm-cache node:20-alpine sh -lc "mkdir -p /tmp/app /tmp/npm-cache && cp -R /workspace/. /tmp/app && cd /tmp/app && npm ci && npm run check && npm test"
+
+javascript_assignment04_docker_build:
+  stage: package
+  tags:
+    - shared
+  needs:
+    - javascript_assignment04_test
+  <<: *javascript_assignment04_job
+  before_script:
+    - cd courses/javascript/assignment-04-vue-secure-todo
+  script:
+    - docker compose -f docker-compose.prod.yml build --pull
+
+javascript_assignment04_deploy:
+  stage: deploy
+  tags:
+    - shared
+  needs:
+    - javascript_assignment04_docker_build
+  environment:
+    name: javascript-assignment-04-production
+  <<: *javascript_assignment04_deploy_job
+  before_script:
+    - cd courses/javascript/assignment-04-vue-secure-todo
+  script:
+    - chmod +x scripts/deploy.sh
+    - ./scripts/deploy.sh

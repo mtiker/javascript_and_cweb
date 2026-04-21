@@ -16,6 +16,126 @@ Record AI-assisted development evidence here.
 
 ## Entries
 
+- Date: 2026-04-21
+- Subject: webapp-csharp
+- Assignment: assignment-03-multi-gym-management-system
+- Prompt: Use the `cweb-a4` proxy URL for C# Assignment 3 deployment after confirming the proxy table, and use previous assignments as the deployment source of truth.
+- Files affected: `courses/webapp-csharp/assignment-03-multi-gym-management-system/README.md`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/docker-compose.prod.yml`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/docs/deployment.md`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/docs/a3-saas-plan.md`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/docs/architecture.md`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/docs/ai-usage.md`, `courses/javascript/assignment-04-vue-secure-todo/README.md`, `courses/javascript/assignment-04-vue-secure-todo/docker-compose.prod.yml`, `courses/javascript/assignment-04-vue-secure-todo/scripts/deploy.sh`, `README.md`, `docs/ci-cd.md`, `docs/ai-prompts.md`
+- AI output used: Aligned C# Assignment 3 with `https://mtiker-cweb-4.proxy.itcollege.ee` on VPS port `83`, added the production CORS origin default, documented the public route and smoke checks, and moved JavaScript Assignment 04 defaults/docs to port `84` to match the `js-vue` proxy route.
+- What AI got wrong / needed correction: The first deployment guidance assumed the older `cweb-a3` URL; the user corrected this to `cweb-a4`.
+- Changes made manually: Reviewed the proxy-host screenshot values and kept Assignment 18 documented on the existing `cweb-a3` route.
+- Alternatives considered: Replacing Assignment 18 on `cweb-a3`, but the proxy table provides a dedicated `cweb-a4` route for the new C# assignment.
+
+- Date: 2026-04-21
+- Subject: javascript
+- Assignment: assignment-04-vue-secure-todo
+- Prompt: Perform a browser visual audit of the Vue assignment, checking real desktop/mobile screenshots for readability, color, spacing, responsive layout, and random or overly technical UI text; fix issues found.
+- Files affected: `courses/javascript/assignment-04-vue-secure-todo/src/styles.css`, `courses/javascript/assignment-04-vue-secure-todo/src/components/AuthCard.vue`, `courses/javascript/assignment-04-vue-secure-todo/src/components/AppShell.vue`, `courses/javascript/assignment-04-vue-secure-todo/src/components/TaskFormModal.vue`, `courses/javascript/assignment-04-vue-secure-todo/src/components/CatalogFormModal.vue`, `courses/javascript/assignment-04-vue-secure-todo/src/views/LoginView.vue`, `courses/javascript/assignment-04-vue-secure-todo/src/views/RegisterView.vue`, `courses/javascript/assignment-04-vue-secure-todo/src/views/DashboardView.vue`, `courses/javascript/assignment-04-vue-secure-todo/src/views/TasksView.vue`, `courses/javascript/assignment-04-vue-secure-todo/src/views/CatalogsView.vue`, `courses/javascript/assignment-04-vue-secure-todo/.gitignore`, `docs/ai-prompts.md`
+- AI output used: Drove Chrome against a local Vite app and mock API, captured desktop/mobile screenshots, then tightened the palette, border radii, mobile shell density, task action button sizing, user-facing copy, and validation-message timing.
+- What AI got wrong / needed correction: The first screenshot driver timed out because Vite was started through `npm.cmd`; switching to Vite's direct Node entrypoint made the browser audit reliable.
+- Changes made manually: Reviewed generated screenshots for login, register, dashboard, task list, catalogs, task modal, and delete confirmation; re-ran `npm test` and `npm run build` after the polish changes.
+- Alternatives considered: Reporting visual issues only, but direct fixes were safer because the screenshots showed concrete mobile and form-state problems.
+
+- Date: 2026-04-21
+- Subject: webapp-csharp
+- Assignment: assignment-03-multi-gym-management-system
+- Prompt: Implement the A3 readiness gap plan: package the React client into production at `/client`, move proposal-critical workflows behind BLL services, add member/trainer/caretaker/opening-hours happy paths, fix nullable session descriptions, add regression tests, and synchronize documentation.
+- Files affected: `courses/webapp-csharp/assignment-03-multi-gym-management-system/Dockerfile`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/client/*`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/src/App.BLL/*`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/src/App.DAL.EF/AppDbContext.cs`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/src/WebApp/ApiControllers/Tenant/*`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/src/WebApp/Areas/Client/*`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/src/WebApp/Setup/*`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/tests/WebApp.Tests/Integration/ProposalWorkflowTests.cs`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/README.md`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/docs/*.md`, `docs/ai-prompts.md`
+- AI output used: Added the production client build/copy stage and `/client` fallback, introduced `IAppDbContext` and BLL workflow services, refactored tenant API controllers to services, expanded MVC role happy paths, added the React sessions/booking workflow, fixed null-safe session description projections, and added backend/frontend regression tests.
+- What AI got wrong / needed correction: The first `/client` fallback did not catch the bare `/client` path, and putting Vitest setup in `vite.config.ts` caused production build type conflicts.
+- Changes made manually: Re-ran backend build/tests, frontend tests/build, and adjusted docs to document the pragmatic remaining `AppDbContext` exceptions.
+- Alternatives considered: Serving React from a second production container or rewriting data access around repositories/unit-of-work, but same-host `/client` deployment plus `IAppDbContext` gives a safer defense-ready fix.
+
+- Date: 2026-04-21
+- Subject: webapp-csharp
+- Assignment: assignment-03-multi-gym-management-system
+- Prompt: Fix the remaining limitations that React did not include trainer/caretaker screens and build/test output still showed `System.Security.Cryptography.Xml` NU1903 vulnerability warnings.
+- Files affected: `courses/webapp-csharp/assignment-03-multi-gym-management-system/client/src/App.tsx`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/client/src/components/AppShell.tsx`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/client/src/lib/*`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/client/src/pages/AttendancePage.tsx`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/client/src/pages/MaintenanceTasksPage.tsx`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/client/src/pages/OperationsPages.test.tsx`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/client/src/styles.css`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/tests/WebApp.Tests/WebApp.Tests.csproj`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/README.md`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/docs/*.md`, `docs/ai-prompts.md`
+- AI output used: Added React Attendance and Maintenance pages, wired trainer/caretaker roles into auth/navigation/API methods, added Vitest coverage for role updates, and pinned `System.Security.Cryptography.Xml` 10.0.6 to remove vulnerable transitive resolution in tests.
+- What AI got wrong / needed correction: No suppression was used; the fix needed a real package resolution change verified by `dotnet list package --vulnerable --include-transitive`.
+- Changes made manually: Checked NuGet/GitHub advisories for the patched package line, then reran frontend tests/build, .NET build/test, and package audit.
+- Alternatives considered: Suppressing NU1903 or leaving trainer/caretaker flows in MVC only, but package pinning and React role screens make the assignment easier to defend.
+
+- Date: 2026-04-21
+- Subject: javascript
+- Assignment: assignment-04-vue-secure-todo
+- Prompt: Fix the Vue assignment readiness review findings excluding deployment: redirect after refresh-token failure during protected-route setup, show retryable startup load-error states, and clean coverage reporting.
+- Files affected: `courses/javascript/assignment-04-vue-secure-todo/src/router/index.ts`, `courses/javascript/assignment-04-vue-secure-todo/src/views/*`, `courses/javascript/assignment-04-vue-secure-todo/tests/*`, `courses/javascript/assignment-04-vue-secure-todo/vite.config.ts`, `courses/javascript/assignment-04-vue-secure-todo/README.md`, `docs/ai-prompts.md`
+- AI output used: Added the auth-failure router redirect, retryable load-error panels for dashboard/tasks/catalogs, regression tests for the route and view states, and coverage excludes for generated/config/test-helper files.
+- What AI got wrong / needed correction: No major correction during this pass; the coverage cleanup needed one extra exclude for top-level test helpers after the first coverage rerun.
+- Changes made manually: Re-ran `npm test`, `npm run build`, and `npm run coverage` to verify the fixes and checked that assignment documentation stayed aligned.
+- Alternatives considered: Letting failed catalog preload pass through to the protected view, but redirecting when the session has been cleared gives a cleaner auth boundary for defense.
+
+- Date: 2026-04-16
+- Subject: javascript
+- Assignment: assignment-04-vue-secure-todo
+- Prompt: Implement Assignment 04 as a Vue 3 + TypeScript secure Todo frontend against the shared TalTech backend, with Vue Router, Pinia, JWT + refresh-token handling, first-run catalog onboarding, tests, Docker deployment, GitLab child pipeline, and synchronized documentation.
+- Files affected: `README.md`, `.gitlab-ci.yml`, `docs/ci-cd.md`, `docs/ai-prompts.md`, `courses/javascript/assignment-04-vue-secure-todo/*`
+- AI output used: Built the new Vue assignment app structure, API client/auth-refresh flow, Pinia stores, router guards, responsive views/components, Vitest suite, Docker/nginx/deploy files, assignment-local CI pipeline, and repo-level documentation updates.
+- What AI got wrong / needed correction: The first dependency set pulled Zod 4, which conflicted with `@vee-validate/zod`; the initial giant patch also hit Windows path/tooling limits; and the first auth-view tests were too brittle and had to be refocused onto the auth store for reliable verification.
+- Changes made manually: Rechecked the live TalTech backend behavior after the April 5, 2026 overhaul, validated real endpoint shapes with throwaway API calls, pinned the compatible validation dependency set, refined the form bindings to a clearer `useForm + setFieldValue` approach, and verified the assignment with `npm run check`, `npm test`, and `npm run build`.
+- Alternatives considered: Keeping the app inside the older JavaScript Assignment 03 deployment folder, storing tokens in `localStorage`, or relying on server seed data for first-run setup, but a self-contained Assignment 04 app with session-scoped auth and explicit catalog onboarding is cleaner, safer, and closer to the course brief.
+
+- Date: 2026-04-16
+- Subject: webapp-csharp
+- Assignment: assignment-03-multi-gym-management-system
+- Prompt: Implement the Assignment 03 correction pass excluding deployment: add a separate React + TypeScript client that uses the existing REST API with JWT and refresh tokens for 3 CRUD entities, fix production HTML vs API error handling, add security-focused tests, wire client verification into CI, and synchronize the assignment documentation.
+- Files affected: `courses/webapp-csharp/assignment-03-multi-gym-management-system/client/*`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/.gitlab-ci.yml`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/src/App.DTO/v1/Tenant/TenantDtos.cs`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/src/WebApp/ApiControllers/Tenant/MembersController.cs`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/src/WebApp/Controllers/HomeController.cs`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/src/WebApp/Middleware/ProblemDetailsMiddleware.cs`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/src/WebApp/Setup/ServiceCollectionExtensions.cs`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/src/WebApp/Setup/ApplicationBuilderExtensions.cs`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/src/WebApp/Views/Home/Error.cshtml`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/src/WebApp/appsettings.json`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/src/App.Resources/SharedResources*.resx`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/tests/WebApp.Tests/Integration/AuthSecurityAndErrorTests.cs`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/README.md`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/docs/architecture.md`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/docs/api.md`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/docs/testing.md`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/docs/a3-saas-plan.md`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/docs/ai-usage.md`, `docs/ai-prompts.md`
+- AI output used: Built the separate React client, added session persistence and refresh-token retry logic, implemented members/training-categories/membership-packages CRUD pages and tests, added backend CORS and member-detail DTO support, fixed production HTML vs API error handling, added integration tests for refresh rotation and authorization-denial cases, and synchronized the assignment CI/docs to the new delivery shape.
+- What AI got wrong / needed correction: The first backend error-response fix used a JSON helper overload that was not available in this target/runtime, the HTML error test initially ran under `Development` where MVC exception handling is disabled, and the `/Home/Error` route needed to accept re-executed failed `POST` requests instead of only `GET`.
+- Changes made manually: Split Vite and Vitest config to keep the frontend build clean, switched the production error test to a production-style test host, adjusted content-type handling for `ProblemDetails`, and checked the new docs against the actual controller routes and client scope.
+- Alternatives considered: Treating the MVC shell as the only client, expanding the React client to the whole tenant surface immediately, or mixing deployment changes into the same pass, but the final change stayed focused on the missing A3 deliverables without reopening deployment work.
+
+- Date: 2026-04-09
+- Subject: webapp-csharp
+- Assignment: assignment-03-multi-gym-management-system
+- Prompt: Implement Assignment 03 as a new full SaaS multi-gym management system based on the approved gym proposal, keep Assignment 18 untouched, and finish the work through backend, MVC UX, tests, migrations, CI/deploy files, and documentation.
+- Files affected: `README.md`, `.gitignore`, `.gitlab-ci.yml`, `docs/ai-prompts.md`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/*`
+- AI output used: Built the new A3 solution structure, platform and tenant domain model, EF Core mappings and migration, BLL services, versioned API controllers, Swagger/auth setup, MVC admin/client areas, workspace switching, tests, Docker/CI files, and assignment documentation.
+- What AI got wrong / needed correction: Several early files were still copied from the dental-clinic assignment, the first `LangStr` model design broke EF/InMemory tests, and the initial MVC layer was too shell-focused for the agreed SaaS scope.
+- Changes made manually: Reworked `LangStr` into a clearer value object, corrected copied project names and paths, added a seeded second gym plus a multi-gym admin for switch-gym coverage, added a migration, and extended the MVC layer with additional operational pages.
+- Alternatives considered: Reusing Assignment 18 directly, keeping a single-tenant gym app, or delaying migrations/docs until later, but those options would not satisfy the agreed A3 separation and SaaS scope cleanly.
+
+- Date: 2026-04-09
+- Subject: webapp-csharp
+- Assignment: assignment-03-multi-gym-management-system
+- Prompt: Clean up the remaining Assignment 03 deploy/CI naming leftovers and make the README match the actual multi-gym configuration.
+- Files affected: `courses/webapp-csharp/assignment-03-multi-gym-management-system/README.md`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/docs/ai-usage.md`, `docs/ai-prompts.md`
+- AI output used: Re-checked the assignment-local CI, compose, Docker, deploy, and project files; confirmed they already used multi-gym naming; then corrected the README connection-string example and removed the outdated warning that still claimed dental-era names were present in the active config.
+- What AI got wrong / needed correction: The previous README cleanup over-reported a legacy-config problem that no longer existed in the current assignment-local deploy and CI files.
+- Changes made manually: Verified `.gitlab-ci.yml`, `docker-compose.yml`, `docker-compose.prod.yml`, `scripts/deploy.sh`, `Dockerfile`, and `WebApp.csproj` before narrowing the update to stale documentation and log synchronization.
+- Alternatives considered: Editing already-correct config files just to create visible diff, but leaving working infrastructure files untouched is cleaner and safer.
+
+- Date: 2026-04-09
+- Subject: webapp-csharp
+- Assignment: assignment-03-multi-gym-management-system
+- Prompt: Add the full Assignment 03 SaaS plan into the project itself and extend `AGENTS.md` so future changes also update that plan when the implementation evolves.
+- Files affected: `courses/webapp-csharp/assignment-03-multi-gym-management-system/README.md`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/docs/a3-saas-plan.md`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/docs/ai-usage.md`, `AGENTS.md`, `docs/ai-prompts.md`
+- AI output used: Added an assignment-local A3 SaaS plan document covering the intended scope, domain model, roles, APIs, security rules, phased implementation order, tests, and delivery artifacts; linked it from the assignment README; and added a repository rule that explicit assignment plans must be kept in sync with implementation changes.
+- What AI got wrong / needed correction: Keeping the plan only in transient chat context would not reliably guide later sessions, and putting the whole plan only into the README would make the README harder to maintain as a day-to-day project guide.
+- Changes made manually: Chose a dedicated `docs/a3-saas-plan.md` location under the assignment so the plan remains local to the project and easy to update alongside future architecture or scope changes.
+- Alternatives considered: Expanding only the README or only `AGENTS.md`, but the combination of a concrete plan file plus an explicit sync rule gives better long-term maintenance.
+
+- Date: 2026-04-09
+- Subject: webapp-csharp
+- Assignment: assignment-03-multi-gym-management-system
+- Prompt: Fix the Assignment 03 README because the document still described a dental-clinic SaaS instead of the actual multi-gym management system.
+- Files affected: `courses/webapp-csharp/assignment-03-multi-gym-management-system/README.md`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/docs/ai-usage.md`, `docs/ai-prompts.md`
+- AI output used: Replaced the copied dental-clinic README with a gym-domain README that matches the real solution name, domain entities, seed users, route groups, project structure, and local startup flow; also added an assignment-local AI usage note.
+- What AI got wrong / needed correction: A shallow terminology swap would still leave incorrect solution names, broken doc references, and misleading instructions copied from the old dental-clinic assignment.
+- Changes made manually: Checked the assignment folder structure, seeded accounts, controller routes, scripts, launch settings, and current local database configuration before rewriting the documentation.
+- Alternatives considered: Only fixing the title and first paragraph, but that would still leave the rest of the README inaccurate for defense or onboarding.
+
+- Date: 2026-04-09
+- Subject: repository-rules
+- Assignment: n/a
+- Prompt: Re-check the live JavaScript and Web Applications with C# course materials and update the `AGENTS.md` subject-specific defaults where the current syllabus or technical requirements differ.
+- Files affected: `AGENTS.md`, `docs/ai-prompts.md`
+- AI output used: Tightened the JavaScript defaults around the current A1-A7 expectations, added the extended-curriculum caveat for JS, clarified the React/NestJS/Angular requirements, and added matching reduced-curriculum/testing guidance for the C# subject defaults.
+- What AI got wrong / needed correction: The earlier ruleset was close, but it did not clearly capture that JavaScript A6-A7 may be dropped based on class progress and it left some current React/NestJS details too generic.
+- Changes made manually: Verified the wording against the current official syllabus and technical-requirements pages before narrowing the update to the subject-specific defaults instead of rewriting broader repository rules.
+- Alternatives considered: Leaving the existing defaults mostly unchanged, but that would keep future sessions slightly out of sync with the live course pages and could push planning too far ahead.
+
 - Date: 2026-03-27
 - Subject: javascript
 - Assignment: assignment-03-ci-cd-1
