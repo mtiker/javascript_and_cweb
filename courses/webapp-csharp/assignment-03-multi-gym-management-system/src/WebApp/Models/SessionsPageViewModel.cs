@@ -22,6 +22,7 @@ public class SessionDetailPageViewModel
     public Guid? CurrentMemberId { get; set; }
     public Guid? CurrentBookingId { get; set; }
     public BookingStatus? CurrentBookingStatus { get; set; }
+    public bool CanManageRoster { get; set; }
     public bool CanBook => CurrentMemberId.HasValue && CurrentBookingId == null && Session.Status == TrainingSessionStatus.Published;
 }
 

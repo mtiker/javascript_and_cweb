@@ -71,7 +71,7 @@ public class TrainingWorkflowService(
 
     public async Task<IReadOnlyCollection<TrainingSessionResponse>> GetSessionsAsync(string gymCode)
     {
-        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin, RoleNames.Member, RoleNames.Trainer);
+        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin, RoleNames.Member, RoleNames.Trainer, RoleNames.Caretaker);
         var sessions = await dbContext.TrainingSessions
             .Where(entity => entity.GymId == gymId)
             .OrderBy(entity => entity.StartAtUtc)
@@ -103,7 +103,7 @@ public class TrainingWorkflowService(
 
     public async Task<TrainingSessionResponse> GetSessionAsync(string gymCode, Guid id)
     {
-        await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin, RoleNames.Member, RoleNames.Trainer);
+        await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin, RoleNames.Member, RoleNames.Trainer, RoleNames.Caretaker);
         return await ProjectSessionAsync(id);
     }
 

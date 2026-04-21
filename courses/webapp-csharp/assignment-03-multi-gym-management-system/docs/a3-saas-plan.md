@@ -4,10 +4,10 @@
 
 Assignment 03 is implemented as one SaaS backend plus two UI approaches:
 - ASP.NET Core MVC admin UX
-- ASP.NET Core MVC client UX
+- ASP.NET Core MVC client UX under `/mvc-client`
 - a separate React + TypeScript admin client in `client/`
 
-The project keeps the ASP.NET Core monolith for backend responsibilities while adding the separate client required for REST API consumption. The production Docker image now builds that client separately and serves it from the backend at `/client`.
+The project keeps the ASP.NET Core monolith for backend responsibilities while adding the separate client required for REST API consumption. The production Docker image now builds that client separately and serves it from the backend at `/client`; the MVC client area uses `/mvc-client` to avoid route collision with the React bundle.
 
 ## Scope
 
@@ -60,6 +60,10 @@ Separate client:
 - TypeScript
 - Vitest
 - production mount: `/client`
+
+MVC client:
+- ASP.NET Core area: `src/WebApp/Areas/Client`
+- route prefix: `/mvc-client`
 
 Technical stack:
 - ASP.NET Core MVC + REST API
@@ -212,7 +216,7 @@ Not implemented in this pass:
 
 Backend:
 - unit tests for translation fallback and membership overlap logic
-- integration tests for login, register, gym switch, refresh-token rotation, expired/reused refresh tokens, cross-gym denial, member self-only denial, system-route denial, API `ProblemDetails`, MVC HTML error handling, `/client` fallback serving, nullable session descriptions, booking payment-reference enforcement, trainer attendance authorization, and caretaker task authorization
+- integration tests for login, register, gym switch, refresh-token rotation, expired/reused refresh tokens, cross-gym denial, member self-only denial, system-route denial, API `ProblemDetails`, MVC HTML error handling, `/client` fallback serving, MVC Admin/Client layout rendering, member roster denial, nullable session descriptions, booking payment-reference enforcement, trainer attendance authorization, and caretaker task authorization
 
 Frontend:
 - auth guard tests

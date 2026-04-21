@@ -467,3 +467,23 @@ Record AI-assisted development evidence here.
 - Prompt: Create a project-specific `App.DTO` study guide in the same style as the existing `App.Domain`, `App.DAL.EF`, and `App.BLL` guides.
 - AI output used: Added `docs/app-dto-guide.md`, linked it from the assignment README, and documented the DTO layer purpose, versioned folder structure, validation patterns, controller mapping flow, and representative DTO groups.
 - Changes made manually: Cross-checked the guide against the current `App.DTO` folders, request/response classes, and controller usage so the explanation matches the real project structure.
+
+- Date: 2026-04-21
+- Subject: webapp-csharp
+- Assignment: assignment-03-multi-gym-management-system
+- Prompt: Diagnose why the deployed `/admin` page rendered as a bare unstyled Razor page and fix the MVC area styling/layout regression.
+- Files affected: `courses/webapp-csharp/assignment-03-multi-gym-management-system/src/WebApp/Areas/_ViewStart.cshtml`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/tests/WebApp.Tests/Integration/SmokeTests.cs`, `docs/ai-prompts.md`
+- AI output used: Identified that MVC area views were missing an area-level `_ViewStart.cshtml`, added the shared layout hook, and added an integration regression test for the admin dashboard layout/CSS.
+- What AI got wrong / needed correction: Nothing material; the issue was initially checked against deployment/static asset possibilities before narrowing to Razor layout discovery.
+- Changes made manually: Reviewed the rendered Razor view structure and existing `site.css` before applying the convention-based fix.
+- Alternatives considered: Adding explicit `Layout = "_Layout"` to each area view, but a shared area `_ViewStart.cshtml` keeps Admin and Client views consistent with less duplication.
+
+- Date: 2026-04-21
+- Subject: webapp-csharp
+- Assignment: assignment-03-multi-gym-management-system
+- Prompt: Make sure the other MVC views are also bugless after fixing the unstyled `/admin` page.
+- Files affected: `courses/webapp-csharp/assignment-03-multi-gym-management-system/src/App.BLL/Services/MaintenanceWorkflowService.cs`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/src/App.BLL/Services/TrainingWorkflowService.cs`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/src/WebApp/Setup/ApplicationBuilderExtensions.cs`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/src/WebApp/Areas/Client/*`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/src/WebApp/Models/SessionsPageViewModel.cs`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/tests/WebApp.Tests/Integration/SmokeTests.cs`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/README.md`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/docs/a3-saas-plan.md`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/docs/architecture.md`, `docs/ai-prompts.md`
+- AI output used: Audited MVC Admin/Client routes, found the React `/client` mount colliding with the MVC Client area, added a `/mvc-client` route prefix, tightened roster authorization, widened safe schedule/opening-hours reads for tenant roles, and expanded integration smoke coverage.
+- What AI got wrong / needed correction: The first broader smoke test exposed the route collision because `/Client` returned the React shell instead of the MVC page.
+- Changes made manually: Reviewed the Razor views, controller role checks, and seeded role data before choosing the route and authorization fixes.
+- Alternatives considered: Moving the React bundle away from `/client`, but keeping `/client` stable for deployment and moving MVC client views to `/mvc-client` preserves the documented REST client endpoint.

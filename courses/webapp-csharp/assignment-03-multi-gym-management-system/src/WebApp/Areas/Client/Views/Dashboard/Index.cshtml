@@ -1,5 +1,6 @@
 @model ClientDashboardViewModel
 @inject IStringLocalizer<SharedResources> L
+@using App.Domain
 <section class="dashboard-grid">
     <article class="panel">
         <h1>@L["ClientArea"]</h1>
@@ -60,6 +61,9 @@
     <div class="link-strip">
         <a asp-area="Client" asp-controller="Profile" asp-action="Index">Profile</a>
         <a asp-area="Client" asp-controller="Sessions" asp-action="Index">@L["Sessions"]</a>
-        <a asp-area="Client" asp-controller="Maintenance" asp-action="Index">@L["Maintenance"]</a>
+        @if (Model.ActiveRole == RoleNames.Caretaker || Model.ActiveRole == RoleNames.GymOwner || Model.ActiveRole == RoleNames.GymAdmin)
+        {
+            <a asp-area="Client" asp-controller="Maintenance" asp-action="Index">@L["Maintenance"]</a>
+        }
     </div>
 </section>

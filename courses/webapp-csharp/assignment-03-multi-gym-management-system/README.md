@@ -6,10 +6,10 @@ Assignment 03 is implemented as a SaaS multi-gym management system under `course
 
 The project now has three user-facing surfaces:
 - MVC admin UX inside `src/WebApp/Areas/Admin`
-- MVC client UX inside `src/WebApp/Areas/Client`
+- MVC client UX inside `src/WebApp/Areas/Client`, served under `/mvc-client`
 - a separate React + TypeScript admin client under `client/`
 
-The backend remains one ASP.NET Core host that serves the MVC areas, Swagger, the versioned REST API, and the production React client at `/client`.
+The backend remains one ASP.NET Core host that serves the MVC areas, Swagger, the versioned REST API, and the production React client at `/client`. The MVC client area uses `/mvc-client` so it does not collide with the React client mount.
 
 ## Requirement Coverage
 
@@ -138,6 +138,8 @@ Default local endpoints:
 - backend HTTPS: `https://localhost:7245`
 - Swagger: `https://localhost:7245/swagger`
 - health: `https://localhost:7245/health`
+- MVC admin area: `https://localhost:7245/Admin`
+- MVC client area: `https://localhost:7245/mvc-client`
 - React client: `http://localhost:5173`
 - production-served React client path after Docker publish: `/client`
 

@@ -1,6 +1,7 @@
 using System.Globalization;
 using App.BLL.Contracts;
 using App.DAL.EF;
+using App.Domain;
 using App.Domain.Common;
 using App.Domain.Enums;
 using App.DTO.v1.Tenant;
@@ -76,7 +77,8 @@ public class SessionsController(
             OpeningHourExceptions = await maintenanceWorkflowService.GetOpeningHourExceptionsAsync(context.ActiveGymCode),
             CurrentMemberId = currentMember?.Id,
             CurrentBookingId = currentBooking?.Id,
-            CurrentBookingStatus = currentBooking?.Status
+            CurrentBookingStatus = currentBooking?.Status,
+            CanManageRoster = await CanManageRosterAsync(context, id)
         });
     }
 
@@ -138,6 +140,11 @@ public class SessionsController(
             return RedirectToAction("Index", "Dashboard");
         }
 
+        if (!await CanManageRosterAsync(context, id))
+        {
+            return Forbid();
+        }
+
         var session = await trainingWorkflowService.GetSessionAsync(context.ActiveGymCode, id);
         var bookings = await dbContext.Bookings
             .Where(entity => entity.TrainingSessionId == id)
@@ -178,5 +185,35 @@ public class SessionsController(
         });
         TempData["StatusMessage"] = "Attendance updated.";
         return RedirectToAction(nameof(Roster), new { id = sessionId });
+    }
+
+    private async Task<bool> CanManageRosterAsync(UserExecutionContext context, Guid sessionId)
+    {
+        if (!context.ActiveGymId.HasValue)
+        {
+            return false;
+        }
+
+        if (context.HasRole(RoleNames.GymOwner) || context.HasRole(RoleNames.GymAdmin))
+        {
+            return true;
+        }
+
+        if (!context.HasRole(RoleNames.Trainer))
+        {
+            return false;
+        }
+
+        var staff = await authorizationService.GetCurrentStaffAsync(context.ActiveGymId.Value);
+        if (staff == null)
+        {
+            return false;
+        }
+
+        return await dbContext.WorkShifts.AnyAsync(shift =>
+            shift.GymId == context.ActiveGymId.Value &&
+            shift.TrainingSessionId == sessionId &&
+            shift.Contract!.StaffId == staff.Id &&
+            shift.ShiftType == ShiftType.Training);
     }
 }

@@ -16,7 +16,7 @@ public class MaintenanceWorkflowService(
 {
     public async Task<IReadOnlyCollection<OpeningHoursResponse>> GetOpeningHoursAsync(string gymCode)
     {
-        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin, RoleNames.Member);
+        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin, RoleNames.Member, RoleNames.Trainer, RoleNames.Caretaker);
         return await dbContext.OpeningHours
             .Where(entity => entity.GymId == gymId)
             .OrderBy(entity => entity.Weekday)
@@ -68,7 +68,7 @@ public class MaintenanceWorkflowService(
 
     public async Task<IReadOnlyCollection<OpeningHoursExceptionResponse>> GetOpeningHourExceptionsAsync(string gymCode)
     {
-        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin, RoleNames.Member);
+        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin, RoleNames.Member, RoleNames.Trainer, RoleNames.Caretaker);
         return await dbContext.OpeningHoursExceptions
             .Where(entity => entity.GymId == gymId)
             .OrderBy(entity => entity.ExceptionDate)

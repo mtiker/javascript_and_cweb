@@ -47,7 +47,10 @@
 
     <div class="link-strip">
         <a asp-action="Index">Back to sessions</a>
-        <a asp-action="Roster" asp-route-id="@Model.Session.Id">Trainer roster</a>
+        @if (Model.CanManageRoster)
+        {
+            <a asp-action="Roster" asp-route-id="@Model.Session.Id">Trainer roster</a>
+        }
     </div>
 </section>
 

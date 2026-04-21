@@ -1,5 +1,6 @@
 using App.BLL.Contracts;
 using App.DAL.EF;
+using App.Domain;
 using App.Domain.Enums;
 using App.DTO.v1.Tenant;
 using Microsoft.AspNetCore.Authorization;
@@ -28,7 +29,7 @@ public class MaintenanceController(
         var staff = await authorizationService.GetCurrentStaffAsync(context.ActiveGymId.Value);
         var tasks = Array.Empty<MaintenanceTaskResponse>();
 
-        if (staff != null)
+        if (staff != null && (context.HasRole(RoleNames.GymOwner) || context.HasRole(RoleNames.GymAdmin) || context.HasRole(RoleNames.Caretaker)))
         {
             tasks = (await maintenanceWorkflowService.GetMaintenanceTasksAsync(context.ActiveGymCode))
                 .Where(entity => entity.AssignedStaffId == staff.Id)

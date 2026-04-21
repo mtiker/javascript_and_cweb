@@ -13,7 +13,7 @@ The solution combines:
 
 Backend host:
 - MVC admin area
-- MVC client area
+- MVC client area mounted at `/mvc-client`
 - versioned REST API under `/api/v1/...`
 - Swagger
 - `/health`
@@ -45,7 +45,8 @@ MVC flow:
 1. request enters `WebApp`
 2. cookie authentication resolves the signed-in user
 3. MVC controller uses view models and server-side rendering
-4. shared localization and anti-forgery protections apply
+4. Admin routes use the standard area route; Client routes use `/mvc-client` to avoid colliding with the React `/client` mount
+5. shared localization and anti-forgery protections apply
 
 API flow:
 1. request enters `WebApp`

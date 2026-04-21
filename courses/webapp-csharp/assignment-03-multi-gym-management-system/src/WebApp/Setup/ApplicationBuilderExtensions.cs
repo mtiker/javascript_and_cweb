@@ -55,6 +55,10 @@ public static class ApplicationBuilderExtensions
         var clientIndexPath = Path.Combine(webRootPath, "client", "index.html");
         app.MapGet("/client", () => Results.File(clientIndexPath, "text/html"));
         app.MapFallbackToFile("/client/{*path:nonfile}", "client/index.html");
+        app.MapAreaControllerRoute(
+            name: "mvc-client",
+            areaName: "Client",
+            pattern: "mvc-client/{controller=Dashboard}/{action=Index}/{id?}");
         app.MapControllerRoute(
             name: "areas",
             pattern: "{area:exists}/{controller=Dashboard}/{action=Index}/{id?}");
