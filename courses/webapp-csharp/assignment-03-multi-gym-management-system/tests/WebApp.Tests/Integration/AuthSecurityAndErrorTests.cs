@@ -6,6 +6,7 @@ using App.DAL.EF;
 using App.Domain.Entities;
 using App.DTO.v1.Identity;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -137,7 +138,43 @@ public class AuthSecurityAndErrorTests(CustomWebApplicationFactory factory) : IC
         Assert.Equal("application/problem+json; charset=utf-8", response.Content.Headers.ContentType?.ToString());
     }
 
-[Fact]
+    [Fact]
+    public async Task TenantApi_UsesAcceptLanguageForLangStrResponses()
+    {
+        var client = factory.CreateClient();
+        client.DefaultRequestHeaders.AcceptLanguage.ParseAdd("et-EE");
+        var loginPayload = await LoginAsync(client, "admin@peakforge.local", "Gym123!");
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", loginPayload.Jwt);
+
+        var response = await client.GetAsync("/api/v1/peak-forge/training-categories");
+        response.EnsureSuccessStatusCode();
+        var content = await response.Content.ReadAsStringAsync();
+
+        Assert.Contains("Jõutreening", content);
+    }
+
+    [Fact]
+    public async Task SetCulture_StoresOnlySupportedCultureCookie()
+    {
+        var client = factory.CreateClient(new WebApplicationFactoryClientOptions
+        {
+            AllowAutoRedirect = false
+        });
+        var antiForgeryToken = await GetAntiforgeryTokenAsync(client);
+
+        var response = await client.PostAsync("/set-culture", new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["culture"] = "not-a-culture",
+            ["returnUrl"] = "/",
+            ["__RequestVerificationToken"] = antiForgeryToken
+        }));
+
+        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+        var setCookie = Assert.Single(response.Headers.GetValues("Set-Cookie"));
+        Assert.Contains("c%3Det-EE", setCookie);
+    }
+
+    [Fact]
     public async Task HtmlErrors_RenderHtmlErrorPage()
     {
         var productionFactory = factory.WithWebHostBuilder(builder => builder.UseEnvironment("Production"));

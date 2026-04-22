@@ -16,6 +16,14 @@ public class HomeController(
     UserManager<App.Domain.Identity.AppUser> userManager,
     AppDbContext dbContext) : Controller
 {
+    private static readonly HashSet<string> SupportedCultures = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "et-EE",
+        "et",
+        "en",
+        "en-US"
+    };
+
     [AllowAnonymous]
     [HttpGet("/")]
     public IActionResult Index()
@@ -85,10 +93,20 @@ public class HomeController(
     [ValidateAntiForgeryToken]
     public IActionResult SetCulture(string culture, string? returnUrl)
     {
+        if (!SupportedCultures.Contains(culture))
+        {
+            culture = "et-EE";
+        }
+
         Response.Cookies.Append(
             CookieRequestCultureProvider.DefaultCookieName,
             CookieRequestCultureProvider.MakeCookieValue(new RequestCulture(culture)),
-            new CookieOptions { Expires = DateTimeOffset.UtcNow.AddYears(1) });
+            new CookieOptions
+            {
+                Expires = DateTimeOffset.UtcNow.AddYears(1),
+                IsEssential = true,
+                SameSite = SameSiteMode.Lax
+            });
 
         return LocalRedirect(returnUrl ?? "/");
     }

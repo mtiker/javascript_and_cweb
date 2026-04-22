@@ -46,6 +46,8 @@ Backend integration tests:
 - `AuthSecurityAndErrorTests.Member_CannotReadAnotherMember`
 - `AuthSecurityAndErrorTests.SystemPlatformAnalytics_RejectsTenantOnlyUser`
 - `AuthSecurityAndErrorTests.ApiErrors_ReturnProblemDetailsJson`
+- `AuthSecurityAndErrorTests.TenantApi_UsesAcceptLanguageForLangStrResponses`
+- `AuthSecurityAndErrorTests.SetCulture_StoresOnlySupportedCultureCookie`
 - `AuthSecurityAndErrorTests.HtmlErrors_RenderHtmlErrorPage`
 - `ProposalWorkflowTests.ReactClientFallback_ServesClientShell`
 - `ProposalWorkflowTests.TrainingSessions_HandleNullableDescriptionInListAndDetail`
@@ -56,8 +58,10 @@ Backend integration tests:
 Frontend Vitest coverage:
 - auth guard redirects anonymous users to login
 - logout clears persisted session state
+- system roles route to the React platform console
 - API client retries once through refresh on `401`
 - refresh failure clears session state and surfaces an auth error
+- API requests include the selected `Accept-Language`
 - production API base defaults to same-origin while development defaults to `https://localhost:7245`
 - members page create success and request-error handling
 - training categories page update success and save-error handling
@@ -82,7 +86,10 @@ Recommended manual verification before defense:
 11. Log in as `trainer@peakforge.local` and update attendance from the React Attendance page.
 12. Log in as `caretaker@peakforge.local` and update a maintenance task from the React Maintenance page.
 13. Confirm the React client stays authenticated across an access-token refresh.
-14. After a production Docker build/deploy, open `/client` and `/client/members` on the backend host.
+14. Log in as `systemadmin@gym.local`, open `/platform`, and verify platform analytics/gyms/subscriptions/support data loads.
+15. From `/console`, run one safe GET action such as `GET /api/v1/{gymCode}/gym-settings`.
+16. Switch the React language selector to `ET` and confirm translated seeded API values such as `Jõutreening` appear after refresh.
+17. After a production Docker build/deploy, open `/client`, `/client/platform`, and `/client/members` on the backend host.
 
 ## Test Notes
 

@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  mapTodoCategoryDto,
   mapTodoPriorityDto,
   mapTodoTaskDto,
+  toCategoryCreateDto,
   toTaskCreateDto,
   toTaskUpdateDto,
 } from "@/lib/todo-mappers";
@@ -33,6 +35,37 @@ describe("todo mappers", () => {
       priorityId: "priority-1",
       syncAt: "2026-04-16T10:00:00.000Z",
     });
+  });
+
+  it("preserves Estonian characters in mapped data and outgoing payloads", () => {
+    const category = mapTodoCategoryDto({
+      id: "category-utf",
+      categoryName: "  Töö ja õpe  ",
+      categorySort: 10,
+      syncDt: "2026-04-16T10:00:00.000Z",
+      tag: "too",
+    });
+    const task = mapTodoTaskDto({
+      id: "task-utf",
+      taskName: "Paranda ä ö ü kuvamine",
+      taskSort: 20,
+      todoCategoryId: "category-utf",
+      todoPriorityId: "priority-utf",
+    });
+
+    expect(category.name).toBe("Töö ja õpe");
+    expect(task.name).toBe("Paranda ä ö ü kuvamine");
+    expect(toCategoryCreateDto({ name: "Üritused", sortOrder: 40, tag: "uritused" }))
+      .toMatchObject({ categoryName: "Üritused" });
+    expect(toTaskCreateDto({
+      name: "Kontrolli täpitähtedega otsingut",
+      sortOrder: 30,
+      dueAt: null,
+      isCompleted: false,
+      isArchived: false,
+      categoryId: "category-utf",
+      priorityId: "priority-utf",
+    })).toMatchObject({ taskName: "Kontrolli täpitähtedega otsingut" });
   });
 
   it("handles undocumented extra fields on priority responses", () => {

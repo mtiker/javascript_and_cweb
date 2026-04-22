@@ -9,6 +9,7 @@ import {
   updateCategory,
   updatePriority,
 } from "@/api/catalogs";
+import { demoCategories, demoPriorities } from "@/lib/demo-seed";
 import type {
   TodoCategoryDraft,
   TodoCategoryEntity,
@@ -30,6 +31,10 @@ const defaultPriorities: TodoPriorityDraft[] = [
 
 function sortByOrder<T extends { sortOrder: number; name: string }>(items: T[]) {
   return [...items].sort((left, right) => left.sortOrder - right.sortOrder || left.name.localeCompare(right.name));
+}
+
+function normalizedName(name: string) {
+  return name.trim().toLowerCase();
 }
 
 export const useCatalogStore = defineStore("catalogs", {
@@ -101,25 +106,50 @@ export const useCatalogStore = defineStore("catalogs", {
       await deletePriority(priorityId);
       this.priorities = this.priorities.filter((item) => item.id !== priorityId);
     },
-    async applyQuickStartPreset() {
-      const existingCategoryNames = new Set(
-        this.categories.map((category) => category.name.toLowerCase()),
-      );
-      const existingPriorityNames = new Set(
-        this.priorities.map((priority) => priority.name.toLowerCase()),
+    async ensureCategory(draft: TodoCategoryDraft) {
+      const existing = this.categories.find(
+        (category) => normalizedName(category.name) === normalizedName(draft.name),
       );
 
+      if (existing) {
+        return existing;
+      }
+
+      return this.createCategory(draft);
+    },
+    async ensurePriority(draft: TodoPriorityDraft) {
+      const existing = this.priorities.find(
+        (priority) => normalizedName(priority.name) === normalizedName(draft.name),
+      );
+
+      if (existing) {
+        return existing;
+      }
+
+      return this.createPriority(draft);
+    },
+    async applyQuickStartPreset() {
       for (const category of defaultCategories) {
-        if (!existingCategoryNames.has(category.name.toLowerCase())) {
-          await this.createCategory(category);
-        }
+        await this.ensureCategory(category);
       }
 
       for (const priority of defaultPriorities) {
-        if (!existingPriorityNames.has(priority.name.toLowerCase())) {
-          await this.createPriority(priority);
-        }
+        await this.ensurePriority(priority);
       }
+    },
+    async applyDemoCatalogPreset() {
+      const categories: TodoCategoryEntity[] = [];
+      const priorities: TodoPriorityEntity[] = [];
+
+      for (const category of demoCategories) {
+        categories.push(await this.ensureCategory(category));
+      }
+
+      for (const priority of demoPriorities) {
+        priorities.push(await this.ensurePriority(priority));
+      }
+
+      return { categories, priorities };
     },
   },
 });

@@ -139,6 +139,26 @@ a {
   backdrop-filter: blur(12px);
 }
 
+.language-select {
+  display: grid;
+  gap: 0.25rem;
+  min-width: 104px;
+  color: #41544a;
+  font-size: 0.85rem;
+}
+
+.language-select select {
+  min-height: 2.4rem;
+  border: 1px solid rgba(19, 36, 29, 0.16);
+  border-radius: 0.8rem;
+  background: rgba(255, 255, 255, 0.88);
+  color: #13241d;
+}
+
+.language-select--login {
+  justify-self: end;
+}
+
 .shell__meta-value {
   display: block;
   margin-top: 0.25rem;
@@ -399,6 +419,13 @@ a {
   box-shadow: 0 24px 60px rgba(37, 57, 47, 0.12);
 }
 
+.login-card__topline {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
 .login-card__demo-grid {
   display: grid;
   gap: 1rem;
@@ -412,6 +439,134 @@ a {
   padding: 1rem;
   border-radius: 1rem;
   background: rgba(247, 242, 232, 0.92);
+}
+
+.overview-grid {
+  display: grid;
+  gap: 1.25rem;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+}
+
+.metric-grid {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  margin: 1rem 0;
+}
+
+.metric {
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.85rem;
+  border-radius: 0.8rem;
+  background: rgba(30, 77, 111, 0.08);
+}
+
+.metric span {
+  color: #52677a;
+  font-size: 0.85rem;
+}
+
+.metric strong {
+  color: #163650;
+  font-size: 1.45rem;
+}
+
+.table-scroll {
+  overflow-x: auto;
+  margin-top: 1rem;
+}
+
+.mini-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 420px;
+}
+
+.mini-table th,
+.mini-table td {
+  padding: 0.65rem 0.55rem;
+  border-bottom: 1px solid rgba(19, 36, 29, 0.08);
+  text-align: left;
+}
+
+.console-groups {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1.25rem;
+}
+
+.console-group {
+  padding: 1rem;
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: 0 18px 40px rgba(37, 57, 47, 0.07);
+}
+
+.console-group summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.console-actions {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  margin-top: 1rem;
+}
+
+.console-action {
+  display: grid;
+  gap: 0.8rem;
+  align-content: start;
+  padding: 1rem;
+  border: 1px solid rgba(19, 36, 29, 0.1);
+  border-radius: 0.9rem;
+  background: rgba(250, 246, 239, 0.72);
+}
+
+.console-action__header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.method-badge {
+  padding: 0.25rem 0.45rem;
+  border-radius: 0.45rem;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.method-badge--get {
+  background: #2f6690;
+}
+
+.method-badge--post {
+  background: #2f7d55;
+}
+
+.method-badge--put {
+  background: #9a6a16;
+}
+
+.method-badge--delete {
+  background: #9b2f2f;
+}
+
+.endpoint,
+.response-preview {
+  overflow-x: auto;
+  padding: 0.75rem;
+  border-radius: 0.75rem;
+  background: rgba(19, 36, 29, 0.07);
+  color: #13241d;
+}
+
+.response-preview {
+  max-height: 260px;
+  white-space: pre-wrap;
 }
 
 @media (max-width: 960px) {
@@ -433,6 +588,14 @@ a {
   .inline-controls {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .login-card__topline {
+    flex-direction: column;
+  }
+
+  .language-select--login {
+    justify-self: stretch;
   }
 
   .login-card__demo-grid {

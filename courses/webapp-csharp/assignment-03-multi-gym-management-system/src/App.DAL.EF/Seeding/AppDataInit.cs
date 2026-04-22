@@ -56,7 +56,7 @@ public static class AppDataInit
             PublicDescription = new LangStr
             {
                 ["en"] = "Boutique multi-zone gym for strength, conditioning, and coached sessions.",
-                ["et"] = "Jou- ja vastupidavustreeningutele keskenduv mitmetsooniline jousaal."
+                ["et"] = "Jõu- ja vastupidavustreeningutele keskenduv mitmetsooniline jõusaal."
             }
         };
 
@@ -70,7 +70,7 @@ public static class AppDataInit
             PublicDescription = new LangStr
             {
                 ["en"] = "Second demo tenant for proving SaaS gym switching and tenant isolation.",
-                ["et"] = "Teine demotenent SaaS gym switching'u ja tenant isolation'i demonstreerimiseks."
+                ["et"] = "Teine demotenant SaaS-i jõusaalivahetuse ja tenant'i isolatsiooni demonstreerimiseks."
             }
         };
 
@@ -169,7 +169,7 @@ public static class AppDataInit
         {
             GymId = gym.Id,
             Code = "gym-admin",
-            Title = new LangStr { ["en"] = "Gym Administrator", ["et"] = "Jouusaali administraator" },
+            Title = new LangStr { ["en"] = "Gym Administrator", ["et"] = "Jõusaali administraator" },
             Description = new LangStr { ["en"] = "Manages members, sessions, and day-to-day operations." }
         };
 
@@ -203,7 +203,7 @@ public static class AppDataInit
         var category = new TrainingCategory
         {
             GymId = gym.Id,
-            Name = new LangStr { ["en"] = "Strength Lab", ["et"] = "Joutreening" },
+            Name = new LangStr { ["en"] = "Strength Lab", ["et"] = "Jõutreening" },
             Description = new LangStr { ["en"] = "Coach-led barbell and accessory training sessions." }
         };
 
@@ -211,7 +211,7 @@ public static class AppDataInit
         {
             GymId = gym.Id,
             CategoryId = category.Id,
-            Name = new LangStr { ["en"] = "Upper Body Fundamentals", ["et"] = "Ulakeha algkursus" },
+            Name = new LangStr { ["en"] = "Upper Body Fundamentals", ["et"] = "Ülakeha algkursus" },
             Description = new LangStr { ["en"] = "Introductory coached session with capped participant count." },
             StartAtUtc = DateTime.UtcNow.Date.AddDays(1).AddHours(17),
             EndAtUtc = DateTime.UtcNow.Date.AddDays(1).AddHours(18),
@@ -313,14 +313,14 @@ public static class AppDataInit
             Reason = new LangStr
             {
                 ["en"] = "Public holiday maintenance window",
-                ["et"] = "Riigipuha ja hooldustood"
+                ["et"] = "Riigipüha ja hooldustööd"
             }
         };
 
         var equipmentModel = new EquipmentModel
         {
             GymId = gym.Id,
-            Name = new LangStr { ["en"] = "Concept2 Rower", ["et"] = "Concept2 soudemasin" },
+            Name = new LangStr { ["en"] = "Concept2 Rower", ["et"] = "Concept2 sõudemasin" },
             Description = new LangStr { ["en"] = "Commercial cardio rower." },
             Type = EquipmentType.Cardio,
             Manufacturer = "Concept2",

@@ -42,6 +42,9 @@
   <data name="ClientArea" xml:space="preserve">
     <value>Client Area</value>
   </data>
+  <data name="Profile" xml:space="preserve">
+    <value>Profile</value>
+  </data>
   <data name="Gyms" xml:space="preserve">
     <value>Gyms</value>
   </data>

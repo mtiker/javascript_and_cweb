@@ -1,5 +1,47 @@
 # AI Usage Log
 
+## 2026-04-21 - SaaS Console, Localization, and Favicon Parity
+
+Task:
+- make Assignment 03 language switching work across MVC and the React API client
+- expose the gym SaaS functions through the React client similarly to the dental clinic demo console
+- add browser-tab logo/favicon branding
+
+Files affected:
+- `client/index.html`
+- `client/public/gym-logo.svg`
+- `client/src/App.tsx`
+- `client/src/components/AppShell.tsx`
+- `client/src/lib/*`
+- `client/src/pages/LoginPage.tsx`
+- `client/src/pages/SaasConsolePage.tsx`
+- `client/src/styles.css`
+- `src/App.DAL.EF/Seeding/AppDataInit.cs`
+- `src/App.Resources/SharedResources*.resx`
+- `src/WebApp/Controllers/HomeController.cs`
+- `src/WebApp/Setup/ServiceCollectionExtensions.cs`
+- `src/WebApp/Views/Shared/_Layout.cshtml`
+- `src/WebApp/wwwroot/assets/gym-logo.svg`
+- `tests/WebApp.Tests/Integration/AuthSecurityAndErrorTests.cs`
+- `README.md`
+- `docs/*.md`
+
+What AI helped with:
+- allowing system-role sessions in the React client
+- adding a language provider, selector, and `Accept-Language` API header
+- adding a broad React SaaS console for platform, billing, support, onboarding, account, and tenant actions
+- validating MVC culture values before writing the culture cookie
+- correcting seeded Estonian `LangStr` values and adding localization regression tests
+- wiring SVG favicon/logo assets into MVC and React
+
+What needed manual review or correction:
+- the existing worktree already had unrelated JavaScript Assignment 04 changes, so this pass avoided touching or reverting them
+- the console keeps destructive actions available but parameterized; reviewers should run safe GET actions first during demos
+
+Alternatives considered:
+- copying the dental clinic static UI directly, but expanding the existing React API client kept Assignment 03's separate-client architecture intact
+- leaving platform flows in MVC only, but system-role React access is closer to the dental clinic SaaS demo behavior
+
 ## 2026-04-21 - CWEB A4 Proxy Deployment Alignment
 
 Task:

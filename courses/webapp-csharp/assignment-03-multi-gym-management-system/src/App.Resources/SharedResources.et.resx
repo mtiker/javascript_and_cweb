@@ -42,6 +42,9 @@
   <data name="ClientArea" xml:space="preserve">
     <value>Kasutaja ala</value>
   </data>
+  <data name="Profile" xml:space="preserve">
+    <value>Profiil</value>
+  </data>
   <data name="Gyms" xml:space="preserve">
     <value>Jõusaalid</value>
   </data>

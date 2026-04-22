@@ -3,20 +3,37 @@ import type {
   AttendanceUpdateRequest,
   Booking,
   BookingCreateRequest,
+  Equipment,
+  EquipmentModel,
+  GymSettings,
+  GymSnapshot,
+  GymSummary,
+  GymUser,
+  HttpMethod,
   LoginRequest,
   MaintenanceStatusUpdateRequest,
   MaintenanceTask,
   MemberDetail,
   MemberSummary,
   MemberUpsertRequest,
+  Membership,
   MembershipPackage,
   MembershipPackageUpsertRequest,
   MessageResponse,
+  OpeningHours,
+  OpeningHoursException,
+  Payment,
+  PlatformAnalytics,
+  RawApiResponse,
+  Staff,
+  SubscriptionSummary,
+  SupportTicket,
   TrainingCategory,
   TrainingCategoryUpsertRequest,
   TrainingSession,
 } from "./types";
 import { ApiError } from "./types";
+import { getCurrentLanguage } from "./language";
 
 interface ApiClientOptions {
   baseUrl: string;
@@ -54,6 +71,40 @@ export class ApiClient {
     return this.request<MessageResponse>("/api/v1/account/logout", {
       method: "POST",
     });
+  }
+
+  async switchGym(gymCode: string): Promise<AuthSession> {
+    return this.request<AuthSession>("/api/v1/account/switch-gym", {
+      method: "POST",
+      body: JSON.stringify({ gymCode }),
+    });
+  }
+
+  async switchRole(roleName: string): Promise<AuthSession> {
+    return this.request<AuthSession>("/api/v1/account/switch-role", {
+      method: "POST",
+      body: JSON.stringify({ roleName }),
+    });
+  }
+
+  async getPlatformAnalytics(): Promise<PlatformAnalytics> {
+    return this.request<PlatformAnalytics>("/api/v1/system/platform/analytics");
+  }
+
+  async getGyms(): Promise<GymSummary[]> {
+    return this.request<GymSummary[]>("/api/v1/system/gyms");
+  }
+
+  async getGymSnapshot(gymId: string): Promise<GymSnapshot> {
+    return this.request<GymSnapshot>(`/api/v1/system/gyms/${encodeURIComponent(gymId)}/snapshot`);
+  }
+
+  async getSubscriptions(): Promise<SubscriptionSummary[]> {
+    return this.request<SubscriptionSummary[]>("/api/v1/system/subscriptions");
+  }
+
+  async getSupportTickets(): Promise<SupportTicket[]> {
+    return this.request<SupportTicket[]>("/api/v1/system/support");
   }
 
   async getMembers(gymCode: string): Promise<MemberSummary[]> {
@@ -120,6 +171,10 @@ export class ApiClient {
     return this.request<TrainingSession>(`${this.tenantBase(gymCode)}/training-sessions/${sessionId}`);
   }
 
+  async getStaff(gymCode: string): Promise<Staff[]> {
+    return this.request<Staff[]>(`${this.tenantBase(gymCode)}/staff`);
+  }
+
   async createBooking(gymCode: string, request: BookingCreateRequest): Promise<Booking> {
     return this.request<Booking>(`${this.tenantBase(gymCode)}/bookings`, {
       method: "POST",
@@ -177,6 +232,51 @@ export class ApiClient {
     });
   }
 
+  async getMemberships(gymCode: string): Promise<Membership[]> {
+    return this.request<Membership[]>(`${this.tenantBase(gymCode)}/memberships`);
+  }
+
+  async getPayments(gymCode: string): Promise<Payment[]> {
+    return this.request<Payment[]>(`${this.tenantBase(gymCode)}/payments`);
+  }
+
+  async getOpeningHours(gymCode: string): Promise<OpeningHours[]> {
+    return this.request<OpeningHours[]>(`${this.tenantBase(gymCode)}/opening-hours`);
+  }
+
+  async getOpeningHoursExceptions(gymCode: string): Promise<OpeningHoursException[]> {
+    return this.request<OpeningHoursException[]>(`${this.tenantBase(gymCode)}/opening-hours-exceptions`);
+  }
+
+  async getEquipmentModels(gymCode: string): Promise<EquipmentModel[]> {
+    return this.request<EquipmentModel[]>(`${this.tenantBase(gymCode)}/equipment-models`);
+  }
+
+  async getEquipment(gymCode: string): Promise<Equipment[]> {
+    return this.request<Equipment[]>(`${this.tenantBase(gymCode)}/equipment`);
+  }
+
+  async getGymSettings(gymCode: string): Promise<GymSettings> {
+    return this.request<GymSettings>(`${this.tenantBase(gymCode)}/gym-settings`);
+  }
+
+  async getGymUsers(gymCode: string): Promise<GymUser[]> {
+    return this.request<GymUser[]>(`${this.tenantBase(gymCode)}/gym-users`);
+  }
+
+  async sendRaw(path: string, method: HttpMethod, bodyText = ""): Promise<RawApiResponse> {
+    const parsedBody = bodyText.trim() ? JSON.parse(bodyText) : undefined;
+    const data = await this.request<unknown>(path, {
+      method,
+      body: parsedBody === undefined ? undefined : JSON.stringify(parsedBody),
+    });
+
+    return {
+      status: 200,
+      data,
+    };
+  }
+
   private tenantBase(gymCode: string): string {
     return `/api/v1/${encodeURIComponent(gymCode)}`;
   }
@@ -189,6 +289,7 @@ export class ApiClient {
   ): Promise<T> {
     const headers = new Headers(init.headers);
     headers.set("Accept", "application/json");
+    headers.set("Accept-Language", getCurrentLanguage());
 
     if (init.body && !headers.has("Content-Type")) {
       headers.set("Content-Type", "application/json");

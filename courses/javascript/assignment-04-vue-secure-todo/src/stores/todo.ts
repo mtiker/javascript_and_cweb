@@ -1,11 +1,21 @@
 import { defineStore } from "pinia";
 import { createTask, deleteTask, listTasks, updateTask } from "@/api/todos";
+import { buildDemoDueAt, demoTaskSeeds } from "@/lib/demo-seed";
 import { loadTodoPreferences, saveTodoPreferences } from "@/lib/preferences-storage";
 import { createDefaultTaskFilters } from "@/lib/task-utils";
-import type { TodoTaskDraft, TodoTaskEntity } from "@/types/todo";
+import type {
+  TodoCategoryEntity,
+  TodoPriorityEntity,
+  TodoTaskDraft,
+  TodoTaskEntity,
+} from "@/types/todo";
 
 function sortTasks(tasks: TodoTaskEntity[]) {
   return [...tasks].sort((left, right) => left.sortOrder - right.sortOrder || left.name.localeCompare(right.name));
+}
+
+function normalizedName(name: string) {
+  return name.trim().toLowerCase();
 }
 
 export const useTodoStore = defineStore("todo", {
@@ -100,6 +110,40 @@ export const useTodoStore = defineStore("todo", {
     async deleteTask(taskId: string) {
       await deleteTask(taskId);
       this.tasks = this.tasks.filter((item) => item.id !== taskId);
+    },
+    async applyDemoTaskPreset(
+      categories: TodoCategoryEntity[],
+      priorities: TodoPriorityEntity[],
+    ) {
+      const existingTaskNames = new Set(this.tasks.map((task) => normalizedName(task.name)));
+
+      for (const seed of demoTaskSeeds) {
+        if (existingTaskNames.has(normalizedName(seed.name))) {
+          continue;
+        }
+
+        const category =
+          categories.find((item) => normalizedName(item.name) === normalizedName(seed.categoryName)) ??
+          categories[0];
+        const priority =
+          priorities.find((item) => normalizedName(item.name) === normalizedName(seed.priorityName)) ??
+          priorities[0];
+
+        if (!category || !priority) {
+          throw new Error("Seed categories and priorities must exist before demo tasks can be created.");
+        }
+
+        const created = await this.createTask({
+          name: seed.name,
+          sortOrder: seed.sortOrder,
+          dueAt: buildDemoDueAt(seed.dueOffsetDays),
+          isCompleted: seed.isCompleted,
+          isArchived: seed.isArchived,
+          categoryId: category.id,
+          priorityId: priority.id,
+        });
+        existingTaskNames.add(normalizedName(created.name));
+      }
     },
   },
 });

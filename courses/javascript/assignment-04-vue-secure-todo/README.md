@@ -9,9 +9,10 @@ The app is intentionally structured as a reusable secure frontend base:
 - Pinia stores for auth, catalogs, tasks, and toasts
 - JWT access-token handling with refresh-token retry on `401`
 - first-run onboarding for empty category/priority catalogs
+- UTF-8-safe Estonian demo data and a browser favicon/logo
 - assignment-local Docker, CI/CD, and deployment files
 
-The backend was overhauled on April 5, 2026, so fresh accounts start with empty tasks, categories, and priorities. This frontend explicitly guides the user through that first-run setup instead of assuming server seed data exists.
+The backend was overhauled on April 5, 2026, so fresh accounts start with empty tasks, categories, and priorities. This frontend explicitly guides the user through that first-run setup and can seed a richer manual-testing workspace from the Catalogs page.
 
 ## Requirement Coverage
 
@@ -24,6 +25,8 @@ The backend was overhauled on April 5, 2026, so fresh accounts start with empty 
 - Todo priority CRUD
 - dashboard summary view
 - first-run catalog onboarding and quick-start preset
+- one-click manual-testing seed data with categories, priorities, and varied task states
+- UTF-8 text delivery for Estonian characters such as `ä`, `ö`, and `ü`
 - responsive UI with loading, empty, filtered-empty, success, and error states
 - Vitest unit and component/integration tests
 - Docker, GitLab child pipeline, and VPS deployment files
@@ -84,6 +87,18 @@ VITE_API_BASE_URL=https://taltech.akaver.com/api/v1 npm run dev
 
 For Docker/VPS deployment, `VITE_API_BASE_URL` is consumed at image build time through the Compose build args.
 
+## Manual Testing Seed Data
+
+After registering or signing in, open `/app/catalogs` and choose `Seed demo workspace`.
+
+The seed flow uses the real authenticated API and is safe to rerun because existing category, priority, and task names are skipped. It creates:
+
+- categories: `Töö`, `Õppimine`, `Kodu`, `Üritused`
+- priorities: `Kõrge`, `Keskmine`, `Madal`
+- five tasks covering open, overdue, completed, archived, future-due, and no-due-date states
+
+Use the seeded data to test dashboard metrics, search with `ä ö ü`, category and priority filters, status filters, create/edit/delete flows, completion toggles, archive/restore, and filtered-empty states.
+
 ## Test Coverage
 
 Current automated coverage includes:
@@ -93,8 +108,9 @@ Current automated coverage includes:
 - task filtering, sorting, and metrics
 - auth store login/register flows
 - router guard redirects, including expired-session recovery during protected setup
-- catalog onboarding and quick-start setup
+- catalog onboarding, quick-start setup, and full demo seed setup
 - task create/edit/delete, empty-state behavior, and startup load-error states
+- UTF-8 preservation for Estonian characters in mapped data and outgoing API payloads
 
 Run:
 

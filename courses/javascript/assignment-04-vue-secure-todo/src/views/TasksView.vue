@@ -42,6 +42,9 @@ const filteredTasks = computed(() =>
     catalogStore.priorities,
   ),
 );
+const deleteDescription = computed(
+  () => `Remove "${deleteTarget.value?.name ?? "this task"}" permanently?`,
+);
 
 function openCreateModal() {
   editingTask.value = null;
@@ -227,7 +230,7 @@ async function confirmDelete() {
     <ConfirmDialog
       :open="Boolean(deleteTarget)"
       title="Delete task"
-      :description="`Remove “${deleteTarget?.name ?? 'this task'}” permanently?`"
+      :description="deleteDescription"
       confirm-label="Delete task"
       :busy="busy"
       @close="deleteTarget = null"

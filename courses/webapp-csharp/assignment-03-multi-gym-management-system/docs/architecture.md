@@ -23,9 +23,12 @@ Separate client:
 - `client/`
 - Vite + React + TypeScript
 - JWT + refresh-token flow
+- system-role platform console for analytics, onboarding, billing, support, snapshots, and impersonation
+- tenant function console for staff, contracts, vacations, scheduling, bookings, memberships, payments, facilities, maintenance, settings, and gym users
 - focused admin CRUD for members, training categories, and membership packages
 - session list/detail and booking through the REST API
 - trainer attendance and caretaker maintenance task updates through the REST API
+- language selector that sends `Accept-Language` to the API
 
 ## Layered Structure
 
@@ -58,7 +61,7 @@ API flow:
 Separate client flow:
 1. React client logs in through `/api/v1/account/login`
 2. auth state is stored in `sessionStorage`
-3. `ApiClient` adds the bearer token to tenant CRUD requests
+3. `ApiClient` adds the bearer token and selected `Accept-Language` to API requests
 4. a `401` triggers one refresh attempt through `/api/v1/account/renew-refresh-token`
 5. refresh failure clears auth state and sends the user back to login
 
@@ -110,7 +113,7 @@ Important rules:
 - trainers can update attendance only for assigned sessions
 - caretakers can update only assigned maintenance tasks
 - gym admins and owners can manage tenant-wide business data
-- the React client admits `GymAdmin`, `GymOwner`, `Member`, `Trainer`, and `Caretaker` sessions
+- the React client admits `SystemAdmin`, `SystemSupport`, `SystemBilling`, `GymAdmin`, `GymOwner`, `Member`, `Trainer`, and `Caretaker` sessions
 
 ## Localization
 
@@ -118,6 +121,7 @@ UI localization:
 - `.resx` files in `App.Resources`
 - request localization for `et-EE` and `en`
 - shared MVC culture switcher
+- React language selector persisted in `localStorage`
 
 DB localization:
 - `LangStr` value object
@@ -139,7 +143,8 @@ This keeps API failures machine-readable while still giving browser users a norm
 
 Current frontend scope:
 - single active gym per login session
-- no gym-switch UI in the React client
+- switch-gym and switch-role actions in the React console, with no polished multi-gym picker yet
+- system-role platform and tenant-owner/admin function console coverage
 - CRUD coverage for:
   - members
   - training categories
@@ -152,6 +157,7 @@ Current frontend scope:
 Frontend structure:
 - `src/lib/apiClient.ts`: HTTP client, refresh retry logic, DTO mapping
 - `src/lib/auth.tsx`: auth context, route protection, session persistence
+- `src/lib/language.tsx`: language state and API localization header source
 - `src/pages/*`: CRUD pages and login
 - `src/components/*`: shell and notice components
 
@@ -181,6 +187,6 @@ Why add a separate client instead of replacing MVC:
 - the assignment requires both working MVC UX and a real API client
 - keeping MVC plus React makes the domain easier to demo from multiple angles
 
-Why keep the React client narrow in v1:
-- the goal of this pass is to satisfy the separate-client requirement cleanly while proving one proposal workflow beyond CRUD
-- the React role screens are focused on proposal-critical state changes; broader staff/equipment CRUD remains in MVC/API for now
+Why use a console for the broad SaaS surface:
+- the dental clinic reference exposes platform and tenant operations from a client UI, so Assignment 03 now does the same without replacing the existing focused pages
+- the console keeps every REST function reachable while the higher-use workflows still have dedicated pages

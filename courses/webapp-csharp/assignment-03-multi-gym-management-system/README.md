@@ -7,7 +7,7 @@ Assignment 03 is implemented as a SaaS multi-gym management system under `course
 The project now has three user-facing surfaces:
 - MVC admin UX inside `src/WebApp/Areas/Admin`
 - MVC client UX inside `src/WebApp/Areas/Client`, served under `/mvc-client`
-- a separate React + TypeScript admin client under `client/`
+- a separate React + TypeScript SaaS client under `client/`
 
 The backend remains one ASP.NET Core host that serves the MVC areas, Swagger, the versioned REST API, and the production React client at `/client`. The MVC client area uses `/mvc-client` so it does not collide with the React client mount.
 
@@ -22,7 +22,10 @@ This assignment currently covers:
 - MVC admin UX
 - MVC client UX
 - a separate React client that uses the REST API with JWT + refresh tokens
+- React platform/tenant SaaS console for system, billing, support, onboarding, account, and tenant operations
+- React language switching that sends `Accept-Language` for localized API data
 - production image packaging for the React client under `/client`
+- SVG favicon/logo branding for MVC and React browser tabs
 - UI translations with `.resx`
 - DB translations with `LangStr`
 - IDOR protection through active-gym, role, and self-only checks
@@ -152,13 +155,16 @@ Client environment notes:
 
 ## Separate Client Scope
 
-The separate client is intentionally focused on the A3 requirement for a real API consumer.
+The separate client is the main API-consuming SaaS console for the assignment.
 
-Current v1 scope:
+Current scope:
 - login and logout through the REST API
 - automatic access-token refresh with the refresh token endpoint
 - auth state persisted in `sessionStorage`
-- one active gym at a time based on `ActiveGymCode` from login
+- language selection persisted in `localStorage` and sent as `Accept-Language`
+- system-role access for platform analytics, gym onboarding, activation, snapshots, support tickets, subscriptions, and impersonation
+- tenant owner/admin access to a function console for staff, contracts, vacations, sessions, work shifts, bookings, memberships, payments, facilities, maintenance, settings, and gym users
+- one active gym at a time based on `ActiveGymCode`, with switch-gym/switch-role actions available in the console
 - CRUD for 3 admin entities:
   - members
   - training categories
@@ -168,7 +174,7 @@ Current v1 scope:
 - trainer attendance updates
 - caretaker maintenance task status updates
 
-The client accepts `GymAdmin`, `GymOwner`, `Member`, `Trainer`, and `Caretaker` sessions. Multi-gym workspace switching remains in the MVC shell.
+The client accepts `SystemAdmin`, `SystemSupport`, `SystemBilling`, `GymAdmin`, `GymOwner`, `Member`, `Trainer`, and `Caretaker` sessions.
 
 ## Seed Demo Users
 
@@ -220,10 +226,15 @@ Platform API:
 - `GET /api/v1/system/platform/analytics`
 - `POST /api/v1/system/impersonation`
 
-React client API subset:
+React client API coverage:
 - `POST /api/v1/account/login`
 - `POST /api/v1/account/logout`
 - `POST /api/v1/account/renew-refresh-token`
+- `POST /api/v1/account/switch-gym`
+- `POST /api/v1/account/switch-role`
+- `POST /api/v1/account/forgot-password`
+- `POST /api/v1/account/reset-password`
+- all documented platform API endpoints
 - `GET|POST|PUT|DELETE /api/v1/{gymCode}/members`
 - `GET /api/v1/{gymCode}/members/me`
 - `GET|POST|PUT|DELETE /api/v1/{gymCode}/training-categories`
@@ -235,6 +246,7 @@ React client API subset:
 - `GET /api/v1/{gymCode}/maintenance-tasks`
 - `PUT /api/v1/{gymCode}/maintenance-tasks/{id}/status`
 - `GET|POST|PUT|DELETE /api/v1/{gymCode}/membership-packages`
+- the `/platform` and `/console` routes expose the remaining tenant endpoints listed in `docs/api.md`
 
 MVC areas:
 - `Areas/Admin`: platform dashboards and tenant admin pages
@@ -290,7 +302,7 @@ Repository CI integration:
 
 ## Known Limitations
 
-- There is still no public deployment URL.
-- The separate React client is limited to one active gym at a time.
+- The public deployment URL is documented, but live availability still depends on the VPS/proxy/container state at review time.
+- The React client works with one active gym context at a time; switch actions are available, but there is no polished multi-gym picker yet.
 - Payments are internal records only; no external payment provider is integrated.
 - Support tickets stay inside the same monolith and are intentionally lightweight.

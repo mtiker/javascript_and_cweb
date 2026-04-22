@@ -17,6 +17,82 @@ export interface MessageResponse {
   messages: string[];
 }
 
+export type HttpMethod = "GET" | "POST" | "PUT" | "DELETE";
+
+export interface RawApiResponse {
+  status: number;
+  data: unknown;
+}
+
+export enum SubscriptionPlan {
+  Starter = 0,
+  Growth = 1,
+  Enterprise = 2,
+}
+
+export enum SubscriptionStatus {
+  Trial = 0,
+  Active = 1,
+  Suspended = 2,
+  Cancelled = 3,
+}
+
+export enum SupportTicketPriority {
+  Low = 0,
+  Medium = 1,
+  High = 2,
+}
+
+export enum SupportTicketStatus {
+  Open = 0,
+  InProgress = 1,
+  Resolved = 2,
+}
+
+export interface PlatformAnalytics {
+  gymCount: number;
+  userCount: number;
+  memberCount: number;
+  openSupportTicketCount: number;
+}
+
+export interface GymSummary {
+  gymId: string;
+  name: string;
+  code: string;
+  isActive: boolean;
+  city: string;
+  country: string;
+}
+
+export interface GymSnapshot {
+  gymId: string;
+  gymName: string;
+  memberCount: number;
+  sessionCount: number;
+  openMaintenanceTaskCount: number;
+}
+
+export interface SubscriptionSummary {
+  gymId: string;
+  gymName: string;
+  plan: SubscriptionPlan;
+  status: SubscriptionStatus;
+  monthlyPrice: number;
+  startDate: string;
+  endDate?: string | null;
+}
+
+export interface SupportTicket {
+  ticketId: string;
+  gymId: string;
+  gymName: string;
+  title: string;
+  status: SupportTicketStatus;
+  priority: SupportTicketPriority;
+  createdAtUtc: string;
+}
+
 export interface ApiProblem {
   title?: string;
   detail?: string;
@@ -184,6 +260,108 @@ export interface MembershipPackageUpsertRequest {
   trainingDiscountPercent?: number | null;
   isTrainingFree: boolean;
   description?: string | null;
+}
+
+export enum StaffStatus {
+  Active = 0,
+  Suspended = 1,
+  Inactive = 2,
+}
+
+export interface Staff {
+  id: string;
+  staffCode: string;
+  fullName: string;
+  status: StaffStatus;
+}
+
+export interface Membership {
+  id: string;
+  memberId: string;
+  membershipPackageId: string;
+  startDate: string;
+  endDate: string;
+  priceAtPurchase: number;
+  currencyCode: string;
+  status: number;
+}
+
+export interface Payment {
+  id: string;
+  amount: number;
+  currencyCode: string;
+  paidAtUtc: string;
+  status: number;
+  reference?: string | null;
+  membershipId?: string | null;
+  bookingId?: string | null;
+}
+
+export interface OpeningHours {
+  id: string;
+  weekday: number;
+  opensAt: string;
+  closesAt: string;
+}
+
+export interface OpeningHoursException {
+  id: string;
+  exceptionDate: string;
+  isClosed: boolean;
+  opensAt?: string | null;
+  closesAt?: string | null;
+  reason?: string | null;
+}
+
+export enum EquipmentType {
+  Cardio = 0,
+  Strength = 1,
+  Mobility = 2,
+  Accessory = 3,
+  Other = 4,
+}
+
+export enum EquipmentStatus {
+  Active = 0,
+  Maintenance = 1,
+  Broken = 2,
+  Decommissioned = 3,
+}
+
+export interface EquipmentModel {
+  id: string;
+  name: string;
+  type: EquipmentType;
+  manufacturer?: string | null;
+  maintenanceIntervalDays: number;
+  description?: string | null;
+}
+
+export interface Equipment {
+  id: string;
+  equipmentModelId: string;
+  assetTag?: string | null;
+  serialNumber?: string | null;
+  currentStatus: EquipmentStatus;
+  commissionedAt?: string | null;
+  decommissionedAt?: string | null;
+  notes?: string | null;
+}
+
+export interface GymSettings {
+  gymId: string;
+  currencyCode: string;
+  timeZone: string;
+  allowNonMemberBookings: boolean;
+  bookingCancellationHours: number;
+  publicDescription?: string | null;
+}
+
+export interface GymUser {
+  appUserId: string;
+  email: string;
+  roleName: string;
+  isActive: boolean;
 }
 
 export interface Notice {

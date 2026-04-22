@@ -2,6 +2,7 @@ import type { PropsWithChildren, ReactElement } from "react";
 import { render } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { AuthProvider } from "../lib/auth";
+import { LanguageProvider } from "../lib/language";
 import type { AuthSession } from "../lib/types";
 
 export const defaultSession: AuthSession = {
@@ -19,9 +20,11 @@ export function renderWithAuth(
   { route = "/", session = defaultSession }: { route?: string; session?: AuthSession | null } = {},
 ) {
   return render(
-    <AuthProvider initialSession={session}>
-      <MemoryRouter initialEntries={[route]}>{ui}</MemoryRouter>
-    </AuthProvider>,
+    <LanguageProvider>
+      <AuthProvider initialSession={session}>
+        <MemoryRouter initialEntries={[route]}>{ui}</MemoryRouter>
+      </AuthProvider>
+    </LanguageProvider>,
   );
 }
 
@@ -31,9 +34,11 @@ export function AuthRouteWrapper({
   session = defaultSession,
 }: PropsWithChildren<{ route?: string; session?: AuthSession | null }>) {
   return (
-    <AuthProvider initialSession={session}>
-      <MemoryRouter initialEntries={[route]}>{children}</MemoryRouter>
-    </AuthProvider>
+    <LanguageProvider>
+      <AuthProvider initialSession={session}>
+        <MemoryRouter initialEntries={[route]}>{children}</MemoryRouter>
+      </AuthProvider>
+    </LanguageProvider>
   );
 }
 

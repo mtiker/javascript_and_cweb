@@ -5,7 +5,7 @@
 Assignment 03 is implemented as one SaaS backend plus two UI approaches:
 - ASP.NET Core MVC admin UX
 - ASP.NET Core MVC client UX under `/mvc-client`
-- a separate React + TypeScript admin client in `client/`
+- a separate React + TypeScript SaaS client in `client/`
 
 The project keeps the ASP.NET Core monolith for backend responsibilities while adding the separate client required for REST API consumption. The production Docker image now builds that client separately and serves it from the backend at `/client`; the MVC client area uses `/mvc-client` to avoid route collision with the React bundle.
 
@@ -174,12 +174,15 @@ Tenant endpoints:
 
 ## Separate Client Plan
 
-The separate client intentionally stays narrow in this phase.
+The separate client now combines focused workflow pages with a broad SaaS function console.
 
 Implemented v1 scope:
 - login/logout through the backend API
 - refresh-token based session continuation
 - `sessionStorage` auth persistence
+- language selection with `Accept-Language` for localized API responses
+- system-role platform console for analytics, gym onboarding/activation/snapshots, subscriptions, support tickets, and impersonation
+- tenant owner/admin function console exposing staff, contracts, vacations, sessions, shifts, bookings, memberships, payments, facilities, equipment, maintenance, settings, and gym-user actions
 - 3 admin CRUD areas:
   - members
   - training categories
@@ -191,7 +194,7 @@ Implemented v1 scope:
 - single active gym per session
 
 Not implemented in this pass:
-- multi-gym switching inside the React client
+- polished multi-gym picker inside the React client; switch actions are available from the console
 - deployment of the client to a separate public server; it is instead deployed under the ASP.NET Core host at `/client`
 
 ## Security Rules
@@ -221,7 +224,9 @@ Backend:
 Frontend:
 - auth guard tests
 - logout cleanup tests
+- system-role routing to the React SaaS console
 - refresh-on-`401` tests
+- selected language is sent through `Accept-Language`
 - production/development API base default tests
 - CRUD happy/error tests for:
   - members

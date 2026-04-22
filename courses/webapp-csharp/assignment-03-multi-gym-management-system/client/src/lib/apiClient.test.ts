@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiClient } from "./apiClient";
 import type { AuthSession } from "./types";
+import { setCurrentLanguage } from "./language";
 import { jsonResponse } from "../test/testUtils";
 
 describe("ApiClient", () => {
@@ -10,6 +11,7 @@ describe("ApiClient", () => {
   let clearSession: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
+    setCurrentLanguage("en");
     session = {
       jwt: "expired-jwt",
       refreshToken: "refresh-1",
@@ -82,5 +84,15 @@ describe("ApiClient", () => {
 
     await expect(client.getMembers("peak-forge")).rejects.toThrow("Session expired. Please sign in again.");
     expect(clearSession).toHaveBeenCalled();
+  });
+
+  it("sends the selected language to localized API endpoints", async () => {
+    setCurrentLanguage("et-EE");
+    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse([]));
+
+    await client.getTrainingCategories("peak-forge");
+
+    const request = vi.mocked(fetch).mock.calls[0]?.[1] as RequestInit;
+    expect(new Headers(request.headers).get("Accept-Language")).toBe("et-EE");
   });
 });

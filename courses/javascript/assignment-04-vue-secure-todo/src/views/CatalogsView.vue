@@ -5,6 +5,7 @@ import ConfirmDialog from "@/components/ConfirmDialog.vue";
 import EmptyStatePanel from "@/components/EmptyStatePanel.vue";
 import { getErrorMessage } from "@/lib/error-utils";
 import { useCatalogStore } from "@/stores/catalogs";
+import { useTodoStore } from "@/stores/todo";
 import { useToastStore } from "@/stores/toast";
 import type {
   TodoCategoryDraft,
@@ -14,6 +15,7 @@ import type {
 } from "@/types/todo";
 
 const catalogStore = useCatalogStore();
+const todoStore = useTodoStore();
 const toastStore = useToastStore();
 
 const busy = ref(false);
@@ -51,6 +53,7 @@ const deleteTargetLabel = computed(() => {
 
   return "this item";
 });
+const deleteDescription = computed(() => `Remove "${deleteTargetLabel.value}" permanently?`);
 
 function openCreate(kind: "category" | "priority") {
   modalKind.value = kind;
@@ -116,6 +119,22 @@ async function applyQuickStartPreset() {
   }
 }
 
+async function applyDemoSeed() {
+  busy.value = true;
+
+  try {
+    await catalogStore.ensureLoaded();
+    await todoStore.ensureLoaded();
+    const seedCatalogs = await catalogStore.applyDemoCatalogPreset();
+    await todoStore.applyDemoTaskPreset(seedCatalogs.categories, seedCatalogs.priorities);
+    toastStore.push("Demo workspace seeded for manual testing.", "success");
+  } catch (error) {
+    toastStore.push(getErrorMessage(error, "Unable to seed demo data."), "error");
+  } finally {
+    busy.value = false;
+  }
+}
+
 async function confirmDelete() {
   busy.value = true;
 
@@ -161,6 +180,14 @@ async function confirmDelete() {
         >
           Apply quick-start preset
         </button>
+        <button
+          class="button button--ghost"
+          type="button"
+          :disabled="busy || Boolean(loadError)"
+          @click="applyDemoSeed"
+        >
+          Seed demo workspace
+        </button>
       </div>
     </section>
 
@@ -180,6 +207,9 @@ async function confirmDelete() {
       >
         <button class="button" type="button" :disabled="busy" @click="applyQuickStartPreset">
           Apply quick-start preset
+        </button>
+        <button class="button button--ghost" type="button" :disabled="busy" @click="applyDemoSeed">
+          Seed demo workspace
         </button>
       </EmptyStatePanel>
     </section>
@@ -296,7 +326,7 @@ async function confirmDelete() {
     <ConfirmDialog
       :open="Boolean(deleteMode)"
       title="Delete catalog item"
-      :description="`Remove “${deleteTargetLabel}” permanently?`"
+      :description="deleteDescription"
       confirm-label="Delete item"
       :busy="busy"
       @close="

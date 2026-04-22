@@ -6,6 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@L["AppTitle"]</title>
+    <link rel="icon" type="image/svg+xml" href="~/assets/gym-logo.svg" />
     <link rel="stylesheet" href="~/css/site.css" />
 </head>
 <body>
@@ -18,7 +19,7 @@
             {
                 <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index">@L["AdminArea"]</a>
                 <a asp-area="Client" asp-controller="Dashboard" asp-action="Index">@L["ClientArea"]</a>
-                <a asp-area="Client" asp-controller="Profile" asp-action="Index">Profile</a>
+                <a asp-area="Client" asp-controller="Profile" asp-action="Index">@L["Profile"]</a>
             }
         </nav>
         <div class="topbar-actions">

@@ -11,6 +11,8 @@ interface AuthContextValue {
   login: (request: LoginRequest) => Promise<void>;
   logout: () => Promise<void>;
   session: AuthSession | null;
+  switchGym: (gymCode: string) => Promise<void>;
+  switchRole: (roleName: string) => Promise<void>;
 }
 
 interface AuthProviderProps extends PropsWithChildren {
@@ -28,6 +30,7 @@ export function resolveApiBaseUrl(
 
 const DEFAULT_API_BASE_URL = resolveApiBaseUrl();
 const CLIENT_ROLES = new Set(["GymAdmin", "GymOwner", "Member", "Trainer", "Caretaker"]);
+const SYSTEM_ROLES = new Set(["SystemAdmin", "SystemSupport", "SystemBilling"]);
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ apiBaseUrl = DEFAULT_API_BASE_URL, children, initialSession }: AuthProviderProps) {
@@ -59,14 +62,9 @@ export function AuthProvider({ apiBaseUrl = DEFAULT_API_BASE_URL, children, init
   const login = async (request: LoginRequest) => {
     const nextSession = await clientRef.current!.login(request);
 
-    if (!nextSession.activeGymCode || !nextSession.activeRole) {
+    if (!canUseClient(nextSession)) {
       persistSession(null);
-      throw new Error("The backend did not return an active gym context.");
-    }
-
-    if (!CLIENT_ROLES.has(nextSession.activeRole)) {
-      persistSession(null);
-      throw new Error("This client is limited to gym admin, owner, member, trainer, and caretaker accounts in this phase.");
+      throw new Error("This account does not have a supported SaaS role.");
     }
 
     persistSession(nextSession);
@@ -80,14 +78,26 @@ export function AuthProvider({ apiBaseUrl = DEFAULT_API_BASE_URL, children, init
     }
   };
 
+  const switchGym = async (gymCode: string) => {
+    const nextSession = await clientRef.current!.switchGym(gymCode);
+    persistSession(nextSession);
+  };
+
+  const switchRole = async (roleName: string) => {
+    const nextSession = await clientRef.current!.switchRole(roleName);
+    persistSession(nextSession);
+  };
+
   return (
     <AuthContext.Provider
       value={{
         api: clientRef.current,
-        isAuthenticated: Boolean(session?.jwt && session.activeGymCode),
+        isAuthenticated: Boolean(session?.jwt && canUseClient(session)),
         login,
         logout,
         session,
+        switchGym,
+        switchRole,
       }}
     >
       {children}
@@ -117,4 +127,14 @@ export function useAuth() {
   }
 
   return context;
+}
+
+function canUseClient(session: AuthSession | null) {
+  if (!session) {
+    return false;
+  }
+
+  const hasSystemRole = session.systemRoles.some((role) => SYSTEM_ROLES.has(role));
+  const hasTenantRole = Boolean(session.activeGymCode && session.activeRole && CLIENT_ROLES.has(session.activeRole));
+  return hasSystemRole || hasTenantRole;
 }

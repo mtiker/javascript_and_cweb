@@ -118,10 +118,15 @@ Facilities:
 
 ## Separate Client Contract
 
-The React client intentionally consumes only this subset:
+The React client now consumes both focused role pages and a broader SaaS function console:
 - `POST /api/v1/account/login`
 - `POST /api/v1/account/logout`
 - `POST /api/v1/account/renew-refresh-token`
+- `POST /api/v1/account/switch-gym`
+- `POST /api/v1/account/switch-role`
+- `POST /api/v1/account/forgot-password`
+- `POST /api/v1/account/reset-password`
+- all platform endpoints listed above through `/platform` or `/console`
 - member CRUD including `GET /api/v1/{gymCode}/members/{id}` for edit forms
 - `GET /api/v1/{gymCode}/members/me` for member self-booking
 - training-category CRUD
@@ -130,10 +135,11 @@ The React client intentionally consumes only this subset:
 - member/admin booking through `POST /api/v1/{gymCode}/bookings`
 - trainer/admin attendance through `GET /api/v1/{gymCode}/bookings` and `PUT /api/v1/{gymCode}/bookings/{id}/attendance`
 - caretaker/admin task updates through `GET /api/v1/{gymCode}/maintenance-tasks` and `PUT /api/v1/{gymCode}/maintenance-tasks/{id}/status`
+- the remaining tenant endpoints listed above through the function console with editable path parameters and JSON request bodies
 
 The member detail route returns a fuller payload than the member list route so the client can edit person fields without inventing a second contract.
 
-The deployed ASP.NET Core app serves the built React client at `/client`; the client is still a separately built Vite application and consumes these REST endpoints through JWT-bearing HTTP calls.
+The deployed ASP.NET Core app serves the built React client at `/client`; the client is still a separately built Vite application and consumes these REST endpoints through JWT-bearing HTTP calls. It sends the selected UI language as `Accept-Language` so `LangStr` values are resolved consistently in API responses.
 
 ## Security Rules
 

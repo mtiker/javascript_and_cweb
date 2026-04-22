@@ -18,6 +18,18 @@ const api = vi.hoisted(() => {
       syncAt: string;
       tag: string | null;
     }>,
+    tasks: [] as Array<{
+      id: string;
+      name: string;
+      sortOrder: number;
+      createdAt: string;
+      dueAt: string | null;
+      isCompleted: boolean;
+      isArchived: boolean;
+      categoryId: string;
+      priorityId: string;
+      syncAt: string;
+    }>,
   };
 
   return {
@@ -74,6 +86,25 @@ const api = vi.hoisted(() => {
     deletePriority: vi.fn(async (id: string) => {
       state.priorities = state.priorities.filter((item) => item.id !== id);
     }),
+    listTasks: vi.fn(async () => state.tasks.map((item) => ({ ...item }))),
+    createTask: vi.fn(async (draft: { name: string; sortOrder: number; dueAt: string | null; isCompleted: boolean; isArchived: boolean; categoryId: string; priorityId: string; }) => {
+      const created = {
+        id: `task-${state.tasks.length + 1}`,
+        name: draft.name,
+        sortOrder: draft.sortOrder,
+        createdAt: "2026-04-16T12:00:00.000Z",
+        dueAt: draft.dueAt,
+        isCompleted: draft.isCompleted,
+        isArchived: draft.isArchived,
+        categoryId: draft.categoryId,
+        priorityId: draft.priorityId,
+        syncAt: "2026-04-16T12:00:00.000Z",
+      };
+      state.tasks.push(created);
+      return created;
+    }),
+    updateTask: vi.fn(),
+    deleteTask: vi.fn(),
   };
 });
 
@@ -88,6 +119,13 @@ vi.mock("@/api/catalogs", () => ({
   deletePriority: api.deletePriority,
 }));
 
+vi.mock("@/api/todos", () => ({
+  listTasks: api.listTasks,
+  createTask: api.createTask,
+  updateTask: api.updateTask,
+  deleteTask: api.deleteTask,
+}));
+
 import CatalogsView from "@/views/CatalogsView.vue";
 import CatalogFormModal from "@/components/CatalogFormModal.vue";
 
@@ -95,10 +133,13 @@ describe("catalogs view", () => {
   beforeEach(() => {
     api.state.categories = [];
     api.state.priorities = [];
+    api.state.tasks = [];
     api.listCategories.mockClear();
     api.listPriorities.mockClear();
     api.createCategory.mockClear();
     api.createPriority.mockClear();
+    api.listTasks.mockClear();
+    api.createTask.mockClear();
   });
 
   it("applies the quick-start preset for a brand-new account", async () => {
@@ -116,6 +157,29 @@ describe("catalogs view", () => {
     expect(api.createPriority).toHaveBeenCalled();
     expect(wrapper.text()).toContain("Personal");
     expect(wrapper.text()).toContain("High");
+  });
+
+  it("seeds a full demo workspace with Estonian characters and varied task states", async () => {
+    const wrapper = mount(CatalogsView, {
+      global: {
+        plugins: [createPinia()],
+      },
+    });
+
+    await flushPromises();
+    const seedButton = wrapper
+      .findAll("button")
+      .find((button) => button.text() === "Seed demo workspace");
+    expect(seedButton).toBeTruthy();
+    await seedButton!.trigger("click");
+    await flushPromises();
+
+    expect(api.state.categories.map((item) => item.name)).toContain("Töö");
+    expect(api.state.priorities.map((item) => item.name)).toContain("Kõrge");
+    expect(api.state.tasks.map((item) => item.name)).toContain("Paranda ä ö ü kuvamine");
+    expect(api.state.tasks.some((item) => item.isCompleted)).toBe(true);
+    expect(api.state.tasks.some((item) => item.isArchived)).toBe(true);
+    expect(api.createTask).toHaveBeenCalledTimes(5);
   });
 
   it("shows a retryable load error when catalogs cannot load", async () => {

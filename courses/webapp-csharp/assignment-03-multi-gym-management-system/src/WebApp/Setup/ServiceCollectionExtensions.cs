@@ -11,6 +11,7 @@ using Asp.Versioning;
 using Asp.Versioning.ApiExplorer;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -94,10 +95,12 @@ public static class ServiceCollectionExtensions
             var supportedCultures = new[]
             {
                 new CultureInfo("et-EE"),
-                new CultureInfo("en")
+                new CultureInfo("et"),
+                new CultureInfo("en"),
+                new CultureInfo("en-US")
             };
 
-            options.DefaultRequestCulture = new Microsoft.AspNetCore.Localization.RequestCulture("et-EE");
+            options.DefaultRequestCulture = new RequestCulture("et-EE");
             options.SupportedCultures = supportedCultures;
             options.SupportedUICultures = supportedCultures;
         });
