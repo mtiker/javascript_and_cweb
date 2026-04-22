@@ -13,6 +13,7 @@ import type {
   LoginRequest,
   MaintenanceStatusUpdateRequest,
   MaintenanceTask,
+  MaintenanceTaskUpsertRequest,
   MemberDetail,
   MemberSummary,
   MemberUpsertRequest,
@@ -31,6 +32,7 @@ import type {
   TrainingCategory,
   TrainingCategoryUpsertRequest,
   TrainingSession,
+  TrainingSessionUpsertRequest,
 } from "./types";
 import { ApiError } from "./types";
 import { getCurrentLanguage } from "./language";
@@ -171,6 +173,20 @@ export class ApiClient {
     return this.request<TrainingSession>(`${this.tenantBase(gymCode)}/training-sessions/${sessionId}`);
   }
 
+  async createTrainingSession(gymCode: string, request: TrainingSessionUpsertRequest): Promise<TrainingSession> {
+    return this.request<TrainingSession>(`${this.tenantBase(gymCode)}/training-sessions`, {
+      method: "POST",
+      body: JSON.stringify(request),
+    });
+  }
+
+  async updateTrainingSession(gymCode: string, sessionId: string, request: TrainingSessionUpsertRequest): Promise<TrainingSession> {
+    return this.request<TrainingSession>(`${this.tenantBase(gymCode)}/training-sessions/${sessionId}`, {
+      method: "PUT",
+      body: JSON.stringify(request),
+    });
+  }
+
   async getStaff(gymCode: string): Promise<Staff[]> {
     return this.request<Staff[]>(`${this.tenantBase(gymCode)}/staff`);
   }
@@ -195,6 +211,13 @@ export class ApiClient {
 
   async getMaintenanceTasks(gymCode: string): Promise<MaintenanceTask[]> {
     return this.request<MaintenanceTask[]>(`${this.tenantBase(gymCode)}/maintenance-tasks`);
+  }
+
+  async createMaintenanceTask(gymCode: string, request: MaintenanceTaskUpsertRequest): Promise<MaintenanceTask> {
+    return this.request<MaintenanceTask>(`${this.tenantBase(gymCode)}/maintenance-tasks`, {
+      method: "POST",
+      body: JSON.stringify(request),
+    });
   }
 
   async updateMaintenanceTaskStatus(

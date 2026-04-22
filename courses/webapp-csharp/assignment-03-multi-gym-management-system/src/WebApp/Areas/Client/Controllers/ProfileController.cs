@@ -1,5 +1,5 @@
 using System.Globalization;
-using App.BLL.Contracts;
+using App.BLL.Services;
 using App.DAL.EF;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -13,7 +13,7 @@ namespace WebApp.Areas.Client.Controllers;
 public class ProfileController(
     AppDbContext dbContext,
     IUserContextService userContextService,
-    App.BLL.Contracts.IAuthorizationService authorizationService) : Controller
+    App.BLL.Services.IAuthorizationService authorizationService) : Controller
 {
     public async Task<IActionResult> Index()
     {

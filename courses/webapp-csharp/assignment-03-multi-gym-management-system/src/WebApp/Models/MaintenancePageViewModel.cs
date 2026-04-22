@@ -1,5 +1,5 @@
-using App.DTO.v1.Tenant;
 using App.Domain.Enums;
+using App.DTO.v1.MaintenanceTasks;
 
 namespace WebApp.Models;
 

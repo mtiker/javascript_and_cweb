@@ -4,10 +4,10 @@ using System.Net.Http.Json;
 using System.Text.RegularExpressions;
 using App.DAL.EF;
 using App.Domain.Entities;
-using App.DTO.v1.Identity;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
+using App.DTO.v1.Identity;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace WebApp.Tests.Integration;

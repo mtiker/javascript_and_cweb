@@ -35,11 +35,14 @@ Backend unit tests:
   - verifies translation fallback behavior
 - `MembershipWorkflowServiceTests`
   - verifies membership overlap detection and suggested next start date
+- `RuntimeConfigurationTests`
+  - verifies required JWT configuration and Data Protection key mapping
 
 Backend integration tests:
 - `SmokeTests.HomePage_ReturnsSuccess`
 - `SmokeTests.Register_ReturnsJwtPayload`
 - `SmokeTests.Login_SeededMultiGymAdmin_CanSwitchGym`
+- `SmokeTests.SplitTenantApiControllers_KeepExistingReadRoutes`
 - `AuthSecurityAndErrorTests.RenewRefreshToken_RotatesToken_AndRejectsReuse`
 - `AuthSecurityAndErrorTests.RenewRefreshToken_RejectsExpiredRefreshToken`
 - `AuthSecurityAndErrorTests.MembersEndpoint_RejectsActiveGymMismatch`
@@ -54,6 +57,10 @@ Backend integration tests:
 - `ProposalWorkflowTests.MemberBooking_RequiresPaymentReferenceWhenPaymentIsDue`
 - `ProposalWorkflowTests.TrainerAttendance_UpdateIsLimitedToAssignedTrainerSessions`
 - `ProposalWorkflowTests.CaretakerStatus_UpdateIsLimitedToAssignedTasks`
+- `StaffWorkflowTests.StaffRelatedTenantEndpoints_SupportCrudThroughBllServices`
+- `StaffWorkflowTests.StaffRelatedTenantEndpoints_ReturnProblemDetailsForMissingResources`
+- `StaffWorkflowTests.StaffRelatedTenantEndpoints_RejectWrongActiveGym`
+- `StaffWorkflowTests.ContractCreate_RejectsStaffFromAnotherGym`
 
 Frontend Vitest coverage:
 - auth guard redirects anonymous users to login
@@ -94,6 +101,7 @@ Recommended manual verification before defense:
 ## Test Notes
 
 - Backend integration tests use EF Core InMemory and seeded demo data.
+- Backend integration tests inject test-only JWT configuration through environment variables before the host starts.
 - The HTML error-page test uses a production-style test host because MVC exception handling is only enabled outside development.
 - Frontend tests run in `jsdom` and mock network traffic directly.
 - The assignment CI pipeline now verifies the React client before the .NET build and test stages.

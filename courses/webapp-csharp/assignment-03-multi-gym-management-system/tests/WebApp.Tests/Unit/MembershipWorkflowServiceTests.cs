@@ -1,4 +1,3 @@
-using App.BLL.Contracts;
 using App.BLL.Services;
 using App.DAL.EF;
 using App.DAL.EF.Tenant;
@@ -6,6 +5,7 @@ using App.Domain.Entities;
 using App.Domain.Enums;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using App.DTO.v1.Memberships;
 
 namespace WebApp.Tests.Unit;
 
@@ -60,7 +60,7 @@ public class MembershipWorkflowServiceTests
 
         var service = new MembershipWorkflowService(dbContext, new TestAuthorizationService(gymId));
 
-        var result = await service.SellMembershipAsync("test-gym", new App.DTO.v1.Tenant.SellMembershipRequest
+        var result = await service.SellMembershipAsync("test-gym", new App.DTO.v1.Memberships.SellMembershipRequest
         {
             MemberId = member.Id,
             MembershipPackageId = package.Id,

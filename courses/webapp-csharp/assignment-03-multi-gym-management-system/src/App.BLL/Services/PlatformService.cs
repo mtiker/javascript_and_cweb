@@ -1,13 +1,16 @@
-using App.BLL.Contracts;
+using App.BLL.Contracts.Infrastructure;
 using App.BLL.Exceptions;
 using App.Domain;
 using App.Domain.Common;
 using App.Domain.Entities;
 using App.Domain.Enums;
 using App.Domain.Identity;
-using App.DTO.v1.System;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using App.DTO.v1.System.Billing;
+using App.DTO.v1.System.Platform;
+using App.DTO.v1.System.Support;
+using App.DTO.v1.System;
 
 namespace App.BLL.Services;
 
@@ -38,12 +41,12 @@ public class PlatformService(
     {
         if (await dbContext.Gyms.AnyAsync(entity => entity.Code == request.Code))
         {
-            throw new AppValidationException("Gym code is already in use.");
+            throw new ValidationAppException("Gym code is already in use.");
         }
 
         if (await userManager.FindByEmailAsync(request.OwnerEmail) != null)
         {
-            throw new AppValidationException("Owner email is already in use.");
+            throw new ValidationAppException("Owner email is already in use.");
         }
 
         var gym = new Gym
@@ -91,7 +94,7 @@ public class PlatformService(
         var result = await userManager.CreateAsync(ownerUser, request.OwnerPassword);
         if (!result.Succeeded)
         {
-            throw new AppValidationException(result.Errors.Select(error => error.Description));
+            throw new ValidationAppException(result.Errors.Select(error => error.Description));
         }
 
         var ownerLink = new AppUserGymRole
@@ -119,7 +122,7 @@ public class PlatformService(
     public async Task UpdateGymActivationAsync(Guid gymId, UpdateGymActivationRequest request)
     {
         var gym = await dbContext.Gyms.FirstOrDefaultAsync(entity => entity.Id == gymId)
-                  ?? throw new AppNotFoundException("Gym was not found.");
+                  ?? throw new NotFoundException("Gym was not found.");
 
         gym.IsActive = request.IsActive;
         await dbContext.SaveChangesAsync();
@@ -147,7 +150,7 @@ public class PlatformService(
     public async Task<SubscriptionSummaryResponse> UpdateSubscriptionAsync(Guid gymId, UpdateSubscriptionRequest request)
     {
         var gym = await dbContext.Gyms.FirstOrDefaultAsync(entity => entity.Id == gymId)
-                  ?? throw new AppNotFoundException("Gym was not found.");
+                  ?? throw new NotFoundException("Gym was not found.");
 
         var subscription = await dbContext.Subscriptions.FirstOrDefaultAsync(entity => entity.GymId == gymId);
         if (subscription == null)
@@ -201,7 +204,7 @@ public class PlatformService(
     public async Task<SupportTicketResponse> CreateSupportTicketAsync(Guid gymId, SupportTicketRequest request)
     {
         var gym = await dbContext.Gyms.FirstOrDefaultAsync(entity => entity.Id == gymId)
-                  ?? throw new AppNotFoundException("Gym was not found.");
+                  ?? throw new NotFoundException("Gym was not found.");
 
         var ticket = new SupportTicket
         {
@@ -231,7 +234,7 @@ public class PlatformService(
     public async Task<CompanySnapshotResponse> GetGymSnapshotAsync(Guid gymId)
     {
         var gym = await dbContext.Gyms.FirstOrDefaultAsync(entity => entity.Id == gymId)
-                  ?? throw new AppNotFoundException("Gym was not found.");
+                  ?? throw new NotFoundException("Gym was not found.");
 
         return new CompanySnapshotResponse
         {
@@ -258,7 +261,7 @@ public class PlatformService(
     public async Task<StartImpersonationResponse> StartImpersonationAsync(StartImpersonationRequest request)
     {
         var user = await userManager.FindByIdAsync(request.UserId.ToString())
-                   ?? throw new AppNotFoundException("User was not found.");
+                   ?? throw new NotFoundException("User was not found.");
 
         var systemRoles = (await userManager.GetRolesAsync(user))
             .Where(RoleNames.SystemRoles.Contains)

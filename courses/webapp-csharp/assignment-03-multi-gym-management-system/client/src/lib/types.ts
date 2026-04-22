@@ -161,6 +161,19 @@ export interface TrainingSession {
   trainerContractIds: string[];
 }
 
+export interface TrainingSessionUpsertRequest {
+  categoryId: string;
+  name: string;
+  description?: string | null;
+  startAtUtc: string;
+  endAtUtc: string;
+  capacity: number;
+  basePrice: number;
+  currencyCode: string;
+  status: TrainingSessionStatus;
+  trainerContractIds: string[];
+}
+
 export enum BookingStatus {
   Booked = 0,
   Cancelled = 1,
@@ -171,7 +184,10 @@ export enum BookingStatus {
 export interface Booking {
   id: string;
   trainingSessionId: string;
+  trainingSessionName: string;
   memberId: string;
+  memberName: string;
+  memberCode: string;
   status: BookingStatus;
   chargedPrice: number;
   paymentRequired: boolean;
@@ -208,7 +224,10 @@ export enum MaintenanceTaskStatus {
 export interface MaintenanceTask {
   id: string;
   equipmentId: string;
+  equipmentAssetTag?: string | null;
+  equipmentName: string;
   assignedStaffId?: string | null;
+  assignedStaffName?: string | null;
   createdByStaffId?: string | null;
   taskType: MaintenanceTaskType;
   priority: MaintenancePriority;
@@ -216,6 +235,17 @@ export interface MaintenanceTask {
   dueAtUtc?: string | null;
   startedAtUtc?: string | null;
   completedAtUtc?: string | null;
+  notes?: string | null;
+}
+
+export interface MaintenanceTaskUpsertRequest {
+  equipmentId: string;
+  assignedStaffId?: string | null;
+  createdByStaffId?: string | null;
+  taskType: MaintenanceTaskType;
+  priority: MaintenancePriority;
+  status: MaintenanceTaskStatus;
+  dueAtUtc?: string | null;
   notes?: string | null;
 }
 

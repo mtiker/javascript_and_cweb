@@ -1,14 +1,14 @@
 using System.Globalization;
-using App.BLL.Contracts;
+using App.BLL.Services;
 using App.DAL.EF;
 using App.Domain;
 using App.Domain.Common;
 using App.Domain.Enums;
-using App.DTO.v1.Tenant;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebApp.Models;
+using App.DTO.v1.Bookings;
 
 namespace WebApp.Areas.Client.Controllers;
 
@@ -17,7 +17,7 @@ namespace WebApp.Areas.Client.Controllers;
 public class SessionsController(
     AppDbContext dbContext,
     IUserContextService userContextService,
-    App.BLL.Contracts.IAuthorizationService authorizationService,
+    App.BLL.Services.IAuthorizationService authorizationService,
     ITrainingWorkflowService trainingWorkflowService,
     IMaintenanceWorkflowService maintenanceWorkflowService) : Controller
 {

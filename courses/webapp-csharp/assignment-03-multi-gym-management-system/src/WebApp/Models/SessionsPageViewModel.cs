@@ -1,5 +1,7 @@
-using App.DTO.v1.Tenant;
 using App.Domain.Enums;
+using App.DTO.v1.OpeningHours;
+using App.DTO.v1.OpeningHoursExceptions;
+using App.DTO.v1.TrainingSessions;
 
 namespace WebApp.Models;
 

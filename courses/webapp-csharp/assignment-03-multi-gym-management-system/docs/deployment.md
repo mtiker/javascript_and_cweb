@@ -53,6 +53,18 @@ Optional variables:
 - `DATA_INIT_SEED_DATA`
 - `COMPOSE_PROJECT_NAME`
 
+`JWT__Key` must be a long secret value and must not be committed to `appsettings.json` or any tracked documentation. `docker-compose.prod.yml` refuses to start without it. `JWT__Issuer` and `JWT__Audience` default to `MultiGymManagementSystem` in production Compose, but can be set explicitly in GitLab CI/CD variables.
+
+For local development, store JWT values as ASP.NET Core user secrets from `src/WebApp`:
+
+```powershell
+dotnet user-secrets set "Jwt:Key" "<long-local-jwt-secret>"
+dotnet user-secrets set "Jwt:Issuer" "MultiGymManagementSystem"
+dotnet user-secrets set "Jwt:Audience" "MultiGymManagementSystem"
+```
+
+Data Protection keys are persisted in the application database via `AppDbContext`, so protected MVC/cookie payloads remain valid across container restarts as long as the database volume is preserved.
+
 ## GitLab CI/CD
 
 Repository level:

@@ -1,9 +1,9 @@
-using App.BLL.Contracts;
+using App.BLL.Services;
 using App.DTO.v1;
-using App.DTO.v1.Identity;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using App.DTO.v1.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace WebApp.ApiControllers.Identity;

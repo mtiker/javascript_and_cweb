@@ -1,10 +1,11 @@
 using System.Net;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.RegularExpressions;
 using App.DAL.EF;
-using App.DTO.v1.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
+using App.DTO.v1.Identity;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace WebApp.Tests.Integration;
@@ -154,6 +155,40 @@ public class SmokeTests(CustomWebApplicationFactory factory) : IClassFixture<Cus
         Assert.Contains("SystemAdmin", switchedPayload.SystemRoles);
     }
 
+    [Fact]
+    public async Task SplitTenantApiControllers_KeepExistingReadRoutes()
+    {
+        var client = await CreateAuthenticatedApiClientAsync("admin@peakforge.local");
+        var paths = new[]
+        {
+            "/api/v1/peak-forge/staff",
+            "/api/v1/peak-forge/job-roles",
+            "/api/v1/peak-forge/contracts",
+            "/api/v1/peak-forge/vacations",
+            "/api/v1/peak-forge/training-categories",
+            "/api/v1/peak-forge/training-sessions",
+            "/api/v1/peak-forge/work-shifts",
+            "/api/v1/peak-forge/bookings",
+            "/api/v1/peak-forge/membership-packages",
+            "/api/v1/peak-forge/memberships",
+            "/api/v1/peak-forge/payments",
+            "/api/v1/peak-forge/opening-hours",
+            "/api/v1/peak-forge/opening-hours-exceptions",
+            "/api/v1/peak-forge/equipment-models",
+            "/api/v1/peak-forge/equipment",
+            "/api/v1/peak-forge/maintenance-tasks",
+            "/api/v1/peak-forge/gym-settings",
+            "/api/v1/peak-forge/gym-users"
+        };
+
+        foreach (var path in paths)
+        {
+            var response = await client.GetAsync(path);
+
+            response.EnsureSuccessStatusCode();
+        }
+    }
+
     private static async Task<string> GetAntiforgeryTokenAsync(HttpClient client)
     {
         var response = await client.GetAsync("/");
@@ -190,6 +225,21 @@ public class SmokeTests(CustomWebApplicationFactory factory) : IClassFixture<Cus
             Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
         }
 
+        return client;
+    }
+
+    private async Task<HttpClient> CreateAuthenticatedApiClientAsync(string email)
+    {
+        var client = factory.CreateClient();
+        var loginResponse = await client.PostAsJsonAsync("/api/v1/account/login", new LoginRequest
+        {
+            Email = email,
+            Password = "Gym123!"
+        });
+
+        loginResponse.EnsureSuccessStatusCode();
+        var loginPayload = (await loginResponse.Content.ReadFromJsonAsync<JwtResponse>())!;
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", loginPayload.Jwt);
         return client;
     }
 

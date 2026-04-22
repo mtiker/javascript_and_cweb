@@ -221,6 +221,12 @@ a {
   gap: 1rem;
 }
 
+.form__row {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .form__two-up > * {
   flex: 1 1 0;
 }
@@ -599,6 +605,10 @@ a {
   }
 
   .login-card__demo-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form__row {
     grid-template-columns: 1fr;
   }
 }

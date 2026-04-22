@@ -42,6 +42,8 @@ Projects:
 - `WebApp.Tests`: unit and integration tests
 - `client`: separate React client and frontend tests
 
+Code organization mirrors the Assignment 18 backend style: each domain entity has its own file, DTOs are split by API resource namespace, BLL service interfaces live beside their implementations, seed data is split through partial files, and `WebApp/Setup` separates database, identity, service registration, web API, middleware, and data initialization.
+
 ## Request Flows
 
 MVC flow:
@@ -95,6 +97,12 @@ Auth modes:
 - JWT access tokens for the REST API
 - refresh-token rotation for API sessions
 - MVC cookie auth for the server-rendered UX
+
+Runtime configuration:
+- `Jwt:Key`, `Jwt:Issuer`, and `Jwt:Audience` are required; the app fails startup if any are missing
+- local development should provide these through user secrets
+- production should provide them through environment variables such as `JWT__Key`
+- ASP.NET Core Data Protection keys are persisted in the database through `AppDbContext`
 
 Platform roles:
 - `SystemAdmin`
@@ -162,8 +170,8 @@ Frontend structure:
 - `src/components/*`: shell and notice components
 
 Boundary note:
-- tenant members, training, membership/payment, and facilities workflows now run through BLL services backed by `IAppDbContext`
-- the remaining direct `AppDbContext` injection is intentionally limited to broad MVC/admin read composition, the staff API slice that still needs a service pass, and framework infrastructure such as Identity/EF setup
+- tenant members, staff, contracts, vacations, training, membership/payment, and facilities workflows now run through BLL services backed by `IAppDbContext`
+- the remaining direct `AppDbContext` injection is intentionally limited to broad MVC/admin read composition and framework infrastructure such as Identity/EF setup
 
 ## CORS
 

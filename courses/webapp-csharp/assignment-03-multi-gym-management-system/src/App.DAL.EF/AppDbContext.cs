@@ -1,7 +1,7 @@
 using System.Linq.Expressions;
 using System.Security.Claims;
 using System.Text.Json;
-using App.BLL.Contracts;
+using App.BLL.Contracts.Infrastructure;
 using App.DAL.EF.Tenant;
 using App.Domain.Common;
 using App.Domain.Entities;

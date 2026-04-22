@@ -5,10 +5,13 @@ using App.DAL.EF;
 using App.Domain.Common;
 using App.Domain.Entities;
 using App.Domain.Enums;
-using App.DTO.v1.Identity;
-using App.DTO.v1.Tenant;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using App.DTO.v1.Bookings;
+using App.DTO.v1.MaintenanceTasks;
+using App.DTO.v1.Members;
+using App.DTO.v1.TrainingSessions;
+using App.DTO.v1.Identity;
 
 namespace WebApp.Tests.Integration;
 
@@ -90,6 +93,67 @@ public class ProposalWorkflowTests(CustomWebApplicationFactory factory) : IClass
         var content = await response.Content.ReadAsStringAsync();
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         Assert.Contains("Payment reference is required when payment is due.", content);
+    }
+
+    [Fact]
+    public async Task MemberCreate_ReturnsValidationProblemForDuplicateMemberCode()
+    {
+        var client = await CreateAuthenticatedClientAsync("admin@peakforge.local");
+        var uniqueSuffix = Guid.NewGuid().ToString("N")[..8];
+        var request = new MemberUpsertRequest
+        {
+            FirstName = "Duplicate",
+            LastName = "Member",
+            PersonalCode = $"DUP-{uniqueSuffix}",
+            MemberCode = $"DUP-{uniqueSuffix}",
+            Status = MemberStatus.Active
+        };
+
+        var createdResponse = await client.PostAsJsonAsync("/api/v1/peak-forge/members", request);
+        createdResponse.EnsureSuccessStatusCode();
+
+        var duplicateResponse = await client.PostAsJsonAsync("/api/v1/peak-forge/members", new MemberUpsertRequest
+        {
+            FirstName = request.FirstName,
+            LastName = request.LastName,
+            PersonalCode = $"DUP2-{uniqueSuffix}",
+            MemberCode = request.MemberCode,
+            Status = request.Status
+        });
+        var content = await duplicateResponse.Content.ReadAsStringAsync();
+
+        Assert.Equal(HttpStatusCode.BadRequest, duplicateResponse.StatusCode);
+        Assert.Contains("Member code already exists in this gym.", content);
+    }
+
+    [Fact]
+    public async Task BookingCreate_ReturnsValidationProblemForDuplicateSessionBooking()
+    {
+        var (sessionId, memberId) = await CreatePaidSessionAndUncoveredMemberAsync();
+        var client = await CreateAuthenticatedClientAsync("admin@peakforge.local");
+        var request = new BookingCreateRequest
+        {
+            TrainingSessionId = sessionId,
+            MemberId = memberId,
+            PaymentReference = $"PAY-{Guid.NewGuid():N}"[..16]
+        };
+
+        var createdResponse = await client.PostAsJsonAsync("/api/v1/peak-forge/bookings", request);
+        createdResponse.EnsureSuccessStatusCode();
+        var booking = await createdResponse.Content.ReadFromJsonAsync<BookingResponse>();
+        Assert.Equal("Payment Required", booking!.MemberName);
+        Assert.Equal("Paid Booking Regression", booking.TrainingSessionName);
+
+        var duplicateResponse = await client.PostAsJsonAsync("/api/v1/peak-forge/bookings", new BookingCreateRequest
+        {
+            TrainingSessionId = sessionId,
+            MemberId = memberId,
+            PaymentReference = $"PAY-{Guid.NewGuid():N}"[..16]
+        });
+        var content = await duplicateResponse.Content.ReadAsStringAsync();
+
+        Assert.Equal(HttpStatusCode.BadRequest, duplicateResponse.StatusCode);
+        Assert.Contains("This member already has a booking for the selected session.", content);
     }
 
     [Fact]

@@ -1,12 +1,14 @@
 using System.Globalization;
-using App.BLL.Contracts;
+using App.BLL.Contracts.Infrastructure;
 using App.BLL.Exceptions;
 using App.Domain;
 using App.Domain.Common;
 using App.Domain.Entities;
 using App.Domain.Enums;
-using App.DTO.v1.Tenant;
 using Microsoft.EntityFrameworkCore;
+using App.DTO.v1.MembershipPackages;
+using App.DTO.v1.Memberships;
+using App.DTO.v1.Payments;
 
 namespace App.BLL.Services;
 
@@ -63,7 +65,7 @@ public class MembershipWorkflowService(
     {
         await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin);
         var package = await dbContext.MembershipPackages.FirstOrDefaultAsync(entity => entity.Id == id)
-                      ?? throw new AppNotFoundException("Membership package was not found.");
+                      ?? throw new NotFoundException("Membership package was not found.");
 
         package.Name = ToLangStr(request.Name);
         package.PackageType = request.PackageType;
@@ -83,7 +85,7 @@ public class MembershipWorkflowService(
     {
         await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin);
         var package = await dbContext.MembershipPackages.FirstOrDefaultAsync(entity => entity.Id == id)
-                      ?? throw new AppNotFoundException("Membership package was not found.");
+                      ?? throw new NotFoundException("Membership package was not found.");
         dbContext.MembershipPackages.Remove(package);
         await dbContext.SaveChangesAsync();
     }
@@ -121,9 +123,9 @@ public class MembershipWorkflowService(
     {
         var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin);
         var member = await dbContext.Members.FirstOrDefaultAsync(entity => entity.Id == request.MemberId)
-                     ?? throw new AppNotFoundException("Member was not found.");
+                     ?? throw new NotFoundException("Member was not found.");
         var package = await dbContext.MembershipPackages.FirstOrDefaultAsync(entity => entity.Id == request.MembershipPackageId)
-                      ?? throw new AppNotFoundException("Membership package was not found.");
+                      ?? throw new NotFoundException("Membership package was not found.");
 
         var startDate = request.RequestedStartDate ?? DateOnly.FromDateTime(DateTime.UtcNow.Date);
         var endDate = CalculateMembershipEndDate(startDate, package.DurationValue, package.DurationUnit);
@@ -192,20 +194,20 @@ public class MembershipWorkflowService(
 
         if (!request.MembershipId.HasValue && !request.BookingId.HasValue)
         {
-            throw new AppValidationException("Payment must be linked to a membership or a booking.");
+            throw new ValidationAppException("Payment must be linked to a membership or a booking.");
         }
 
         if (request.MembershipId.HasValue)
         {
             var membership = await dbContext.Memberships.FirstOrDefaultAsync(entity => entity.Id == request.MembershipId.Value)
-                             ?? throw new AppNotFoundException("Membership was not found.");
+                             ?? throw new NotFoundException("Membership was not found.");
             await authorizationService.EnsureMemberSelfAccessAsync(gymId, membership.MemberId);
         }
 
         if (request.BookingId.HasValue)
         {
             var booking = await dbContext.Bookings.FirstOrDefaultAsync(entity => entity.Id == request.BookingId.Value)
-                          ?? throw new AppNotFoundException("Booking was not found.");
+                          ?? throw new NotFoundException("Booking was not found.");
             await authorizationService.EnsureBookingAccessAsync(booking);
         }
 
@@ -240,7 +242,7 @@ public class MembershipWorkflowService(
     {
         var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin, RoleNames.Member);
         var membership = await dbContext.Memberships.FirstOrDefaultAsync(entity => entity.Id == id)
-                         ?? throw new AppNotFoundException("Membership was not found.");
+                         ?? throw new NotFoundException("Membership was not found.");
         await authorizationService.EnsureMemberSelfAccessAsync(gymId, membership.MemberId);
         dbContext.Memberships.Remove(membership);
         await dbContext.SaveChangesAsync();

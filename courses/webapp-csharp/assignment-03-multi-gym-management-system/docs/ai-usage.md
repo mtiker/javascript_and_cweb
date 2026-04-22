@@ -1,5 +1,44 @@
 # AI Usage Log
 
+## 2026-04-22 - Backend Structure Alignment With Assignment 18
+
+Task:
+- refactor the Assignment 03 backend organization to match the clearer Assignment 18 style
+- preserve existing HTTP routes, DTO JSON shapes, EF model, seed data, authentication, tenant isolation, and deployment behavior
+
+Files affected:
+- `src/App.Domain/Entities/*`
+- `src/App.DTO/v1/*`
+- `src/App.BLL/Contracts/*`
+- `src/App.BLL/Services/*`
+- `src/App.BLL/Exceptions/*`
+- `src/App.DAL.EF/Seeding/*`
+- `src/WebApp/ApiControllers/*`
+- `src/WebApp/Setup/*`
+- `src/WebApp/Program.cs`
+- `src/WebApp/Middleware/ProblemDetailsMiddleware.cs`
+- `tests/WebApp.Tests/Integration/SmokeTests.cs`
+- `README.md`
+- `docs/*.md`
+
+What AI helped with:
+- splitting grouped domain entity files into one public entity per file
+- splitting grouped DTO files into Assignment 18-style resource folders and namespaces
+- moving BLL service interfaces beside implementations and infrastructure contracts under `App.BLL.Contracts.Infrastructure`
+- splitting infrastructure services, WebApp setup extensions, and seed initialization into focused files
+- standardizing BLL exception names to `NotFoundException`, `ForbiddenException`, and `ValidationAppException`
+- splitting broad tenant controllers into resource controllers while keeping the existing `/api/v1/{gymCode}/...` URLs
+- adding route smoke coverage for one endpoint from each newly split tenant controller
+
+What needed manual review or correction:
+- mechanical namespace updates initially left duplicate `using` directives, which were cleaned before the final build
+- EF migration files were restored after incidental encoding/formatting churn so the refactor does not commit a migration change
+- route templates were reviewed after the controller split to ensure external API URLs stayed unchanged
+
+Alternatives considered:
+- leaving the grouped files in place and documenting the exception, but that would not address the Assignment 18 alignment request
+- adding per-entity EF configuration files, but the existing `AppDbContext` configuration was kept to reduce model-drift risk during a structure-only refactor
+
 ## 2026-04-22 - A3 Translation, Tenant Switch, and Demo Data Pass
 
 Task:

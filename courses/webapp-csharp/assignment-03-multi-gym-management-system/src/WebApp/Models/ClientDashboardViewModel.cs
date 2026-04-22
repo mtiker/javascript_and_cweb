@@ -1,4 +1,6 @@
-using App.DTO.v1.Tenant;
+using App.DTO.v1.TrainingSessions;
+using App.DTO.v1.MaintenanceTasks;
+using App.DTO.v1.Bookings;
 
 namespace WebApp.Models;
 

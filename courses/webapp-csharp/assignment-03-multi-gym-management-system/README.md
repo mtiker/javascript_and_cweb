@@ -90,6 +90,12 @@ assignment-03-multi-gym-management-system/
   multi-gym-management-system.slnx
 ```
 
+Backend organization now follows the Assignment 18 reference style:
+- `App.Domain/Entities` keeps one public entity per file.
+- `App.DTO/v1` is split by API resource instead of grouped DTO files.
+- BLL service interfaces live beside their implementations in `App.BLL/Services`; infrastructure-only contracts live under `App.BLL/Contracts`.
+- `WebApp/Setup` is split into focused database, identity, service, API, middleware, and data-initialization extension files.
+
 ## Local Run
 
 Prerequisites:
@@ -103,6 +109,18 @@ Recommended one-time tools:
 dotnet tool update -g dotnet-ef
 dotnet dev-certs https --trust
 ```
+
+Configure local WebApp secrets:
+
+```powershell
+cd src/WebApp
+dotnet user-secrets set "Jwt:Key" "<long-local-jwt-secret>"
+dotnet user-secrets set "Jwt:Issuer" "MultiGymManagementSystem"
+dotnet user-secrets set "Jwt:Audience" "MultiGymManagementSystem"
+cd ../..
+```
+
+`Jwt:Key`, `Jwt:Issuer`, and `Jwt:Audience` are required at runtime. The JWT key is intentionally not stored in `appsettings.json`.
 
 Start PostgreSQL:
 
@@ -170,8 +188,12 @@ Current scope:
   - training categories
   - membership packages
 - session list and detail view
+- owner/admin training-session scheduling from existing training categories
 - booking action for member accounts and admin/owner demo users selecting a member
+- member and booking duplicate validation returns tenant API `ProblemDetails` instead of database errors
 - trainer attendance updates
+- attendance lists show member/session names instead of raw identifiers
+- maintenance task scheduling from active equipment with optional staff assignment
 - caretaker maintenance task status updates
 
 The client accepts `SystemAdmin`, `SystemSupport`, `SystemBilling`, `GymAdmin`, `GymOwner`, `Member`, `Trainer`, and `Caretaker` sessions.
@@ -282,6 +304,15 @@ Production deployment assets:
 - `scripts/deploy.sh`
 
 The production Dockerfile builds the Vite client with Node 20 and copies `client/dist` into `WebApp/wwwroot/client`, so the deployed backend serves the REST client at `/client`.
+
+Required production secrets/configuration:
+- `JWT__Key`
+- `JWT__Issuer`, defaulted by Compose to `MultiGymManagementSystem`
+- `JWT__Audience`, defaulted by Compose to `MultiGymManagementSystem`
+- `CORS_ALLOWED_ORIGIN`, defaulted by Compose to `https://mtiker-cweb-4.proxy.itcollege.ee`
+- `POSTGRES_DB`, `POSTGRES_USER`, and `POSTGRES_PASSWORD` when overriding database defaults
+
+ASP.NET Core Data Protection keys are persisted through the application database so MVC/cookie protection keys survive container restarts.
 
 Repository CI integration:
 - root `.gitlab-ci.yml` triggers this assignment as an isolated child pipeline

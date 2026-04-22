@@ -1,8 +1,8 @@
-using App.BLL.Contracts;
+using App.BLL.Contracts.Infrastructure;
 using App.BLL.Exceptions;
 using App.Domain.Entities;
-using App.DTO.v1.Tenant;
 using Microsoft.EntityFrameworkCore;
+using App.DTO.v1.Members;
 
 namespace App.BLL.Services;
 
@@ -38,12 +38,12 @@ public class MemberWorkflowService(
             App.Domain.RoleNames.Member);
 
         var currentMember = await authorizationService.GetCurrentMemberAsync(gymId)
-                            ?? throw new AppNotFoundException("Current user does not have a member profile in the active gym.");
+                            ?? throw new NotFoundException("Current user does not have a member profile in the active gym.");
 
         var member = await dbContext.Members
             .Include(entity => entity.Person)
             .FirstOrDefaultAsync(entity => entity.Id == currentMember.Id)
-            ?? throw new AppNotFoundException("Member was not found.");
+            ?? throw new NotFoundException("Member was not found.");
 
         return ToMemberDetailResponse(member);
     }
@@ -61,7 +61,7 @@ public class MemberWorkflowService(
         var member = await dbContext.Members
             .Include(entity => entity.Person)
             .FirstOrDefaultAsync(entity => entity.Id == id)
-            ?? throw new AppNotFoundException("Member was not found.");
+            ?? throw new NotFoundException("Member was not found.");
 
         return ToMemberDetailResponse(member);
     }
@@ -69,21 +69,24 @@ public class MemberWorkflowService(
     public async Task<MemberDetailResponse> CreateMemberAsync(string gymCode, MemberUpsertRequest request)
     {
         var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, App.Domain.RoleNames.GymOwner, App.Domain.RoleNames.GymAdmin);
+        var normalized = NormalizeRequest(request);
+
+        await EnsureUniqueMemberFieldsAsync(gymId, normalized.MemberCode, normalized.PersonalCode, null, null);
 
         var person = new Person
         {
-            FirstName = request.FirstName.Trim(),
-            LastName = request.LastName.Trim(),
-            PersonalCode = request.PersonalCode?.Trim(),
-            DateOfBirth = request.DateOfBirth
+            FirstName = normalized.FirstName,
+            LastName = normalized.LastName,
+            PersonalCode = normalized.PersonalCode,
+            DateOfBirth = normalized.DateOfBirth
         };
 
         var member = new Member
         {
             GymId = gymId,
             Person = person,
-            MemberCode = request.MemberCode.Trim(),
-            Status = request.Status
+            MemberCode = normalized.MemberCode,
+            Status = normalized.Status
         };
 
         dbContext.Members.Add(member);
@@ -94,19 +97,22 @@ public class MemberWorkflowService(
 
     public async Task<MemberDetailResponse> UpdateMemberAsync(string gymCode, Guid id, MemberUpsertRequest request)
     {
-        await authorizationService.EnsureTenantAccessAsync(gymCode, App.Domain.RoleNames.GymOwner, App.Domain.RoleNames.GymAdmin);
+        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, App.Domain.RoleNames.GymOwner, App.Domain.RoleNames.GymAdmin);
+        var normalized = NormalizeRequest(request);
 
         var member = await dbContext.Members
             .Include(entity => entity.Person)
             .FirstOrDefaultAsync(entity => entity.Id == id)
-            ?? throw new AppNotFoundException("Member was not found.");
+            ?? throw new NotFoundException("Member was not found.");
 
-        member.MemberCode = request.MemberCode.Trim();
-        member.Status = request.Status;
-        member.Person!.FirstName = request.FirstName.Trim();
-        member.Person.LastName = request.LastName.Trim();
-        member.Person.PersonalCode = request.PersonalCode?.Trim();
-        member.Person.DateOfBirth = request.DateOfBirth;
+        await EnsureUniqueMemberFieldsAsync(gymId, normalized.MemberCode, normalized.PersonalCode, member.Id, member.PersonId);
+
+        member.MemberCode = normalized.MemberCode;
+        member.Status = normalized.Status;
+        member.Person!.FirstName = normalized.FirstName;
+        member.Person.LastName = normalized.LastName;
+        member.Person.PersonalCode = normalized.PersonalCode;
+        member.Person.DateOfBirth = normalized.DateOfBirth;
 
         await dbContext.SaveChangesAsync();
 
@@ -118,7 +124,7 @@ public class MemberWorkflowService(
         await authorizationService.EnsureTenantAccessAsync(gymCode, App.Domain.RoleNames.GymOwner, App.Domain.RoleNames.GymAdmin);
 
         var member = await dbContext.Members.FirstOrDefaultAsync(entity => entity.Id == id)
-                     ?? throw new AppNotFoundException("Member was not found.");
+                     ?? throw new NotFoundException("Member was not found.");
 
         dbContext.Members.Remove(member);
         await dbContext.SaveChangesAsync();
@@ -136,6 +142,66 @@ public class MemberWorkflowService(
             PersonalCode = member.Person?.PersonalCode,
             DateOfBirth = member.Person?.DateOfBirth,
             Status = member.Status
+        };
+    }
+
+    private async Task EnsureUniqueMemberFieldsAsync(
+        Guid gymId,
+        string memberCode,
+        string? personalCode,
+        Guid? currentMemberId,
+        Guid? currentPersonId)
+    {
+        var memberCodeExists = await dbContext.Members.AnyAsync(entity =>
+            entity.GymId == gymId &&
+            entity.MemberCode == memberCode &&
+            (!currentMemberId.HasValue || entity.Id != currentMemberId.Value));
+
+        if (memberCodeExists)
+        {
+            throw new ValidationAppException("Member code already exists in this gym.");
+        }
+
+        if (string.IsNullOrWhiteSpace(personalCode))
+        {
+            return;
+        }
+
+        var personalCodeExists = await dbContext.People.AnyAsync(entity =>
+            entity.PersonalCode == personalCode &&
+            (!currentPersonId.HasValue || entity.Id != currentPersonId.Value));
+
+        if (personalCodeExists)
+        {
+            throw new ValidationAppException("Personal code already belongs to another person.");
+        }
+    }
+
+    private static MemberUpsertRequest NormalizeRequest(MemberUpsertRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.FirstName))
+        {
+            throw new ValidationAppException("First name is required.");
+        }
+
+        if (string.IsNullOrWhiteSpace(request.LastName))
+        {
+            throw new ValidationAppException("Last name is required.");
+        }
+
+        if (string.IsNullOrWhiteSpace(request.MemberCode))
+        {
+            throw new ValidationAppException("Member code is required.");
+        }
+
+        return new MemberUpsertRequest
+        {
+            FirstName = request.FirstName.Trim(),
+            LastName = request.LastName.Trim(),
+            PersonalCode = string.IsNullOrWhiteSpace(request.PersonalCode) ? null : request.PersonalCode.Trim(),
+            DateOfBirth = request.DateOfBirth,
+            MemberCode = request.MemberCode.Trim(),
+            Status = request.Status
         };
     }
 }

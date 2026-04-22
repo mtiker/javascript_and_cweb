@@ -1,12 +1,15 @@
 using System.Globalization;
-using App.BLL.Contracts;
+using App.BLL.Contracts.Infrastructure;
 using App.BLL.Exceptions;
 using App.Domain;
 using App.Domain.Common;
 using App.Domain.Entities;
 using App.Domain.Enums;
-using App.DTO.v1.Tenant;
 using Microsoft.EntityFrameworkCore;
+using App.DTO.v1.Bookings;
+using App.DTO.v1.TrainingCategories;
+using App.DTO.v1.TrainingSessions;
+using App.DTO.v1.WorkShifts;
 
 namespace App.BLL.Services;
 
@@ -51,7 +54,7 @@ public class TrainingWorkflowService(
     {
         await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin);
         var category = await dbContext.TrainingCategories.FirstOrDefaultAsync(entity => entity.Id == id)
-                       ?? throw new AppNotFoundException("Training category was not found.");
+                       ?? throw new NotFoundException("Training category was not found.");
 
         category.Name = ToLangStr(request.Name);
         category.Description = string.IsNullOrWhiteSpace(request.Description) ? null : ToLangStr(request.Description);
@@ -64,7 +67,7 @@ public class TrainingWorkflowService(
     {
         await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin);
         var category = await dbContext.TrainingCategories.FirstOrDefaultAsync(entity => entity.Id == id)
-                       ?? throw new AppNotFoundException("Training category was not found.");
+                       ?? throw new NotFoundException("Training category was not found.");
         dbContext.TrainingCategories.Remove(category);
         await dbContext.SaveChangesAsync();
     }
@@ -113,19 +116,20 @@ public class TrainingWorkflowService(
 
         if (request.EndAtUtc <= request.StartAtUtc)
         {
-            throw new AppValidationException("Session end time must be later than start time.");
+            throw new ValidationAppException("Session end time must be later than start time.");
         }
 
-        var category = await dbContext.TrainingCategories.FirstOrDefaultAsync(entity => entity.Id == request.CategoryId)
-                       ?? throw new AppNotFoundException("Training category was not found.");
+        var category = await dbContext.TrainingCategories.FirstOrDefaultAsync(entity =>
+                           entity.GymId == gymId && entity.Id == request.CategoryId)
+                       ?? throw new NotFoundException("Training category was not found.");
 
         var trainerContracts = await dbContext.EmploymentContracts
-            .Where(entity => request.TrainerContractIds.Contains(entity.Id))
+            .Where(entity => entity.GymId == gymId && request.TrainerContractIds.Contains(entity.Id))
             .ToListAsync();
 
         if (trainerContracts.Count != request.TrainerContractIds.Count)
         {
-            throw new AppValidationException("One or more trainer contracts were not found.");
+            throw new ValidationAppException("One or more trainer contracts were not found.");
         }
 
         var session = sessionId.HasValue
@@ -179,7 +183,7 @@ public class TrainingWorkflowService(
     {
         await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin);
         var session = await dbContext.TrainingSessions.FirstOrDefaultAsync(entity => entity.Id == id)
-                      ?? throw new AppNotFoundException("Training session was not found.");
+                      ?? throw new NotFoundException("Training session was not found.");
         dbContext.TrainingSessions.Remove(session);
         await dbContext.SaveChangesAsync();
     }
@@ -237,7 +241,7 @@ public class TrainingWorkflowService(
     {
         await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin);
         var shift = await dbContext.WorkShifts.FirstOrDefaultAsync(entity => entity.Id == id)
-                    ?? throw new AppNotFoundException("Work shift was not found.");
+                    ?? throw new NotFoundException("Work shift was not found.");
 
         shift.ContractId = request.ContractId;
         shift.StartAtUtc = request.StartAtUtc;
@@ -254,7 +258,7 @@ public class TrainingWorkflowService(
     {
         await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin);
         var shift = await dbContext.WorkShifts.FirstOrDefaultAsync(entity => entity.Id == id)
-                    ?? throw new AppNotFoundException("Work shift was not found.");
+                    ?? throw new NotFoundException("Work shift was not found.");
         dbContext.WorkShifts.Remove(shift);
         await dbContext.SaveChangesAsync();
     }
@@ -292,7 +296,10 @@ public class TrainingWorkflowService(
             {
                 Id = entity.Id,
                 TrainingSessionId = entity.TrainingSessionId,
+                TrainingSessionName = Translate(entity.TrainingSession!.Name) ?? string.Empty,
                 MemberId = entity.MemberId,
+                MemberName = $"{entity.Member!.Person!.FirstName} {entity.Member.Person.LastName}".Trim(),
+                MemberCode = entity.Member.MemberCode,
                 Status = entity.Status,
                 ChargedPrice = entity.ChargedPrice,
                 PaymentRequired = entity.PaymentRequired
@@ -304,17 +311,30 @@ public class TrainingWorkflowService(
     {
         var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin, RoleNames.Member);
 
-        var trainingSession = await dbContext.TrainingSessions.FirstOrDefaultAsync(entity => entity.Id == request.TrainingSessionId)
-                              ?? throw new AppNotFoundException("Training session was not found.");
+        var trainingSession = await dbContext.TrainingSessions.FirstOrDefaultAsync(entity =>
+                                  entity.GymId == gymId && entity.Id == request.TrainingSessionId)
+                              ?? throw new NotFoundException("Training session was not found.");
 
-        var member = await dbContext.Members.FirstOrDefaultAsync(entity => entity.Id == request.MemberId)
-                     ?? throw new AppNotFoundException("Member was not found.");
+        var member = await dbContext.Members
+                     .Include(entity => entity.Person)
+                     .FirstOrDefaultAsync(entity => entity.GymId == gymId && entity.Id == request.MemberId)
+                     ?? throw new NotFoundException("Member was not found.");
 
         await authorizationService.EnsureMemberSelfAccessAsync(gymId, member.Id);
 
+        var existingBooking = await dbContext.Bookings.FirstOrDefaultAsync(entity =>
+            entity.GymId == gymId &&
+            entity.MemberId == member.Id &&
+            entity.TrainingSessionId == trainingSession.Id);
+
+        if (existingBooking != null)
+        {
+            throw new ValidationAppException("This member already has a booking for the selected session.");
+        }
+
         if (trainingSession.Status != TrainingSessionStatus.Published)
         {
-            throw new AppValidationException("Bookings can be created only for published sessions.");
+            throw new ValidationAppException("Bookings can be created only for published sessions.");
         }
 
         var bookedCount = await dbContext.Bookings.CountAsync(entity =>
@@ -323,29 +343,31 @@ public class TrainingWorkflowService(
 
         if (bookedCount >= trainingSession.Capacity)
         {
-            throw new AppValidationException("Training session capacity has been reached.");
+            throw new ValidationAppException("Training session capacity has been reached.");
         }
 
         var settings = await dbContext.GymSettings.FirstOrDefaultAsync(entity => entity.GymId == gymId)
-                       ?? throw new AppNotFoundException("Gym settings were not found.");
+                       ?? throw new NotFoundException("Gym settings were not found.");
 
         var chargedPrice = await membershipWorkflowService.CalculateBookingPriceAsync(gymId, member.Id, trainingSession);
         if (!settings.AllowNonMemberBookings && chargedPrice == trainingSession.BasePrice)
         {
-            throw new AppValidationException("This gym does not allow non-member bookings.");
+            throw new ValidationAppException("This gym does not allow non-member bookings.");
         }
 
         var paymentRequired = chargedPrice > 0m;
         if (paymentRequired && string.IsNullOrWhiteSpace(request.PaymentReference))
         {
-            throw new AppValidationException("Payment reference is required when payment is due.");
+            throw new ValidationAppException("Payment reference is required when payment is due.");
         }
 
         var booking = new Booking
         {
             GymId = gymId,
             TrainingSessionId = trainingSession.Id,
+            TrainingSession = trainingSession,
             MemberId = member.Id,
+            Member = member,
             Status = BookingStatus.Booked,
             ChargedPrice = chargedPrice,
             CurrencyCode = trainingSession.CurrencyCode,
@@ -378,8 +400,10 @@ public class TrainingWorkflowService(
 
         var booking = await dbContext.Bookings
             .Include(entity => entity.TrainingSession)
+            .Include(entity => entity.Member)
+                .ThenInclude(entity => entity!.Person)
             .FirstOrDefaultAsync(entity => entity.Id == bookingId)
-            ?? throw new AppNotFoundException("Booking was not found.");
+            ?? throw new NotFoundException("Booking was not found.");
 
         await authorizationService.EnsureTrainingAttendanceAccessAsync(booking.TrainingSession!);
 
@@ -397,7 +421,7 @@ public class TrainingWorkflowService(
     {
         await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin, RoleNames.Member);
         var booking = await dbContext.Bookings.FirstOrDefaultAsync(entity => entity.Id == id)
-                      ?? throw new AppNotFoundException("Booking was not found.");
+                      ?? throw new NotFoundException("Booking was not found.");
         await authorizationService.EnsureBookingAccessAsync(booking);
         booking.Status = BookingStatus.Cancelled;
         booking.CancelledAtUtc = DateTime.UtcNow;
@@ -408,7 +432,7 @@ public class TrainingWorkflowService(
     {
         var session = await dbContext.TrainingSessions
             .FirstOrDefaultAsync(entity => entity.Id == sessionId)
-            ?? throw new AppNotFoundException("Training session was not found.");
+            ?? throw new NotFoundException("Training session was not found.");
 
         var trainerContractIds = await dbContext.WorkShifts
             .Where(entity => entity.TrainingSessionId == sessionId && entity.ShiftType == ShiftType.Training)
@@ -461,7 +485,10 @@ public class TrainingWorkflowService(
         {
             Id = booking.Id,
             TrainingSessionId = booking.TrainingSessionId,
+            TrainingSessionName = Translate(booking.TrainingSession?.Name) ?? string.Empty,
             MemberId = booking.MemberId,
+            MemberName = $"{booking.Member?.Person?.FirstName} {booking.Member?.Person?.LastName}".Trim(),
+            MemberCode = booking.Member?.MemberCode ?? string.Empty,
             Status = booking.Status,
             ChargedPrice = booking.ChargedPrice,
             PaymentRequired = booking.PaymentRequired

@@ -1,17 +1,19 @@
-using App.BLL.Contracts;
+using App.BLL.Services;
 using App.DAL.EF;
 using App.Domain;
-using App.DTO.v1.Tenant;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebApp.Models;
+using App.DTO.v1.Bookings;
+using App.DTO.v1.MaintenanceTasks;
+using App.DTO.v1.TrainingSessions;
 
 namespace WebApp.Areas.Client.Controllers;
 
 [Area("Client")]
 [Authorize]
-public class DashboardController(AppDbContext dbContext, IUserContextService userContextService, App.BLL.Contracts.IAuthorizationService authorizationService) : Controller
+public class DashboardController(AppDbContext dbContext, IUserContextService userContextService, App.BLL.Services.IAuthorizationService authorizationService) : Controller
 {
     public async Task<IActionResult> Index()
     {
@@ -59,7 +61,10 @@ public class DashboardController(AppDbContext dbContext, IUserContextService use
                 {
                     Id = entity.Id,
                     TrainingSessionId = entity.TrainingSessionId,
+                    TrainingSessionName = entity.TrainingSession!.Name.Translate() ?? string.Empty,
                     MemberId = entity.MemberId,
+                    MemberName = $"{entity.Member!.Person!.FirstName} {entity.Member.Person.LastName}".Trim(),
+                    MemberCode = entity.Member.MemberCode,
                     Status = entity.Status,
                     ChargedPrice = entity.ChargedPrice,
                     PaymentRequired = entity.PaymentRequired
@@ -78,7 +83,12 @@ public class DashboardController(AppDbContext dbContext, IUserContextService use
                 {
                     Id = entity.Id,
                     EquipmentId = entity.EquipmentId,
+                    EquipmentAssetTag = entity.Equipment!.AssetTag,
+                    EquipmentName = entity.Equipment.EquipmentModel!.Name.Translate() ?? entity.Equipment.AssetTag ?? "Equipment",
                     AssignedStaffId = entity.AssignedStaffId,
+                    AssignedStaffName = entity.AssignedStaff == null
+                        ? null
+                        : $"{entity.AssignedStaff.Person!.FirstName} {entity.AssignedStaff.Person.LastName}".Trim(),
                     CreatedByStaffId = entity.CreatedByStaffId,
                     TaskType = entity.TaskType,
                     Priority = entity.Priority,

@@ -53,6 +53,12 @@ Backend projects:
 - `src/WebApp`
 - `tests/WebApp.Tests`
 
+Backend structure follows the Assignment 18 reference layout:
+- domain entities are one public class per file
+- DTOs are grouped by resource folder and namespace
+- BLL service interfaces sit beside service implementations
+- startup/setup concerns are split into focused WebApp extension files
+
 Separate client:
 - `client/`
 - Vite
@@ -190,8 +196,12 @@ Implemented v1 scope:
   - training categories
   - membership packages
 - sessions list/detail
+- owner/admin training-session scheduling from existing categories
 - member/admin booking with payment reference
+- duplicate member-code, personal-code, and session-booking validation through API `ProblemDetails`
 - trainer attendance updates
+- attendance responses include member/session display names for client UIs
+- maintenance task scheduling from equipment with optional staff assignment
 - caretaker maintenance task status updates
 - single active gym per session, with SystemAdmin able to select any active tenant
 
@@ -221,7 +231,7 @@ Not implemented in this pass:
 
 Backend:
 - unit tests for translation fallback and membership overlap logic
-- integration tests for login, register, multi-gym user switch, SystemAdmin tenant-context switch, refresh-token rotation, expired/reused refresh tokens, cross-gym denial, member self-only denial, system-route denial, API `ProblemDetails`, MVC HTML error handling, `/client` fallback serving, MVC Admin/Client layout rendering, member roster denial, nullable session descriptions, booking payment-reference enforcement, trainer attendance authorization, and caretaker task authorization
+- integration tests for login, register, multi-gym user switch, SystemAdmin tenant-context switch, refresh-token rotation, expired/reused refresh tokens, cross-gym denial, member self-only denial, system-route denial, API `ProblemDetails`, MVC HTML error handling, `/client` fallback serving, MVC Admin/Client layout rendering, member roster denial, nullable session descriptions, member duplicate validation, booking payment-reference and duplicate-booking enforcement, trainer attendance authorization, and caretaker task authorization
 
 Frontend:
 - auth guard tests
@@ -235,8 +245,10 @@ Frontend:
   - training categories
   - membership packages
 - sessions detail and booking test
-- trainer attendance update test
+- session scheduling test
+- trainer attendance update test with member display names
 - caretaker maintenance task status update test
+- maintenance scheduling test
 
 Verification commands:
 - `dotnet build multi-gym-management-system.slnx`

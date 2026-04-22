@@ -58,13 +58,14 @@ export function AttendancePage() {
       const updated = await api.updateAttendance(session.activeGymCode, bookingId, {
         status: statusByBookingId[bookingId] ?? BookingStatus.Booked,
       });
+      const updatedMemberLabel = memberLabel(updated);
 
       setBookings((current) => current.map((booking) => (booking.id === updated.id ? updated : booking)));
       setStatusByBookingId((current) => ({ ...current, [updated.id]: updated.status }));
       setNotice({
         tone: "success",
         title: "Attendance updated",
-        messages: [`Booking ${updated.id.slice(0, 8)} is now ${bookingStatusLabel(updated.status)}.`],
+        messages: [`${updatedMemberLabel} is now ${bookingStatusLabel(updated.status)}.`],
       });
     } catch (error) {
       setNotice({
@@ -99,13 +100,14 @@ export function AttendancePage() {
         <div className="record-list" role="list">
           {bookings.map((booking) => {
             const trainingSession = sessionById.get(booking.trainingSessionId);
+            const displaySessionName = booking.trainingSessionName || trainingSession?.name || "Training session";
             return (
               <article className="record-card record-card--wide" key={booking.id} role="listitem">
                 <div className="record-card__body">
-                  <strong>{trainingSession?.name ?? "Training session"}</strong>
+                  <strong>{displaySessionName}</strong>
                   <span>{trainingSession ? formatRange(trainingSession.startAtUtc, trainingSession.endAtUtc) : booking.trainingSessionId}</span>
                   <span>
-                    Member {booking.memberId.slice(0, 8)} / current status {bookingStatusLabel(booking.status)}
+                    {memberLabel(booking)} / current status {bookingStatusLabel(booking.status)}
                   </span>
                 </div>
                 <div className="inline-controls">
@@ -170,4 +172,8 @@ function formatRange(startAtUtc: string, endAtUtc: string) {
   }).format(end);
 
   return `${date} - ${endTime}`;
+}
+
+function memberLabel(booking: Booking) {
+  return booking.memberName || booking.memberCode || `Member ${booking.memberId.slice(0, 8)}`;
 }

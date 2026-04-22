@@ -1,12 +1,18 @@
 using System.Globalization;
-using App.BLL.Contracts;
+using App.BLL.Contracts.Infrastructure;
 using App.BLL.Exceptions;
 using App.Domain;
 using App.Domain.Common;
 using App.Domain.Entities;
 using App.Domain.Enums;
-using App.DTO.v1.Tenant;
 using Microsoft.EntityFrameworkCore;
+using App.DTO.v1.Equipment;
+using App.DTO.v1.EquipmentModels;
+using App.DTO.v1.GymSettings;
+using App.DTO.v1.GymUsers;
+using App.DTO.v1.MaintenanceTasks;
+using App.DTO.v1.OpeningHours;
+using App.DTO.v1.OpeningHoursExceptions;
 
 namespace App.BLL.Services;
 
@@ -49,7 +55,7 @@ public class MaintenanceWorkflowService(
     {
         await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin);
         var entity = await dbContext.OpeningHours.FirstOrDefaultAsync(value => value.Id == id)
-                     ?? throw new AppNotFoundException("Opening hours row was not found.");
+                     ?? throw new NotFoundException("Opening hours row was not found.");
         entity.Weekday = request.Weekday;
         entity.OpensAt = request.OpensAt;
         entity.ClosesAt = request.ClosesAt;
@@ -61,7 +67,7 @@ public class MaintenanceWorkflowService(
     {
         await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin);
         var entity = await dbContext.OpeningHours.FirstOrDefaultAsync(value => value.Id == id)
-                     ?? throw new AppNotFoundException("Opening hours row was not found.");
+                     ?? throw new NotFoundException("Opening hours row was not found.");
         dbContext.OpeningHours.Remove(entity);
         await dbContext.SaveChangesAsync();
     }
@@ -105,7 +111,7 @@ public class MaintenanceWorkflowService(
     {
         await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin);
         var entity = await dbContext.OpeningHoursExceptions.FirstOrDefaultAsync(value => value.Id == id)
-                     ?? throw new AppNotFoundException("Opening hours exception was not found.");
+                     ?? throw new NotFoundException("Opening hours exception was not found.");
         entity.ExceptionDate = request.ExceptionDate;
         entity.IsClosed = request.IsClosed;
         entity.OpensAt = request.OpensAt;
@@ -119,7 +125,7 @@ public class MaintenanceWorkflowService(
     {
         await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin);
         var entity = await dbContext.OpeningHoursExceptions.FirstOrDefaultAsync(value => value.Id == id)
-                     ?? throw new AppNotFoundException("Opening hours exception was not found.");
+                     ?? throw new NotFoundException("Opening hours exception was not found.");
         dbContext.OpeningHoursExceptions.Remove(entity);
         await dbContext.SaveChangesAsync();
     }
@@ -163,7 +169,7 @@ public class MaintenanceWorkflowService(
     {
         await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin);
         var entity = await dbContext.EquipmentModels.FirstOrDefaultAsync(value => value.Id == id)
-                     ?? throw new AppNotFoundException("Equipment model was not found.");
+                     ?? throw new NotFoundException("Equipment model was not found.");
         entity.Name = ToLangStr(request.Name);
         entity.Type = request.Type;
         entity.Manufacturer = request.Manufacturer?.Trim();
@@ -177,7 +183,7 @@ public class MaintenanceWorkflowService(
     {
         await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin);
         var entity = await dbContext.EquipmentModels.FirstOrDefaultAsync(value => value.Id == id)
-                     ?? throw new AppNotFoundException("Equipment model was not found.");
+                     ?? throw new NotFoundException("Equipment model was not found.");
         dbContext.EquipmentModels.Remove(entity);
         await dbContext.SaveChangesAsync();
     }
@@ -225,7 +231,7 @@ public class MaintenanceWorkflowService(
     {
         await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin);
         var entity = await dbContext.Equipment.FirstOrDefaultAsync(value => value.Id == id)
-                     ?? throw new AppNotFoundException("Equipment item was not found.");
+                     ?? throw new NotFoundException("Equipment item was not found.");
         entity.EquipmentModelId = request.EquipmentModelId;
         entity.AssetTag = request.AssetTag?.Trim();
         entity.SerialNumber = request.SerialNumber?.Trim();
@@ -241,7 +247,7 @@ public class MaintenanceWorkflowService(
     {
         await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin);
         var entity = await dbContext.Equipment.FirstOrDefaultAsync(value => value.Id == id)
-                     ?? throw new AppNotFoundException("Equipment item was not found.");
+                     ?? throw new NotFoundException("Equipment item was not found.");
         dbContext.Equipment.Remove(entity);
         await dbContext.SaveChangesAsync();
     }
@@ -256,7 +262,12 @@ public class MaintenanceWorkflowService(
             {
                 Id = entity.Id,
                 EquipmentId = entity.EquipmentId,
+                EquipmentAssetTag = entity.Equipment!.AssetTag,
+                EquipmentName = Translate(entity.Equipment.EquipmentModel!.Name) ?? entity.Equipment.AssetTag ?? "Equipment",
                 AssignedStaffId = entity.AssignedStaffId,
+                AssignedStaffName = entity.AssignedStaff == null
+                    ? null
+                    : $"{entity.AssignedStaff.Person!.FirstName} {entity.AssignedStaff.Person.LastName}".Trim(),
                 CreatedByStaffId = entity.CreatedByStaffId,
                 TaskType = entity.TaskType,
                 Priority = entity.Priority,
@@ -275,16 +286,19 @@ public class MaintenanceWorkflowService(
 
         var equipment = await dbContext.Equipment
             .Include(item => item.EquipmentModel)
-            .FirstOrDefaultAsync(entity => entity.Id == request.EquipmentId)
-            ?? throw new AppNotFoundException("Equipment item was not found.");
+            .FirstOrDefaultAsync(entity => entity.GymId == gymId && entity.Id == request.EquipmentId)
+            ?? throw new NotFoundException("Equipment item was not found.");
 
+        Staff? assignedStaff = null;
         if (request.AssignedStaffId.HasValue)
         {
-            var assignedStaff = await dbContext.Staff.FirstOrDefaultAsync(entity => entity.Id == request.AssignedStaffId.Value)
-                               ?? throw new AppNotFoundException("Assigned staff member was not found.");
+            assignedStaff = await dbContext.Staff
+                               .Include(entity => entity.Person)
+                               .FirstOrDefaultAsync(entity => entity.Id == request.AssignedStaffId.Value)
+                               ?? throw new NotFoundException("Assigned staff member was not found.");
             if (assignedStaff.GymId != gymId)
             {
-                throw new AppValidationException("Assigned staff member must belong to the active gym.");
+                throw new ValidationAppException("Assigned staff member must belong to the active gym.");
             }
         }
 
@@ -292,7 +306,9 @@ public class MaintenanceWorkflowService(
         {
             GymId = gymId,
             EquipmentId = equipment.Id,
+            Equipment = equipment,
             AssignedStaffId = request.AssignedStaffId,
+            AssignedStaff = assignedStaff,
             CreatedByStaffId = request.CreatedByStaffId,
             TaskType = request.TaskType,
             Priority = request.Priority,
@@ -311,8 +327,13 @@ public class MaintenanceWorkflowService(
     {
         await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin, RoleNames.Caretaker);
 
-        var task = await dbContext.MaintenanceTasks.FirstOrDefaultAsync(entity => entity.Id == taskId)
-                   ?? throw new AppNotFoundException("Maintenance task was not found.");
+        var task = await dbContext.MaintenanceTasks
+                   .Include(entity => entity.Equipment)
+                       .ThenInclude(entity => entity!.EquipmentModel)
+                   .Include(entity => entity.AssignedStaff)
+                       .ThenInclude(entity => entity!.Person)
+                   .FirstOrDefaultAsync(entity => entity.Id == taskId)
+                   ?? throw new NotFoundException("Maintenance task was not found.");
 
         await authorizationService.EnsureMaintenanceTaskAccessAsync(task);
 
@@ -407,7 +428,7 @@ public class MaintenanceWorkflowService(
     {
         await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin);
         var entity = await dbContext.MaintenanceTasks.FirstOrDefaultAsync(value => value.Id == id)
-                     ?? throw new AppNotFoundException("Maintenance task was not found.");
+                     ?? throw new NotFoundException("Maintenance task was not found.");
         dbContext.MaintenanceTasks.Remove(entity);
         await dbContext.SaveChangesAsync();
     }
@@ -416,7 +437,7 @@ public class MaintenanceWorkflowService(
     {
         var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin, RoleNames.Member, RoleNames.Trainer, RoleNames.Caretaker);
         var entity = await dbContext.GymSettings.FirstOrDefaultAsync(value => value.GymId == gymId)
-                     ?? throw new AppNotFoundException("Gym settings were not found.");
+                     ?? throw new NotFoundException("Gym settings were not found.");
         return ToGymSettingsResponse(entity);
     }
 
@@ -424,7 +445,7 @@ public class MaintenanceWorkflowService(
     {
         var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin);
         var entity = await dbContext.GymSettings.FirstOrDefaultAsync(value => value.GymId == gymId)
-                     ?? throw new AppNotFoundException("Gym settings were not found.");
+                     ?? throw new NotFoundException("Gym settings were not found.");
         entity.CurrencyCode = request.CurrencyCode.Trim();
         entity.TimeZone = request.TimeZone.Trim();
         entity.AllowNonMemberBookings = request.AllowNonMemberBookings;
@@ -475,7 +496,7 @@ public class MaintenanceWorkflowService(
 
         await dbContext.SaveChangesAsync();
         var user = await dbContext.Users.FirstOrDefaultAsync(entity => entity.Id == link.AppUserId)
-                   ?? throw new AppNotFoundException("App user was not found.");
+                   ?? throw new NotFoundException("App user was not found.");
 
         return new GymUserResponse
         {
@@ -493,7 +514,7 @@ public class MaintenanceWorkflowService(
                          value.GymId == gymId &&
                          value.AppUserId == appUserId &&
                          value.RoleName == roleName)
-                     ?? throw new AppNotFoundException("Gym user role was not found.");
+                     ?? throw new NotFoundException("Gym user role was not found.");
         dbContext.AppUserGymRoles.Remove(entity);
         await dbContext.SaveChangesAsync();
     }
@@ -569,7 +590,12 @@ public class MaintenanceWorkflowService(
         {
             Id = task.Id,
             EquipmentId = task.EquipmentId,
+            EquipmentAssetTag = task.Equipment?.AssetTag,
+            EquipmentName = Translate(task.Equipment?.EquipmentModel?.Name) ?? task.Equipment?.AssetTag ?? "Equipment",
             AssignedStaffId = task.AssignedStaffId,
+            AssignedStaffName = task.AssignedStaff == null
+                ? null
+                : $"{task.AssignedStaff.Person?.FirstName} {task.AssignedStaff.Person?.LastName}".Trim(),
             CreatedByStaffId = task.CreatedByStaffId,
             TaskType = task.TaskType,
             Priority = task.Priority,

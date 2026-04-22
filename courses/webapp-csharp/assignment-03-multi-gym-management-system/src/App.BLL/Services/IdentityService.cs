@@ -1,13 +1,13 @@
 using System.Security.Claims;
-using App.BLL.Contracts;
+using App.BLL.Contracts.Infrastructure;
 using App.BLL.Exceptions;
 using App.Domain;
 using App.Domain.Entities;
 using App.Domain.Enums;
 using App.Domain.Identity;
 using App.Domain.Security;
-using App.DTO.v1.Identity;
 using Microsoft.AspNetCore.Identity;
+using App.DTO.v1.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace App.BLL.Services;
@@ -22,7 +22,7 @@ public class IdentityService(
     {
         if (await userManager.FindByEmailAsync(request.Email) != null)
         {
-            throw new AppValidationException("A user with this email already exists.");
+            throw new ValidationAppException("A user with this email already exists.");
         }
 
         var person = new Person
@@ -43,7 +43,7 @@ public class IdentityService(
         var result = await userManager.CreateAsync(user, request.Password);
         if (!result.Succeeded)
         {
-            throw new AppValidationException(result.Errors.Select(error => error.Description));
+            throw new ValidationAppException(result.Errors.Select(error => error.Description));
         }
 
         AppUserGymRole? activeLink = null;
@@ -78,11 +78,11 @@ public class IdentityService(
     public async Task<JwtResponse> LoginAsync(LoginRequest request)
     {
         var user = await userManager.FindByEmailAsync(request.Email)
-                   ?? throw new AppValidationException("Invalid email or password.");
+                   ?? throw new ValidationAppException("Invalid email or password.");
 
         if (!await userManager.CheckPasswordAsync(user, request.Password))
         {
-            throw new AppValidationException("Invalid email or password.");
+            throw new ValidationAppException("Invalid email or password.");
         }
 
         var activeLink = await dbContext.AppUserGymRoles
@@ -113,7 +113,7 @@ public class IdentityService(
         var principal = tokenService.GetPrincipalFromExpiredToken(request.Jwt);
         if (!Guid.TryParse(principal.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
         {
-            throw new AppValidationException("Invalid refresh token request.");
+            throw new ValidationAppException("Invalid refresh token request.");
         }
 
         var refreshToken = await dbContext.RefreshTokens
@@ -122,11 +122,11 @@ public class IdentityService(
 
         if (refreshToken == null || refreshToken.Expiration <= DateTime.UtcNow)
         {
-            throw new AppForbiddenException("Refresh token is invalid or expired.");
+            throw new ForbiddenException("Refresh token is invalid or expired.");
         }
 
         var user = refreshToken.User ?? await userManager.FindByIdAsync(userId.ToString())
-                   ?? throw new AppNotFoundException("User not found for the provided refresh token.");
+                   ?? throw new NotFoundException("User not found for the provided refresh token.");
 
         var activeGymCode = principal.FindFirstValue(AppClaimTypes.GymCode);
         var activeRole = principal.FindFirstValue(AppClaimTypes.ActiveRole);
@@ -145,11 +145,11 @@ public class IdentityService(
         var context = userContextService.GetCurrent();
         if (!context.UserId.HasValue)
         {
-            throw new AppForbiddenException("Authentication is required.");
+            throw new ForbiddenException("Authentication is required.");
         }
 
         var user = await userManager.FindByIdAsync(context.UserId.Value.ToString())
-                   ?? throw new AppNotFoundException("User not found.");
+                   ?? throw new NotFoundException("User not found.");
 
         var activeLink = await dbContext.AppUserGymRoles
             .Include(link => link.Gym)
@@ -175,7 +175,7 @@ public class IdentityService(
 
         if (activeLink == null)
         {
-            throw new AppForbiddenException("The user does not have access to the requested gym.");
+            throw new ForbiddenException("The user does not have access to the requested gym.");
         }
 
         return await BuildJwtResponseAsync(user, activeLink);
@@ -186,11 +186,11 @@ public class IdentityService(
         var context = userContextService.GetCurrent();
         if (!context.UserId.HasValue || !context.ActiveGymId.HasValue)
         {
-            throw new AppForbiddenException("An active gym is required to switch tenant roles.");
+            throw new ForbiddenException("An active gym is required to switch tenant roles.");
         }
 
         var user = await userManager.FindByIdAsync(context.UserId.Value.ToString())
-                   ?? throw new AppNotFoundException("User not found.");
+                   ?? throw new NotFoundException("User not found.");
 
         var activeLink = await dbContext.AppUserGymRoles
             .Include(link => link.Gym)
@@ -218,7 +218,7 @@ public class IdentityService(
 
         if (activeLink == null)
         {
-            throw new AppForbiddenException("The requested role is not assigned in the active gym.");
+            throw new ForbiddenException("The requested role is not assigned in the active gym.");
         }
 
         return await BuildJwtResponseAsync(user, activeLink);
@@ -246,12 +246,12 @@ public class IdentityService(
     public async Task ResetPasswordAsync(ResetPasswordRequest request)
     {
         var user = await userManager.FindByEmailAsync(request.Email)
-                   ?? throw new AppNotFoundException("User not found.");
+                   ?? throw new NotFoundException("User not found.");
 
         var result = await userManager.ResetPasswordAsync(user, request.ResetToken, request.NewPassword);
         if (!result.Succeeded)
         {
-            throw new AppValidationException(result.Errors.Select(error => error.Description));
+            throw new ValidationAppException(result.Errors.Select(error => error.Description));
         }
     }
 

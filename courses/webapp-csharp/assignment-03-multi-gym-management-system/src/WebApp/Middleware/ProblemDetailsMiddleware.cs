@@ -41,9 +41,9 @@ public class ProblemDetailsMiddleware(RequestDelegate next, ILogger<ProblemDetai
     {
         var (statusCode, title) = exception switch
         {
-            AppNotFoundException => ((int)HttpStatusCode.NotFound, "Not Found"),
-            AppForbiddenException => ((int)HttpStatusCode.Forbidden, "Forbidden"),
-            AppValidationException => ((int)HttpStatusCode.BadRequest, "Validation Failed"),
+            NotFoundException => ((int)HttpStatusCode.NotFound, "Not Found"),
+            ForbiddenException => ((int)HttpStatusCode.Forbidden, "Forbidden"),
+            ValidationAppException => ((int)HttpStatusCode.BadRequest, "Validation Failed"),
             _ => ((int)HttpStatusCode.InternalServerError, "Server Error")
         };
 
@@ -58,7 +58,7 @@ public class ProblemDetailsMiddleware(RequestDelegate next, ILogger<ProblemDetai
             Instance = context.Request.Path
         };
 
-        if (exception is AppValidationException validationException)
+        if (exception is ValidationAppException validationException)
         {
             problem.Extensions["errors"] = validationException.Errors;
         }

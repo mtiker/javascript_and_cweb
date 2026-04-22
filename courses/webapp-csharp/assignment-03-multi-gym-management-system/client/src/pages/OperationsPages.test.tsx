@@ -18,7 +18,10 @@ describe("role operation pages", () => {
           {
             id: "booking-1",
             trainingSessionId: "session-1",
+            trainingSessionName: "Upper Body Fundamentals",
             memberId: "member-1",
+            memberName: "Liis Lill",
+            memberCode: "MEM-001",
             status: 0,
             chargedPrice: 0,
             paymentRequired: false,
@@ -46,7 +49,10 @@ describe("role operation pages", () => {
         jsonResponse({
           id: "booking-1",
           trainingSessionId: "session-1",
+          trainingSessionName: "Upper Body Fundamentals",
           memberId: "member-1",
+          memberName: "Liis Lill",
+          memberCode: "MEM-001",
           status: 2,
           chargedPrice: 0,
           paymentRequired: false,
@@ -69,6 +75,7 @@ describe("role operation pages", () => {
     await userEvent.click(screen.getByRole("button", { name: "Update" }));
 
     expect(await screen.findByText("Attendance updated")).toBeInTheDocument();
+    expect(await screen.findByText("Liis Lill is now Attended.")).toBeInTheDocument();
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3));
     expect(fetchMock.mock.calls[2]?.[0]).toContain("/api/v1/peak-forge/bookings/booking-1/attendance");
   });
@@ -81,7 +88,10 @@ describe("role operation pages", () => {
           {
             id: "task-1",
             equipmentId: "equipment-1",
+            equipmentAssetTag: "EQ-ROW-001",
+            equipmentName: "Concept2 rower",
             assignedStaffId: "staff-1",
+            assignedStaffName: "Tanel Tamme",
             createdByStaffId: "staff-2",
             taskType: 0,
             priority: 1,
@@ -94,10 +104,27 @@ describe("role operation pages", () => {
         ]),
       )
       .mockResolvedValueOnce(
+        jsonResponse([
+          {
+            id: "equipment-1",
+            equipmentModelId: "model-1",
+            assetTag: "EQ-ROW-001",
+            serialNumber: "ROW-001",
+            currentStatus: 0,
+            commissionedAt: "2026-01-10",
+            decommissionedAt: null,
+            notes: null,
+          },
+        ]),
+      )
+      .mockResolvedValueOnce(
         jsonResponse({
           id: "task-1",
           equipmentId: "equipment-1",
+          equipmentAssetTag: "EQ-ROW-001",
+          equipmentName: "Concept2 rower",
           assignedStaffId: "staff-1",
+          assignedStaffName: "Tanel Tamme",
           createdByStaffId: "staff-2",
           taskType: 0,
           priority: 1,
@@ -122,12 +149,75 @@ describe("role operation pages", () => {
 
     expect(await screen.findByText("Scheduled maintenance")).toBeInTheDocument();
     await userEvent.selectOptions(screen.getByLabelText("Status"), "1");
-    await userEvent.clear(screen.getByLabelText("Notes"));
-    await userEvent.type(screen.getByLabelText("Notes"), "Started chain inspection");
+    const taskNotes = screen.getAllByLabelText("Notes")[1];
+    await userEvent.clear(taskNotes);
+    await userEvent.type(taskNotes, "Started chain inspection");
     await userEvent.click(screen.getByRole("button", { name: "Update" }));
 
     expect(await screen.findByText("Maintenance task updated")).toBeInTheDocument();
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
-    expect(fetchMock.mock.calls[1]?.[0]).toContain("/api/v1/peak-forge/maintenance-tasks/task-1/status");
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3));
+    expect(fetchMock.mock.calls[2]?.[0]).toContain("/api/v1/peak-forge/maintenance-tasks/task-1/status");
+  });
+
+  it("schedules a maintenance task with equipment and staff assignment", async () => {
+    const fetchMock = vi.mocked(fetch);
+    fetchMock
+      .mockResolvedValueOnce(jsonResponse([]))
+      .mockResolvedValueOnce(
+        jsonResponse([
+          {
+            id: "equipment-1",
+            equipmentModelId: "model-1",
+            assetTag: "EQ-TREAD-001",
+            serialNumber: "TR-001",
+            currentStatus: 0,
+            commissionedAt: "2026-01-10",
+            decommissionedAt: null,
+            notes: null,
+          },
+        ]),
+      )
+      .mockResolvedValueOnce(
+        jsonResponse([
+          {
+            id: "staff-1",
+            staffCode: "STF-CARE-001",
+            fullName: "Tanel Tamme",
+            status: 0,
+          },
+        ]),
+      )
+      .mockResolvedValueOnce(
+        jsonResponse({
+          id: "task-2",
+          equipmentId: "equipment-1",
+          equipmentAssetTag: "EQ-TREAD-001",
+          equipmentName: "Treadmill",
+          assignedStaffId: "staff-1",
+          assignedStaffName: "Tanel Tamme",
+          createdByStaffId: null,
+          taskType: 0,
+          priority: 2,
+          status: 0,
+          dueAtUtc: "2026-04-25T12:00:00Z",
+          startedAtUtc: null,
+          completedAtUtc: null,
+          notes: "Inspect belt",
+        }),
+      );
+
+    renderWithAuth(<MaintenanceTasksPage />);
+
+    await screen.findByText("New maintenance task");
+    await userEvent.selectOptions(screen.getByLabelText("Priority"), "2");
+    await userEvent.type(screen.getByLabelText("Due"), "2026-04-25T12:00");
+    await userEvent.type(screen.getByLabelText("Notes"), "Inspect belt");
+    await userEvent.click(screen.getByRole("button", { name: "Schedule maintenance" }));
+
+    expect(await screen.findByText("Maintenance scheduled")).toBeInTheDocument();
+    expect(await screen.findByText("EQ-TREAD-001 / Treadmill")).toBeInTheDocument();
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(4));
+    expect(fetchMock.mock.calls[3]?.[0]).toContain("/api/v1/peak-forge/maintenance-tasks");
+    expect(fetchMock.mock.calls[3]?.[1]).toMatchObject({ method: "POST" });
   });
 });
