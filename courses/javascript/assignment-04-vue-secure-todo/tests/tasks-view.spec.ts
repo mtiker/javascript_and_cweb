@@ -159,6 +159,23 @@ describe("tasks view", () => {
     expect(wrapper.text()).not.toContain("No tasks yet");
   });
 
+  it("shows a loading state instead of an empty state while startup data is still fetching", async () => {
+    api.listCategories.mockImplementationOnce(async () => new Promise<never>(() => undefined));
+    api.listPriorities.mockImplementationOnce(async () => new Promise<never>(() => undefined));
+    api.listTasks.mockImplementationOnce(async () => new Promise<never>(() => undefined));
+
+    const wrapper = mount(TasksView, {
+      global: {
+        plugins: [createPinia()],
+      },
+    });
+
+    await Promise.resolve();
+
+    expect(wrapper.text()).toContain("Loading tasks");
+    expect(wrapper.text()).not.toContain("No tasks yet");
+  });
+
   it("shows a retryable load error when startup data cannot load", async () => {
     api.listTasks.mockRejectedValueOnce(new Error("Backend unavailable"));
 

@@ -146,6 +146,13 @@ async function confirmDelete() {
       </EmptyStatePanel>
     </section>
 
+    <section v-else-if="catalogStore.loading || todoStore.loading" class="panel">
+      <EmptyStatePanel
+        title="Loading tasks"
+        description="Syncing tasks, categories, and priorities from the server."
+      />
+    </section>
+
     <section v-else-if="!catalogStore.isReadyForTasks" class="panel">
       <EmptyStatePanel
         title="Task creation is waiting for catalogs"

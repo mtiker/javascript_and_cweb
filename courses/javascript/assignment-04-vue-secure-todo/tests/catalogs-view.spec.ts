@@ -159,6 +159,24 @@ describe("catalogs view", () => {
     expect(wrapper.text()).toContain("High");
   });
 
+  it("shows a loading state while catalogs are still being fetched", async () => {
+    api.listCategories.mockImplementationOnce(async () => new Promise<never>(() => undefined));
+    api.listPriorities.mockImplementationOnce(async () => new Promise<never>(() => undefined));
+
+    const wrapper = mount(CatalogsView, {
+      global: {
+        plugins: [createPinia()],
+      },
+    });
+
+    await Promise.resolve();
+
+    expect(wrapper.text()).toContain("Loading catalogs");
+    expect(wrapper.text()).not.toContain("This account is brand new");
+    expect(wrapper.text()).not.toContain("No categories yet");
+    expect(wrapper.text()).not.toContain("No priorities yet");
+  });
+
   it("seeds a full demo workspace with Estonian characters and varied task states", async () => {
     const wrapper = mount(CatalogsView, {
       global: {

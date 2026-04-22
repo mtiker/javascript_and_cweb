@@ -46,10 +46,11 @@ export function filterAndSortTasks(
   priorities: TodoPriorityEntity[],
 ) {
   const normalizedQuery = filters.query.trim().toLowerCase();
+  const allowArchived = filters.showArchived || filters.status === "archived";
 
   return [...tasks]
     .filter((task) => {
-      if (!filters.showArchived && task.isArchived) {
+      if (!allowArchived && task.isArchived) {
         return false;
       }
 

@@ -197,6 +197,13 @@ async function confirmDelete() {
       </EmptyStatePanel>
     </section>
 
+    <section v-else-if="catalogStore.loading" class="panel">
+      <EmptyStatePanel
+        title="Loading catalogs"
+        description="Fetching categories and priorities from the server."
+      />
+    </section>
+
     <section
       v-else-if="!catalogStore.categories.length && !catalogStore.priorities.length"
       class="panel"
@@ -214,7 +221,7 @@ async function confirmDelete() {
       </EmptyStatePanel>
     </section>
 
-    <section v-if="!loadError" class="catalog-grid">
+    <section v-if="!loadError && !catalogStore.loading" class="catalog-grid">
       <article class="panel">
         <div class="panel__heading">
           <div>

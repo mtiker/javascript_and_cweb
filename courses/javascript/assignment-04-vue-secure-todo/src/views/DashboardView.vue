@@ -55,6 +55,13 @@ const recentTasks = computed(() =>
       </EmptyStatePanel>
     </section>
 
+    <section v-else-if="catalogStore.loading || todoStore.loading" class="panel">
+      <EmptyStatePanel
+        title="Loading dashboard"
+        description="Collecting the latest task metrics and recent activity."
+      />
+    </section>
+
     <template v-else>
       <section class="stats-grid">
         <StatCard label="Total tasks" :value="metrics.total" hint="All synced Todo items" />
