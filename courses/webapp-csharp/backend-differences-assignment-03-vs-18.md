@@ -1,462 +1,429 @@
-# Backend Differences: Assignment 03 vs Assignment 18
+# Controller Differences: Assignment 03 vs Assignment 18
 
 Date: 2026-04-22
 
-This report compares the current working-tree backend implementations of:
+This report compares the controller layer in:
 
-- `assignment-03-multi-gym-management-system`
-- `assignment-18-dental-clinic-platform`
+- `courses/webapp-csharp/assignment-03-multi-gym-management-system`
+- `courses/webapp-csharp/assignment-18-dental-clinic-platform`
 
-The comparison is based on the repository state at the time of writing, including uncommitted local changes. Frontend-only code is mentioned only where it affects backend hosting or API shape.
+The goal is practical: identify what Assignment 03 should later adopt so its controllers become as functional, testable, and defendable as Assignment 18, without copying weaker Assignment 18 patterns that would reduce Assignment 03's current service-layer separation.
+
+Official course lens used for this review:
+
+- Web Applications with C# expects REST API + client-app readiness from the Clean/Onion project phase onward.
+- The course BLL material treats controllers as boundary adapters: routing, authorization attributes, DTO binding, response shaping, and delegation should live in controllers; business validation, tenant access, orchestration, and transactions should live in BLL/services.
 
 ## Executive Summary
 
-Both assignments are multi-tenant ASP.NET Core SaaS backends on the same core stack: .NET 10, ASP.NET Core Identity, JWT authentication, EF Core 10, PostgreSQL, Swagger, API versioning, Docker, and xUnit integration tests.
+Assignment 03 is already stronger than Assignment 18 in one important controller-boundary area: almost every API controller delegates to a BLL service. Tenant API controllers such as `BookingsController`, `MembershipsController`, `MembersController`, `TrainingSessionsController`, `StaffController`, and `MaintenanceTasksController` are thin service callers. That is the right direction and should be preserved.
 
-The main difference is product focus and backend maturity:
+Assignment 18 is stronger in HTTP/API polish and controller test evidence. It consistently uses:
 
-- Assignment 03 is a gym SaaS backend with broader operational coverage: gym onboarding, members, staff, contracts, schedules, bookings, memberships, payments, facilities, equipment, maintenance, MVC admin/client areas, a React client mount, localization, and a newer service-boundary cleanup inspired by Assignment 18.
-- Assignment 18 is a dental clinic SaaS backend with deeper vertical workflows: patients, tooth records, appointments, treatment plans, clinical records, insurance, cost estimates, invoices, payment plans, finance workspace, company administration, feature flags, support, billing, and system impersonation.
-- Assignment 03 currently has a cleaner BLL abstraction over persistence for most new backend workflows through `IAppDbContext`, while Assignment 18 has more domain-specific services but lets BLL depend directly on `AppDbContext`.
-- Assignment 18 has more advanced clinical/finance business workflows and more backend service tests. Assignment 03 has more runtime surfaces because it serves REST, MVC admin, MVC client, and the production React client from one host.
+- explicit `[ApiController]`, versioned routes, and controller-resource route naming
+- `[ProducesResponseType]` metadata for Swagger/OpenAPI
+- `CancellationToken` on async actions and EF/service calls
+- `201 Created` for creates and `204 NoContent` for deletes
+- command/result mapping between API DTOs and BLL contracts
+- controller unit tests for service-backed controllers and direct-DbContext CRUD controllers
+- explicit route tenant mismatch checks before work is done
 
-## High-Level Backend Profile
+Assignment 03 should not simply copy Assignment 18's direct `AppDbContext` CRUD controllers. Assignment 18 still has many controllers where validation and persistence happen directly in the API layer. That is useful as a reference for response shape and tests, but not as a target architecture.
 
-| Area | Assignment 03: Multi-Gym | Assignment 18: Dental Clinic |
-| --- | --- | --- |
-| Tenant root | `Gym` | `Company` |
-| Tenant route | `/api/v1/{gymCode}/...` | `/api/v1/{companySlug}/...` |
-| System route | `/api/v1/system/...` | `/api/v1/system/...` |
-| Identity route | `/api/v1/account/...` with kebab-case actions | `/api/v1/account/{action}` mostly action-name based |
-| Backend projects | `App.Domain`, `App.DAL.EF`, `App.BLL`, `App.DTO`, `App.Resources`, `WebApp` | `App.Domain`, `App.DAL.EF`, `App.BLL`, `App.DTO`, `WebApp` |
-| Localization | Backend `.resx`, request localization, and `LangStr` DB localization | No separate resources project; domain text is mostly direct scalar data |
-| Hosted UI surfaces | API, Swagger, MVC Admin, MVC Client under `/mvc-client`, React client under `/client` | API, Swagger, static demo UI under `/app/*` |
-| API controllers | 25 controllers, 92 HTTP actions | 23 controllers, 89 HTTP actions |
-| EF migrations | 1 migration: initial create | 3 migrations: initial create plus treatment-plan/finance refinements |
-| Test focus | Smoke, auth/security, proposal workflows, LangStr, membership workflow | Identity, onboarding, impersonation, tenant operations, patients, appointments, treatment plans, finance services, tenant access |
+The target for Assignment 03 should be:
 
-## Architecture and Layering
+1. Keep the Assignment 03 service-first controller boundary.
+2. Add Assignment 18's REST metadata, cancellation support, command/result mapping, response semantics, and controller-level tests.
+3. Remove the stale direct-DbContext affordance from `ApiControllerBase`.
+4. Standardize controller route and action conventions without breaking existing public routes unless a migration is planned.
 
-### Shared baseline
+## Safe First Pass Implementation Status
 
-Both backends use the same N-tier shape:
+Implemented on 2026-04-22:
 
-- `App.Domain` contains entities, common base types, enums, role constants, and Identity models.
-- `App.DAL.EF` owns `AppDbContext`, EF mapping, migrations, tenant filtering, audit logging, soft delete, and seeding.
-- `App.BLL` contains higher-risk business workflows and validation.
-- `App.DTO` contains versioned public API request/response contracts.
-- `WebApp` contains startup, DI, middleware, authentication, controllers, Swagger, and hosted UI assets.
-- `tests/WebApp.Tests` contains xUnit tests using `Microsoft.AspNetCore.Mvc.Testing`.
+- `ApiControllerBase` now only provides shared API behavior: `[ApiController]`, JWT authorization, and the `LangStr` translation helper.
+- Direct `AppDbContext` access was removed from the API base controller.
+- All Assignment 03 API actions now accept `CancellationToken`.
+- BLL service interfaces and implementations now expose compatible optional cancellation-token parameters.
+- Controllers pass request cancellation tokens into BLL calls.
+- BLL workflow services pass cancellation tokens into EF async calls, `SaveChangesAsync`, and tenant-authorization checks.
+- Every API action now has success `[ProducesResponseType]` metadata matching the preserved current response behavior.
+- Existing public routes, DTO JSON shapes, authorization rules, and response bodies/statuses were preserved. Metadata now correctly documents existing `CreatedAtAction` endpoints as `201 Created`.
+- Added Assignment 03 controller unit-test infrastructure and targeted tests for `MembersController`, `BookingsController`, and `MembershipsController`.
 
-### Dependency direction
+Verified:
 
-Assignment 03 has moved toward a more defensive BLL boundary:
+- `dotnet build courses\webapp-csharp\assignment-03-multi-gym-management-system\multi-gym-management-system.slnx`
+- `dotnet test courses\webapp-csharp\assignment-03-multi-gym-management-system\multi-gym-management-system.slnx`
 
-- `App.BLL` depends on `App.Domain` and `App.DTO`.
-- BLL services use `IAppDbContext` from `App.BLL.Contracts.Infrastructure`.
-- `App.DAL.EF` implements the BLL persistence contract by exposing `AppDbContext` as `IAppDbContext`.
-- Most tenant workflow controllers delegate to BLL services.
+## Inventory Snapshot
 
-Assignment 18 uses a practical hybrid:
+The counts below are based on the current local `src/WebApp/ApiControllers` folders.
 
-- `App.BLL` depends directly on `App.DAL.EF`.
-- BLL services inject `AppDbContext` directly.
-- Complex workflows are in services, but simpler CRUD controllers still use `AppDbContext` directly.
-- This is less strict architecturally, but very direct and easy to follow for the assignment scope.
+| Metric | Assignment 03 | Assignment 18 | Meaning |
+| --- | ---: | ---: | --- |
+| API controller files, including A03 base controller | 26 | 23 | A03 has more split tenant resources. |
+| HTTP actions | 92 | 89 | Both expose similarly broad API surfaces. |
+| Controllers using direct DbContext | 0 | 14 | A03 is now API-service-first; A18 is hybrid. |
+| Controllers using BLL services | 25 | 12 | A03 already delegates more consistently. |
+| `[ProducesResponseType]` attributes | 92 | 147 | A03 now documents success responses for every API action; A18 remains more exhaustive on error metadata. |
+| Controllers returning created responses | 2 | 13 | A18 models REST create semantics better. |
+| Controllers accepting `CancellationToken` | 25 | 23 | A03 now has cancellation-token support across API actions. |
 
-### Startup and middleware
+Interpretation:
 
-Assignment 03 startup is organized around:
+- Assignment 03 has the better architectural direction.
+- Assignment 18 has the better API ergonomics, documentation metadata, cancellation plumbing, and controller test coverage.
+- The ideal Assignment 03 controller layer is not "make it like Assignment 18 exactly"; it is "keep A03's service boundary and bring over A18's mature HTTP/API contract discipline."
 
-- `AddAppDatabase`
-- `AddAppIdentity`
-- `AddAppServices`
-- `AddAppLocalization`
-- `AddAppControllers`
-- `AddAppCors`
-- `AddAppApiVersioning`
-- `AddAppSwagger`
-- `UseAppPipeline`
-- `MapAppEndpoints`
+## Controller Surface Differences
 
-Assignment 18 startup is similar but includes additional production/deployment behavior:
+### 1. Runtime Surfaces
 
-- forwarded headers support
-- stricter connection string and JWT configuration requirements
-- persisted Data Protection keys in the database
-- migrations endpoint in development
-- tenant resolution middleware in the main pipeline
-- static demo UI fallback under `/app/{*path:nonfile}`
+Assignment 03 has three controller surfaces:
 
-## Domain Model Differences
+- API controllers under `src/WebApp/ApiControllers`
+- MVC admin area controllers under `src/WebApp/Areas/Admin/Controllers`
+- MVC client area controllers under `src/WebApp/Areas/Client/Controllers`
 
-### Assignment 03 domain
+Assignment 18 is primarily API plus static/client assets:
 
-Assignment 03 models gym operations and platform SaaS administration. Main persisted sets include:
+- API controllers under `src/WebApp/ApiControllers`
+- no comparable MVC Admin/Client controller areas in the current project structure
 
-- platform: `Gym`, `GymSettings`, `Subscription`, `SupportTicket`, `AuditLog`, `AppUserGymRole`
-- people/contact model: `Person`, `Contact`, `PersonContact`, `GymContact`
-- member/staff model: `Member`, `Staff`, `JobRole`, `EmploymentContract`, `Vacation`
-- training/scheduling: `TrainingCategory`, `TrainingSession`, `WorkShift`, `Booking`
-- commercial model: `MembershipPackage`, `Membership`, `Payment`
-- facilities/equipment: `OpeningHours`, `OpeningHoursException`, `EquipmentModel`, `Equipment`, `MaintenanceTask`
-- identity/support: `AppUser`, `AppRole`, `AppRefreshToken`, `DataProtectionKey`
+Impact for Assignment 03:
 
-The gym backend has stronger operational breadth. It tracks member and employee structure, recurring operating constraints, bookings, attendance, equipment lifecycle, and maintenance.
+- A03 has more user-facing server-rendered routes to keep working during controller refactors.
+- Any controller modernization must preserve both API clients and MVC area workflows.
+- A03 controller tests should cover both REST behavior and MVC route smoke behavior.
 
-### Assignment 18 domain
+### 2. Base Controller Design
 
-Assignment 18 models dental clinic operations and finance. Main persisted sets include:
+Assignment 03 has `ApiControllerBase`, which applies `[ApiController]` and JWT authorization globally, but it also contains optional direct `AppDbContext` access:
 
-- platform: `Company`, `CompanySettings`, `Subscription`, `AppUserRole`, `AuditLog`
-- patient/clinical model: `Patient`, `ToothRecord`, `TreatmentType`, `Treatment`, `Appointment`, `TreatmentPlan`, `PlanItem`, `Xray`
-- insurance/finance model: `InsurancePlan`, `PatientInsurancePolicy`, `CostEstimate`, `Invoice`, `InvoiceLine`, `Payment`, `PaymentPlan`, `PaymentPlanInstallment`
-- resources: `Dentist`, `TreatmentRoom`
-- identity/support: `AppUser`, `AppRole`, `AppRefreshToken`, `DataProtectionKey`
+- `ApiControllerBase(AppDbContext dbContext)`
+- protected `DbContext` property
+- parameterless constructor path for controllers that do not use direct DbContext
 
-The dental backend has deeper transactional workflows. Treatment plans, plan item decisions, performed treatments, invoices, payment plans, and patient finance workspace form a more integrated business process than any single Assignment 03 slice.
+Current tenant API controllers no longer appear to need that `DbContext` access. This base controller now communicates the wrong architectural possibility: it says direct persistence from API controllers is acceptable even though Assignment 03 has moved toward BLL service delegation.
 
-## Multi-Tenancy and Security
+Assignment 18 does not use a shared base controller for tenant APIs. Each controller declares `[ApiController]`, `[ApiVersion]`, `[Route]`, and `[Authorize]` directly.
 
-### Tenant resolution
+Recommended A03 target:
 
-Assignment 03:
+- Keep a base controller only if it provides real shared API behavior.
+- Remove direct `AppDbContext` from `ApiControllerBase`.
+- Keep shared authorization only if all derived controllers truly share the same policy.
+- If different controller groups need different policies, use explicit attributes on each controller like Assignment 18.
 
-- Uses `GymId` on tenant-owned entities.
-- Uses route `gymCode`.
-- Uses active gym claims such as `active_gym_id`, `active_gym_code`, `active_role`, and `person_id`.
-- Uses `IGymContext` and `HttpGymContext`.
-- BLL authorization checks ensure the route gym matches the active gym context.
+### 3. Routing Style
 
-Assignment 18:
+Assignment 03 tenant APIs use route templates like:
 
-- Uses `CompanyId` on tenant-owned entities.
-- Uses route `companySlug`.
-- Resolves tenant context centrally through `TenantResolutionMiddleware`.
-- Uses `ITenantProvider` and `RequestTenantProvider`.
-- JWT uses claims such as `companyId`, `companySlug`, and `companyRole`.
+- `api/v{version:apiVersion}/{gymCode}`
+- action-level segments such as `"memberships"`, `"bookings"`, `"training-sessions"`
 
-Assignment 18 has tenant resolution more visibly centralized in middleware. Assignment 03 currently pushes more route/claim matching into authorization and user-context services.
+Example:
 
-### EF isolation
+- `MembershipsController` uses `[Route("api/v{version:apiVersion}/{gymCode}")]` plus `[HttpGet("memberships")]`.
+- `BookingsController` uses the same controller route plus `[HttpGet("bookings")]`, `[HttpPost("bookings")]`, and `[HttpPut("bookings/{id:guid}/attendance")]`.
 
-Both backends enforce tenant isolation at `AppDbContext` level:
+Assignment 18 uses controller-resource routes:
 
-- query filters for `ITenantEntity`
-- combined query filters for `ITenantEntity` plus `ISoftDeleteEntity`
-- automatic tenant id assignment on added tenant entities
-- audit logging in `SaveChangesAsync`
-- soft delete conversion for deleted business entities
+- `api/v{version:apiVersion}/{companySlug}/[controller]`
+- action-level routes mostly for subresources or commands
 
-Assignment 03 filters on `GymId`. Assignment 18 filters on `CompanyId`.
+Example:
 
-### Roles
+- `AppointmentsController` route resolves to `/appointments`.
+- `TreatmentPlansController` route resolves to `/treatmentplans`.
+- workflow actions are nested as `/{planId}/submit`, `/openitems`, and `/recorditemdecision`.
 
-Assignment 03 roles:
+Tradeoff:
 
-- system: `SystemAdmin`, `SystemSupport`, `SystemBilling`
-- tenant: `GymOwner`, `GymAdmin`, `Member`, `Trainer`, `Caretaker`
+- A03's explicit action-level route names preserve kebab-case endpoints such as `training-sessions`.
+- A18's `[controller]` route is less repetitive but produces names based on C# controller names, which can be less client-friendly unless route tokens are transformed.
 
-Assignment 18 roles:
+Recommended A03 target:
 
-- system: `SystemAdmin`, `SystemSupport`, `SystemBilling`
-- tenant: `CompanyOwner`, `CompanyAdmin`, `CompanyManager`, `CompanyEmployee`
+- Preserve current public routes unless the frontend and docs are migrated in the same change.
+- Standardize action names and HTTP semantics first.
+- Later consider controller-level resource routes only with explicit route aliases or a route-token transformer so kebab-case public URLs are preserved.
 
-Assignment 03 uses more domain-specific tenant roles that map to gym behavior. Assignment 18 uses organization roles that map to clinic administration levels.
-
-### Authentication differences
+### 4. Authorization Shape
 
 Assignment 03:
 
-- Allows fallback JWT issuer/audience/key defaults in code.
-- Password policy is lighter: required length 6, digit required, non-alphanumeric and uppercase not required.
-- Uses refresh-token rotation through BLL services.
-- Supports MVC cookie auth plus JWT API auth.
+- applies JWT authorization from `ApiControllerBase`
+- uses controller/action `[Authorize]` mainly for system endpoints
+- relies heavily on BLL `AuthorizationService` to validate active gym, route gym, tenant roles, and object-level permissions
 
 Assignment 18:
 
-- Fails startup if `JWT:Key`, `JWT:Issuer`, or `JWT:Audience` is missing.
-- Uses stricter password rules: length 8, digit, uppercase, lowercase, and non-alphanumeric required.
-- Sets JWT clock skew to 30 seconds.
-- Uses Identity UI registration in setup, although the main app is API/static UI oriented.
+- declares JWT + role requirements directly on most controllers
+- adds narrower action-level role attributes for write operations
+- checks route tenant mismatch in controllers through `TenantMatches(companySlug)`
+- then delegates role/business checks into BLL services for service-backed workflows
 
-Assignment 18 is stricter by default for production security configuration. Assignment 03 is easier to start locally but should avoid fallback secrets in production.
+Assessment:
 
-## API Surface Differences
+- A03's BLL authorization is stronger for route-gym vs active-gym validation and member/trainer/caretaker object-level checks.
+- A18's controller attributes make Swagger/security review easier because coarse role requirements are visible at the API boundary.
 
-### Assignment 03 API
+Recommended A03 target:
 
-Assignment 03 has 25 API controllers:
+- Keep BLL authorization as the source of truth.
+- Add explicit controller/action `[Authorize(Roles = ...)]` where it documents coarse API intent without replacing BLL checks.
+- Add controller tests proving wrong gym/active-gym mismatches are rejected through the service path or boundary path.
 
-- identity: `AccountController`
-- system: `GymsController`, `ImpersonationController`, `PlatformController`, `SubscriptionsController`, `SupportController`
-- tenant: `BookingsController`, `EmploymentContractsController`, `EquipmentController`, `EquipmentModelsController`, `GymSettingsController`, `GymUsersController`, `JobRolesController`, `MaintenanceTasksController`, `MembersController`, `MembershipPackagesController`, `MembershipsController`, `OpeningHoursController`, `OpeningHoursExceptionsController`, `PaymentsController`, `StaffController`, `TrainingCategoriesController`, `TrainingSessionsController`, `VacationsController`, `WorkShiftsController`
+### 5. DTO to BLL Mapping
 
-The API is broad and operational. Most tenant endpoints are explicit kebab-case resource routes, for example:
+Assignment 03 controllers usually pass public API DTOs directly into services:
 
-- `/api/v1/{gymCode}/members`
-- `/api/v1/{gymCode}/training-sessions`
-- `/api/v1/{gymCode}/membership-packages`
-- `/api/v1/{gymCode}/maintenance-tasks/generate-due`
+- `SellMembership(string gymCode, [FromBody] SellMembershipRequest request)`
+- service call: `membershipWorkflowService.SellMembershipAsync(gymCode, request)`
 
-### Assignment 18 API
+Assignment 18 service-backed controllers map API DTOs into BLL command records and map BLL result records back to API responses:
 
-Assignment 18 has 23 API controllers:
+- `CreateAppointmentRequest` -> `CreateAppointmentCommand`
+- `TreatmentPlanItemRequest` -> `TreatmentPlanItemCommand`
+- `AppointmentResult` -> `AppointmentResponse`
+- `TreatmentPlanResult` -> `TreatmentPlanResponse`
 
-- identity: `AccountController`
-- system: `BillingController`, `ImpersonationController`, `OnboardingController`, `PlatformController`, `SupportController`
-- tenant: `AppointmentsController`, `CompanySettingsController`, `CompanyUsersController`, `CostEstimatesController`, `DentistsController`, `FinanceController`, `InsurancePlansController`, `InvoicesController`, `PatientInsurancePoliciesController`, `PatientsController`, `PaymentPlansController`, `SubscriptionController`, `ToothRecordsController`, `TreatmentPlansController`, `TreatmentRoomsController`, `TreatmentTypesController`, `XraysController`
+Assessment:
 
-The API is deeper around patient care and finance. Several routes are controller-name based without kebab-case normalization, for example:
+- A03 controllers are thinner and simpler today.
+- A18 has a cleaner long-term boundary because public API DTO changes do not automatically become BLL contract changes.
 
-- `/api/v1/{companySlug}/treatmentplans`
-- `/api/v1/{companySlug}/patientinsurancepolicies`
-- `/api/v1/{companySlug}/finance/workspace/{patientId}`
-- `/api/v1/system/onboarding/registercompany`
+Recommended A03 target:
 
-Assignment 03 has more readable public route names. Assignment 18 has more workflow-rich endpoints.
+- Do not convert every controller at once.
+- Start with high-risk workflows: identity, membership sale, booking/payment, training session upsert, maintenance scheduling, staff assignment, platform onboarding, and impersonation.
+- Keep simple read-only operations DTO-based until there is a real reason to split them.
 
-## Business Workflow Differences
+### 6. Response Semantics
 
-### Assignment 03 workflow strengths
+Assignment 03 commonly returns:
 
-Assignment 03 focuses on gym SaaS operations:
+- `Ok(...)` after create operations
+- `Ok(new Message(...))` after delete/cancel operations
+- limited `[ProducesResponseType]` metadata
 
-- gym onboarding and activation
-- platform analytics, support tickets, billing/subscription administration, and impersonation
-- member CRUD with self-profile access
-- staff, job roles, employment contracts, vacations, and shifts
-- training categories and session scheduling
-- session booking, duplicate prevention, capacity checks, attendance updates
-- membership packages, memberships, and payments
-- opening hours, opening-hour exceptions, gym settings, equipment models, equipment, generated maintenance tasks, and task status updates
-- role-specific protections for members, trainers, and caretakers
+Assignment 18 commonly returns:
 
-The backend is broad enough to demonstrate a full multi-gym SaaS product. The main limitation is that some staff/contract/vacation APIs still compose direct `AppDbContext` logic in controllers, while other workflows have already moved to BLL services.
+- `Created(...)` or `CreatedAtAction(...)` after creates
+- `NoContent()` after deletes
+- `BadRequest(new Message(...))` for boundary validation failures
+- `NotFound(new Message(...))` for missing direct-controller resources
+- detailed `[ProducesResponseType]` annotations for success and expected error outcomes
 
-### Assignment 18 workflow strengths
+Recommended A03 target:
 
-Assignment 18 focuses on dental clinic SaaS operations:
+- Return `201 Created` from create endpoints where a resource is created.
+- Return `204 NoContent` for successful deletes/cancellations unless the existing frontend requires a message.
+- Add `[ProducesResponseType]` for all public API actions.
+- Keep the global `ProblemDetails` behavior for BLL exceptions; do not replace service exceptions with controller `BadRequest` branches except for pure HTTP-boundary parsing errors.
 
-- company onboarding with owner membership
-- company activation, feature flags, support snapshots, support tickets, billing operations
-- SystemAdmin impersonation with audit trail
-- patients and patient profile aggregation
-- tooth record management
-- dentist and treatment-room resources
-- appointment scheduling with dentist/room conflict checks
-- appointment clinical record workflow
-- treatment plans with plan items, submission, open items, and patient decisions
-- treatment type catalog
-- insurance plans and patient insurance policies
-- cost estimates with legal preview
-- invoices, invoice generation from procedures, payments, payment plans
-- finance workspace by patient
-- company users, settings, and tenant subscription management
+### 7. Cancellation and Operability
 
-The backend is stronger for complex business transactions, especially where clinical and finance data interact.
+Assignment 03 API actions currently do not accept `CancellationToken`.
 
-## Persistence and Data Model Differences
+Assignment 18 consistently accepts `CancellationToken` on controller actions and passes it to EF/service calls.
 
-Assignment 03 persistence characteristics:
+Why this matters:
 
-- one large initial migration generated on 2026-04-09
-- `GymId` tenant key
-- one public entity per file in the current working tree
-- `LangStr` conversion for multilingual domain-owned text
-- `App.Resources` for UI localization
-- many unique indexes around gym-scoped business identifiers, such as member code, staff code, booking uniqueness, equipment asset tag, and opening-hour exceptions
-- audit logs store gym-related changes
+- request aborts should stop avoidable database and BLL work
+- tests can assert async method shape
+- it is a standard ASP.NET Core production habit and easy to explain in defense
 
-Assignment 18 persistence characteristics:
+Recommended A03 target:
 
-- initial migration plus two subsequent migrations for treatment-plan and finance changes
-- `CompanyId` tenant key
-- company settings and subscription root platform data
-- query splitting configured for Npgsql queries
-- warnings configured to throw on multiple collection include issues
-- database-persisted Data Protection keys
-- audit logs store company-related changes
+- Add `CancellationToken cancellationToken` to all async API actions.
+- Thread it through BLL service interfaces and implementations.
+- Thread it into EF calls and `SaveChangesAsync`.
+- Do this by workflow slice, not through a half-finished broad edit.
 
-Assignment 03 has a larger operational schema. Assignment 18 has more evolution history and stronger EF diagnostics/configuration.
-
-## Service Layer Differences
-
-Assignment 03 registered services:
-
-- `UserContextService`
-- `AuthorizationService`
-- `TokenService`
-- `IdentityService`
-- `PlatformService`
-- `MemberWorkflowService`
-- `MembershipWorkflowService`
-- `TrainingWorkflowService`
-- `MaintenanceWorkflowService`
-
-These are coarse-grained workflow services. They group related domain actions by business area. This keeps the service list small, but individual services can become large.
-
-Assignment 18 registered services:
-
-- `CompanyOnboardingService`
-- `CompanySettingsService`
-- `CompanyUserService`
-- `SubscriptionPolicyService`
-- `TenantAccessService`
-- `TreatmentPlanService`
-- `FinanceWorkspaceService`
-- `CostEstimateService`
-- `InvoiceService`
-- `PaymentPlanService`
-- `ImpersonationService`
-- `PatientService`
-- `AppointmentService`
-- `JwtTokenService`
-- `FeatureFlagStore`
-
-These are narrower and more use-case oriented. This gives better test targeting for complex workflows but creates more service classes and direct persistence dependencies.
-
-## Controller Boundary Differences
+### 8. Direct DbContext in Controllers
 
 Assignment 03:
 
-- Most new tenant API controllers delegate to BLL workflow services.
-- `EmploymentContractsController`, `JobRolesController`, `StaffController`, and `VacationsController` still use direct `AppDbContext`.
-- MVC area controllers exist for Admin and Client pages.
-- `ApiControllerBase` can expose direct DbContext access for the remaining direct-controller slices.
+- current API controllers are almost entirely service-backed
+- only `ApiControllerBase` still exposes direct `DbContext`
+- MVC controllers may still perform composition, but tenant API workflows have moved toward BLL services
 
 Assignment 18:
 
-- Complex controllers use services: patients, appointments, treatment plans, finance workspace, cost estimates, invoices, payment plans, company settings/users, onboarding, impersonation.
-- Several simpler CRUD controllers use direct `AppDbContext`: dentists, insurance plans, patient insurance policies, tooth records, treatment rooms, treatment types, subscription, and xrays.
-- There are no MVC area controllers; the browser UI is static assets under `wwwroot`.
+- service-backed controllers exist for complex workflows: appointments, patients, treatment plans, finance, invoices, payment plans, company settings, company users
+- direct `AppDbContext` controllers still exist for simpler CRUD: dentists, treatment rooms, treatment types, insurance plans, patient insurance policies, tooth records, xrays, tenant subscription, billing/platform/support reads
 
-Assignment 03 is moving toward service-first controllers. Assignment 18 intentionally keeps a hybrid controller/service style.
+Assessment:
 
-## Error Handling and API Consistency
+- A18 direct-DbContext controllers are not the part A03 should copy.
+- They do provide useful examples for response metadata, `CancellationToken`, validation branches, and controller unit tests.
 
-Assignment 03:
+Recommended A03 target:
 
-- Uses `ProblemDetailsMiddleware`.
-- Handles API/JSON requests as `application/problem+json`.
-- Leaves MVC/HTML requests to the normal error handler in production.
-- `ValidationAppException` can carry multiple errors.
-- Uses localized MVC error views and request localization.
+- Keep direct persistence out of tenant API controllers.
+- If a workflow needs data access, create or extend a BLL service.
+- Use A18 direct-DbContext controllers only as examples for HTTP response conventions.
 
-Assignment 18:
+### 9. Controller Unit Tests
 
-- Uses `GlobalExceptionMiddleware`.
-- Adds `TenantResolutionMiddleware`.
-- Higher-level service and middleware errors generally return `ProblemDetails`.
-- Some controller paths still return simpler `Message` payloads.
+Assignment 03 has integration smoke coverage proving split tenant controllers keep existing routes, but it does not have a comparable controller-unit suite for API behavior.
 
-Assignment 03 has a clearer split between API and MVC error behavior. Assignment 18 has more consistent central tenant middleware but still has mixed error payload shapes in some controllers.
+Assignment 18 has dedicated controller unit coverage:
 
-## Testing Differences
+- `UnitTestTenantApiServiceControllers.cs`
+- `UnitTestTenantApiDbControllers.cs`
+- helper types in `ControllerTestHelpers.cs`
 
-Assignment 03 backend test files:
+Those tests cover:
 
-- `AuthSecurityAndErrorTests`
-- `ProposalWorkflowTests`
-- `SmokeTests`
-- `LangStrTests`
-- `MembershipWorkflowServiceTests`
-- `CustomWebApplicationFactory`
+- DTO-to-command mapping
+- service user id propagation
+- created/ok/no-content result types
+- invalid enum/parsing boundary failures
+- wrong tenant slug returns `Forbid`
+- repeated read actions
+- direct-controller validation failures
 
-Main coverage themes:
+Recommended A03 target:
 
-- app smoke checks
-- auth/security/error behavior
-- gym proposal/onboarding workflows
-- multilingual string behavior
-- membership workflow behavior
-- MVC route/layout smoke coverage in recent changes
+- Add `ControllerTestHelpers` for Assignment 03.
+- Add unit tests for service-backed tenant controllers before large controller cleanup.
+- Cover at least:
+  - bookings create/cancel/attendance mapping
+  - membership sale/delete mapping
+  - training session create/update/publish/cancel mapping
+  - maintenance task create/assign/complete mapping
+  - members CRUD mapping
+  - wrong active gym/gym code denial path
+  - create returns `Created` after semantics change
+  - delete returns `NoContent` after semantics change
 
-Assignment 18 backend test files:
+## Resource-by-Resource Gap Map
 
-- integration: deployment, identity, impersonation, onboarding, tenant operations
-- unit: appointment service, finance services, identity seed, patient service, tenant access service, tenant API DB controllers, tenant API service controllers, treatment plan service
-- test helpers for DB context, tenant provider, and controller setup
+This is not a one-to-one domain map. It identifies the Assignment 18 controller patterns that Assignment 03 should mirror.
 
-Main coverage themes:
+| Assignment 03 area | Current A03 controller state | Assignment 18 reference pattern | Upgrade target |
+| --- | --- | --- | --- |
+| Identity account | Service-backed `AccountController`, limited metadata, no cancellation | A18 account has cancellation and more response metadata but still contains Identity logic directly | Keep A03 `IIdentityService`; add cancellation, response metadata, and controller tests. |
+| System gyms/onboarding | Service-backed `GymsController`; uses `CreatedAtAction` for register | A18 `OnboardingController` maps to onboarding service and system role attributes | Keep service-backed flow; add metadata, cancellation, and explicit role response docs. |
+| System subscriptions/billing | A03 subscriptions are service-backed but thinly documented | A18 `BillingController` has richer subscription/invoice admin API but direct DbContext | Copy endpoint coverage ideas and metadata; keep business logic in `PlatformService` or billing service. |
+| System support | Service-backed support ticket endpoints | A18 support uses direct DbContext but has created response and metadata | Add cancellation, `201 Created`, and tests; keep service boundary. |
+| Tenant memberships | Service-backed but returns `Ok` on sale/delete and passes API DTOs to BLL | A18 invoices/payment plans use command/result contracts and created/no-content semantics | Introduce commands/results for sale/payment flow; return created/no-content where compatible. |
+| Tenant bookings | Service-backed, route stable, no cancellation/metadata | A18 appointments use command/result mapping and clinical workflow subaction tests | Add booking command/result mapping, cancellation, metadata, controller tests, and create/cancel semantics. |
+| Tenant training sessions/categories | Service-backed CRUD/workflow actions | A18 treatment plans use nested workflow actions, command mapping, and role narrowing | Add explicit write-role attributes, command/result mapping for session upsert/publish/cancel, and tests. |
+| Tenant members | Service-backed and has several CRUD/profile actions | A18 patients have full service-backed CRUD/profile controller tests | Mirror A18 patient controller test style for member list/get/profile/create/update/delete. |
+| Tenant staff/contracts/vacations | Service-backed after cleanup | A18 company users centralize tenant user management with BLL commands | Add command/result contracts for staff assignment and role/contract changes. |
+| Tenant maintenance/equipment/opening hours | Service-backed but broad maintenance service | A18 direct CRUD resources show consistent metadata and cancellation | Keep service boundary; add metadata/cancellation and split service contracts only when tests need clearer units. |
+| Tenant settings/users | Service-backed settings and users | A18 company settings/users use BLL commands/results and controller tests | Copy command/result boundary and wrong-tenant tests. |
 
-- identity and seed correctness
-- tenant isolation and access
-- onboarding and impersonation
-- patient, appointment, treatment-plan, and finance service rules
-- controller behavior for direct-DB and service-backed APIs
+## Recommended Controller Modernization Plan For Assignment 03
 
-Assignment 18 has a broader backend test matrix for business services. Assignment 03 has useful tests but should add more unit tests around training, maintenance, authorization, and remaining direct-controller workflows.
+### Phase 1: Non-breaking API contract hardening
 
-## Deployment and Runtime Differences
+Status: completed in the safe first pass.
 
-Assignment 03:
+- Added `[ProducesResponseType]` success metadata to every API action.
+- Added `CancellationToken` to controller actions and BLL service calls.
+- Removed direct `AppDbContext` from `ApiControllerBase`.
+- Added controller unit-test helpers.
+- Added first controller unit tests for `MembersController`, `BookingsController`, and `MembershipsController`.
 
-- Public URL in README: `https://mtiker-cweb-4.proxy.itcollege.ee`
-- Backend serves MVC and React production assets.
-- React app is built separately and copied under `WebApp/wwwroot/client`.
-- Production React route is `/client`.
-- MVC client area is moved to `/mvc-client` to avoid route collision with React.
-- CORS policy is named `ClientApp`.
+Risk:
 
-Assignment 18:
+- Low behavior risk if responses remain unchanged.
+- Medium signature churn because BLL interfaces and tests need cancellation parameters.
 
-- Public URL in README: `https://mtiker-cweb-a3.proxy.itcollege.ee`
-- Static demo UI is served directly from `WebApp/wwwroot`.
-- Browser routes live under `/app/*`.
-- Uses forwarded headers and stricter production CORS behavior.
-- CORS policy is named `CorsAllowAll`, but outside development it requires configured origins.
+## Further Implementation List
 
-Assignment 03 has more hosted surfaces and therefore more route-collision risk. Assignment 18 has a simpler backend hosting story.
+After the safe first pass, the remaining controller alignment work is:
 
-## Documentation Differences
+1. Add expected error-response metadata, especially `ProblemDetails` for validation, forbidden, unauthorized, not-found, and conflict outcomes.
+2. Expand controller unit tests to the remaining high-value controllers: training sessions/categories, maintenance tasks/equipment, staff/contracts/vacations, platform gyms/support/subscriptions, tenant settings/users, and identity.
+3. Add tests that assert coarse authorization metadata and tenant mismatch behavior without weakening BLL authorization as the source of truth.
+4. Convert create endpoints that still return `Ok(...)` to `Created` or `CreatedAtAction` only after checking React and MVC clients.
+5. Convert delete/cancel endpoints from `Ok(new Message(...))` to `NoContent()` only after client compatibility work.
+6. Introduce command/result BLL contracts for high-risk workflows: booking create/attendance, membership sale/payment, training session lifecycle, maintenance scheduling/completion, staff contracts/vacations, and platform onboarding.
+7. Add controller-level DTO-to-command and result-to-response mapping tests once command/result contracts exist.
+8. Add explicit controller/action role attributes where they document coarse API intent, while keeping BLL tenant/object checks authoritative.
+9. Generate and review Swagger/OpenAPI output to catch response metadata discrepancies before public route docs are updated.
+10. Defer route-template cleanup until after functional parity and tests are stable; if it happens, preserve kebab-case public URLs with aliases or route-token transformation.
 
-Assignment 03 docs:
+### Phase 2: REST response semantics
 
-- assignment README
-- architecture
-- API
-- data model
-- deployment
-- testing
-- SaaS plan
-- AI usage
+- Convert create endpoints from `Ok` to `Created` or `CreatedAtAction`.
+- Convert delete/cancel endpoints from `Ok(Message)` to `NoContent` where the frontend does not require a response body.
+- Update frontend/API client tests and Swagger expectations.
+- Document any response-shape changes in README/API notes.
 
-Assignment 18 docs:
+Risk:
 
-- assignment README
-- architecture
-- API
-- data model
-- testing
-- AI usage
-- detailed study guides for Domain, DAL/EF, BLL, DTO, and Docker deployment
+- Medium client-compatibility risk. React/MVC consumers must be checked in the same change.
 
-Assignment 18 has stronger study/explanation documentation. Assignment 03 has stronger active assignment-planning documentation through `a3-saas-plan.md`.
+### Phase 3: Command/result boundary for high-risk workflows
 
-## Main Risks and Improvement Opportunities
+- Add BLL commands/results for:
+  - membership sale and package upsert
+  - booking create and attendance update
+  - training session upsert, publish, cancel
+  - maintenance task create, assign, complete
+  - staff upsert/contract/vacation workflows
+  - platform gym onboarding and subscription updates
+- Keep public API DTOs in `App.DTO`.
+- Map DTOs to BLL commands in controllers.
+- Map BLL results to API responses in controllers.
 
-### Assignment 03
+Risk:
 
-- Remove production fallback secrets for JWT configuration and require deployment secrets.
-- Persist Data Protection keys if cookie/MVC sessions must survive container restarts across deployments.
-- Finish moving staff, contracts, job roles, and vacations from direct controller persistence into BLL services.
-- Add service tests for training, maintenance, authorization, and tenant self-only rules.
-- Add more explicit tests for cross-gym access attempts and role-specific forbidden paths.
-- Keep route documentation aligned because the backend hosts MVC and React surfaces together.
+- Medium implementation churn but high long-term maintainability value.
 
-### Assignment 18
+### Phase 4: Controller authorization visibility
 
-- Introduce a persistence abstraction if the course defense expects stricter clean architecture boundaries.
-- Normalize route naming if public API consistency matters; current action/controller naming yields routes like `forgotpassword` and `treatmentplans`.
-- Continue reducing direct `AppDbContext` usage in simple CRUD controllers if consistency becomes more important than speed.
-- Standardize error payloads so all API failures consistently return `ProblemDetails`.
-- Add localization only if required by the assignment or demo expectations.
+- Add explicit controller/action role attributes that describe coarse access intent.
+- Keep BLL authorization as the final enforcement point.
+- Add tests for route gym mismatch, wrong role, member self-access, trainer assignment, and caretaker assignment.
+
+Risk:
+
+- Medium risk of accidentally over-restricting valid roles. Use integration tests against seeded demo roles.
+
+### Phase 5: Optional route cleanup
+
+- Only after the frontend and docs are stable, evaluate whether to move from action-level resource segments to controller-level resource routes.
+- Preserve existing kebab-case routes or add compatibility aliases.
+- Update Swagger, README, client API methods, and smoke tests in the same change.
+
+Risk:
+
+- High client/documentation churn. Defer until functional parity work is finished.
+
+## What Not To Copy From Assignment 18
+
+Do not copy these patterns into Assignment 03 as-is:
+
+- direct `AppDbContext` CRUD in tenant API controllers
+- controller-local business validation for workflows that already have BLL services
+- repeated `TenantMatches` methods in every controller if A03's BLL route/claim authorization remains stronger
+- `[controller]` routes if they would silently change public URLs from established kebab-case endpoints
+
+These are acceptable in Assignment 18 because that project is hybrid and already has tests around them. Assignment 03's more consistent BLL boundary is the better architecture to defend.
+
+## Definition Of Done For Future A03 Controller Alignment
+
+A controller alignment change should not be considered complete until:
+
+- backend builds
+- relevant backend tests pass
+- new or changed controller behavior has unit or integration coverage
+- React client and MVC workflows still use the affected endpoints successfully
+- Swagger/OpenAPI output documents success and expected error statuses
+- assignment README and `docs/a3-saas-plan.md` are updated if routes, response statuses, roles, or workflow scope change
+- `docs/ai-prompts.md` logs the AI-assisted work
 
 ## Bottom Line
 
-Assignment 03 is now shaped as a broad, defense-ready gym SaaS backend with multiple runtime surfaces and an increasingly clean service boundary. Its strongest backend areas are tenant-aware operational breadth, MVC/API/React coexistence, gym-specific role behavior, and documentation aligned to current assignment delivery.
+Assignment 03 should become "as functional and well-made as Assignment 18" by adopting Assignment 18's controller maturity: response metadata, cancellation, command/result mapping, REST status codes, route-tenant tests, and controller-unit coverage.
 
-Assignment 18 is a more mature reference for complex vertical business workflows. Its strongest backend areas are clinical and finance workflow depth, tenant middleware, production-oriented configuration, EF diagnostics, and targeted service tests.
-
-For future Assignment 03 backend work, the most valuable lessons to carry over from Assignment 18 are stricter production configuration, more granular workflow tests, stronger EF diagnostics, and continued movement of controller logic into services. The most valuable Assignment 03 improvement over Assignment 18 is the `IAppDbContext` BLL boundary, which makes the architecture easier to defend as layered and course-aligned.
+It should not regress to Assignment 18's direct-DbContext controller style. The best target is Assignment 03's current BLL-first architecture plus Assignment 18's API contract polish and test discipline.

@@ -20,7 +20,10 @@ public class AuthorizationService(
     IAppDbContext dbContext,
     IUserContextService userContextService) : IAuthorizationService
 {
-    public async Task<Guid> EnsureTenantAccessAsync(string gymCode, params string[] allowedRoles)
+    public Task<Guid> EnsureTenantAccessAsync(string gymCode, params string[] allowedRoles) =>
+        EnsureTenantAccessAsync(gymCode, CancellationToken.None, allowedRoles);
+
+    public async Task<Guid> EnsureTenantAccessAsync(string gymCode, CancellationToken cancellationToken, params string[] allowedRoles)
     {
         var context = userContextService.GetCurrent();
         if (!context.IsAuthenticated || !context.ActiveGymId.HasValue || string.IsNullOrWhiteSpace(context.ActiveGymCode))
@@ -47,7 +50,7 @@ public class AuthorizationService(
         return gym.Id;
     }
 
-    public async Task<Member?> GetCurrentMemberAsync(Guid gymId)
+    public async Task<Member?> GetCurrentMemberAsync(Guid gymId, CancellationToken cancellationToken = default)
     {
         var context = userContextService.GetCurrent();
         if (!context.PersonId.HasValue)
@@ -58,7 +61,7 @@ public class AuthorizationService(
         return await dbContext.Members.FirstOrDefaultAsync(member => member.GymId == gymId && member.PersonId == context.PersonId);
     }
 
-    public async Task<Staff?> GetCurrentStaffAsync(Guid gymId)
+    public async Task<Staff?> GetCurrentStaffAsync(Guid gymId, CancellationToken cancellationToken = default)
     {
         var context = userContextService.GetCurrent();
         if (!context.PersonId.HasValue)
@@ -69,7 +72,7 @@ public class AuthorizationService(
         return await dbContext.Staff.FirstOrDefaultAsync(staff => staff.GymId == gymId && staff.PersonId == context.PersonId);
     }
 
-    public async Task EnsureMemberSelfAccessAsync(Guid gymId, Guid memberId)
+    public async Task EnsureMemberSelfAccessAsync(Guid gymId, Guid memberId, CancellationToken cancellationToken = default)
     {
         var context = userContextService.GetCurrent();
         if (HasTenantAdminPrivileges(context))
@@ -89,7 +92,7 @@ public class AuthorizationService(
         }
     }
 
-    public async Task EnsureBookingAccessAsync(Booking booking)
+    public async Task EnsureBookingAccessAsync(Booking booking, CancellationToken cancellationToken = default)
     {
         var context = userContextService.GetCurrent();
         if (HasTenantAdminPrivileges(context))
@@ -128,7 +131,7 @@ public class AuthorizationService(
         throw new ForbiddenException("You do not have permission to access this booking.");
     }
 
-    public async Task EnsureTrainingAttendanceAccessAsync(TrainingSession trainingSession)
+    public async Task EnsureTrainingAttendanceAccessAsync(TrainingSession trainingSession, CancellationToken cancellationToken = default)
     {
         var context = userContextService.GetCurrent();
         if (HasTenantAdminPrivileges(context))
@@ -159,7 +162,7 @@ public class AuthorizationService(
         }
     }
 
-    public async Task EnsureMaintenanceTaskAccessAsync(MaintenanceTask task)
+    public async Task EnsureMaintenanceTaskAccessAsync(MaintenanceTask task, CancellationToken cancellationToken = default)
     {
         var context = userContextService.GetCurrent();
         if (HasTenantAdminPrivileges(context))

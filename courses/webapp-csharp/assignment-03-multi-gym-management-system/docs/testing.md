@@ -66,6 +66,7 @@ Frontend Vitest coverage:
 - auth guard redirects anonymous users to login
 - logout clears persisted session state
 - system roles route to the React platform console
+- assigned multi-gym users can switch active tenant and role from the shell
 - API client retries once through refresh on `401`
 - refresh failure clears session state and surfaces an auth error
 - API requests include the selected `Accept-Language`

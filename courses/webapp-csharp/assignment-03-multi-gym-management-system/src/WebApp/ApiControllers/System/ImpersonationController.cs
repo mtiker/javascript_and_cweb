@@ -13,8 +13,9 @@ namespace WebApp.ApiControllers.System;
 public class ImpersonationController(IPlatformService platformService) : ControllerBase
 {
     [HttpPost]
-    public async Task<ActionResult<StartImpersonationResponse>> Start([FromBody] StartImpersonationRequest request)
+    [ProducesResponseType(typeof(StartImpersonationResponse), StatusCodes.Status200OK)]
+    public async Task<ActionResult<StartImpersonationResponse>> Start([FromBody] StartImpersonationRequest request, CancellationToken cancellationToken)
     {
-        return Ok(await platformService.StartImpersonationAsync(request));
+        return Ok(await platformService.StartImpersonationAsync(request, cancellationToken));
     }
 }

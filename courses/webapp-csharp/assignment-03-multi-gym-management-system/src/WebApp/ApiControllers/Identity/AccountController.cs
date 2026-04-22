@@ -15,64 +15,66 @@ public class AccountController(IIdentityService identityService) : ControllerBas
     [AllowAnonymous]
     [HttpPost("register")]
     [ProducesResponseType(typeof(JwtResponse), StatusCodes.Status200OK)]
-    public async Task<ActionResult<JwtResponse>> Register([FromBody] RegisterRequest request)
+    public async Task<ActionResult<JwtResponse>> Register([FromBody] RegisterRequest request, CancellationToken cancellationToken)
     {
-        return Ok(await identityService.RegisterAsync(request));
+        return Ok(await identityService.RegisterAsync(request, cancellationToken));
     }
 
     [AllowAnonymous]
     [HttpPost("login")]
     [ProducesResponseType(typeof(JwtResponse), StatusCodes.Status200OK)]
-    public async Task<ActionResult<JwtResponse>> Login([FromBody] LoginRequest request)
+    public async Task<ActionResult<JwtResponse>> Login([FromBody] LoginRequest request, CancellationToken cancellationToken)
     {
-        return Ok(await identityService.LoginAsync(request));
+        return Ok(await identityService.LoginAsync(request, cancellationToken));
     }
 
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [HttpPost("logout")]
-    public async Task<ActionResult<Message>> Logout()
+    [ProducesResponseType(typeof(Message), StatusCodes.Status200OK)]
+    public async Task<ActionResult<Message>> Logout(CancellationToken cancellationToken)
     {
-        await identityService.LogoutAsync();
+        await identityService.LogoutAsync(cancellationToken);
         return Ok(new Message("Logged out."));
     }
 
     [AllowAnonymous]
     [HttpPost("renew-refresh-token")]
     [ProducesResponseType(typeof(JwtResponse), StatusCodes.Status200OK)]
-    public async Task<ActionResult<JwtResponse>> RenewRefreshToken([FromBody] RefreshTokenRequest request)
+    public async Task<ActionResult<JwtResponse>> RenewRefreshToken([FromBody] RefreshTokenRequest request, CancellationToken cancellationToken)
     {
-        return Ok(await identityService.RenewRefreshTokenAsync(request));
+        return Ok(await identityService.RenewRefreshTokenAsync(request, cancellationToken));
     }
 
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [HttpPost("switch-gym")]
     [ProducesResponseType(typeof(JwtResponse), StatusCodes.Status200OK)]
-    public async Task<ActionResult<JwtResponse>> SwitchGym([FromBody] SwitchGymRequest request)
+    public async Task<ActionResult<JwtResponse>> SwitchGym([FromBody] SwitchGymRequest request, CancellationToken cancellationToken)
     {
-        return Ok(await identityService.SwitchGymAsync(request));
+        return Ok(await identityService.SwitchGymAsync(request, cancellationToken));
     }
 
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [HttpPost("switch-role")]
     [ProducesResponseType(typeof(JwtResponse), StatusCodes.Status200OK)]
-    public async Task<ActionResult<JwtResponse>> SwitchRole([FromBody] SwitchRoleRequest request)
+    public async Task<ActionResult<JwtResponse>> SwitchRole([FromBody] SwitchRoleRequest request, CancellationToken cancellationToken)
     {
-        return Ok(await identityService.SwitchRoleAsync(request));
+        return Ok(await identityService.SwitchRoleAsync(request, cancellationToken));
     }
 
     [AllowAnonymous]
     [HttpPost("forgot-password")]
     [ProducesResponseType(typeof(ForgotPasswordResponse), StatusCodes.Status200OK)]
-    public async Task<ActionResult<ForgotPasswordResponse>> ForgotPassword([FromBody] ForgotPasswordRequest request)
+    public async Task<ActionResult<ForgotPasswordResponse>> ForgotPassword([FromBody] ForgotPasswordRequest request, CancellationToken cancellationToken)
     {
-        return Ok(await identityService.ForgotPasswordAsync(request));
+        return Ok(await identityService.ForgotPasswordAsync(request, cancellationToken));
     }
 
     [AllowAnonymous]
     [HttpPost("reset-password")]
-    public async Task<ActionResult<Message>> ResetPassword([FromBody] ResetPasswordRequest request)
+    [ProducesResponseType(typeof(Message), StatusCodes.Status200OK)]
+    public async Task<ActionResult<Message>> ResetPassword([FromBody] ResetPasswordRequest request, CancellationToken cancellationToken)
     {
-        await identityService.ResetPasswordAsync(request);
+        await identityService.ResetPasswordAsync(request, cancellationToken);
         return Ok(new Message("Password updated."));
     }
 }

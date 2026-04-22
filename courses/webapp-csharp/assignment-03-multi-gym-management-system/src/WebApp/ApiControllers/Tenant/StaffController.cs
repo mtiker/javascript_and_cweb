@@ -12,27 +12,31 @@ namespace WebApp.ApiControllers.Tenant;
 public class StaffController(IStaffWorkflowService staffWorkflowService) : ApiControllerBase
 {
     [HttpGet("staff")]
-    public async Task<ActionResult<IReadOnlyCollection<StaffResponse>>> GetStaff(string gymCode)
+    [ProducesResponseType(typeof(IReadOnlyCollection<StaffResponse>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<IReadOnlyCollection<StaffResponse>>> GetStaff(string gymCode, CancellationToken cancellationToken)
     {
-        return Ok(await staffWorkflowService.GetStaffAsync(gymCode));
+        return Ok(await staffWorkflowService.GetStaffAsync(gymCode, cancellationToken));
     }
 
     [HttpPost("staff")]
-    public async Task<ActionResult<StaffResponse>> CreateStaff(string gymCode, [FromBody] StaffUpsertRequest request)
+    [ProducesResponseType(typeof(StaffResponse), StatusCodes.Status200OK)]
+    public async Task<ActionResult<StaffResponse>> CreateStaff(string gymCode, [FromBody] StaffUpsertRequest request, CancellationToken cancellationToken)
     {
-        return Ok(await staffWorkflowService.CreateStaffAsync(gymCode, request));
+        return Ok(await staffWorkflowService.CreateStaffAsync(gymCode, request, cancellationToken));
     }
 
     [HttpPut("staff/{id:guid}")]
-    public async Task<ActionResult<StaffResponse>> UpdateStaff(string gymCode, Guid id, [FromBody] StaffUpsertRequest request)
+    [ProducesResponseType(typeof(StaffResponse), StatusCodes.Status200OK)]
+    public async Task<ActionResult<StaffResponse>> UpdateStaff(string gymCode, Guid id, [FromBody] StaffUpsertRequest request, CancellationToken cancellationToken)
     {
-        return Ok(await staffWorkflowService.UpdateStaffAsync(gymCode, id, request));
+        return Ok(await staffWorkflowService.UpdateStaffAsync(gymCode, id, request, cancellationToken));
     }
 
     [HttpDelete("staff/{id:guid}")]
-    public async Task<ActionResult<Message>> DeleteStaff(string gymCode, Guid id)
+    [ProducesResponseType(typeof(Message), StatusCodes.Status200OK)]
+    public async Task<ActionResult<Message>> DeleteStaff(string gymCode, Guid id, CancellationToken cancellationToken)
     {
-        await staffWorkflowService.DeleteStaffAsync(gymCode, id);
+        await staffWorkflowService.DeleteStaffAsync(gymCode, id, cancellationToken);
         return Ok(new Message("Staff member deleted."));
     }
 }

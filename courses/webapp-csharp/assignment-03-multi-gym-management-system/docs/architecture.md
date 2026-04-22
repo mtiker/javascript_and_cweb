@@ -151,7 +151,8 @@ This keeps API failures machine-readable while still giving browser users a norm
 
 Current frontend scope:
 - single active gym per login session
-- switch-gym and switch-role actions in the React console, with no polished multi-gym picker yet
+- shell-level gym and role picker for assigned multi-gym users, plus SystemAdmin tenant picking
+- switch-gym and switch-role actions remain available in the React console for explicit API testing
 - system-role platform and tenant-owner/admin function console coverage
 - CRUD coverage for:
   - members

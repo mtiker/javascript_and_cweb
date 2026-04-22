@@ -12,27 +12,31 @@ namespace WebApp.ApiControllers.Tenant;
 public class WorkShiftsController(ITrainingWorkflowService trainingWorkflowService) : ApiControllerBase
 {
     [HttpGet("work-shifts")]
-    public async Task<ActionResult<IReadOnlyCollection<WorkShiftResponse>>> GetWorkShifts(string gymCode)
+    [ProducesResponseType(typeof(IReadOnlyCollection<WorkShiftResponse>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<IReadOnlyCollection<WorkShiftResponse>>> GetWorkShifts(string gymCode, CancellationToken cancellationToken)
     {
-        return Ok(await trainingWorkflowService.GetWorkShiftsAsync(gymCode));
+        return Ok(await trainingWorkflowService.GetWorkShiftsAsync(gymCode, cancellationToken));
     }
 
     [HttpPost("work-shifts")]
-    public async Task<ActionResult<WorkShiftResponse>> CreateWorkShift(string gymCode, [FromBody] WorkShiftUpsertRequest request)
+    [ProducesResponseType(typeof(WorkShiftResponse), StatusCodes.Status200OK)]
+    public async Task<ActionResult<WorkShiftResponse>> CreateWorkShift(string gymCode, [FromBody] WorkShiftUpsertRequest request, CancellationToken cancellationToken)
     {
-        return Ok(await trainingWorkflowService.CreateWorkShiftAsync(gymCode, request));
+        return Ok(await trainingWorkflowService.CreateWorkShiftAsync(gymCode, request, cancellationToken));
     }
 
     [HttpPut("work-shifts/{id:guid}")]
-    public async Task<ActionResult<WorkShiftResponse>> UpdateWorkShift(string gymCode, Guid id, [FromBody] WorkShiftUpsertRequest request)
+    [ProducesResponseType(typeof(WorkShiftResponse), StatusCodes.Status200OK)]
+    public async Task<ActionResult<WorkShiftResponse>> UpdateWorkShift(string gymCode, Guid id, [FromBody] WorkShiftUpsertRequest request, CancellationToken cancellationToken)
     {
-        return Ok(await trainingWorkflowService.UpdateWorkShiftAsync(gymCode, id, request));
+        return Ok(await trainingWorkflowService.UpdateWorkShiftAsync(gymCode, id, request, cancellationToken));
     }
 
     [HttpDelete("work-shifts/{id:guid}")]
-    public async Task<ActionResult<Message>> DeleteWorkShift(string gymCode, Guid id)
+    [ProducesResponseType(typeof(Message), StatusCodes.Status200OK)]
+    public async Task<ActionResult<Message>> DeleteWorkShift(string gymCode, Guid id, CancellationToken cancellationToken)
     {
-        await trainingWorkflowService.DeleteWorkShiftAsync(gymCode, id);
+        await trainingWorkflowService.DeleteWorkShiftAsync(gymCode, id, cancellationToken);
         return Ok(new Message("Work shift deleted."));
     }
 }

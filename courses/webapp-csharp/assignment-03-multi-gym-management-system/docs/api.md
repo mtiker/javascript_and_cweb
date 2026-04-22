@@ -30,6 +30,8 @@ JWT carries:
 - active tenant role
 - system roles
 
+Auth responses also return `availableTenants`, a list of active gym memberships and role names assigned to the user. The React client uses this for the shell gym/role picker; authorization still depends on the JWT claims and backend role checks.
+
 ## Platform API
 
 Gyms:

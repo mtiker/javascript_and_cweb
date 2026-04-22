@@ -13,15 +13,17 @@ public class SupportController(IPlatformService platformService) : ControllerBas
 {
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "SystemAdmin,SystemSupport")]
     [HttpGet]
-    public async Task<ActionResult<IReadOnlyCollection<SupportTicketResponse>>> GetTickets()
+    [ProducesResponseType(typeof(IReadOnlyCollection<SupportTicketResponse>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<IReadOnlyCollection<SupportTicketResponse>>> GetTickets(CancellationToken cancellationToken)
     {
-        return Ok(await platformService.GetSupportTicketsAsync());
+        return Ok(await platformService.GetSupportTicketsAsync(cancellationToken));
     }
 
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [HttpPost("{gymId:guid}/tickets")]
-    public async Task<ActionResult<SupportTicketResponse>> CreateTicket(Guid gymId, [FromBody] SupportTicketRequest request)
+    [ProducesResponseType(typeof(SupportTicketResponse), StatusCodes.Status200OK)]
+    public async Task<ActionResult<SupportTicketResponse>> CreateTicket(Guid gymId, [FromBody] SupportTicketRequest request, CancellationToken cancellationToken)
     {
-        return Ok(await platformService.CreateSupportTicketAsync(gymId, request));
+        return Ok(await platformService.CreateSupportTicketAsync(gymId, request, cancellationToken));
     }
 }

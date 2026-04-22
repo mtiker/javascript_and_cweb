@@ -10,7 +10,7 @@ Code: `232786IADB`
 - `courses/javascript/assignment-03-ci-cd-1`: Docker + GitLab CI/CD deployment for JavaScript assignments 01 and 02
 - `courses/javascript/assignment-04-vue-secure-todo`: Vue 3 secure Todo app against the shared TalTech backend
 - `courses/webapp-csharp`: Web App in C# subject assignments
-- `courses/webapp-csharp/backend-differences-assignment-03-vs-18.md`: backend comparison report for C# assignments 03 and 18
+- `courses/webapp-csharp/backend-differences-assignment-03-vs-18.md`: controller comparison and modernization gap report for C# assignments 03 and 18
 - `courses/webapp-csharp/assignment-03-multi-gym-management-system`: Assignment 3 full SaaS multi-gym management system
 - `courses/webapp-csharp/assignment-18-dental-clinic-platform`: later C# assignment kept separate from Assignment 03
 - `shared`: reusable code/assets moved here when both subjects need them

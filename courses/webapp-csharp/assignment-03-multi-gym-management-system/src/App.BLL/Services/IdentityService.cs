@@ -18,7 +18,7 @@ public class IdentityService(
     ITokenService tokenService,
     IUserContextService userContextService) : IIdentityService
 {
-    public async Task<JwtResponse> RegisterAsync(RegisterRequest request)
+    public async Task<JwtResponse> RegisterAsync(RegisterRequest request, CancellationToken cancellationToken = default)
     {
         if (await userManager.FindByEmailAsync(request.Email) != null)
         {
@@ -47,7 +47,7 @@ public class IdentityService(
         }
 
         AppUserGymRole? activeLink = null;
-        var defaultGym = await dbContext.Gyms.OrderBy(entity => entity.Name).FirstOrDefaultAsync();
+        var defaultGym = await dbContext.Gyms.OrderBy(entity => entity.Name).FirstOrDefaultAsync(cancellationToken);
 
         if (defaultGym != null)
         {
@@ -69,13 +69,13 @@ public class IdentityService(
 
             dbContext.Members.Add(member);
             dbContext.AppUserGymRoles.Add(activeLink);
-            await dbContext.SaveChangesAsync();
+            await dbContext.SaveChangesAsync(cancellationToken);
         }
 
-        return await BuildJwtResponseAsync(user, activeLink);
+        return await BuildJwtResponseAsync(user, activeLink, cancellationToken: cancellationToken);
     }
 
-    public async Task<JwtResponse> LoginAsync(LoginRequest request)
+    public async Task<JwtResponse> LoginAsync(LoginRequest request, CancellationToken cancellationToken = default)
     {
         var user = await userManager.FindByEmailAsync(request.Email)
                    ?? throw new ValidationAppException("Invalid email or password.");
@@ -90,12 +90,12 @@ public class IdentityService(
             .Where(link => link.AppUserId == user.Id && link.IsActive)
             .OrderBy(link => link.Gym!.Name)
             .ThenBy(link => link.RoleName)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(cancellationToken);
 
-        return await BuildJwtResponseAsync(user, activeLink);
+        return await BuildJwtResponseAsync(user, activeLink, cancellationToken: cancellationToken);
     }
 
-    public async Task LogoutAsync()
+    public async Task LogoutAsync(CancellationToken cancellationToken = default)
     {
         var context = userContextService.GetCurrent();
         if (!context.UserId.HasValue)
@@ -103,12 +103,12 @@ public class IdentityService(
             return;
         }
 
-        var refreshTokens = await dbContext.RefreshTokens.Where(token => token.UserId == context.UserId.Value).ToListAsync();
+        var refreshTokens = await dbContext.RefreshTokens.Where(token => token.UserId == context.UserId.Value).ToListAsync(cancellationToken);
         dbContext.RefreshTokens.RemoveRange(refreshTokens);
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<JwtResponse> RenewRefreshTokenAsync(RefreshTokenRequest request)
+    public async Task<JwtResponse> RenewRefreshTokenAsync(RefreshTokenRequest request, CancellationToken cancellationToken = default)
     {
         var principal = tokenService.GetPrincipalFromExpiredToken(request.Jwt);
         if (!Guid.TryParse(principal.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
@@ -118,7 +118,7 @@ public class IdentityService(
 
         var refreshToken = await dbContext.RefreshTokens
             .Include(token => token.User)
-            .FirstOrDefaultAsync(token => token.UserId == userId && token.RefreshToken == request.RefreshToken);
+            .FirstOrDefaultAsync(token => token.UserId == userId && token.RefreshToken == request.RefreshToken, cancellationToken);
 
         if (refreshToken == null || refreshToken.Expiration <= DateTime.UtcNow)
         {
@@ -130,17 +130,17 @@ public class IdentityService(
 
         var activeGymCode = principal.FindFirstValue(AppClaimTypes.GymCode);
         var activeRole = principal.FindFirstValue(AppClaimTypes.ActiveRole);
-        var activeLink = await GetActiveLinkAsync(user.Id, activeGymCode, activeRole);
+        var activeLink = await GetActiveLinkAsync(user.Id, activeGymCode, activeRole, cancellationToken);
 
         dbContext.RefreshTokens.Remove(refreshToken);
         var replacementToken = tokenService.CreateRefreshToken(user.Id, refreshToken);
         dbContext.RefreshTokens.Add(replacementToken);
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
 
-        return await BuildJwtResponseAsync(user, activeLink, replacementToken);
+        return await BuildJwtResponseAsync(user, activeLink, replacementToken, cancellationToken);
     }
 
-    public async Task<JwtResponse> SwitchGymAsync(SwitchGymRequest request)
+    public async Task<JwtResponse> SwitchGymAsync(SwitchGymRequest request, CancellationToken cancellationToken = default)
     {
         var context = userContextService.GetCurrent();
         if (!context.UserId.HasValue)
@@ -155,11 +155,11 @@ public class IdentityService(
             .Include(link => link.Gym)
             .Where(link => link.AppUserId == user.Id && link.IsActive && link.Gym!.Code == request.GymCode)
             .OrderBy(link => link.RoleName)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(cancellationToken);
 
         if (activeLink == null && context.HasRole(RoleNames.SystemAdmin))
         {
-            var gym = await dbContext.Gyms.FirstOrDefaultAsync(entity => entity.Code == request.GymCode && entity.IsActive);
+            var gym = await dbContext.Gyms.FirstOrDefaultAsync(entity => entity.Code == request.GymCode && entity.IsActive, cancellationToken);
             if (gym != null)
             {
                 activeLink = new AppUserGymRole
@@ -178,10 +178,10 @@ public class IdentityService(
             throw new ForbiddenException("The user does not have access to the requested gym.");
         }
 
-        return await BuildJwtResponseAsync(user, activeLink);
+        return await BuildJwtResponseAsync(user, activeLink, cancellationToken: cancellationToken);
     }
 
-    public async Task<JwtResponse> SwitchRoleAsync(SwitchRoleRequest request)
+    public async Task<JwtResponse> SwitchRoleAsync(SwitchRoleRequest request, CancellationToken cancellationToken = default)
     {
         var context = userContextService.GetCurrent();
         if (!context.UserId.HasValue || !context.ActiveGymId.HasValue)
@@ -198,11 +198,12 @@ public class IdentityService(
                 link.AppUserId == user.Id &&
                 link.GymId == context.ActiveGymId.Value &&
                 link.RoleName == request.RoleName &&
-                link.IsActive);
+                link.IsActive,
+                cancellationToken);
 
         if (activeLink == null && context.HasRole(RoleNames.SystemAdmin) && IsSystemAdminTenantRole(request.RoleName))
         {
-            var gym = await dbContext.Gyms.FirstOrDefaultAsync(entity => entity.Id == context.ActiveGymId.Value && entity.IsActive);
+            var gym = await dbContext.Gyms.FirstOrDefaultAsync(entity => entity.Id == context.ActiveGymId.Value && entity.IsActive, cancellationToken);
             if (gym != null)
             {
                 activeLink = new AppUserGymRole
@@ -221,10 +222,10 @@ public class IdentityService(
             throw new ForbiddenException("The requested role is not assigned in the active gym.");
         }
 
-        return await BuildJwtResponseAsync(user, activeLink);
+        return await BuildJwtResponseAsync(user, activeLink, cancellationToken: cancellationToken);
     }
 
-    public async Task<ForgotPasswordResponse> ForgotPasswordAsync(ForgotPasswordRequest request)
+    public async Task<ForgotPasswordResponse> ForgotPasswordAsync(ForgotPasswordRequest request, CancellationToken cancellationToken = default)
     {
         var user = await userManager.FindByEmailAsync(request.Email);
         if (user == null)
@@ -243,7 +244,7 @@ public class IdentityService(
         };
     }
 
-    public async Task ResetPasswordAsync(ResetPasswordRequest request)
+    public async Task ResetPasswordAsync(ResetPasswordRequest request, CancellationToken cancellationToken = default)
     {
         var user = await userManager.FindByEmailAsync(request.Email)
                    ?? throw new NotFoundException("User not found.");
@@ -255,17 +256,45 @@ public class IdentityService(
         }
     }
 
-    private async Task<JwtResponse> BuildJwtResponseAsync(AppUser user, AppUserGymRole? activeLink, AppRefreshToken? explicitRefreshToken = null)
+    private async Task<JwtResponse> BuildJwtResponseAsync(AppUser user, AppUserGymRole? activeLink, AppRefreshToken? explicitRefreshToken = null, CancellationToken cancellationToken = default)
     {
         activeLink ??= await dbContext.AppUserGymRoles
             .Include(link => link.Gym)
             .Where(link => link.AppUserId == user.Id && link.IsActive)
             .OrderBy(link => link.Gym!.Name)
             .ThenBy(link => link.RoleName)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(cancellationToken);
 
         var systemRoles = (await userManager.GetRolesAsync(user))
             .Where(RoleNames.SystemRoles.Contains)
+            .ToArray();
+
+        var tenantLinks = await dbContext.AppUserGymRoles
+            .Include(link => link.Gym)
+            .Where(link => link.AppUserId == user.Id && link.IsActive && link.Gym != null && link.Gym.IsActive)
+            .OrderBy(link => link.Gym!.Name)
+            .ThenBy(link => link.RoleName)
+            .ToListAsync(cancellationToken);
+
+        var availableTenants = tenantLinks
+            .GroupBy(link => new
+            {
+                link.GymId,
+                link.Gym!.Code,
+                link.Gym.Name
+            })
+            .Select(group => new TenantAccessResponse
+            {
+                GymId = group.Key.GymId,
+                GymCode = group.Key.Code,
+                GymName = group.Key.Name,
+                Roles = group
+                    .Select(link => link.RoleName)
+                    .Distinct()
+                    .OrderBy(role => role)
+                    .ToArray()
+            })
+            .OrderBy(tenant => tenant.GymName)
             .ToArray();
 
         var jwt = tokenService.CreateJwt(user, systemRoles, activeLink);
@@ -274,7 +303,7 @@ public class IdentityService(
         if (explicitRefreshToken == null)
         {
             dbContext.RefreshTokens.Add(refreshToken);
-            await dbContext.SaveChangesAsync();
+            await dbContext.SaveChangesAsync(cancellationToken);
         }
 
         return new JwtResponse
@@ -285,11 +314,12 @@ public class IdentityService(
             ActiveGymId = activeLink?.GymId,
             ActiveGymCode = activeLink?.Gym?.Code,
             ActiveRole = activeLink?.RoleName,
-            SystemRoles = systemRoles
+            SystemRoles = systemRoles,
+            AvailableTenants = availableTenants
         };
     }
 
-    private async Task<AppUserGymRole?> GetActiveLinkAsync(Guid userId, string? gymCode, string? roleName)
+    private async Task<AppUserGymRole?> GetActiveLinkAsync(Guid userId, string? gymCode, string? roleName, CancellationToken cancellationToken = default)
     {
         var query = dbContext.AppUserGymRoles
             .Include(link => link.Gym)
@@ -305,7 +335,7 @@ public class IdentityService(
             query = query.Where(link => link.RoleName == roleName);
         }
 
-        var activeLink = await query.OrderBy(link => link.Gym!.Name).ThenBy(link => link.RoleName).FirstOrDefaultAsync();
+        var activeLink = await query.OrderBy(link => link.Gym!.Name).ThenBy(link => link.RoleName).FirstOrDefaultAsync(cancellationToken);
         if (activeLink != null)
         {
             return activeLink;
@@ -321,7 +351,7 @@ public class IdentityService(
             return null;
         }
 
-        var gym = await dbContext.Gyms.FirstOrDefaultAsync(entity => entity.Code == gymCode && entity.IsActive);
+        var gym = await dbContext.Gyms.FirstOrDefaultAsync(entity => entity.Code == gymCode && entity.IsActive, cancellationToken);
         return gym == null
             ? null
             : new AppUserGymRole

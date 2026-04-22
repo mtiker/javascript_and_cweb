@@ -9,4 +9,13 @@ public class JwtResponse
     public string? ActiveGymCode { get; set; }
     public string? ActiveRole { get; set; }
     public string[] SystemRoles { get; set; } = [];
+    public TenantAccessResponse[] AvailableTenants { get; set; } = [];
+}
+
+public class TenantAccessResponse
+{
+    public Guid GymId { get; set; }
+    public string GymCode { get; set; } = default!;
+    public string GymName { get; set; } = default!;
+    public string[] Roles { get; set; } = [];
 }

@@ -182,7 +182,7 @@ Current scope:
 - language selection persisted in `localStorage` and sent as `Accept-Language`
 - system-role access for platform analytics, gym onboarding, activation, snapshots, support tickets, subscriptions, and impersonation
 - tenant owner/admin access to a function console for staff, contracts, vacations, sessions, work shifts, bookings, memberships, payments, facilities, maintenance, settings, and gym users
-- one active gym at a time based on `ActiveGymCode`, with SystemAdmin tenant picking in the shell and switch-gym/switch-role actions available in the console
+- one active gym at a time based on `ActiveGymCode`, with shell tenant/role picking for assigned multi-gym users, SystemAdmin tenant picking, and switch-gym/switch-role actions available in the console
 - CRUD for 3 admin entities:
   - members
   - training categories
@@ -336,6 +336,6 @@ Repository CI integration:
 ## Known Limitations
 
 - The public deployment URL is documented, but live availability still depends on the VPS/proxy/container state at review time.
-- The React client works with one active gym context at a time; SystemAdmin can switch the active tenant from the shell, while non-system multi-gym users still use the console switch action.
+- The React client works with one active gym context at a time; assigned multi-gym users and SystemAdmin can switch active context from the shell.
 - Payments are internal records only; no external payment provider is integrated.
 - Support tickets stay inside the same monolith and are intentionally lightweight.

@@ -19,9 +19,9 @@ public class TrainingWorkflowService(
     IUserContextService userContextService,
     IMembershipWorkflowService membershipWorkflowService) : ITrainingWorkflowService
 {
-    public async Task<IReadOnlyCollection<TrainingCategoryResponse>> GetCategoriesAsync(string gymCode)
+    public async Task<IReadOnlyCollection<TrainingCategoryResponse>> GetCategoriesAsync(string gymCode, CancellationToken cancellationToken = default)
     {
-        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin, RoleNames.Member, RoleNames.Trainer);
+        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin, RoleNames.Member, RoleNames.Trainer);
 
         return await dbContext.TrainingCategories
             .Where(entity => entity.GymId == gymId)
@@ -32,12 +32,12 @@ public class TrainingWorkflowService(
                 Name = Translate(entity.Name) ?? string.Empty,
                 Description = Translate(entity.Description)
             })
-            .ToArrayAsync();
+            .ToArrayAsync(cancellationToken);
     }
 
-    public async Task<TrainingCategoryResponse> CreateCategoryAsync(string gymCode, TrainingCategoryUpsertRequest request)
+    public async Task<TrainingCategoryResponse> CreateCategoryAsync(string gymCode, TrainingCategoryUpsertRequest request, CancellationToken cancellationToken = default)
     {
-        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin);
+        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin);
         var category = new TrainingCategory
         {
             GymId = gymId,
@@ -46,35 +46,35 @@ public class TrainingWorkflowService(
         };
 
         dbContext.TrainingCategories.Add(category);
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
         return ToCategoryResponse(category);
     }
 
-    public async Task<TrainingCategoryResponse> UpdateCategoryAsync(string gymCode, Guid id, TrainingCategoryUpsertRequest request)
+    public async Task<TrainingCategoryResponse> UpdateCategoryAsync(string gymCode, Guid id, TrainingCategoryUpsertRequest request, CancellationToken cancellationToken = default)
     {
-        await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin);
+        await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin);
         var category = await dbContext.TrainingCategories.FirstOrDefaultAsync(entity => entity.Id == id)
                        ?? throw new NotFoundException("Training category was not found.");
 
         category.Name = ToLangStr(request.Name);
         category.Description = string.IsNullOrWhiteSpace(request.Description) ? null : ToLangStr(request.Description);
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
 
         return ToCategoryResponse(category);
     }
 
-    public async Task DeleteCategoryAsync(string gymCode, Guid id)
+    public async Task DeleteCategoryAsync(string gymCode, Guid id, CancellationToken cancellationToken = default)
     {
-        await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin);
+        await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin);
         var category = await dbContext.TrainingCategories.FirstOrDefaultAsync(entity => entity.Id == id)
                        ?? throw new NotFoundException("Training category was not found.");
         dbContext.TrainingCategories.Remove(category);
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<IReadOnlyCollection<TrainingSessionResponse>> GetSessionsAsync(string gymCode)
+    public async Task<IReadOnlyCollection<TrainingSessionResponse>> GetSessionsAsync(string gymCode, CancellationToken cancellationToken = default)
     {
-        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin, RoleNames.Member, RoleNames.Trainer, RoleNames.Caretaker);
+        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin, RoleNames.Member, RoleNames.Trainer, RoleNames.Caretaker);
         var sessions = await dbContext.TrainingSessions
             .Where(entity => entity.GymId == gymId)
             .OrderBy(entity => entity.StartAtUtc)
@@ -91,28 +91,28 @@ public class TrainingWorkflowService(
                 CurrencyCode = entity.CurrencyCode,
                 Status = entity.Status
             })
-            .ToArrayAsync();
+            .ToArrayAsync(cancellationToken);
 
         foreach (var session in sessions)
         {
             session.TrainerContractIds = await dbContext.WorkShifts
                 .Where(entity => entity.TrainingSessionId == session.Id && entity.ShiftType == ShiftType.Training)
                 .Select(entity => entity.ContractId)
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
         }
 
         return sessions;
     }
 
-    public async Task<TrainingSessionResponse> GetSessionAsync(string gymCode, Guid id)
+    public async Task<TrainingSessionResponse> GetSessionAsync(string gymCode, Guid id, CancellationToken cancellationToken = default)
     {
-        await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin, RoleNames.Member, RoleNames.Trainer, RoleNames.Caretaker);
-        return await ProjectSessionAsync(id);
+        await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin, RoleNames.Member, RoleNames.Trainer, RoleNames.Caretaker);
+        return await ProjectSessionAsync(id, cancellationToken);
     }
 
-    public async Task<TrainingSessionResponse> UpsertTrainingSessionAsync(string gymCode, Guid? sessionId, TrainingSessionUpsertRequest request)
+    public async Task<TrainingSessionResponse> UpsertTrainingSessionAsync(string gymCode, Guid? sessionId, TrainingSessionUpsertRequest request, CancellationToken cancellationToken = default)
     {
-        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin);
+        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin);
 
         if (request.EndAtUtc <= request.StartAtUtc)
         {
@@ -125,7 +125,7 @@ public class TrainingWorkflowService(
 
         var trainerContracts = await dbContext.EmploymentContracts
             .Where(entity => entity.GymId == gymId && request.TrainerContractIds.Contains(entity.Id))
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
 
         if (trainerContracts.Count != request.TrainerContractIds.Count)
         {
@@ -152,11 +152,11 @@ public class TrainingWorkflowService(
         session.CurrencyCode = request.CurrencyCode;
         session.Status = request.Status;
 
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
 
         var existingTrainerShifts = await dbContext.WorkShifts
             .Where(entity => entity.GymId == gymId && entity.TrainingSessionId == session.Id && entity.ShiftType == ShiftType.Training)
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
 
         dbContext.WorkShifts.RemoveRange(existingTrainerShifts);
 
@@ -174,23 +174,23 @@ public class TrainingWorkflowService(
             });
         }
 
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
 
-        return await ProjectSessionAsync(session.Id);
+        return await ProjectSessionAsync(session.Id, cancellationToken);
     }
 
-    public async Task DeleteSessionAsync(string gymCode, Guid id)
+    public async Task DeleteSessionAsync(string gymCode, Guid id, CancellationToken cancellationToken = default)
     {
-        await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin);
+        await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin);
         var session = await dbContext.TrainingSessions.FirstOrDefaultAsync(entity => entity.Id == id)
                       ?? throw new NotFoundException("Training session was not found.");
         dbContext.TrainingSessions.Remove(session);
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<IReadOnlyCollection<WorkShiftResponse>> GetWorkShiftsAsync(string gymCode)
+    public async Task<IReadOnlyCollection<WorkShiftResponse>> GetWorkShiftsAsync(string gymCode, CancellationToken cancellationToken = default)
     {
-        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin, RoleNames.Trainer, RoleNames.Caretaker);
+        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin, RoleNames.Trainer, RoleNames.Caretaker);
         var current = userContextService.GetCurrent();
         var query = dbContext.WorkShifts.Where(entity => entity.GymId == gymId);
 
@@ -215,12 +215,12 @@ public class TrainingWorkflowService(
                 TrainingSessionId = entity.TrainingSessionId,
                 Comment = entity.Comment
             })
-            .ToArrayAsync();
+            .ToArrayAsync(cancellationToken);
     }
 
-    public async Task<WorkShiftResponse> CreateWorkShiftAsync(string gymCode, WorkShiftUpsertRequest request)
+    public async Task<WorkShiftResponse> CreateWorkShiftAsync(string gymCode, WorkShiftUpsertRequest request, CancellationToken cancellationToken = default)
     {
-        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin);
+        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin);
         var shift = new WorkShift
         {
             GymId = gymId,
@@ -233,13 +233,13 @@ public class TrainingWorkflowService(
         };
 
         dbContext.WorkShifts.Add(shift);
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
         return ToShiftResponse(shift);
     }
 
-    public async Task<WorkShiftResponse> UpdateWorkShiftAsync(string gymCode, Guid id, WorkShiftUpsertRequest request)
+    public async Task<WorkShiftResponse> UpdateWorkShiftAsync(string gymCode, Guid id, WorkShiftUpsertRequest request, CancellationToken cancellationToken = default)
     {
-        await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin);
+        await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin);
         var shift = await dbContext.WorkShifts.FirstOrDefaultAsync(entity => entity.Id == id)
                     ?? throw new NotFoundException("Work shift was not found.");
 
@@ -249,23 +249,23 @@ public class TrainingWorkflowService(
         shift.ShiftType = request.ShiftType;
         shift.TrainingSessionId = request.TrainingSessionId;
         shift.Comment = request.Comment?.Trim();
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
 
         return ToShiftResponse(shift);
     }
 
-    public async Task DeleteWorkShiftAsync(string gymCode, Guid id)
+    public async Task DeleteWorkShiftAsync(string gymCode, Guid id, CancellationToken cancellationToken = default)
     {
-        await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin);
+        await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin);
         var shift = await dbContext.WorkShifts.FirstOrDefaultAsync(entity => entity.Id == id)
                     ?? throw new NotFoundException("Work shift was not found.");
         dbContext.WorkShifts.Remove(shift);
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<IReadOnlyCollection<BookingResponse>> GetBookingsAsync(string gymCode)
+    public async Task<IReadOnlyCollection<BookingResponse>> GetBookingsAsync(string gymCode, CancellationToken cancellationToken = default)
     {
-        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin, RoleNames.Member, RoleNames.Trainer);
+        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin, RoleNames.Member, RoleNames.Trainer);
         var current = userContextService.GetCurrent();
         var query = dbContext.Bookings.Where(entity => entity.GymId == gymId);
 
@@ -285,7 +285,7 @@ public class TrainingWorkflowService(
                 var sessionIds = await dbContext.WorkShifts
                     .Where(entity => entity.GymId == gymId && entity.Contract!.StaffId == staff.Id && entity.TrainingSessionId.HasValue)
                     .Select(entity => entity.TrainingSessionId!.Value)
-                    .ToListAsync();
+                    .ToListAsync(cancellationToken);
                 query = query.Where(entity => sessionIds.Contains(entity.TrainingSessionId));
             }
         }
@@ -304,12 +304,12 @@ public class TrainingWorkflowService(
                 ChargedPrice = entity.ChargedPrice,
                 PaymentRequired = entity.PaymentRequired
             })
-            .ToArrayAsync();
+            .ToArrayAsync(cancellationToken);
     }
 
-    public async Task<BookingResponse> CreateBookingAsync(string gymCode, BookingCreateRequest request)
+    public async Task<BookingResponse> CreateBookingAsync(string gymCode, BookingCreateRequest request, CancellationToken cancellationToken = default)
     {
-        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin, RoleNames.Member);
+        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin, RoleNames.Member);
 
         var trainingSession = await dbContext.TrainingSessions.FirstOrDefaultAsync(entity =>
                                   entity.GymId == gymId && entity.Id == request.TrainingSessionId)
@@ -375,7 +375,7 @@ public class TrainingWorkflowService(
         };
 
         dbContext.Bookings.Add(booking);
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
 
         if (paymentRequired)
         {
@@ -388,15 +388,15 @@ public class TrainingWorkflowService(
                 Status = PaymentStatus.Completed,
                 Reference = request.PaymentReference
             });
-            await dbContext.SaveChangesAsync();
+            await dbContext.SaveChangesAsync(cancellationToken);
         }
 
         return ToBookingResponse(booking);
     }
 
-    public async Task<BookingResponse> UpdateAttendanceAsync(string gymCode, Guid bookingId, AttendanceUpdateRequest request)
+    public async Task<BookingResponse> UpdateAttendanceAsync(string gymCode, Guid bookingId, AttendanceUpdateRequest request, CancellationToken cancellationToken = default)
     {
-        await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin, RoleNames.Trainer);
+        await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin, RoleNames.Trainer);
 
         var booking = await dbContext.Bookings
             .Include(entity => entity.TrainingSession)
@@ -413,22 +413,22 @@ public class TrainingWorkflowService(
             booking.CancelledAtUtc = DateTime.UtcNow;
         }
 
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
         return ToBookingResponse(booking);
     }
 
-    public async Task CancelBookingAsync(string gymCode, Guid id)
+    public async Task CancelBookingAsync(string gymCode, Guid id, CancellationToken cancellationToken = default)
     {
-        await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin, RoleNames.Member);
+        await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin, RoleNames.Member);
         var booking = await dbContext.Bookings.FirstOrDefaultAsync(entity => entity.Id == id)
                       ?? throw new NotFoundException("Booking was not found.");
         await authorizationService.EnsureBookingAccessAsync(booking);
         booking.Status = BookingStatus.Cancelled;
         booking.CancelledAtUtc = DateTime.UtcNow;
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    private async Task<TrainingSessionResponse> ProjectSessionAsync(Guid sessionId)
+    private async Task<TrainingSessionResponse> ProjectSessionAsync(Guid sessionId, CancellationToken cancellationToken = default)
     {
         var session = await dbContext.TrainingSessions
             .FirstOrDefaultAsync(entity => entity.Id == sessionId)
@@ -437,7 +437,7 @@ public class TrainingWorkflowService(
         var trainerContractIds = await dbContext.WorkShifts
             .Where(entity => entity.TrainingSessionId == sessionId && entity.ShiftType == ShiftType.Training)
             .Select(entity => entity.ContractId)
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
 
         return new TrainingSessionResponse
         {

@@ -82,11 +82,12 @@ public class MembershipWorkflowServiceTests
     private sealed class TestAuthorizationService(Guid gymId) : IAuthorizationService
     {
         public Task<Guid> EnsureTenantAccessAsync(string gymCode, params string[] allowedRoles) => Task.FromResult(gymId);
-        public Task<Member?> GetCurrentMemberAsync(Guid gymIdValue) => Task.FromResult<Member?>(null);
-        public Task<Staff?> GetCurrentStaffAsync(Guid gymIdValue) => Task.FromResult<Staff?>(null);
-        public Task EnsureMemberSelfAccessAsync(Guid gymIdValue, Guid memberId) => Task.CompletedTask;
-        public Task EnsureBookingAccessAsync(Booking booking) => Task.CompletedTask;
-        public Task EnsureTrainingAttendanceAccessAsync(TrainingSession trainingSession) => Task.CompletedTask;
-        public Task EnsureMaintenanceTaskAccessAsync(MaintenanceTask task) => Task.CompletedTask;
+        public Task<Guid> EnsureTenantAccessAsync(string gymCode, CancellationToken cancellationToken, params string[] allowedRoles) => Task.FromResult(gymId);
+        public Task<Member?> GetCurrentMemberAsync(Guid gymIdValue, CancellationToken cancellationToken = default) => Task.FromResult<Member?>(null);
+        public Task<Staff?> GetCurrentStaffAsync(Guid gymIdValue, CancellationToken cancellationToken = default) => Task.FromResult<Staff?>(null);
+        public Task EnsureMemberSelfAccessAsync(Guid gymIdValue, Guid memberId, CancellationToken cancellationToken = default) => Task.CompletedTask;
+        public Task EnsureBookingAccessAsync(Booking booking, CancellationToken cancellationToken = default) => Task.CompletedTask;
+        public Task EnsureTrainingAttendanceAccessAsync(TrainingSession trainingSession, CancellationToken cancellationToken = default) => Task.CompletedTask;
+        public Task EnsureMaintenanceTaskAccessAsync(MaintenanceTask task, CancellationToken cancellationToken = default) => Task.CompletedTask;
     }
 }

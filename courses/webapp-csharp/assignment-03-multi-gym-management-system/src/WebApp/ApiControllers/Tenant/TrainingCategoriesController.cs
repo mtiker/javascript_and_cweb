@@ -12,27 +12,31 @@ namespace WebApp.ApiControllers.Tenant;
 public class TrainingCategoriesController(ITrainingWorkflowService trainingWorkflowService) : ApiControllerBase
 {
     [HttpGet("training-categories")]
-    public async Task<ActionResult<IReadOnlyCollection<TrainingCategoryResponse>>> GetCategories(string gymCode)
+    [ProducesResponseType(typeof(IReadOnlyCollection<TrainingCategoryResponse>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<IReadOnlyCollection<TrainingCategoryResponse>>> GetCategories(string gymCode, CancellationToken cancellationToken)
     {
-        return Ok(await trainingWorkflowService.GetCategoriesAsync(gymCode));
+        return Ok(await trainingWorkflowService.GetCategoriesAsync(gymCode, cancellationToken));
     }
 
     [HttpPost("training-categories")]
-    public async Task<ActionResult<TrainingCategoryResponse>> CreateCategory(string gymCode, [FromBody] TrainingCategoryUpsertRequest request)
+    [ProducesResponseType(typeof(TrainingCategoryResponse), StatusCodes.Status200OK)]
+    public async Task<ActionResult<TrainingCategoryResponse>> CreateCategory(string gymCode, [FromBody] TrainingCategoryUpsertRequest request, CancellationToken cancellationToken)
     {
-        return Ok(await trainingWorkflowService.CreateCategoryAsync(gymCode, request));
+        return Ok(await trainingWorkflowService.CreateCategoryAsync(gymCode, request, cancellationToken));
     }
 
     [HttpPut("training-categories/{id:guid}")]
-    public async Task<ActionResult<TrainingCategoryResponse>> UpdateCategory(string gymCode, Guid id, [FromBody] TrainingCategoryUpsertRequest request)
+    [ProducesResponseType(typeof(TrainingCategoryResponse), StatusCodes.Status200OK)]
+    public async Task<ActionResult<TrainingCategoryResponse>> UpdateCategory(string gymCode, Guid id, [FromBody] TrainingCategoryUpsertRequest request, CancellationToken cancellationToken)
     {
-        return Ok(await trainingWorkflowService.UpdateCategoryAsync(gymCode, id, request));
+        return Ok(await trainingWorkflowService.UpdateCategoryAsync(gymCode, id, request, cancellationToken));
     }
 
     [HttpDelete("training-categories/{id:guid}")]
-    public async Task<ActionResult<Message>> DeleteCategory(string gymCode, Guid id)
+    [ProducesResponseType(typeof(Message), StatusCodes.Status200OK)]
+    public async Task<ActionResult<Message>> DeleteCategory(string gymCode, Guid id, CancellationToken cancellationToken)
     {
-        await trainingWorkflowService.DeleteCategoryAsync(gymCode, id);
+        await trainingWorkflowService.DeleteCategoryAsync(gymCode, id, cancellationToken);
         return Ok(new Message("Training category deleted."));
 }
 }

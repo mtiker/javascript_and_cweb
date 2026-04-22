@@ -12,21 +12,24 @@ namespace WebApp.ApiControllers.Tenant;
 public class GymUsersController(IMaintenanceWorkflowService maintenanceWorkflowService) : ApiControllerBase
 {
     [HttpGet("gym-users")]
-    public async Task<ActionResult<IReadOnlyCollection<GymUserResponse>>> GetGymUsers(string gymCode)
+    [ProducesResponseType(typeof(IReadOnlyCollection<GymUserResponse>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<IReadOnlyCollection<GymUserResponse>>> GetGymUsers(string gymCode, CancellationToken cancellationToken)
     {
-        return Ok(await maintenanceWorkflowService.GetGymUsersAsync(gymCode));
+        return Ok(await maintenanceWorkflowService.GetGymUsersAsync(gymCode, cancellationToken));
     }
 
     [HttpPost("gym-users")]
-    public async Task<ActionResult<GymUserResponse>> UpsertGymUser(string gymCode, [FromBody] GymUserUpsertRequest request)
+    [ProducesResponseType(typeof(GymUserResponse), StatusCodes.Status200OK)]
+    public async Task<ActionResult<GymUserResponse>> UpsertGymUser(string gymCode, [FromBody] GymUserUpsertRequest request, CancellationToken cancellationToken)
     {
-        return Ok(await maintenanceWorkflowService.UpsertGymUserAsync(gymCode, request));
+        return Ok(await maintenanceWorkflowService.UpsertGymUserAsync(gymCode, request, cancellationToken));
     }
 
     [HttpDelete("gym-users/{appUserId:guid}/{roleName}")]
-    public async Task<ActionResult<Message>> DeleteGymUser(string gymCode, Guid appUserId, string roleName)
+    [ProducesResponseType(typeof(Message), StatusCodes.Status200OK)]
+    public async Task<ActionResult<Message>> DeleteGymUser(string gymCode, Guid appUserId, string roleName, CancellationToken cancellationToken)
     {
-        await maintenanceWorkflowService.DeleteGymUserAsync(gymCode, appUserId, roleName);
+        await maintenanceWorkflowService.DeleteGymUserAsync(gymCode, appUserId, roleName, cancellationToken);
         return Ok(new Message("Gym user role deleted."));
     }
 }

@@ -20,9 +20,9 @@ public class MaintenanceWorkflowService(
     IAppDbContext dbContext,
     IAuthorizationService authorizationService) : IMaintenanceWorkflowService
 {
-    public async Task<IReadOnlyCollection<OpeningHoursResponse>> GetOpeningHoursAsync(string gymCode)
+    public async Task<IReadOnlyCollection<OpeningHoursResponse>> GetOpeningHoursAsync(string gymCode, CancellationToken cancellationToken = default)
     {
-        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin, RoleNames.Member, RoleNames.Trainer, RoleNames.Caretaker);
+        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin, RoleNames.Member, RoleNames.Trainer, RoleNames.Caretaker);
         return await dbContext.OpeningHours
             .Where(entity => entity.GymId == gymId)
             .OrderBy(entity => entity.Weekday)
@@ -33,12 +33,12 @@ public class MaintenanceWorkflowService(
                 OpensAt = entity.OpensAt,
                 ClosesAt = entity.ClosesAt
             })
-            .ToArrayAsync();
+            .ToArrayAsync(cancellationToken);
     }
 
-    public async Task<OpeningHoursResponse> CreateOpeningHoursAsync(string gymCode, OpeningHoursUpsertRequest request)
+    public async Task<OpeningHoursResponse> CreateOpeningHoursAsync(string gymCode, OpeningHoursUpsertRequest request, CancellationToken cancellationToken = default)
     {
-        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin);
+        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin);
         var entity = new OpeningHours
         {
             GymId = gymId,
@@ -47,34 +47,34 @@ public class MaintenanceWorkflowService(
             ClosesAt = request.ClosesAt
         };
         dbContext.OpeningHours.Add(entity);
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
         return ToOpeningHoursResponse(entity);
     }
 
-    public async Task<OpeningHoursResponse> UpdateOpeningHoursAsync(string gymCode, Guid id, OpeningHoursUpsertRequest request)
+    public async Task<OpeningHoursResponse> UpdateOpeningHoursAsync(string gymCode, Guid id, OpeningHoursUpsertRequest request, CancellationToken cancellationToken = default)
     {
-        await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin);
+        await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin);
         var entity = await dbContext.OpeningHours.FirstOrDefaultAsync(value => value.Id == id)
                      ?? throw new NotFoundException("Opening hours row was not found.");
         entity.Weekday = request.Weekday;
         entity.OpensAt = request.OpensAt;
         entity.ClosesAt = request.ClosesAt;
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
         return ToOpeningHoursResponse(entity);
     }
 
-    public async Task DeleteOpeningHoursAsync(string gymCode, Guid id)
+    public async Task DeleteOpeningHoursAsync(string gymCode, Guid id, CancellationToken cancellationToken = default)
     {
-        await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin);
+        await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin);
         var entity = await dbContext.OpeningHours.FirstOrDefaultAsync(value => value.Id == id)
                      ?? throw new NotFoundException("Opening hours row was not found.");
         dbContext.OpeningHours.Remove(entity);
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<IReadOnlyCollection<OpeningHoursExceptionResponse>> GetOpeningHourExceptionsAsync(string gymCode)
+    public async Task<IReadOnlyCollection<OpeningHoursExceptionResponse>> GetOpeningHourExceptionsAsync(string gymCode, CancellationToken cancellationToken = default)
     {
-        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin, RoleNames.Member, RoleNames.Trainer, RoleNames.Caretaker);
+        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin, RoleNames.Member, RoleNames.Trainer, RoleNames.Caretaker);
         return await dbContext.OpeningHoursExceptions
             .Where(entity => entity.GymId == gymId)
             .OrderBy(entity => entity.ExceptionDate)
@@ -87,12 +87,12 @@ public class MaintenanceWorkflowService(
                 ClosesAt = entity.ClosesAt,
                 Reason = Translate(entity.Reason)
             })
-            .ToArrayAsync();
+            .ToArrayAsync(cancellationToken);
     }
 
-    public async Task<OpeningHoursExceptionResponse> CreateOpeningHourExceptionAsync(string gymCode, OpeningHoursExceptionUpsertRequest request)
+    public async Task<OpeningHoursExceptionResponse> CreateOpeningHourExceptionAsync(string gymCode, OpeningHoursExceptionUpsertRequest request, CancellationToken cancellationToken = default)
     {
-        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin);
+        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin);
         var entity = new OpeningHoursException
         {
             GymId = gymId,
@@ -103,13 +103,13 @@ public class MaintenanceWorkflowService(
             Reason = string.IsNullOrWhiteSpace(request.Reason) ? null : ToLangStr(request.Reason)
         };
         dbContext.OpeningHoursExceptions.Add(entity);
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
         return ToOpeningHoursExceptionResponse(entity);
     }
 
-    public async Task<OpeningHoursExceptionResponse> UpdateOpeningHourExceptionAsync(string gymCode, Guid id, OpeningHoursExceptionUpsertRequest request)
+    public async Task<OpeningHoursExceptionResponse> UpdateOpeningHourExceptionAsync(string gymCode, Guid id, OpeningHoursExceptionUpsertRequest request, CancellationToken cancellationToken = default)
     {
-        await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin);
+        await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin);
         var entity = await dbContext.OpeningHoursExceptions.FirstOrDefaultAsync(value => value.Id == id)
                      ?? throw new NotFoundException("Opening hours exception was not found.");
         entity.ExceptionDate = request.ExceptionDate;
@@ -117,22 +117,22 @@ public class MaintenanceWorkflowService(
         entity.OpensAt = request.OpensAt;
         entity.ClosesAt = request.ClosesAt;
         entity.Reason = string.IsNullOrWhiteSpace(request.Reason) ? null : ToLangStr(request.Reason);
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
         return ToOpeningHoursExceptionResponse(entity);
     }
 
-    public async Task DeleteOpeningHourExceptionAsync(string gymCode, Guid id)
+    public async Task DeleteOpeningHourExceptionAsync(string gymCode, Guid id, CancellationToken cancellationToken = default)
     {
-        await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin);
+        await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin);
         var entity = await dbContext.OpeningHoursExceptions.FirstOrDefaultAsync(value => value.Id == id)
                      ?? throw new NotFoundException("Opening hours exception was not found.");
         dbContext.OpeningHoursExceptions.Remove(entity);
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<IReadOnlyCollection<EquipmentModelResponse>> GetEquipmentModelsAsync(string gymCode)
+    public async Task<IReadOnlyCollection<EquipmentModelResponse>> GetEquipmentModelsAsync(string gymCode, CancellationToken cancellationToken = default)
     {
-        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin, RoleNames.Caretaker);
+        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin, RoleNames.Caretaker);
         return await dbContext.EquipmentModels
             .Where(entity => entity.GymId == gymId)
             .OrderBy(entity => entity.ValidFrom)
@@ -145,12 +145,12 @@ public class MaintenanceWorkflowService(
                 MaintenanceIntervalDays = entity.MaintenanceIntervalDays,
                 Description = Translate(entity.Description)
             })
-            .ToArrayAsync();
+            .ToArrayAsync(cancellationToken);
     }
 
-    public async Task<EquipmentModelResponse> CreateEquipmentModelAsync(string gymCode, EquipmentModelUpsertRequest request)
+    public async Task<EquipmentModelResponse> CreateEquipmentModelAsync(string gymCode, EquipmentModelUpsertRequest request, CancellationToken cancellationToken = default)
     {
-        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin);
+        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin);
         var entity = new EquipmentModel
         {
             GymId = gymId,
@@ -161,13 +161,13 @@ public class MaintenanceWorkflowService(
             Description = string.IsNullOrWhiteSpace(request.Description) ? null : ToLangStr(request.Description)
         };
         dbContext.EquipmentModels.Add(entity);
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
         return ToEquipmentModelResponse(entity);
     }
 
-    public async Task<EquipmentModelResponse> UpdateEquipmentModelAsync(string gymCode, Guid id, EquipmentModelUpsertRequest request)
+    public async Task<EquipmentModelResponse> UpdateEquipmentModelAsync(string gymCode, Guid id, EquipmentModelUpsertRequest request, CancellationToken cancellationToken = default)
     {
-        await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin);
+        await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin);
         var entity = await dbContext.EquipmentModels.FirstOrDefaultAsync(value => value.Id == id)
                      ?? throw new NotFoundException("Equipment model was not found.");
         entity.Name = ToLangStr(request.Name);
@@ -175,22 +175,22 @@ public class MaintenanceWorkflowService(
         entity.Manufacturer = request.Manufacturer?.Trim();
         entity.MaintenanceIntervalDays = request.MaintenanceIntervalDays;
         entity.Description = string.IsNullOrWhiteSpace(request.Description) ? null : ToLangStr(request.Description);
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
         return ToEquipmentModelResponse(entity);
     }
 
-    public async Task DeleteEquipmentModelAsync(string gymCode, Guid id)
+    public async Task DeleteEquipmentModelAsync(string gymCode, Guid id, CancellationToken cancellationToken = default)
     {
-        await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin);
+        await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin);
         var entity = await dbContext.EquipmentModels.FirstOrDefaultAsync(value => value.Id == id)
                      ?? throw new NotFoundException("Equipment model was not found.");
         dbContext.EquipmentModels.Remove(entity);
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<IReadOnlyCollection<EquipmentResponse>> GetEquipmentAsync(string gymCode)
+    public async Task<IReadOnlyCollection<EquipmentResponse>> GetEquipmentAsync(string gymCode, CancellationToken cancellationToken = default)
     {
-        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin, RoleNames.Caretaker);
+        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin, RoleNames.Caretaker);
         return await dbContext.Equipment
             .Where(entity => entity.GymId == gymId)
             .OrderBy(entity => entity.AssetTag)
@@ -205,12 +205,12 @@ public class MaintenanceWorkflowService(
                 DecommissionedAt = entity.DecommissionedAt,
                 Notes = entity.Notes
             })
-            .ToArrayAsync();
+            .ToArrayAsync(cancellationToken);
     }
 
-    public async Task<EquipmentResponse> CreateEquipmentAsync(string gymCode, EquipmentUpsertRequest request)
+    public async Task<EquipmentResponse> CreateEquipmentAsync(string gymCode, EquipmentUpsertRequest request, CancellationToken cancellationToken = default)
     {
-        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin);
+        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin);
         var entity = new Equipment
         {
             GymId = gymId,
@@ -223,13 +223,13 @@ public class MaintenanceWorkflowService(
             Notes = request.Notes?.Trim()
         };
         dbContext.Equipment.Add(entity);
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
         return ToEquipmentResponse(entity);
     }
 
-    public async Task<EquipmentResponse> UpdateEquipmentAsync(string gymCode, Guid id, EquipmentUpsertRequest request)
+    public async Task<EquipmentResponse> UpdateEquipmentAsync(string gymCode, Guid id, EquipmentUpsertRequest request, CancellationToken cancellationToken = default)
     {
-        await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin);
+        await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin);
         var entity = await dbContext.Equipment.FirstOrDefaultAsync(value => value.Id == id)
                      ?? throw new NotFoundException("Equipment item was not found.");
         entity.EquipmentModelId = request.EquipmentModelId;
@@ -239,22 +239,22 @@ public class MaintenanceWorkflowService(
         entity.CommissionedAt = request.CommissionedAt;
         entity.DecommissionedAt = request.DecommissionedAt;
         entity.Notes = request.Notes?.Trim();
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
         return ToEquipmentResponse(entity);
     }
 
-    public async Task DeleteEquipmentAsync(string gymCode, Guid id)
+    public async Task DeleteEquipmentAsync(string gymCode, Guid id, CancellationToken cancellationToken = default)
     {
-        await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin);
+        await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin);
         var entity = await dbContext.Equipment.FirstOrDefaultAsync(value => value.Id == id)
                      ?? throw new NotFoundException("Equipment item was not found.");
         dbContext.Equipment.Remove(entity);
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<IReadOnlyCollection<MaintenanceTaskResponse>> GetMaintenanceTasksAsync(string gymCode)
+    public async Task<IReadOnlyCollection<MaintenanceTaskResponse>> GetMaintenanceTasksAsync(string gymCode, CancellationToken cancellationToken = default)
     {
-        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin, RoleNames.Caretaker);
+        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin, RoleNames.Caretaker);
         return await dbContext.MaintenanceTasks
             .Where(entity => entity.GymId == gymId)
             .OrderByDescending(entity => entity.CreatedAtUtc)
@@ -277,12 +277,12 @@ public class MaintenanceWorkflowService(
                 CompletedAtUtc = entity.CompletedAtUtc,
                 Notes = entity.Notes
             })
-            .ToArrayAsync();
+            .ToArrayAsync(cancellationToken);
     }
 
-    public async Task<MaintenanceTaskResponse> CreateTaskAsync(string gymCode, MaintenanceTaskUpsertRequest request)
+    public async Task<MaintenanceTaskResponse> CreateTaskAsync(string gymCode, MaintenanceTaskUpsertRequest request, CancellationToken cancellationToken = default)
     {
-        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin, RoleNames.Caretaker);
+        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin, RoleNames.Caretaker);
 
         var equipment = await dbContext.Equipment
             .Include(item => item.EquipmentModel)
@@ -318,14 +318,14 @@ public class MaintenanceWorkflowService(
         };
 
         dbContext.MaintenanceTasks.Add(task);
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
 
         return ToMaintenanceResponse(task);
     }
 
-    public async Task<MaintenanceTaskResponse> UpdateTaskStatusAsync(string gymCode, Guid taskId, MaintenanceStatusUpdateRequest request)
+    public async Task<MaintenanceTaskResponse> UpdateTaskStatusAsync(string gymCode, Guid taskId, MaintenanceStatusUpdateRequest request, CancellationToken cancellationToken = default)
     {
-        await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin, RoleNames.Caretaker);
+        await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin, RoleNames.Caretaker);
 
         var task = await dbContext.MaintenanceTasks
                    .Include(entity => entity.Equipment)
@@ -350,17 +350,17 @@ public class MaintenanceWorkflowService(
             task.CompletedAtUtc = DateTime.UtcNow;
         }
 
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
         return ToMaintenanceResponse(task);
     }
 
-    public async Task<int> GenerateDueScheduledTasksAsync(string gymCode)
+    public async Task<int> GenerateDueScheduledTasksAsync(string gymCode, CancellationToken cancellationToken = default)
     {
-        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin);
+        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin);
         var equipmentItems = await dbContext.Equipment
             .Include(item => item.EquipmentModel)
             .Where(item => item.GymId == gymId && item.CurrentStatus != EquipmentStatus.Decommissioned)
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
 
         var createdCount = 0;
 
@@ -379,13 +379,14 @@ public class MaintenanceWorkflowService(
                     task.Status == MaintenanceTaskStatus.Done &&
                     task.CompletedAtUtc.HasValue)
                 .OrderByDescending(task => task.CompletedAtUtc)
-                .FirstOrDefaultAsync();
+                .FirstOrDefaultAsync(cancellationToken);
 
             var hasOpenScheduledTask = await dbContext.MaintenanceTasks.AnyAsync(task =>
                 task.GymId == gymId &&
                 task.EquipmentId == equipment.Id &&
                 task.TaskType == MaintenanceTaskType.Scheduled &&
-                task.Status != MaintenanceTaskStatus.Done);
+                task.Status != MaintenanceTaskStatus.Done,
+                cancellationToken);
 
             if (hasOpenScheduledTask)
             {
@@ -418,32 +419,32 @@ public class MaintenanceWorkflowService(
 
         if (createdCount > 0)
         {
-            await dbContext.SaveChangesAsync();
+            await dbContext.SaveChangesAsync(cancellationToken);
         }
 
         return createdCount;
     }
 
-    public async Task DeleteMaintenanceTaskAsync(string gymCode, Guid id)
+    public async Task DeleteMaintenanceTaskAsync(string gymCode, Guid id, CancellationToken cancellationToken = default)
     {
-        await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin);
+        await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin);
         var entity = await dbContext.MaintenanceTasks.FirstOrDefaultAsync(value => value.Id == id)
                      ?? throw new NotFoundException("Maintenance task was not found.");
         dbContext.MaintenanceTasks.Remove(entity);
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<GymSettingsResponse> GetGymSettingsAsync(string gymCode)
+    public async Task<GymSettingsResponse> GetGymSettingsAsync(string gymCode, CancellationToken cancellationToken = default)
     {
-        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin, RoleNames.Member, RoleNames.Trainer, RoleNames.Caretaker);
+        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin, RoleNames.Member, RoleNames.Trainer, RoleNames.Caretaker);
         var entity = await dbContext.GymSettings.FirstOrDefaultAsync(value => value.GymId == gymId)
                      ?? throw new NotFoundException("Gym settings were not found.");
         return ToGymSettingsResponse(entity);
     }
 
-    public async Task<GymSettingsResponse> UpdateGymSettingsAsync(string gymCode, GymSettingsUpdateRequest request)
+    public async Task<GymSettingsResponse> UpdateGymSettingsAsync(string gymCode, GymSettingsUpdateRequest request, CancellationToken cancellationToken = default)
     {
-        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin);
+        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin);
         var entity = await dbContext.GymSettings.FirstOrDefaultAsync(value => value.GymId == gymId)
                      ?? throw new NotFoundException("Gym settings were not found.");
         entity.CurrencyCode = request.CurrencyCode.Trim();
@@ -451,13 +452,13 @@ public class MaintenanceWorkflowService(
         entity.AllowNonMemberBookings = request.AllowNonMemberBookings;
         entity.BookingCancellationHours = request.BookingCancellationHours;
         entity.PublicDescription = string.IsNullOrWhiteSpace(request.PublicDescription) ? entity.PublicDescription : ToLangStr(request.PublicDescription);
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
         return ToGymSettingsResponse(entity);
     }
 
-    public async Task<IReadOnlyCollection<GymUserResponse>> GetGymUsersAsync(string gymCode)
+    public async Task<IReadOnlyCollection<GymUserResponse>> GetGymUsersAsync(string gymCode, CancellationToken cancellationToken = default)
     {
-        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin);
+        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin);
         return await dbContext.AppUserGymRoles
             .Include(entity => entity.AppUser)
             .Where(entity => entity.GymId == gymId)
@@ -469,12 +470,12 @@ public class MaintenanceWorkflowService(
                 RoleName = entity.RoleName,
                 IsActive = entity.IsActive
             })
-            .ToArrayAsync();
+            .ToArrayAsync(cancellationToken);
     }
 
-    public async Task<GymUserResponse> UpsertGymUserAsync(string gymCode, GymUserUpsertRequest request)
+    public async Task<GymUserResponse> UpsertGymUserAsync(string gymCode, GymUserUpsertRequest request, CancellationToken cancellationToken = default)
     {
-        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin);
+        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin);
         var existingLink = await dbContext.AppUserGymRoles.FirstOrDefaultAsync(entity =>
             entity.GymId == gymId &&
             entity.AppUserId == request.AppUserId &&
@@ -494,7 +495,7 @@ public class MaintenanceWorkflowService(
             dbContext.AppUserGymRoles.Add(link);
         }
 
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
         var user = await dbContext.Users.FirstOrDefaultAsync(entity => entity.Id == link.AppUserId)
                    ?? throw new NotFoundException("App user was not found.");
 
@@ -507,16 +508,16 @@ public class MaintenanceWorkflowService(
         };
     }
 
-    public async Task DeleteGymUserAsync(string gymCode, Guid appUserId, string roleName)
+    public async Task DeleteGymUserAsync(string gymCode, Guid appUserId, string roleName, CancellationToken cancellationToken = default)
     {
-        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin);
+        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin);
         var entity = await dbContext.AppUserGymRoles.FirstOrDefaultAsync(value =>
                          value.GymId == gymId &&
                          value.AppUserId == appUserId &&
                          value.RoleName == roleName)
                      ?? throw new NotFoundException("Gym user role was not found.");
         dbContext.AppUserGymRoles.Remove(entity);
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
     }
 
     private static OpeningHoursResponse ToOpeningHoursResponse(OpeningHours entity)

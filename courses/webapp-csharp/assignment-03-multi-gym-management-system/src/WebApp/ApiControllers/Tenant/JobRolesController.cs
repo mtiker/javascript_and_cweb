@@ -12,27 +12,31 @@ namespace WebApp.ApiControllers.Tenant;
 public class JobRolesController(IStaffWorkflowService staffWorkflowService) : ApiControllerBase
 {
     [HttpGet("job-roles")]
-    public async Task<ActionResult<IReadOnlyCollection<JobRoleResponse>>> GetJobRoles(string gymCode)
+    [ProducesResponseType(typeof(IReadOnlyCollection<JobRoleResponse>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<IReadOnlyCollection<JobRoleResponse>>> GetJobRoles(string gymCode, CancellationToken cancellationToken)
     {
-        return Ok(await staffWorkflowService.GetJobRolesAsync(gymCode));
+        return Ok(await staffWorkflowService.GetJobRolesAsync(gymCode, cancellationToken));
     }
 
     [HttpPost("job-roles")]
-    public async Task<ActionResult<JobRoleResponse>> CreateJobRole(string gymCode, [FromBody] JobRoleUpsertRequest request)
+    [ProducesResponseType(typeof(JobRoleResponse), StatusCodes.Status200OK)]
+    public async Task<ActionResult<JobRoleResponse>> CreateJobRole(string gymCode, [FromBody] JobRoleUpsertRequest request, CancellationToken cancellationToken)
     {
-        return Ok(await staffWorkflowService.CreateJobRoleAsync(gymCode, request));
+        return Ok(await staffWorkflowService.CreateJobRoleAsync(gymCode, request, cancellationToken));
     }
 
     [HttpPut("job-roles/{id:guid}")]
-    public async Task<ActionResult<JobRoleResponse>> UpdateJobRole(string gymCode, Guid id, [FromBody] JobRoleUpsertRequest request)
+    [ProducesResponseType(typeof(JobRoleResponse), StatusCodes.Status200OK)]
+    public async Task<ActionResult<JobRoleResponse>> UpdateJobRole(string gymCode, Guid id, [FromBody] JobRoleUpsertRequest request, CancellationToken cancellationToken)
     {
-        return Ok(await staffWorkflowService.UpdateJobRoleAsync(gymCode, id, request));
+        return Ok(await staffWorkflowService.UpdateJobRoleAsync(gymCode, id, request, cancellationToken));
     }
 
     [HttpDelete("job-roles/{id:guid}")]
-    public async Task<ActionResult<Message>> DeleteJobRole(string gymCode, Guid id)
+    [ProducesResponseType(typeof(Message), StatusCodes.Status200OK)]
+    public async Task<ActionResult<Message>> DeleteJobRole(string gymCode, Guid id, CancellationToken cancellationToken)
     {
-        await staffWorkflowService.DeleteJobRoleAsync(gymCode, id);
+        await staffWorkflowService.DeleteJobRoleAsync(gymCode, id, cancellationToken);
         return Ok(new Message("Job role deleted."));
     }
 }

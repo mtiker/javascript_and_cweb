@@ -12,33 +12,38 @@ namespace WebApp.ApiControllers.Tenant;
 public class TrainingSessionsController(ITrainingWorkflowService trainingWorkflowService) : ApiControllerBase
 {
     [HttpGet("training-sessions")]
-    public async Task<ActionResult<IReadOnlyCollection<TrainingSessionResponse>>> GetSessions(string gymCode)
+    [ProducesResponseType(typeof(IReadOnlyCollection<TrainingSessionResponse>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<IReadOnlyCollection<TrainingSessionResponse>>> GetSessions(string gymCode, CancellationToken cancellationToken)
     {
-        return Ok(await trainingWorkflowService.GetSessionsAsync(gymCode));
+        return Ok(await trainingWorkflowService.GetSessionsAsync(gymCode, cancellationToken));
     }
 
     [HttpGet("training-sessions/{id:guid}")]
-    public async Task<ActionResult<TrainingSessionResponse>> GetSession(string gymCode, Guid id)
+    [ProducesResponseType(typeof(TrainingSessionResponse), StatusCodes.Status200OK)]
+    public async Task<ActionResult<TrainingSessionResponse>> GetSession(string gymCode, Guid id, CancellationToken cancellationToken)
     {
-        return Ok(await trainingWorkflowService.GetSessionAsync(gymCode, id));
+        return Ok(await trainingWorkflowService.GetSessionAsync(gymCode, id, cancellationToken));
     }
 
     [HttpPost("training-sessions")]
-    public async Task<ActionResult<TrainingSessionResponse>> CreateSession(string gymCode, [FromBody] TrainingSessionUpsertRequest request)
+    [ProducesResponseType(typeof(TrainingSessionResponse), StatusCodes.Status200OK)]
+    public async Task<ActionResult<TrainingSessionResponse>> CreateSession(string gymCode, [FromBody] TrainingSessionUpsertRequest request, CancellationToken cancellationToken)
     {
-        return Ok(await trainingWorkflowService.UpsertTrainingSessionAsync(gymCode, null, request));
+        return Ok(await trainingWorkflowService.UpsertTrainingSessionAsync(gymCode, null, request, cancellationToken));
     }
 
     [HttpPut("training-sessions/{id:guid}")]
-    public async Task<ActionResult<TrainingSessionResponse>> UpdateSession(string gymCode, Guid id, [FromBody] TrainingSessionUpsertRequest request)
+    [ProducesResponseType(typeof(TrainingSessionResponse), StatusCodes.Status200OK)]
+    public async Task<ActionResult<TrainingSessionResponse>> UpdateSession(string gymCode, Guid id, [FromBody] TrainingSessionUpsertRequest request, CancellationToken cancellationToken)
     {
-        return Ok(await trainingWorkflowService.UpsertTrainingSessionAsync(gymCode, id, request));
+        return Ok(await trainingWorkflowService.UpsertTrainingSessionAsync(gymCode, id, request, cancellationToken));
     }
 
     [HttpDelete("training-sessions/{id:guid}")]
-    public async Task<ActionResult<Message>> DeleteSession(string gymCode, Guid id)
+    [ProducesResponseType(typeof(Message), StatusCodes.Status200OK)]
+    public async Task<ActionResult<Message>> DeleteSession(string gymCode, Guid id, CancellationToken cancellationToken)
     {
-        await trainingWorkflowService.DeleteSessionAsync(gymCode, id);
+        await trainingWorkflowService.DeleteSessionAsync(gymCode, id, cancellationToken);
         return Ok(new Message("Training session deleted."));
 }
 }

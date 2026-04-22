@@ -13,14 +13,16 @@ namespace WebApp.ApiControllers.System;
 public class SubscriptionsController(IPlatformService platformService) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<IReadOnlyCollection<SubscriptionSummaryResponse>>> GetSubscriptions()
+    [ProducesResponseType(typeof(IReadOnlyCollection<SubscriptionSummaryResponse>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<IReadOnlyCollection<SubscriptionSummaryResponse>>> GetSubscriptions(CancellationToken cancellationToken)
     {
-        return Ok(await platformService.GetSubscriptionsAsync());
+        return Ok(await platformService.GetSubscriptionsAsync(cancellationToken));
     }
 
     [HttpPut("{gymId:guid}")]
-    public async Task<ActionResult<SubscriptionSummaryResponse>> UpdateSubscription(Guid gymId, [FromBody] UpdateSubscriptionRequest request)
+    [ProducesResponseType(typeof(SubscriptionSummaryResponse), StatusCodes.Status200OK)]
+    public async Task<ActionResult<SubscriptionSummaryResponse>> UpdateSubscription(Guid gymId, [FromBody] UpdateSubscriptionRequest request, CancellationToken cancellationToken)
     {
-        return Ok(await platformService.UpdateSubscriptionAsync(gymId, request));
+        return Ok(await platformService.UpdateSubscriptionAsync(gymId, request, cancellationToken));
     }
 }

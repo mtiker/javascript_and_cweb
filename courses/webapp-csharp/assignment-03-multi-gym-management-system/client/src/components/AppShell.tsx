@@ -2,7 +2,7 @@ import { useEffect, useState, type PropsWithChildren } from "react";
 import { NavLink } from "react-router-dom";
 import { useAuth } from "../lib/auth";
 import { useLanguage, type AppLanguage } from "../lib/language";
-import type { AuthSession, GymSummary } from "../lib/types";
+import type { AuthSession, GymSummary, TenantAccess } from "../lib/types";
 
 const tenantAdminNavigationItems = [
   { to: "/members", label: "Members" },
@@ -18,10 +18,16 @@ export function AppShell({ children }: PropsWithChildren) {
   const [gyms, setGyms] = useState<GymSummary[]>([]);
   const [isSwitchingTenant, setIsSwitchingTenant] = useState(false);
   const systemRole = hasSystemRole(session);
-  const canSwitchTenant = Boolean(session?.systemRoles.includes("SystemAdmin"));
+  const canSwitchAllTenants = Boolean(session?.systemRoles.includes("SystemAdmin"));
+  const assignedTenantOptions = session?.availableTenants ?? [];
+  const tenantOptions = canSwitchAllTenants ? toSystemTenantOptions(gyms) : assignedTenantOptions;
+  const activeTenantOption = tenantOptions.find((tenant) => tenant.gymCode === session?.activeGymCode);
+  const roleOptions = getRoleOptions(session, activeTenantOption);
+  const canSwitchTenant = tenantOptions.length > 1 || canSwitchAllTenants;
+  const canSwitchTenantRole = Boolean(session?.activeGymCode && roleOptions.length > 1);
 
   useEffect(() => {
-    if (!canSwitchTenant) {
+    if (!canSwitchAllTenants) {
       setGyms([]);
       return;
     }
@@ -43,7 +49,7 @@ export function AppShell({ children }: PropsWithChildren) {
     return () => {
       isMounted = false;
     };
-  }, [api, canSwitchTenant]);
+  }, [api, canSwitchAllTenants]);
   const navigationItems = [
     ...(systemRole ? [{ to: "/platform", label: t("platform") }, { to: "/console", label: t("console") }] : []),
     ...(canUseAdminTools(session?.activeRole)
@@ -83,7 +89,7 @@ export function AppShell({ children }: PropsWithChildren) {
             <p className="shell__meta-label">{session?.activeRole ? t("activeRole") : t("systemRoles")}</p>
             <strong className="shell__meta-value">{session?.activeRole ?? session?.systemRoles.join(", ")}</strong>
           </div>
-          {canSwitchTenant && gyms.length > 0 ? (
+          {canSwitchTenant && tenantOptions.length > 0 ? (
             <label className="language-select">
               <span>{t("switchTenant")}</span>
               <select
@@ -91,10 +97,26 @@ export function AppShell({ children }: PropsWithChildren) {
                 onChange={(event) => void handleTenantSwitch(event.target.value)}
                 value={session?.activeGymCode ?? ""}
               >
-                <option value="">{t("system")}</option>
-                {gyms.map((gym) => (
-                  <option key={gym.gymId} value={gym.code}>
-                    {gym.name}
+                {canSwitchAllTenants ? <option value="">{t("system")}</option> : null}
+                {tenantOptions.map((tenant) => (
+                  <option key={tenant.gymId} value={tenant.gymCode}>
+                    {tenant.gymName}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
+          {canSwitchTenantRole ? (
+            <label className="language-select">
+              <span>{t("switchRole")}</span>
+              <select
+                disabled={isSwitchingTenant}
+                onChange={(event) => void handleRoleSwitch(event.target.value)}
+                value={session?.activeRole ?? ""}
+              >
+                {roleOptions.map((role) => (
+                  <option key={role} value={role}>
+                    {role}
                   </option>
                 ))}
               </select>
@@ -124,7 +146,22 @@ export function AppShell({ children }: PropsWithChildren) {
     setIsSwitchingTenant(true);
     try {
       await switchGym(gymCode);
-      await switchRole("GymOwner");
+      if (canSwitchAllTenants) {
+        await switchRole("GymOwner");
+      }
+    } finally {
+      setIsSwitchingTenant(false);
+    }
+  }
+
+  async function handleRoleSwitch(roleName: string) {
+    if (!roleName || roleName === session?.activeRole) {
+      return;
+    }
+
+    setIsSwitchingTenant(true);
+    try {
+      await switchRole(roleName);
     } finally {
       setIsSwitchingTenant(false);
     }
@@ -162,4 +199,25 @@ function translateNavigationLabel(label: string, t: ReturnType<typeof useLanguag
     default:
       return label;
   }
+}
+
+function toSystemTenantOptions(gyms: GymSummary[]): TenantAccess[] {
+  return gyms.map((gym) => ({
+    gymId: gym.gymId,
+    gymCode: gym.code,
+    gymName: gym.name,
+    roles: ["GymOwner", "GymAdmin"],
+  }));
+}
+
+function getRoleOptions(session: AuthSession | null, activeTenantOption?: TenantAccess) {
+  if (!session?.activeGymCode) {
+    return [];
+  }
+
+  if (session.systemRoles.includes("SystemAdmin")) {
+    return activeTenantOption?.roles ?? ["GymOwner", "GymAdmin"];
+  }
+
+  return activeTenantOption?.roles ?? [];
 }

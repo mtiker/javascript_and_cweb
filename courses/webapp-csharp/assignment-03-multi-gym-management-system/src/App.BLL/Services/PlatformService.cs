@@ -20,7 +20,7 @@ public class PlatformService(
     ITokenService tokenService,
     IUserContextService userContextService) : IPlatformService
 {
-    public async Task<IReadOnlyCollection<GymSummaryResponse>> GetGymsAsync()
+    public async Task<IReadOnlyCollection<GymSummaryResponse>> GetGymsAsync(CancellationToken cancellationToken = default)
     {
         return await dbContext.Gyms
             .AsNoTracking()
@@ -34,10 +34,10 @@ public class PlatformService(
                 City = entity.City,
                 Country = entity.Country
             })
-            .ToArrayAsync();
+            .ToArrayAsync(cancellationToken);
     }
 
-    public async Task<RegisterGymResponse> RegisterGymAsync(RegisterGymRequest request)
+    public async Task<RegisterGymResponse> RegisterGymAsync(RegisterGymRequest request, CancellationToken cancellationToken = default)
     {
         if (await dbContext.Gyms.AnyAsync(entity => entity.Code == request.Code))
         {
@@ -109,7 +109,7 @@ public class PlatformService(
         dbContext.GymSettings.Add(settings);
         dbContext.Subscriptions.Add(subscription);
         dbContext.AppUserGymRoles.Add(ownerLink);
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
 
         return new RegisterGymResponse
         {
@@ -119,16 +119,16 @@ public class PlatformService(
         };
     }
 
-    public async Task UpdateGymActivationAsync(Guid gymId, UpdateGymActivationRequest request)
+    public async Task UpdateGymActivationAsync(Guid gymId, UpdateGymActivationRequest request, CancellationToken cancellationToken = default)
     {
-        var gym = await dbContext.Gyms.FirstOrDefaultAsync(entity => entity.Id == gymId)
+        var gym = await dbContext.Gyms.FirstOrDefaultAsync(entity => entity.Id == gymId, cancellationToken)
                   ?? throw new NotFoundException("Gym was not found.");
 
         gym.IsActive = request.IsActive;
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<IReadOnlyCollection<SubscriptionSummaryResponse>> GetSubscriptionsAsync()
+    public async Task<IReadOnlyCollection<SubscriptionSummaryResponse>> GetSubscriptionsAsync(CancellationToken cancellationToken = default)
     {
         return await dbContext.Subscriptions
             .AsNoTracking()
@@ -144,10 +144,10 @@ public class PlatformService(
                 StartDate = subscription.StartDate,
                 EndDate = subscription.EndDate
             })
-            .ToArrayAsync();
+            .ToArrayAsync(cancellationToken);
     }
 
-    public async Task<SubscriptionSummaryResponse> UpdateSubscriptionAsync(Guid gymId, UpdateSubscriptionRequest request)
+    public async Task<SubscriptionSummaryResponse> UpdateSubscriptionAsync(Guid gymId, UpdateSubscriptionRequest request, CancellationToken cancellationToken = default)
     {
         var gym = await dbContext.Gyms.FirstOrDefaultAsync(entity => entity.Id == gymId)
                   ?? throw new NotFoundException("Gym was not found.");
@@ -168,7 +168,7 @@ public class PlatformService(
         subscription.EndDate = request.EndDate;
         subscription.MonthlyPrice = request.MonthlyPrice;
 
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
 
         return new SubscriptionSummaryResponse
         {
@@ -182,7 +182,7 @@ public class PlatformService(
         };
     }
 
-    public async Task<IReadOnlyCollection<SupportTicketResponse>> GetSupportTicketsAsync()
+    public async Task<IReadOnlyCollection<SupportTicketResponse>> GetSupportTicketsAsync(CancellationToken cancellationToken = default)
     {
         return await dbContext.SupportTickets
             .AsNoTracking()
@@ -198,10 +198,10 @@ public class PlatformService(
                 Priority = ticket.Priority,
                 CreatedAtUtc = ticket.CreatedAtUtc
             })
-            .ToArrayAsync();
+            .ToArrayAsync(cancellationToken);
     }
 
-    public async Task<SupportTicketResponse> CreateSupportTicketAsync(Guid gymId, SupportTicketRequest request)
+    public async Task<SupportTicketResponse> CreateSupportTicketAsync(Guid gymId, SupportTicketRequest request, CancellationToken cancellationToken = default)
     {
         var gym = await dbContext.Gyms.FirstOrDefaultAsync(entity => entity.Id == gymId)
                   ?? throw new NotFoundException("Gym was not found.");
@@ -217,7 +217,7 @@ public class PlatformService(
         };
 
         dbContext.SupportTickets.Add(ticket);
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
 
         return new SupportTicketResponse
         {
@@ -231,7 +231,7 @@ public class PlatformService(
         };
     }
 
-    public async Task<CompanySnapshotResponse> GetGymSnapshotAsync(Guid gymId)
+    public async Task<CompanySnapshotResponse> GetGymSnapshotAsync(Guid gymId, CancellationToken cancellationToken = default)
     {
         var gym = await dbContext.Gyms.FirstOrDefaultAsync(entity => entity.Id == gymId)
                   ?? throw new NotFoundException("Gym was not found.");
@@ -240,25 +240,25 @@ public class PlatformService(
         {
             GymId = gym.Id,
             GymName = gym.Name,
-            MemberCount = await dbContext.Members.IgnoreQueryFilters().CountAsync(entity => entity.GymId == gymId && !entity.IsDeleted),
-            SessionCount = await dbContext.TrainingSessions.IgnoreQueryFilters().CountAsync(entity => entity.GymId == gymId && !entity.IsDeleted),
+            MemberCount = await dbContext.Members.IgnoreQueryFilters().CountAsync(entity => entity.GymId == gymId && !entity.IsDeleted, cancellationToken),
+            SessionCount = await dbContext.TrainingSessions.IgnoreQueryFilters().CountAsync(entity => entity.GymId == gymId && !entity.IsDeleted, cancellationToken),
             OpenMaintenanceTaskCount = await dbContext.MaintenanceTasks.IgnoreQueryFilters()
-                .CountAsync(entity => entity.GymId == gymId && !entity.IsDeleted && entity.Status != MaintenanceTaskStatus.Done)
+                .CountAsync(entity => entity.GymId == gymId && !entity.IsDeleted && entity.Status != MaintenanceTaskStatus.Done, cancellationToken)
         };
     }
 
-    public async Task<PlatformAnalyticsResponse> GetAnalyticsAsync()
+    public async Task<PlatformAnalyticsResponse> GetAnalyticsAsync(CancellationToken cancellationToken = default)
     {
         return new PlatformAnalyticsResponse
         {
-            GymCount = await dbContext.Gyms.CountAsync(),
-            UserCount = await dbContext.Users.CountAsync(),
-            MemberCount = await dbContext.Members.IgnoreQueryFilters().CountAsync(entity => !entity.IsDeleted),
-            OpenSupportTicketCount = await dbContext.SupportTickets.CountAsync(entity => entity.Status != SupportTicketStatus.Resolved)
+            GymCount = await dbContext.Gyms.CountAsync(cancellationToken),
+            UserCount = await dbContext.Users.CountAsync(cancellationToken),
+            MemberCount = await dbContext.Members.IgnoreQueryFilters().CountAsync(entity => !entity.IsDeleted, cancellationToken),
+            OpenSupportTicketCount = await dbContext.SupportTickets.CountAsync(entity => entity.Status != SupportTicketStatus.Resolved, cancellationToken)
         };
     }
 
-    public async Task<StartImpersonationResponse> StartImpersonationAsync(StartImpersonationRequest request)
+    public async Task<StartImpersonationResponse> StartImpersonationAsync(StartImpersonationRequest request, CancellationToken cancellationToken = default)
     {
         var user = await userManager.FindByIdAsync(request.UserId.ToString())
                    ?? throw new NotFoundException("User was not found.");
@@ -276,7 +276,8 @@ public class PlatformService(
                 .FirstOrDefaultAsync(link =>
                     link.AppUserId == user.Id &&
                     link.Gym!.Code == request.GymCode &&
-                    link.IsActive);
+                    link.IsActive,
+                    cancellationToken);
         }
         else
         {
@@ -285,7 +286,7 @@ public class PlatformService(
                 .Where(link => link.AppUserId == user.Id && link.IsActive)
                 .OrderBy(link => link.Gym!.Name)
                 .ThenBy(link => link.RoleName)
-                .FirstOrDefaultAsync();
+                .FirstOrDefaultAsync(cancellationToken);
         }
 
         return new StartImpersonationResponse

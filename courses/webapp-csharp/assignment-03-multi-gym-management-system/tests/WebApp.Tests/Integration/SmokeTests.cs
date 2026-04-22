@@ -109,6 +109,8 @@ public class SmokeTests(CustomWebApplicationFactory factory) : IClassFixture<Cus
 
         Assert.NotNull(loginPayload);
         Assert.False(string.IsNullOrWhiteSpace(loginPayload!.ActiveGymCode));
+        Assert.Contains(loginPayload.AvailableTenants, tenant => tenant.GymCode == "peak-forge");
+        Assert.Contains(loginPayload.AvailableTenants, tenant => tenant.GymCode == "north-star");
 
         var targetGym = loginPayload.ActiveGymCode == "peak-forge" ? "north-star" : "peak-forge";
         client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", loginPayload.Jwt);
@@ -123,6 +125,8 @@ public class SmokeTests(CustomWebApplicationFactory factory) : IClassFixture<Cus
 
         Assert.NotNull(switchedPayload);
         Assert.Equal(targetGym, switchedPayload!.ActiveGymCode);
+        var switchedTenant = Assert.Single(switchedPayload.AvailableTenants, tenant => tenant.GymCode == targetGym);
+        Assert.Contains(switchedPayload.ActiveRole!, switchedTenant.Roles);
     }
 
     [Fact]

@@ -190,6 +190,7 @@ Implemented v1 scope:
 - translated React login/shell labels for English and Estonian
 - system-role platform console for analytics, gym onboarding/activation/snapshots, subscriptions, support tickets, and impersonation
 - SystemAdmin active-tenant picker in the React shell
+- assigned multi-gym user active tenant and role picker in the React shell
 - tenant owner/admin function console exposing staff, contracts, vacations, sessions, shifts, bookings, memberships, payments, facilities, equipment, maintenance, settings, and gym-user actions
 - 3 admin CRUD areas:
   - members
@@ -206,7 +207,6 @@ Implemented v1 scope:
 - single active gym per session, with SystemAdmin able to select any active tenant
 
 Not implemented in this pass:
-- polished role/gym picker for non-system multi-gym users; switch actions are available from the console
 - deployment of the client to a separate public server; it is instead deployed under the ASP.NET Core host at `/client`
 
 ## Security Rules
@@ -225,18 +225,22 @@ Not implemented in this pass:
 
 - tenant members, training, memberships/payments, facilities, and client workspace reads are handled through BLL service interfaces
 - BLL services depend on `IAppDbContext` rather than the concrete EF `AppDbContext`
-- remaining direct `AppDbContext` usage is documented as pragmatic read composition in broad MVC/admin surfaces, the staff API slice, and application infrastructure
+- API controllers are thin boundary adapters and do not expose direct `AppDbContext` access through `ApiControllerBase`
+- API controller actions accept request cancellation tokens and pass them through BLL services to EF async calls
+- remaining direct `AppDbContext` usage is documented as pragmatic read composition in broad MVC/admin surfaces and application infrastructure
 
 ## Test Plan
 
 Backend:
 - unit tests for translation fallback and membership overlap logic
+- controller unit tests for members, bookings, and memberships, including current response shapes and cancellation-token forwarding
 - integration tests for login, register, multi-gym user switch, SystemAdmin tenant-context switch, refresh-token rotation, expired/reused refresh tokens, cross-gym denial, member self-only denial, system-route denial, API `ProblemDetails`, MVC HTML error handling, `/client` fallback serving, MVC Admin/Client layout rendering, member roster denial, nullable session descriptions, member duplicate validation, booking payment-reference and duplicate-booking enforcement, trainer attendance authorization, and caretaker task authorization
 
 Frontend:
 - auth guard tests
 - logout cleanup tests
 - system-role routing to the React SaaS console
+- assigned multi-gym user shell tenant/role switching
 - refresh-on-`401` tests
 - selected language is sent through `Accept-Language`
 - production/development API base default tests

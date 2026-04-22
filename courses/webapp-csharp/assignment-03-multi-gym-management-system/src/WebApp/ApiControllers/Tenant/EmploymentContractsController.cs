@@ -12,27 +12,31 @@ namespace WebApp.ApiControllers.Tenant;
 public class EmploymentContractsController(IStaffWorkflowService staffWorkflowService) : ApiControllerBase
 {
     [HttpGet("contracts")]
-    public async Task<ActionResult<IReadOnlyCollection<ContractResponse>>> GetContracts(string gymCode)
+    [ProducesResponseType(typeof(IReadOnlyCollection<ContractResponse>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<IReadOnlyCollection<ContractResponse>>> GetContracts(string gymCode, CancellationToken cancellationToken)
     {
-        return Ok(await staffWorkflowService.GetContractsAsync(gymCode));
+        return Ok(await staffWorkflowService.GetContractsAsync(gymCode, cancellationToken));
     }
 
     [HttpPost("contracts")]
-    public async Task<ActionResult<ContractResponse>> CreateContract(string gymCode, [FromBody] ContractUpsertRequest request)
+    [ProducesResponseType(typeof(ContractResponse), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ContractResponse>> CreateContract(string gymCode, [FromBody] ContractUpsertRequest request, CancellationToken cancellationToken)
     {
-        return Ok(await staffWorkflowService.CreateContractAsync(gymCode, request));
+        return Ok(await staffWorkflowService.CreateContractAsync(gymCode, request, cancellationToken));
     }
 
     [HttpPut("contracts/{id:guid}")]
-    public async Task<ActionResult<ContractResponse>> UpdateContract(string gymCode, Guid id, [FromBody] ContractUpsertRequest request)
+    [ProducesResponseType(typeof(ContractResponse), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ContractResponse>> UpdateContract(string gymCode, Guid id, [FromBody] ContractUpsertRequest request, CancellationToken cancellationToken)
     {
-        return Ok(await staffWorkflowService.UpdateContractAsync(gymCode, id, request));
+        return Ok(await staffWorkflowService.UpdateContractAsync(gymCode, id, request, cancellationToken));
     }
 
     [HttpDelete("contracts/{id:guid}")]
-    public async Task<ActionResult<Message>> DeleteContract(string gymCode, Guid id)
+    [ProducesResponseType(typeof(Message), StatusCodes.Status200OK)]
+    public async Task<ActionResult<Message>> DeleteContract(string gymCode, Guid id, CancellationToken cancellationToken)
     {
-        await staffWorkflowService.DeleteContractAsync(gymCode, id);
+        await staffWorkflowService.DeleteContractAsync(gymCode, id, cancellationToken);
         return Ok(new Message("Contract deleted."));
     }
 }

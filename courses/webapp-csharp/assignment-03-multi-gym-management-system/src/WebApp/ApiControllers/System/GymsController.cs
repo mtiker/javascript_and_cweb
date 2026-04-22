@@ -16,31 +16,35 @@ namespace WebApp.ApiControllers.System;
 public class GymsController(IPlatformService platformService) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<IReadOnlyCollection<GymSummaryResponse>>> GetGyms()
+    [ProducesResponseType(typeof(IReadOnlyCollection<GymSummaryResponse>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<IReadOnlyCollection<GymSummaryResponse>>> GetGyms(CancellationToken cancellationToken)
     {
-        return Ok(await platformService.GetGymsAsync());
+        return Ok(await platformService.GetGymsAsync(cancellationToken));
     }
 
     [Authorize(Roles = "SystemAdmin", AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [HttpPost]
-    public async Task<ActionResult<RegisterGymResponse>> RegisterGym([FromBody] RegisterGymRequest request)
+    [ProducesResponseType(typeof(RegisterGymResponse), StatusCodes.Status201Created)]
+    public async Task<ActionResult<RegisterGymResponse>> RegisterGym([FromBody] RegisterGymRequest request, CancellationToken cancellationToken)
     {
-        var response = await platformService.RegisterGymAsync(request);
+        var response = await platformService.RegisterGymAsync(request, cancellationToken);
         return CreatedAtAction(nameof(GetGymSnapshot), new { version = "1.0", gymId = response.GymId }, response);
     }
 
     [Authorize(Roles = "SystemAdmin", AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [HttpPut("{gymId:guid}/activation")]
-    public async Task<ActionResult<Message>> UpdateActivation(Guid gymId, [FromBody] UpdateGymActivationRequest request)
+    [ProducesResponseType(typeof(Message), StatusCodes.Status200OK)]
+    public async Task<ActionResult<Message>> UpdateActivation(Guid gymId, [FromBody] UpdateGymActivationRequest request, CancellationToken cancellationToken)
     {
-        await platformService.UpdateGymActivationAsync(gymId, request);
+        await platformService.UpdateGymActivationAsync(gymId, request, cancellationToken);
         return Ok(new Message("Gym activation updated."));
     }
 
     [Authorize(Roles = "SystemAdmin,SystemSupport", AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [HttpGet("{gymId:guid}/snapshot")]
-    public async Task<ActionResult<CompanySnapshotResponse>> GetGymSnapshot(Guid gymId)
+    [ProducesResponseType(typeof(CompanySnapshotResponse), StatusCodes.Status200OK)]
+    public async Task<ActionResult<CompanySnapshotResponse>> GetGymSnapshot(Guid gymId, CancellationToken cancellationToken)
     {
-        return Ok(await platformService.GetGymSnapshotAsync(gymId));
+        return Ok(await platformService.GetGymSnapshotAsync(gymId, cancellationToken));
     }
 }

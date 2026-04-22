@@ -12,27 +12,31 @@ namespace WebApp.ApiControllers.Tenant;
 public class EquipmentModelsController(IMaintenanceWorkflowService maintenanceWorkflowService) : ApiControllerBase
 {
     [HttpGet("equipment-models")]
-    public async Task<ActionResult<IReadOnlyCollection<EquipmentModelResponse>>> GetEquipmentModels(string gymCode)
+    [ProducesResponseType(typeof(IReadOnlyCollection<EquipmentModelResponse>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<IReadOnlyCollection<EquipmentModelResponse>>> GetEquipmentModels(string gymCode, CancellationToken cancellationToken)
     {
-        return Ok(await maintenanceWorkflowService.GetEquipmentModelsAsync(gymCode));
+        return Ok(await maintenanceWorkflowService.GetEquipmentModelsAsync(gymCode, cancellationToken));
     }
 
     [HttpPost("equipment-models")]
-    public async Task<ActionResult<EquipmentModelResponse>> CreateEquipmentModel(string gymCode, [FromBody] EquipmentModelUpsertRequest request)
+    [ProducesResponseType(typeof(EquipmentModelResponse), StatusCodes.Status200OK)]
+    public async Task<ActionResult<EquipmentModelResponse>> CreateEquipmentModel(string gymCode, [FromBody] EquipmentModelUpsertRequest request, CancellationToken cancellationToken)
     {
-        return Ok(await maintenanceWorkflowService.CreateEquipmentModelAsync(gymCode, request));
+        return Ok(await maintenanceWorkflowService.CreateEquipmentModelAsync(gymCode, request, cancellationToken));
     }
 
     [HttpPut("equipment-models/{id:guid}")]
-    public async Task<ActionResult<EquipmentModelResponse>> UpdateEquipmentModel(string gymCode, Guid id, [FromBody] EquipmentModelUpsertRequest request)
+    [ProducesResponseType(typeof(EquipmentModelResponse), StatusCodes.Status200OK)]
+    public async Task<ActionResult<EquipmentModelResponse>> UpdateEquipmentModel(string gymCode, Guid id, [FromBody] EquipmentModelUpsertRequest request, CancellationToken cancellationToken)
     {
-        return Ok(await maintenanceWorkflowService.UpdateEquipmentModelAsync(gymCode, id, request));
+        return Ok(await maintenanceWorkflowService.UpdateEquipmentModelAsync(gymCode, id, request, cancellationToken));
     }
 
     [HttpDelete("equipment-models/{id:guid}")]
-    public async Task<ActionResult<Message>> DeleteEquipmentModel(string gymCode, Guid id)
+    [ProducesResponseType(typeof(Message), StatusCodes.Status200OK)]
+    public async Task<ActionResult<Message>> DeleteEquipmentModel(string gymCode, Guid id, CancellationToken cancellationToken)
     {
-        await maintenanceWorkflowService.DeleteEquipmentModelAsync(gymCode, id);
+        await maintenanceWorkflowService.DeleteEquipmentModelAsync(gymCode, id, cancellationToken);
         return Ok(new Message("Equipment model deleted."));
 }
 }

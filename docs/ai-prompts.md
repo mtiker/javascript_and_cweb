@@ -18,6 +18,16 @@ Record AI-assisted development evidence here.
 
 - Date: 2026-04-22
 - Subject: webapp-csharp
+- Assignment: assignment-03-multi-gym-management-system and assignment-18-dental-clinic-platform
+- Prompt: Compare the controllers of Assignment 03 and Assignment 18 so Assignment 03 can later be made as functional and well-made as Assignment 18.
+- Files affected: `courses/webapp-csharp/backend-differences-assignment-03-vs-18.md`, `README.md`, `docs/ai-prompts.md`
+- AI output used: Reworked the cross-assignment comparison into a controller-focused report covering controller surfaces, routes, authorization, DTO-to-BLL mapping, response semantics, cancellation support, direct DbContext usage, controller tests, and a phased modernization plan for Assignment 03.
+- What AI got wrong / needed correction: Nothing material; the comparison separates Assignment 18 patterns worth adopting from direct-DbContext controller patterns that Assignment 03 should not copy.
+- Changes made manually: Inspected both projects' API controller files, representative service-backed and direct-DbContext controllers, Assignment 18 controller unit tests, Assignment 03 route smoke coverage, the root README map, and official course controller/BLL expectations before editing.
+- Alternatives considered: Implementing controller changes immediately, but the request is better served first by a precise gap map so later changes can be done in safe workflow slices without breaking routes or clients.
+
+- Date: 2026-04-22
+- Subject: webapp-csharp
 - Assignment: assignment-03-multi-gym-management-system
 - Prompt: Continue implementing the plan to align Assignment 03 backend structure with Assignment 18 without changing routes, DTO JSON shapes, EF model, migrations, seed data, auth, tenant isolation, tests, or deployment behavior.
 - Files affected: `courses/webapp-csharp/assignment-03-multi-gym-management-system/src/App.Domain/Entities/*`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/src/App.DTO/v1/*`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/src/App.BLL/Contracts/*`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/src/App.BLL/Services/*`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/src/App.BLL/Exceptions/*`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/src/App.DAL.EF/Seeding/*`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/src/WebApp/ApiControllers/*`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/src/WebApp/Setup/*`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/src/WebApp/Program.cs`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/src/WebApp/Middleware/ProblemDetailsMiddleware.cs`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/tests/WebApp.Tests/Integration/SmokeTests.cs`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/README.md`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/docs/*.md`, `docs/ai-prompts.md`
@@ -557,3 +567,33 @@ Record AI-assisted development evidence here.
 - What AI got wrong / needed correction: The first test-host configuration attempt injected JWT settings too late for minimal-host startup; the test factory was corrected to set test JWT environment variables before host creation. One staff regression test initially assumed North Star staff seed data and was changed to create its own cross-gym fixture.
 - Changes made manually: Verified the full Assignment 03 backend test suite passes after the refactor and kept the provided JWT key out of tracked source and documentation.
 - Alternatives considered: Adding a new gym-resolution middleware was deferred because the existing active-gym claim and authorization service flow is stable and lower risk for this pass.
+
+- Date: 2026-04-22
+- Subject: webapp-csharp
+- Assignment: assignment-03-multi-gym-management-system and assignment-18-dental-clinic-platform
+- Prompt: Make a full report on the structural and safety differences of the BLL in Assignment 18 and Assignment 03.
+- Files affected: `courses/webapp-csharp/backend-differences-assignment-03-vs-18.md`, `README.md`, `docs/ai-prompts.md`
+- AI output used: Reworked the existing cross-assignment comparison into a BLL-focused report covering project references, dependency direction, service granularity, contracts, tenant access, authorization, validation, transactions, controller leakage, tests, risks, and recommendations.
+- What AI got wrong / needed correction: Nothing material; the report was grounded in the current local BLL, WebApp DI, controller, DbContext, test, and architecture documentation files.
+- Changes made manually: Checked the official course BLL lecture framing and verified the report against inspected repository files.
+- Alternatives considered: Keeping the broader backend report unchanged, but the requested scope was specifically BLL structure and safety.
+
+- Date: 2026-04-22
+- Subject: webapp-csharp
+- Assignment: assignment-03-multi-gym-management-system
+- Prompt: Implement the safe first pass from the Assignment 03 controller hardening plan and list what remains for later implementation.
+- Files affected: `courses/webapp-csharp/assignment-03-multi-gym-management-system/src/WebApp/ApiControllers/**`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/src/App.BLL/Services/**`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/tests/WebApp.Tests/Helpers/ControllerTestHelpers.cs`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/tests/WebApp.Tests/Unit/TenantControllerTests.cs`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/tests/WebApp.Tests/Unit/MembershipWorkflowServiceTests.cs`, `courses/webapp-csharp/backend-differences-assignment-03-vs-18.md`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/docs/a3-saas-plan.md`, `docs/ai-prompts.md`
+- AI output used: Removed direct `AppDbContext` access from `ApiControllerBase`, added cancellation-token plumbing through API controllers and BLL services, added success `[ProducesResponseType]` metadata for API actions, threaded tokens into EF async calls and tenant authorization, added controller unit-test helpers and tests for members/bookings/memberships, and documented the completed safe pass plus the remaining implementation list.
+- What AI got wrong / needed correction: The first mechanical OpenAPI metadata rewrite produced invalid `typeof()` attributes, which were repaired before validation. A later cancellation-token cleanup exposed a private staff helper signature mismatch, which was corrected before the final test run.
+- Changes made manually: Reviewed created-response metadata, preserved existing route/DTO/status/body behavior, checked for remaining EF async calls without cancellation tokens, and ran the full backend test suite.
+- Alternatives considered: Converting all create/delete responses to stricter REST semantics immediately was deferred to avoid breaking current React/MVC clients before broader controller tests and client compatibility checks are in place.
+
+- Date: 2026-04-22
+- Subject: webapp-csharp
+- Assignment: assignment-03-multi-gym-management-system
+- Prompt: implement a3-saas-plan.md
+- Files affected: `courses/webapp-csharp/assignment-03-multi-gym-management-system/src/App.DTO/v1/Identity/JwtResponse.cs`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/src/App.BLL/Services/IdentityService.cs`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/client/src/components/AppShell.tsx`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/client/src/lib/*`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/client/src/App.test.tsx`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/tests/WebApp.Tests/Integration/SmokeTests.cs`, assignment README and docs.
+- AI output used: Completed the remaining local SaaS-plan gap by adding assigned tenant/role metadata to JWT responses and wiring the React shell to switch active tenant and role for non-system multi-gym users as well as SystemAdmin.
+- What AI got wrong / needed correction: No material correction; the implementation was kept additive so existing auth clients can ignore the new response field.
+- Changes made manually: Verified the official course assignment/deploy requirements, ran backend build/tests and frontend tests/build, and synchronized the plan, architecture, API, testing, README, and AI logs.
+- Alternatives considered: Keeping switch actions only in the function console, but a shell picker is more appropriate for a real SaaS workspace and closes the plan's remaining local UX gap.

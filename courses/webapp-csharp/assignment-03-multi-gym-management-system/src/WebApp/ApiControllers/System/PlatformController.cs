@@ -13,8 +13,9 @@ namespace WebApp.ApiControllers.System;
 public class PlatformController(IPlatformService platformService) : ControllerBase
 {
     [HttpGet("analytics")]
-    public async Task<ActionResult<PlatformAnalyticsResponse>> GetAnalytics()
+    [ProducesResponseType(typeof(PlatformAnalyticsResponse), StatusCodes.Status200OK)]
+    public async Task<ActionResult<PlatformAnalyticsResponse>> GetAnalytics(CancellationToken cancellationToken)
     {
-        return Ok(await platformService.GetAnalyticsAsync());
+        return Ok(await platformService.GetAnalyticsAsync(cancellationToken));
     }
 }

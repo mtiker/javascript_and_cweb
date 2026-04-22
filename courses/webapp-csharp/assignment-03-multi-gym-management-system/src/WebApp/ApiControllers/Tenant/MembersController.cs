@@ -12,40 +12,46 @@ namespace WebApp.ApiControllers.Tenant;
 public class MembersController(IMemberWorkflowService memberWorkflowService) : ApiControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<IReadOnlyCollection<MemberResponse>>> GetMembers(string gymCode)
+    [ProducesResponseType(typeof(IReadOnlyCollection<MemberResponse>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<IReadOnlyCollection<MemberResponse>>> GetMembers(string gymCode, CancellationToken cancellationToken)
     {
-        return Ok(await memberWorkflowService.GetMembersAsync(gymCode));
+        return Ok(await memberWorkflowService.GetMembersAsync(gymCode, cancellationToken));
     }
 
     [HttpGet("me")]
-    public async Task<ActionResult<MemberDetailResponse>> GetCurrentMember(string gymCode)
+    [ProducesResponseType(typeof(MemberDetailResponse), StatusCodes.Status201Created)]
+    public async Task<ActionResult<MemberDetailResponse>> GetCurrentMember(string gymCode, CancellationToken cancellationToken)
     {
-        return Ok(await memberWorkflowService.GetCurrentMemberAsync(gymCode));
+        return Ok(await memberWorkflowService.GetCurrentMemberAsync(gymCode, cancellationToken));
     }
 
     [HttpGet("{id:guid}")]
-    public async Task<ActionResult<MemberDetailResponse>> GetMember(string gymCode, Guid id)
+    [ProducesResponseType(typeof(MemberDetailResponse), StatusCodes.Status200OK)]
+    public async Task<ActionResult<MemberDetailResponse>> GetMember(string gymCode, Guid id, CancellationToken cancellationToken)
     {
-        return Ok(await memberWorkflowService.GetMemberAsync(gymCode, id));
+        return Ok(await memberWorkflowService.GetMemberAsync(gymCode, id, cancellationToken));
     }
 
     [HttpPost]
-    public async Task<ActionResult<MemberDetailResponse>> CreateMember(string gymCode, [FromBody] MemberUpsertRequest request)
+    [ProducesResponseType(typeof(MemberDetailResponse), StatusCodes.Status200OK)]
+    public async Task<ActionResult<MemberDetailResponse>> CreateMember(string gymCode, [FromBody] MemberUpsertRequest request, CancellationToken cancellationToken)
     {
-        var member = await memberWorkflowService.CreateMemberAsync(gymCode, request);
+        var member = await memberWorkflowService.CreateMemberAsync(gymCode, request, cancellationToken);
         return CreatedAtAction(nameof(GetMember), new { version = "1.0", gymCode, id = member.Id }, member);
     }
 
     [HttpPut("{id:guid}")]
-    public async Task<ActionResult<MemberDetailResponse>> UpdateMember(string gymCode, Guid id, [FromBody] MemberUpsertRequest request)
+    [ProducesResponseType(typeof(MemberDetailResponse), StatusCodes.Status200OK)]
+    public async Task<ActionResult<MemberDetailResponse>> UpdateMember(string gymCode, Guid id, [FromBody] MemberUpsertRequest request, CancellationToken cancellationToken)
     {
-        return Ok(await memberWorkflowService.UpdateMemberAsync(gymCode, id, request));
+        return Ok(await memberWorkflowService.UpdateMemberAsync(gymCode, id, request, cancellationToken));
     }
 
     [HttpDelete("{id:guid}")]
-    public async Task<ActionResult<Message>> DeleteMember(string gymCode, Guid id)
+    [ProducesResponseType(typeof(Message), StatusCodes.Status200OK)]
+    public async Task<ActionResult<Message>> DeleteMember(string gymCode, Guid id, CancellationToken cancellationToken)
     {
-        await memberWorkflowService.DeleteMemberAsync(gymCode, id);
+        await memberWorkflowService.DeleteMemberAsync(gymCode, id, cancellationToken);
         return Ok(new Message("Member deleted."));
     }
 }

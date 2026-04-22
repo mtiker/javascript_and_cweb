@@ -312,3 +312,43 @@ Final decision:
 - keep the current ASP.NET Core monolith as the backend
 - add a focused separate React client for the minimum required API-consumer coverage
 - keep deployment status explicitly pending while still finishing code, tests, CI, and documentation for the correction pass
+
+## 2026-04-22 - A3 SaaS Plan Completion
+
+Task:
+- implement the remaining local `a3-saas-plan.md` gap after validating the current backend and React client state
+- make the React shell support assigned multi-gym tenant and role switching for non-system users
+
+Files affected:
+- `src/App.DTO/v1/Identity/JwtResponse.cs`
+- `src/App.BLL/Services/IdentityService.cs`
+- `client/src/components/AppShell.tsx`
+- `client/src/lib/types.ts`
+- `client/src/lib/language.tsx`
+- `client/src/App.test.tsx`
+- `client/src/test/testUtils.tsx`
+- `tests/WebApp.Tests/Integration/SmokeTests.cs`
+- `README.md`
+- `docs/a3-saas-plan.md`
+- `docs/api.md`
+- `docs/architecture.md`
+- `docs/testing.md`
+- `docs/ai-usage.md`
+
+What AI helped with:
+- added `availableTenants` to auth responses as a backward-compatible session contract
+- populated assigned active gym memberships and roles from `AppUserGymRole`
+- replaced the SystemAdmin-only React shell picker with a shell tenant/role switcher that also works for assigned multi-gym users
+- added backend and frontend regression coverage for the new session metadata and shell switching behavior
+
+What needed manual review or correction:
+- verified that the new auth response metadata does not replace backend authorization; tenant access still depends on JWT claims and BLL/controller checks
+- kept separate public client hosting out of scope because the documented deployment model intentionally serves the built Vite client from the ASP.NET Core host at `/client`
+
+Alternatives considered:
+- leaving non-system users to switch through the function console only
+- introducing a separate tenant directory endpoint, but the session contract already has the required user-specific assignment context
+
+Final decision:
+- expose assigned tenant/role choices in the login/refresh/switch responses
+- use the React shell as the primary workspace switcher

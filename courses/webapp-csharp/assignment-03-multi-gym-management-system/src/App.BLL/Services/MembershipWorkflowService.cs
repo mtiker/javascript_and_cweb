@@ -16,9 +16,9 @@ public class MembershipWorkflowService(
     IAppDbContext dbContext,
     IAuthorizationService authorizationService) : IMembershipWorkflowService
 {
-    public async Task<IReadOnlyCollection<MembershipPackageResponse>> GetPackagesAsync(string gymCode)
+    public async Task<IReadOnlyCollection<MembershipPackageResponse>> GetPackagesAsync(string gymCode, CancellationToken cancellationToken = default)
     {
-        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin, RoleNames.Member);
+        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin, RoleNames.Member);
 
         return await dbContext.MembershipPackages
             .Where(entity => entity.GymId == gymId)
@@ -36,12 +36,12 @@ public class MembershipWorkflowService(
                 IsTrainingFree = entity.IsTrainingFree,
                 Description = Translate(entity.Description)
             })
-            .ToArrayAsync();
+            .ToArrayAsync(cancellationToken);
     }
 
-    public async Task<MembershipPackageResponse> CreatePackageAsync(string gymCode, MembershipPackageUpsertRequest request)
+    public async Task<MembershipPackageResponse> CreatePackageAsync(string gymCode, MembershipPackageUpsertRequest request, CancellationToken cancellationToken = default)
     {
-        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin);
+        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin);
         var package = new MembershipPackage
         {
             GymId = gymId,
@@ -57,13 +57,13 @@ public class MembershipWorkflowService(
         };
 
         dbContext.MembershipPackages.Add(package);
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
         return ToPackageResponse(package);
     }
 
-    public async Task<MembershipPackageResponse> UpdatePackageAsync(string gymCode, Guid id, MembershipPackageUpsertRequest request)
+    public async Task<MembershipPackageResponse> UpdatePackageAsync(string gymCode, Guid id, MembershipPackageUpsertRequest request, CancellationToken cancellationToken = default)
     {
-        await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin);
+        await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin);
         var package = await dbContext.MembershipPackages.FirstOrDefaultAsync(entity => entity.Id == id)
                       ?? throw new NotFoundException("Membership package was not found.");
 
@@ -77,22 +77,22 @@ public class MembershipWorkflowService(
         package.IsTrainingFree = request.IsTrainingFree;
         package.Description = string.IsNullOrWhiteSpace(request.Description) ? null : ToLangStr(request.Description);
 
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
         return ToPackageResponse(package);
     }
 
-    public async Task DeletePackageAsync(string gymCode, Guid id)
+    public async Task DeletePackageAsync(string gymCode, Guid id, CancellationToken cancellationToken = default)
     {
-        await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin);
+        await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin);
         var package = await dbContext.MembershipPackages.FirstOrDefaultAsync(entity => entity.Id == id)
                       ?? throw new NotFoundException("Membership package was not found.");
         dbContext.MembershipPackages.Remove(package);
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<IReadOnlyCollection<MembershipResponse>> GetMembershipsAsync(string gymCode)
+    public async Task<IReadOnlyCollection<MembershipResponse>> GetMembershipsAsync(string gymCode, CancellationToken cancellationToken = default)
     {
-        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin, RoleNames.Member);
+        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin, RoleNames.Member);
         var query = dbContext.Memberships.Where(entity => entity.GymId == gymId);
 
         // The current user context is evaluated inside the authorization service for individual writes.
@@ -116,12 +116,12 @@ public class MembershipWorkflowService(
                 CurrencyCode = entity.CurrencyCode,
                 Status = entity.Status
             })
-            .ToArrayAsync();
+            .ToArrayAsync(cancellationToken);
     }
 
-    public async Task<MembershipSaleResponse> SellMembershipAsync(string gymCode, SellMembershipRequest request)
+    public async Task<MembershipSaleResponse> SellMembershipAsync(string gymCode, SellMembershipRequest request, CancellationToken cancellationToken = default)
     {
-        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin);
+        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin);
         var member = await dbContext.Members.FirstOrDefaultAsync(entity => entity.Id == request.MemberId)
                      ?? throw new NotFoundException("Member was not found.");
         var package = await dbContext.MembershipPackages.FirstOrDefaultAsync(entity => entity.Id == request.MembershipPackageId)
@@ -134,7 +134,7 @@ public class MembershipWorkflowService(
             .Where(entity => entity.GymId == gymId && entity.MemberId == member.Id)
             .Where(entity => entity.StartDate <= endDate && entity.EndDate >= startDate)
             .OrderByDescending(entity => entity.EndDate)
-            .ToListAsync();
+            .ToListAsync(cancellationToken);
 
         if (overlappingMemberships.Count > 0)
         {
@@ -177,7 +177,7 @@ public class MembershipWorkflowService(
             });
         }
 
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
 
         return new MembershipSaleResponse
         {
@@ -188,9 +188,9 @@ public class MembershipWorkflowService(
         };
     }
 
-    public async Task<PaymentResponse> CreatePaymentAsync(string gymCode, PaymentCreateRequest request)
+    public async Task<PaymentResponse> CreatePaymentAsync(string gymCode, PaymentCreateRequest request, CancellationToken cancellationToken = default)
     {
-        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin, RoleNames.Member);
+        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin, RoleNames.Member);
 
         if (!request.MembershipId.HasValue && !request.BookingId.HasValue)
         {
@@ -223,7 +223,7 @@ public class MembershipWorkflowService(
         };
 
         dbContext.Payments.Add(payment);
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
 
         return new PaymentResponse
         {
@@ -238,26 +238,26 @@ public class MembershipWorkflowService(
         };
     }
 
-    public async Task DeleteMembershipAsync(string gymCode, Guid id)
+    public async Task DeleteMembershipAsync(string gymCode, Guid id, CancellationToken cancellationToken = default)
     {
-        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin, RoleNames.Member);
+        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin, RoleNames.Member);
         var membership = await dbContext.Memberships.FirstOrDefaultAsync(entity => entity.Id == id)
                          ?? throw new NotFoundException("Membership was not found.");
         await authorizationService.EnsureMemberSelfAccessAsync(gymId, membership.MemberId);
         dbContext.Memberships.Remove(membership);
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<IReadOnlyCollection<PaymentResponse>> GetPaymentsAsync(string gymCode)
+    public async Task<IReadOnlyCollection<PaymentResponse>> GetPaymentsAsync(string gymCode, CancellationToken cancellationToken = default)
     {
-        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin, RoleNames.Member);
+        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin, RoleNames.Member);
         var query = dbContext.Payments.Where(entity => entity.GymId == gymId);
 
         var member = await authorizationService.GetCurrentMemberAsync(gymId);
         if (member != null)
         {
-            var membershipIds = await dbContext.Memberships.Where(entity => entity.MemberId == member.Id).Select(entity => entity.Id).ToListAsync();
-            var bookingIds = await dbContext.Bookings.Where(entity => entity.MemberId == member.Id).Select(entity => entity.Id).ToListAsync();
+            var membershipIds = await dbContext.Memberships.Where(entity => entity.MemberId == member.Id).Select(entity => entity.Id).ToListAsync(cancellationToken);
+            var bookingIds = await dbContext.Bookings.Where(entity => entity.MemberId == member.Id).Select(entity => entity.Id).ToListAsync(cancellationToken);
             query = query.Where(entity => entity.MembershipId.HasValue && membershipIds.Contains(entity.MembershipId.Value)
                                           || entity.BookingId.HasValue && bookingIds.Contains(entity.BookingId.Value));
         }
@@ -275,10 +275,10 @@ public class MembershipWorkflowService(
                 MembershipId = entity.MembershipId,
                 BookingId = entity.BookingId
             })
-            .ToArrayAsync();
+            .ToArrayAsync(cancellationToken);
     }
 
-    public async Task<decimal> CalculateBookingPriceAsync(Guid gymId, Guid memberId, TrainingSession trainingSession)
+    public async Task<decimal> CalculateBookingPriceAsync(Guid gymId, Guid memberId, TrainingSession trainingSession, CancellationToken cancellationToken = default)
     {
         var bookingDate = DateOnly.FromDateTime(trainingSession.StartAtUtc.Date);
         var membership = await dbContext.Memberships
@@ -286,7 +286,7 @@ public class MembershipWorkflowService(
             .Where(entity => entity.GymId == gymId && entity.MemberId == memberId)
             .Where(entity => entity.StartDate <= bookingDate && entity.EndDate >= bookingDate)
             .OrderByDescending(entity => entity.EndDate)
-            .FirstOrDefaultAsync();
+            .FirstOrDefaultAsync(cancellationToken);
 
         if (membership?.MembershipPackage == null)
         {

@@ -11,6 +11,14 @@ export interface AuthSession {
   activeGymCode?: string | null;
   activeRole?: string | null;
   systemRoles: string[];
+  availableTenants?: TenantAccess[];
+}
+
+export interface TenantAccess {
+  gymId: string;
+  gymCode: string;
+  gymName: string;
+  roles: string[];
 }
 
 export interface MessageResponse {

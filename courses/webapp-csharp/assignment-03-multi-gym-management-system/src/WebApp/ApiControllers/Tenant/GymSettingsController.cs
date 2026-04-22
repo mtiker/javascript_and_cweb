@@ -12,14 +12,16 @@ namespace WebApp.ApiControllers.Tenant;
 public class GymSettingsController(IMaintenanceWorkflowService maintenanceWorkflowService) : ApiControllerBase
 {
     [HttpGet("gym-settings")]
-    public async Task<ActionResult<GymSettingsResponse>> GetGymSettings(string gymCode)
+    [ProducesResponseType(typeof(GymSettingsResponse), StatusCodes.Status200OK)]
+    public async Task<ActionResult<GymSettingsResponse>> GetGymSettings(string gymCode, CancellationToken cancellationToken)
     {
-        return Ok(await maintenanceWorkflowService.GetGymSettingsAsync(gymCode));
+        return Ok(await maintenanceWorkflowService.GetGymSettingsAsync(gymCode, cancellationToken));
     }
 
     [HttpPut("gym-settings")]
-    public async Task<ActionResult<GymSettingsResponse>> UpdateGymSettings(string gymCode, [FromBody] GymSettingsUpdateRequest request)
+    [ProducesResponseType(typeof(GymSettingsResponse), StatusCodes.Status200OK)]
+    public async Task<ActionResult<GymSettingsResponse>> UpdateGymSettings(string gymCode, [FromBody] GymSettingsUpdateRequest request, CancellationToken cancellationToken)
     {
-        return Ok(await maintenanceWorkflowService.UpdateGymSettingsAsync(gymCode, request));
+        return Ok(await maintenanceWorkflowService.UpdateGymSettingsAsync(gymCode, request, cancellationToken));
 }
 }

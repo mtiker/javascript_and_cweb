@@ -13,6 +13,14 @@ export const defaultSession: AuthSession = {
   activeGymId: "gym-id",
   activeRole: "GymAdmin",
   systemRoles: [],
+  availableTenants: [
+    {
+      gymId: "gym-id",
+      gymCode: "peak-forge",
+      gymName: "Peak Forge",
+      roles: ["GymAdmin"],
+    },
+  ],
 };
 
 export function renderWithAuth(

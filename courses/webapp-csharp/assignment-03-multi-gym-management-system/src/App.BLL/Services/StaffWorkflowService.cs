@@ -16,9 +16,9 @@ public class StaffWorkflowService(
     IAppDbContext dbContext,
     IAuthorizationService authorizationService) : IStaffWorkflowService
 {
-    public async Task<IReadOnlyCollection<StaffResponse>> GetStaffAsync(string gymCode)
+    public async Task<IReadOnlyCollection<StaffResponse>> GetStaffAsync(string gymCode, CancellationToken cancellationToken = default)
     {
-        var gymId = await EnsureStaffAdminAccessAsync(gymCode);
+        var gymId = await EnsureStaffAdminAccessAsync(gymCode, cancellationToken);
         return await dbContext.Staff
             .Include(entity => entity.Person)
             .Where(entity => entity.GymId == gymId)
@@ -31,12 +31,12 @@ public class StaffWorkflowService(
                 FullName = $"{entity.Person!.FirstName} {entity.Person!.LastName}".Trim(),
                 Status = entity.Status
             })
-            .ToArrayAsync();
+            .ToArrayAsync(cancellationToken);
     }
 
-    public async Task<StaffResponse> CreateStaffAsync(string gymCode, StaffUpsertRequest request)
+    public async Task<StaffResponse> CreateStaffAsync(string gymCode, StaffUpsertRequest request, CancellationToken cancellationToken = default)
     {
-        var gymId = await EnsureStaffAdminAccessAsync(gymCode);
+        var gymId = await EnsureStaffAdminAccessAsync(gymCode, cancellationToken);
         var staff = new Staff
         {
             GymId = gymId,
@@ -50,16 +50,16 @@ public class StaffWorkflowService(
         };
 
         dbContext.Staff.Add(staff);
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
         return ToStaffResponse(staff);
     }
 
-    public async Task<StaffResponse> UpdateStaffAsync(string gymCode, Guid id, StaffUpsertRequest request)
+    public async Task<StaffResponse> UpdateStaffAsync(string gymCode, Guid id, StaffUpsertRequest request, CancellationToken cancellationToken = default)
     {
-        var gymId = await EnsureStaffAdminAccessAsync(gymCode);
+        var gymId = await EnsureStaffAdminAccessAsync(gymCode, cancellationToken);
         var staff = await dbContext.Staff
                         .Include(entity => entity.Person)
-                        .FirstOrDefaultAsync(entity => entity.Id == id && entity.GymId == gymId)
+                        .FirstOrDefaultAsync(entity => entity.Id == id && entity.GymId == gymId, cancellationToken)
                     ?? throw new NotFoundException("Staff member was not found.");
 
         staff.StaffCode = request.StaffCode.Trim();
@@ -67,23 +67,23 @@ public class StaffWorkflowService(
         staff.Person!.FirstName = request.FirstName.Trim();
         staff.Person.LastName = request.LastName.Trim();
 
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
         return ToStaffResponse(staff);
     }
 
-    public async Task DeleteStaffAsync(string gymCode, Guid id)
+    public async Task DeleteStaffAsync(string gymCode, Guid id, CancellationToken cancellationToken = default)
     {
-        var gymId = await EnsureStaffAdminAccessAsync(gymCode);
-        var staff = await dbContext.Staff.FirstOrDefaultAsync(entity => entity.Id == id && entity.GymId == gymId)
+        var gymId = await EnsureStaffAdminAccessAsync(gymCode, cancellationToken);
+        var staff = await dbContext.Staff.FirstOrDefaultAsync(entity => entity.Id == id && entity.GymId == gymId, cancellationToken)
                     ?? throw new NotFoundException("Staff member was not found.");
 
         dbContext.Staff.Remove(staff);
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<IReadOnlyCollection<JobRoleResponse>> GetJobRolesAsync(string gymCode)
+    public async Task<IReadOnlyCollection<JobRoleResponse>> GetJobRolesAsync(string gymCode, CancellationToken cancellationToken = default)
     {
-        var gymId = await EnsureStaffAdminAccessAsync(gymCode);
+        var gymId = await EnsureStaffAdminAccessAsync(gymCode, cancellationToken);
         return await dbContext.JobRoles
             .Where(entity => entity.GymId == gymId)
             .OrderBy(entity => entity.Code)
@@ -94,12 +94,12 @@ public class StaffWorkflowService(
                 Title = Translate(entity.Title) ?? string.Empty,
                 Description = Translate(entity.Description)
             })
-            .ToArrayAsync();
+            .ToArrayAsync(cancellationToken);
     }
 
-    public async Task<JobRoleResponse> CreateJobRoleAsync(string gymCode, JobRoleUpsertRequest request)
+    public async Task<JobRoleResponse> CreateJobRoleAsync(string gymCode, JobRoleUpsertRequest request, CancellationToken cancellationToken = default)
     {
-        var gymId = await EnsureStaffAdminAccessAsync(gymCode);
+        var gymId = await EnsureStaffAdminAccessAsync(gymCode, cancellationToken);
         var role = new JobRole
         {
             GymId = gymId,
@@ -109,36 +109,36 @@ public class StaffWorkflowService(
         };
 
         dbContext.JobRoles.Add(role);
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
         return ToJobRoleResponse(role);
     }
 
-    public async Task<JobRoleResponse> UpdateJobRoleAsync(string gymCode, Guid id, JobRoleUpsertRequest request)
+    public async Task<JobRoleResponse> UpdateJobRoleAsync(string gymCode, Guid id, JobRoleUpsertRequest request, CancellationToken cancellationToken = default)
     {
-        var gymId = await EnsureStaffAdminAccessAsync(gymCode);
-        var role = await dbContext.JobRoles.FirstOrDefaultAsync(entity => entity.Id == id && entity.GymId == gymId)
+        var gymId = await EnsureStaffAdminAccessAsync(gymCode, cancellationToken);
+        var role = await dbContext.JobRoles.FirstOrDefaultAsync(entity => entity.Id == id && entity.GymId == gymId, cancellationToken)
                    ?? throw new NotFoundException("Job role was not found.");
 
         role.Code = request.Code.Trim();
         role.Title = ToLangStr(request.Title);
         role.Description = string.IsNullOrWhiteSpace(request.Description) ? null : ToLangStr(request.Description);
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
         return ToJobRoleResponse(role);
     }
 
-    public async Task DeleteJobRoleAsync(string gymCode, Guid id)
+    public async Task DeleteJobRoleAsync(string gymCode, Guid id, CancellationToken cancellationToken = default)
     {
-        var gymId = await EnsureStaffAdminAccessAsync(gymCode);
-        var role = await dbContext.JobRoles.FirstOrDefaultAsync(entity => entity.Id == id && entity.GymId == gymId)
+        var gymId = await EnsureStaffAdminAccessAsync(gymCode, cancellationToken);
+        var role = await dbContext.JobRoles.FirstOrDefaultAsync(entity => entity.Id == id && entity.GymId == gymId, cancellationToken)
                    ?? throw new NotFoundException("Job role was not found.");
 
         dbContext.JobRoles.Remove(role);
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<IReadOnlyCollection<ContractResponse>> GetContractsAsync(string gymCode)
+    public async Task<IReadOnlyCollection<ContractResponse>> GetContractsAsync(string gymCode, CancellationToken cancellationToken = default)
     {
-        var gymId = await EnsureStaffAdminAccessAsync(gymCode);
+        var gymId = await EnsureStaffAdminAccessAsync(gymCode, cancellationToken);
         return await dbContext.EmploymentContracts
             .Where(entity => entity.GymId == gymId)
             .OrderByDescending(entity => entity.StartDate)
@@ -153,13 +153,13 @@ public class StaffWorkflowService(
                 ContractStatus = entity.ContractStatus,
                 EmployerType = entity.EmployerType
             })
-            .ToArrayAsync();
+            .ToArrayAsync(cancellationToken);
     }
 
-    public async Task<ContractResponse> CreateContractAsync(string gymCode, ContractUpsertRequest request)
+    public async Task<ContractResponse> CreateContractAsync(string gymCode, ContractUpsertRequest request, CancellationToken cancellationToken = default)
     {
-        var gymId = await EnsureStaffAdminAccessAsync(gymCode);
-        await EnsureStaffAndRoleBelongToGymAsync(gymId, request.StaffId, request.PrimaryJobRoleId);
+        var gymId = await EnsureStaffAdminAccessAsync(gymCode, cancellationToken);
+        await EnsureStaffAndRoleBelongToGymAsync(gymId, request.StaffId, request.PrimaryJobRoleId, cancellationToken);
 
         var contract = new EmploymentContract
         {
@@ -176,16 +176,16 @@ public class StaffWorkflowService(
         };
 
         dbContext.EmploymentContracts.Add(contract);
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
         return ToContractResponse(contract);
     }
 
-    public async Task<ContractResponse> UpdateContractAsync(string gymCode, Guid id, ContractUpsertRequest request)
+    public async Task<ContractResponse> UpdateContractAsync(string gymCode, Guid id, ContractUpsertRequest request, CancellationToken cancellationToken = default)
     {
-        var gymId = await EnsureStaffAdminAccessAsync(gymCode);
-        await EnsureStaffAndRoleBelongToGymAsync(gymId, request.StaffId, request.PrimaryJobRoleId);
+        var gymId = await EnsureStaffAdminAccessAsync(gymCode, cancellationToken);
+        await EnsureStaffAndRoleBelongToGymAsync(gymId, request.StaffId, request.PrimaryJobRoleId, cancellationToken);
 
-        var contract = await dbContext.EmploymentContracts.FirstOrDefaultAsync(entity => entity.Id == id && entity.GymId == gymId)
+        var contract = await dbContext.EmploymentContracts.FirstOrDefaultAsync(entity => entity.Id == id && entity.GymId == gymId, cancellationToken)
                        ?? throw new NotFoundException("Contract was not found.");
 
         contract.StaffId = request.StaffId;
@@ -198,23 +198,23 @@ public class StaffWorkflowService(
         contract.EmployerType = request.EmployerType;
         contract.EmployerName = request.EmployerName?.Trim();
 
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
         return ToContractResponse(contract);
     }
 
-    public async Task DeleteContractAsync(string gymCode, Guid id)
+    public async Task DeleteContractAsync(string gymCode, Guid id, CancellationToken cancellationToken = default)
     {
-        var gymId = await EnsureStaffAdminAccessAsync(gymCode);
-        var contract = await dbContext.EmploymentContracts.FirstOrDefaultAsync(entity => entity.Id == id && entity.GymId == gymId)
+        var gymId = await EnsureStaffAdminAccessAsync(gymCode, cancellationToken);
+        var contract = await dbContext.EmploymentContracts.FirstOrDefaultAsync(entity => entity.Id == id && entity.GymId == gymId, cancellationToken)
                        ?? throw new NotFoundException("Contract was not found.");
 
         dbContext.EmploymentContracts.Remove(contract);
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<IReadOnlyCollection<VacationResponse>> GetVacationsAsync(string gymCode)
+    public async Task<IReadOnlyCollection<VacationResponse>> GetVacationsAsync(string gymCode, CancellationToken cancellationToken = default)
     {
-        var gymId = await EnsureStaffAdminAccessAsync(gymCode);
+        var gymId = await EnsureStaffAdminAccessAsync(gymCode, cancellationToken);
         return await dbContext.Vacations
             .Where(entity => entity.GymId == gymId)
             .OrderByDescending(entity => entity.StartDate)
@@ -228,13 +228,13 @@ public class StaffWorkflowService(
                 Status = entity.Status,
                 Comment = entity.Comment
             })
-            .ToArrayAsync();
+            .ToArrayAsync(cancellationToken);
     }
 
-    public async Task<VacationResponse> CreateVacationAsync(string gymCode, VacationUpsertRequest request)
+    public async Task<VacationResponse> CreateVacationAsync(string gymCode, VacationUpsertRequest request, CancellationToken cancellationToken = default)
     {
-        var gymId = await EnsureStaffAdminAccessAsync(gymCode);
-        await EnsureContractBelongsToGymAsync(gymId, request.ContractId);
+        var gymId = await EnsureStaffAdminAccessAsync(gymCode, cancellationToken);
+        await EnsureContractBelongsToGymAsync(gymId, request.ContractId, cancellationToken);
 
         var vacation = new Vacation
         {
@@ -248,16 +248,16 @@ public class StaffWorkflowService(
         };
 
         dbContext.Vacations.Add(vacation);
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
         return ToVacationResponse(vacation);
     }
 
-    public async Task<VacationResponse> UpdateVacationAsync(string gymCode, Guid id, VacationUpsertRequest request)
+    public async Task<VacationResponse> UpdateVacationAsync(string gymCode, Guid id, VacationUpsertRequest request, CancellationToken cancellationToken = default)
     {
-        var gymId = await EnsureStaffAdminAccessAsync(gymCode);
-        await EnsureContractBelongsToGymAsync(gymId, request.ContractId);
+        var gymId = await EnsureStaffAdminAccessAsync(gymCode, cancellationToken);
+        await EnsureContractBelongsToGymAsync(gymId, request.ContractId, cancellationToken);
 
-        var vacation = await dbContext.Vacations.FirstOrDefaultAsync(entity => entity.Id == id && entity.GymId == gymId)
+        var vacation = await dbContext.Vacations.FirstOrDefaultAsync(entity => entity.Id == id && entity.GymId == gymId, cancellationToken)
                        ?? throw new NotFoundException("Vacation was not found.");
 
         vacation.ContractId = request.ContractId;
@@ -267,41 +267,41 @@ public class StaffWorkflowService(
         vacation.Status = request.Status;
         vacation.Comment = request.Comment?.Trim();
 
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
         return ToVacationResponse(vacation);
     }
 
-    public async Task DeleteVacationAsync(string gymCode, Guid id)
+    public async Task DeleteVacationAsync(string gymCode, Guid id, CancellationToken cancellationToken = default)
     {
-        var gymId = await EnsureStaffAdminAccessAsync(gymCode);
-        var vacation = await dbContext.Vacations.FirstOrDefaultAsync(entity => entity.Id == id && entity.GymId == gymId)
+        var gymId = await EnsureStaffAdminAccessAsync(gymCode, cancellationToken);
+        var vacation = await dbContext.Vacations.FirstOrDefaultAsync(entity => entity.Id == id && entity.GymId == gymId, cancellationToken)
                        ?? throw new NotFoundException("Vacation was not found.");
 
         dbContext.Vacations.Remove(vacation);
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    private Task<Guid> EnsureStaffAdminAccessAsync(string gymCode)
+    private Task<Guid> EnsureStaffAdminAccessAsync(string gymCode, CancellationToken cancellationToken)
     {
-        return authorizationService.EnsureTenantAccessAsync(gymCode, RoleNames.GymOwner, RoleNames.GymAdmin);
+        return authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin);
     }
 
-    private async Task EnsureStaffAndRoleBelongToGymAsync(Guid gymId, Guid staffId, Guid jobRoleId)
+    private async Task EnsureStaffAndRoleBelongToGymAsync(Guid gymId, Guid staffId, Guid jobRoleId, CancellationToken cancellationToken)
     {
-        if (!await dbContext.Staff.AnyAsync(entity => entity.Id == staffId && entity.GymId == gymId))
+        if (!await dbContext.Staff.AnyAsync(entity => entity.Id == staffId && entity.GymId == gymId, cancellationToken))
         {
             throw new ValidationAppException("Staff member was not found in the active gym.");
         }
 
-        if (!await dbContext.JobRoles.AnyAsync(entity => entity.Id == jobRoleId && entity.GymId == gymId))
+        if (!await dbContext.JobRoles.AnyAsync(entity => entity.Id == jobRoleId && entity.GymId == gymId, cancellationToken))
         {
             throw new ValidationAppException("Job role was not found in the active gym.");
         }
     }
 
-    private async Task EnsureContractBelongsToGymAsync(Guid gymId, Guid contractId)
+    private async Task EnsureContractBelongsToGymAsync(Guid gymId, Guid contractId, CancellationToken cancellationToken)
     {
-        if (!await dbContext.EmploymentContracts.AnyAsync(entity => entity.Id == contractId && entity.GymId == gymId))
+        if (!await dbContext.EmploymentContracts.AnyAsync(entity => entity.Id == contractId && entity.GymId == gymId, cancellationToken))
         {
             throw new ValidationAppException("Contract was not found in the active gym.");
         }

@@ -12,14 +12,16 @@ namespace WebApp.ApiControllers.Tenant;
 public class PaymentsController(IMembershipWorkflowService membershipWorkflowService) : ApiControllerBase
 {
     [HttpGet("payments")]
-    public async Task<ActionResult<IReadOnlyCollection<PaymentResponse>>> GetPayments(string gymCode)
+    [ProducesResponseType(typeof(IReadOnlyCollection<PaymentResponse>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<IReadOnlyCollection<PaymentResponse>>> GetPayments(string gymCode, CancellationToken cancellationToken)
     {
-        return Ok(await membershipWorkflowService.GetPaymentsAsync(gymCode));
+        return Ok(await membershipWorkflowService.GetPaymentsAsync(gymCode, cancellationToken));
     }
 
     [HttpPost("payments")]
-    public async Task<ActionResult<PaymentResponse>> CreatePayment(string gymCode, [FromBody] PaymentCreateRequest request)
+    [ProducesResponseType(typeof(PaymentResponse), StatusCodes.Status200OK)]
+    public async Task<ActionResult<PaymentResponse>> CreatePayment(string gymCode, [FromBody] PaymentCreateRequest request, CancellationToken cancellationToken)
     {
-        return Ok(await membershipWorkflowService.CreatePaymentAsync(gymCode, request));
+        return Ok(await membershipWorkflowService.CreatePaymentAsync(gymCode, request, cancellationToken));
 }
 }

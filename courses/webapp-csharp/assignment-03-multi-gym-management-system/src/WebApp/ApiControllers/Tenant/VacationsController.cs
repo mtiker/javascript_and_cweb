@@ -12,27 +12,31 @@ namespace WebApp.ApiControllers.Tenant;
 public class VacationsController(IStaffWorkflowService staffWorkflowService) : ApiControllerBase
 {
     [HttpGet("vacations")]
-    public async Task<ActionResult<IReadOnlyCollection<VacationResponse>>> GetVacations(string gymCode)
+    [ProducesResponseType(typeof(IReadOnlyCollection<VacationResponse>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<IReadOnlyCollection<VacationResponse>>> GetVacations(string gymCode, CancellationToken cancellationToken)
     {
-        return Ok(await staffWorkflowService.GetVacationsAsync(gymCode));
+        return Ok(await staffWorkflowService.GetVacationsAsync(gymCode, cancellationToken));
     }
 
     [HttpPost("vacations")]
-    public async Task<ActionResult<VacationResponse>> CreateVacation(string gymCode, [FromBody] VacationUpsertRequest request)
+    [ProducesResponseType(typeof(VacationResponse), StatusCodes.Status200OK)]
+    public async Task<ActionResult<VacationResponse>> CreateVacation(string gymCode, [FromBody] VacationUpsertRequest request, CancellationToken cancellationToken)
     {
-        return Ok(await staffWorkflowService.CreateVacationAsync(gymCode, request));
+        return Ok(await staffWorkflowService.CreateVacationAsync(gymCode, request, cancellationToken));
     }
 
     [HttpPut("vacations/{id:guid}")]
-    public async Task<ActionResult<VacationResponse>> UpdateVacation(string gymCode, Guid id, [FromBody] VacationUpsertRequest request)
+    [ProducesResponseType(typeof(VacationResponse), StatusCodes.Status200OK)]
+    public async Task<ActionResult<VacationResponse>> UpdateVacation(string gymCode, Guid id, [FromBody] VacationUpsertRequest request, CancellationToken cancellationToken)
     {
-        return Ok(await staffWorkflowService.UpdateVacationAsync(gymCode, id, request));
+        return Ok(await staffWorkflowService.UpdateVacationAsync(gymCode, id, request, cancellationToken));
     }
 
     [HttpDelete("vacations/{id:guid}")]
-    public async Task<ActionResult<Message>> DeleteVacation(string gymCode, Guid id)
+    [ProducesResponseType(typeof(Message), StatusCodes.Status200OK)]
+    public async Task<ActionResult<Message>> DeleteVacation(string gymCode, Guid id, CancellationToken cancellationToken)
     {
-        await staffWorkflowService.DeleteVacationAsync(gymCode, id);
+        await staffWorkflowService.DeleteVacationAsync(gymCode, id, cancellationToken);
         return Ok(new Message("Vacation deleted."));
     }
 }

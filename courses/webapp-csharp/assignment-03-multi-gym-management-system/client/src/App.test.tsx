@@ -78,4 +78,71 @@ describe("App routing and auth", () => {
 
     expect(await screen.findByRole("heading", { name: "Platform and Tenant Console" })).toBeInTheDocument();
   });
+
+  it("lets assigned multi-gym users switch tenant and role from the shell", async () => {
+    const multiGymSession = {
+      ...defaultSession,
+      availableTenants: [
+        {
+          gymId: "peak-id",
+          gymCode: "peak-forge",
+          gymName: "Peak Forge",
+          roles: ["GymAdmin"],
+        },
+        {
+          gymId: "north-id",
+          gymCode: "north-star",
+          gymName: "North Star",
+          roles: ["GymAdmin", "GymOwner"],
+        },
+      ],
+    };
+    const switchedGymSession = {
+      ...multiGymSession,
+      activeGymId: "north-id",
+      activeGymCode: "north-star",
+      activeRole: "GymAdmin",
+    };
+    const switchedRoleSession = {
+      ...switchedGymSession,
+      activeRole: "GymOwner",
+    };
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse([]))
+      .mockResolvedValueOnce(jsonResponse(switchedGymSession))
+      .mockResolvedValueOnce(jsonResponse([]))
+      .mockResolvedValueOnce(jsonResponse(switchedRoleSession));
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(
+      <LanguageProvider>
+        <AuthProvider initialSession={multiGymSession}>
+          <MemoryRouter initialEntries={["/members"]}>
+            <AppRoutes />
+          </MemoryRouter>
+        </AuthProvider>
+      </LanguageProvider>,
+    );
+
+    await userEvent.selectOptions(await screen.findByLabelText("Switch active tenant"), "north-star");
+    await userEvent.selectOptions(await screen.findByLabelText("Switch active role"), "GymOwner");
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledWith(
+        "https://localhost:7245/api/v1/account/switch-gym",
+        expect.objectContaining({
+          body: JSON.stringify({ gymCode: "north-star" }),
+          method: "POST",
+        }),
+      );
+      expect(fetchMock).toHaveBeenCalledWith(
+        "https://localhost:7245/api/v1/account/switch-role",
+        expect.objectContaining({
+          body: JSON.stringify({ roleName: "GymOwner" }),
+          method: "POST",
+        }),
+      );
+    });
+  });
 });

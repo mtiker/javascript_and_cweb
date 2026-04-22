@@ -10,9 +10,9 @@ public class MemberWorkflowService(
     IAppDbContext dbContext,
     IAuthorizationService authorizationService) : IMemberWorkflowService
 {
-    public async Task<IReadOnlyCollection<MemberResponse>> GetMembersAsync(string gymCode)
+    public async Task<IReadOnlyCollection<MemberResponse>> GetMembersAsync(string gymCode, CancellationToken cancellationToken = default)
     {
-        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, App.Domain.RoleNames.GymOwner, App.Domain.RoleNames.GymAdmin);
+        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, App.Domain.RoleNames.GymOwner, App.Domain.RoleNames.GymAdmin);
 
         return await dbContext.Members
             .Include(entity => entity.Person)
@@ -26,10 +26,10 @@ public class MemberWorkflowService(
                 FullName = $"{entity.Person!.FirstName} {entity.Person!.LastName}".Trim(),
                 Status = entity.Status
             })
-            .ToArrayAsync();
+            .ToArrayAsync(cancellationToken);
     }
 
-    public async Task<MemberDetailResponse> GetCurrentMemberAsync(string gymCode)
+    public async Task<MemberDetailResponse> GetCurrentMemberAsync(string gymCode, CancellationToken cancellationToken = default)
     {
         var gymId = await authorizationService.EnsureTenantAccessAsync(
             gymCode,
@@ -48,7 +48,7 @@ public class MemberWorkflowService(
         return ToMemberDetailResponse(member);
     }
 
-    public async Task<MemberDetailResponse> GetMemberAsync(string gymCode, Guid id)
+    public async Task<MemberDetailResponse> GetMemberAsync(string gymCode, Guid id, CancellationToken cancellationToken = default)
     {
         var gymId = await authorizationService.EnsureTenantAccessAsync(
             gymCode,
@@ -66,9 +66,9 @@ public class MemberWorkflowService(
         return ToMemberDetailResponse(member);
     }
 
-    public async Task<MemberDetailResponse> CreateMemberAsync(string gymCode, MemberUpsertRequest request)
+    public async Task<MemberDetailResponse> CreateMemberAsync(string gymCode, MemberUpsertRequest request, CancellationToken cancellationToken = default)
     {
-        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, App.Domain.RoleNames.GymOwner, App.Domain.RoleNames.GymAdmin);
+        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, App.Domain.RoleNames.GymOwner, App.Domain.RoleNames.GymAdmin);
         var normalized = NormalizeRequest(request);
 
         await EnsureUniqueMemberFieldsAsync(gymId, normalized.MemberCode, normalized.PersonalCode, null, null);
@@ -90,14 +90,14 @@ public class MemberWorkflowService(
         };
 
         dbContext.Members.Add(member);
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
 
         return ToMemberDetailResponse(member);
     }
 
-    public async Task<MemberDetailResponse> UpdateMemberAsync(string gymCode, Guid id, MemberUpsertRequest request)
+    public async Task<MemberDetailResponse> UpdateMemberAsync(string gymCode, Guid id, MemberUpsertRequest request, CancellationToken cancellationToken = default)
     {
-        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, App.Domain.RoleNames.GymOwner, App.Domain.RoleNames.GymAdmin);
+        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, App.Domain.RoleNames.GymOwner, App.Domain.RoleNames.GymAdmin);
         var normalized = NormalizeRequest(request);
 
         var member = await dbContext.Members
@@ -114,20 +114,20 @@ public class MemberWorkflowService(
         member.Person.PersonalCode = normalized.PersonalCode;
         member.Person.DateOfBirth = normalized.DateOfBirth;
 
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
 
         return ToMemberDetailResponse(member);
     }
 
-    public async Task DeleteMemberAsync(string gymCode, Guid id)
+    public async Task DeleteMemberAsync(string gymCode, Guid id, CancellationToken cancellationToken = default)
     {
-        await authorizationService.EnsureTenantAccessAsync(gymCode, App.Domain.RoleNames.GymOwner, App.Domain.RoleNames.GymAdmin);
+        await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, App.Domain.RoleNames.GymOwner, App.Domain.RoleNames.GymAdmin);
 
         var member = await dbContext.Members.FirstOrDefaultAsync(entity => entity.Id == id)
                      ?? throw new NotFoundException("Member was not found.");
 
         dbContext.Members.Remove(member);
-        await dbContext.SaveChangesAsync();
+        await dbContext.SaveChangesAsync(cancellationToken);
     }
 
     private static MemberDetailResponse ToMemberDetailResponse(Member member)

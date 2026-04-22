@@ -12,27 +12,31 @@ namespace WebApp.ApiControllers.Tenant;
 public class MembershipPackagesController(IMembershipWorkflowService membershipWorkflowService) : ApiControllerBase
 {
     [HttpGet("membership-packages")]
-    public async Task<ActionResult<IReadOnlyCollection<MembershipPackageResponse>>> GetPackages(string gymCode)
+    [ProducesResponseType(typeof(IReadOnlyCollection<MembershipPackageResponse>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<IReadOnlyCollection<MembershipPackageResponse>>> GetPackages(string gymCode, CancellationToken cancellationToken)
     {
-        return Ok(await membershipWorkflowService.GetPackagesAsync(gymCode));
+        return Ok(await membershipWorkflowService.GetPackagesAsync(gymCode, cancellationToken));
     }
 
     [HttpPost("membership-packages")]
-    public async Task<ActionResult<MembershipPackageResponse>> CreatePackage(string gymCode, [FromBody] MembershipPackageUpsertRequest request)
+    [ProducesResponseType(typeof(MembershipPackageResponse), StatusCodes.Status200OK)]
+    public async Task<ActionResult<MembershipPackageResponse>> CreatePackage(string gymCode, [FromBody] MembershipPackageUpsertRequest request, CancellationToken cancellationToken)
     {
-        return Ok(await membershipWorkflowService.CreatePackageAsync(gymCode, request));
+        return Ok(await membershipWorkflowService.CreatePackageAsync(gymCode, request, cancellationToken));
     }
 
     [HttpPut("membership-packages/{id:guid}")]
-    public async Task<ActionResult<MembershipPackageResponse>> UpdatePackage(string gymCode, Guid id, [FromBody] MembershipPackageUpsertRequest request)
+    [ProducesResponseType(typeof(MembershipPackageResponse), StatusCodes.Status200OK)]
+    public async Task<ActionResult<MembershipPackageResponse>> UpdatePackage(string gymCode, Guid id, [FromBody] MembershipPackageUpsertRequest request, CancellationToken cancellationToken)
     {
-        return Ok(await membershipWorkflowService.UpdatePackageAsync(gymCode, id, request));
+        return Ok(await membershipWorkflowService.UpdatePackageAsync(gymCode, id, request, cancellationToken));
     }
 
     [HttpDelete("membership-packages/{id:guid}")]
-    public async Task<ActionResult<Message>> DeletePackage(string gymCode, Guid id)
+    [ProducesResponseType(typeof(Message), StatusCodes.Status200OK)]
+    public async Task<ActionResult<Message>> DeletePackage(string gymCode, Guid id, CancellationToken cancellationToken)
     {
-        await membershipWorkflowService.DeletePackageAsync(gymCode, id);
+        await membershipWorkflowService.DeletePackageAsync(gymCode, id, cancellationToken);
         return Ok(new Message("Membership package deleted."));
 }
 }
