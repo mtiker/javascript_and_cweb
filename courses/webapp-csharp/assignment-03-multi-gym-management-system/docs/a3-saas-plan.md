@@ -181,7 +181,9 @@ Implemented v1 scope:
 - refresh-token based session continuation
 - `sessionStorage` auth persistence
 - language selection with `Accept-Language` for localized API responses
+- translated React login/shell labels for English and Estonian
 - system-role platform console for analytics, gym onboarding/activation/snapshots, subscriptions, support tickets, and impersonation
+- SystemAdmin active-tenant picker in the React shell
 - tenant owner/admin function console exposing staff, contracts, vacations, sessions, shifts, bookings, memberships, payments, facilities, equipment, maintenance, settings, and gym-user actions
 - 3 admin CRUD areas:
   - members
@@ -191,10 +193,10 @@ Implemented v1 scope:
 - member/admin booking with payment reference
 - trainer attendance updates
 - caretaker maintenance task status updates
-- single active gym per session
+- single active gym per session, with SystemAdmin able to select any active tenant
 
 Not implemented in this pass:
-- polished multi-gym picker inside the React client; switch actions are available from the console
+- polished role/gym picker for non-system multi-gym users; switch actions are available from the console
 - deployment of the client to a separate public server; it is instead deployed under the ASP.NET Core host at `/client`
 
 ## Security Rules
@@ -205,7 +207,7 @@ Not implemented in this pass:
 - production HTML failures render `/Home/Error`.
 - members can access only their own member data.
 - tenant-only users cannot use system routes.
-- platform-role access is separated from tenant-role access.
+- platform-role access is separated from tenant-role access; SystemAdmin can intentionally enter an active tenant context as `GymOwner` for support/demo work.
 - trainers can update only attendance for sessions assigned to them.
 - caretakers can update only maintenance tasks assigned to them.
 
@@ -219,7 +221,7 @@ Not implemented in this pass:
 
 Backend:
 - unit tests for translation fallback and membership overlap logic
-- integration tests for login, register, gym switch, refresh-token rotation, expired/reused refresh tokens, cross-gym denial, member self-only denial, system-route denial, API `ProblemDetails`, MVC HTML error handling, `/client` fallback serving, MVC Admin/Client layout rendering, member roster denial, nullable session descriptions, booking payment-reference enforcement, trainer attendance authorization, and caretaker task authorization
+- integration tests for login, register, multi-gym user switch, SystemAdmin tenant-context switch, refresh-token rotation, expired/reused refresh tokens, cross-gym denial, member self-only denial, system-route denial, API `ProblemDetails`, MVC HTML error handling, `/client` fallback serving, MVC Admin/Client layout rendering, member roster denial, nullable session descriptions, booking payment-reference enforcement, trainer attendance authorization, and caretaker task authorization
 
 Frontend:
 - auth guard tests

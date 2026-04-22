@@ -157,6 +157,22 @@ public class IdentityService(
             .OrderBy(link => link.RoleName)
             .FirstOrDefaultAsync();
 
+        if (activeLink == null && context.HasRole(RoleNames.SystemAdmin))
+        {
+            var gym = await dbContext.Gyms.FirstOrDefaultAsync(entity => entity.Code == request.GymCode && entity.IsActive);
+            if (gym != null)
+            {
+                activeLink = new AppUserGymRole
+                {
+                    AppUserId = user.Id,
+                    GymId = gym.Id,
+                    Gym = gym,
+                    RoleName = RoleNames.GymOwner,
+                    IsActive = true
+                };
+            }
+        }
+
         if (activeLink == null)
         {
             throw new AppForbiddenException("The user does not have access to the requested gym.");
@@ -183,6 +199,22 @@ public class IdentityService(
                 link.GymId == context.ActiveGymId.Value &&
                 link.RoleName == request.RoleName &&
                 link.IsActive);
+
+        if (activeLink == null && context.HasRole(RoleNames.SystemAdmin) && IsSystemAdminTenantRole(request.RoleName))
+        {
+            var gym = await dbContext.Gyms.FirstOrDefaultAsync(entity => entity.Id == context.ActiveGymId.Value && entity.IsActive);
+            if (gym != null)
+            {
+                activeLink = new AppUserGymRole
+                {
+                    AppUserId = user.Id,
+                    GymId = gym.Id,
+                    Gym = gym,
+                    RoleName = request.RoleName,
+                    IsActive = true
+                };
+            }
+        }
 
         if (activeLink == null)
         {
@@ -273,6 +305,38 @@ public class IdentityService(
             query = query.Where(link => link.RoleName == roleName);
         }
 
-        return await query.OrderBy(link => link.Gym!.Name).ThenBy(link => link.RoleName).FirstOrDefaultAsync();
+        var activeLink = await query.OrderBy(link => link.Gym!.Name).ThenBy(link => link.RoleName).FirstOrDefaultAsync();
+        if (activeLink != null)
+        {
+            return activeLink;
+        }
+
+        var user = await userManager.FindByIdAsync(userId.ToString());
+        if (user == null ||
+            !await userManager.IsInRoleAsync(user, RoleNames.SystemAdmin) ||
+            string.IsNullOrWhiteSpace(gymCode) ||
+            string.IsNullOrWhiteSpace(roleName) ||
+            !IsSystemAdminTenantRole(roleName))
+        {
+            return null;
+        }
+
+        var gym = await dbContext.Gyms.FirstOrDefaultAsync(entity => entity.Code == gymCode && entity.IsActive);
+        return gym == null
+            ? null
+            : new AppUserGymRole
+            {
+                AppUserId = userId,
+                GymId = gym.Id,
+                Gym = gym,
+                RoleName = roleName,
+                IsActive = true
+            };
+    }
+
+    private static bool IsSystemAdminTenantRole(string roleName)
+    {
+        return string.Equals(roleName, RoleNames.GymOwner, StringComparison.OrdinalIgnoreCase) ||
+               string.Equals(roleName, RoleNames.GymAdmin, StringComparison.OrdinalIgnoreCase);
     }
 }

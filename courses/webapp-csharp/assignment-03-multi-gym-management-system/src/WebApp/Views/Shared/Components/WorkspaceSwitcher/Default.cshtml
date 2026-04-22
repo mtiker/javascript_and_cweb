@@ -1,4 +1,5 @@
 @model WorkspaceSwitcherViewModel
+@inject IStringLocalizer<SharedResources> L
 
 @if (Model.Gyms.Count > 1 || Model.RolesInActiveGym.Count > 1)
 {
@@ -8,7 +9,7 @@
             <form asp-area="" asp-controller="Home" asp-action="SwitchGym" method="post" class="workspace-form">
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="returnUrl" value="@Model.ReturnUrl" />
-                <label for="gymCode">Gym</label>
+                <label for="gymCode">@L["Gym"]</label>
                 <select id="gymCode" name="gymCode" onchange="this.form.submit()">
                     @foreach (var gym in Model.Gyms)
                     {
@@ -23,7 +24,7 @@
             <form asp-area="" asp-controller="Home" asp-action="SwitchRole" method="post" class="workspace-form">
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="returnUrl" value="@Model.ReturnUrl" />
-                <label for="roleName">Role</label>
+                <label for="roleName">@L["Role"]</label>
                 <select id="roleName" name="roleName" onchange="this.form.submit()">
                     @foreach (var roleName in Model.RolesInActiveGym)
                     {

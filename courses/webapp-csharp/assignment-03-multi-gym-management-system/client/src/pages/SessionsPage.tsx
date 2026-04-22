@@ -1,11 +1,13 @@
 import { type FormEvent, useEffect, useMemo, useState } from "react";
 import { NoticeBanner } from "../components/NoticeBanner";
 import { useAuth } from "../lib/auth";
+import { useLanguage } from "../lib/language";
 import type { MemberDetail, MemberSummary, Notice, TrainingSession } from "../lib/types";
 import { getErrorMessages, TrainingSessionStatus } from "../lib/types";
 
 export function SessionsPage() {
   const { api, session } = useAuth();
+  const { t } = useLanguage();
   const [sessions, setSessions] = useState<TrainingSession[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [activeSession, setActiveSession] = useState<TrainingSession | null>(null);
@@ -128,8 +130,8 @@ export function SessionsPage() {
     <section className="workspace">
       <header className="workspace__header">
         <div>
-          <p className="workspace__eyebrow">REST workflow</p>
-          <h2 className="workspace__title">Sessions</h2>
+          <p className="workspace__eyebrow">{t("REST workflow")}</p>
+          <h2 className="workspace__title">{t("sessions")}</h2>
           <p className="workspace__copy">
             Browse published training sessions, inspect details, and create member bookings through tenant API calls.
           </p>
@@ -141,8 +143,8 @@ export function SessionsPage() {
       <div className="workspace__grid">
         <section className="panel panel--list">
           {pageError ? <p className="state state--error">{pageError}</p> : null}
-          {isLoading ? <p className="state">Loading sessions...</p> : null}
-          {!isLoading && sessions.length === 0 ? <p className="state">No training sessions have been published yet.</p> : null}
+          {isLoading ? <p className="state">{t("Loading sessions...")}</p> : null}
+          {!isLoading && sessions.length === 0 ? <p className="state">{t("No training sessions have been published yet.")}</p> : null}
 
           <div className="record-list" role="list">
             {upcomingSessions.map((item) => (
@@ -161,13 +163,13 @@ export function SessionsPage() {
         </section>
 
         <section className="panel">
-          {isDetailLoading ? <p className="state">Loading session details...</p> : null}
-          {!activeSession && !isDetailLoading ? <p className="state">Select a session to open booking details.</p> : null}
+          {isDetailLoading ? <p className="state">{t("Loading session details...")}</p> : null}
+          {!activeSession && !isDetailLoading ? <p className="state">{t("Select a session to open booking details.")}</p> : null}
           {activeSession ? (
             <div className="session-detail">
               <div className="editor-header">
                 <div>
-                  <p className="workspace__eyebrow">Session detail</p>
+                  <p className="workspace__eyebrow">{t("Session detail")}</p>
                   <h3>{activeSession.name}</h3>
                 </div>
                 <span className="badge">{sessionStatusLabel(activeSession.status)}</span>
@@ -175,21 +177,21 @@ export function SessionsPage() {
 
               <dl className="definition-list">
                 <div>
-                  <dt>When</dt>
+                  <dt>{t("When")}</dt>
                   <dd>{formatRange(activeSession.startAtUtc, activeSession.endAtUtc)}</dd>
                 </div>
                 <div>
-                  <dt>Capacity</dt>
+                  <dt>{t("Capacity")}</dt>
                   <dd>{activeSession.capacity} members</dd>
                 </div>
                 <div>
-                  <dt>Price</dt>
+                  <dt>{t("Price")}</dt>
                   <dd>
                     {activeSession.basePrice.toFixed(2)} {activeSession.currencyCode}
                   </dd>
                 </div>
                 <div>
-                  <dt>Trainers</dt>
+                  <dt>{t("Trainers")}</dt>
                   <dd>{activeSession.trainerContractIds.length || "No assigned trainers"}</dd>
                 </div>
               </dl>
@@ -202,7 +204,7 @@ export function SessionsPage() {
                 <form className="form" onSubmit={(event) => void handleBook(event)}>
                   {canChooseMember ? (
                     <label className="field">
-                      <span>Member</span>
+                      <span>{t("Member")}</span>
                       <select
                         disabled={isSubmitting || members.length === 0}
                         onChange={(event) => setSelectedMemberId(event.target.value)}
@@ -218,7 +220,7 @@ export function SessionsPage() {
                   ) : null}
 
                   <label className="field">
-                    <span>Payment reference</span>
+                    <span>{t("Payment reference")}</span>
                     <input
                       disabled={isSubmitting}
                       onChange={(event) => setPaymentReference(event.target.value)}
@@ -229,13 +231,13 @@ export function SessionsPage() {
 
                   <div className="form__actions">
                     <button className="button" disabled={isSubmitting || !bookingMemberId} type="submit">
-                      {isSubmitting ? "Booking..." : "Book session"}
+                      {isSubmitting ? t("Booking...") : t("Book session")}
                     </button>
-                    {!bookingMemberId ? <span className="state">No member profile is available for this role.</span> : null}
+                    {!bookingMemberId ? <span className="state">{t("No member profile is available for this role.")}</span> : null}
                   </div>
                 </form>
               ) : (
-                <p className="state">Only published sessions can be booked.</p>
+                <p className="state">{t("Only published sessions can be booked.")}</p>
               )}
             </div>
           ) : null}

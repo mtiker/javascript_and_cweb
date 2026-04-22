@@ -1,33 +1,34 @@
 @model ClientProfilePageViewModel
+@inject IStringLocalizer<SharedResources> L
 
 <section class="panel">
-    <p class="eyebrow">Client workspace</p>
-    <h1>Profile</h1>
-    <p>Active gym: <strong>@Model.GymCode</strong></p>
-    <p>Active role: <strong>@Model.ActiveRole</strong></p>
+    <p class="eyebrow">@L["ClientWorkspace"]</p>
+    <h1>@L["Profile"]</h1>
+    <p>@L["ActiveGym"]: <strong>@Model.GymCode</strong></p>
+    <p>@L["ActiveRole"]: <strong>@Model.ActiveRole</strong></p>
 </section>
 
 @if (!Model.ProfileAvailable)
 {
     <section class="panel">
-        <p class="muted-text">This account does not currently have a member profile in the active gym.</p>
+        <p class="muted-text">@L["NoProfileInGym"]</p>
     </section>
 }
 else
 {
     <section class="page-grid">
         <article class="panel">
-            <h2>Member record</h2>
+            <h2>@L["MemberRecord"]</h2>
             <p><strong>@Model.MemberName</strong></p>
-            <p>Member code: @Model.MemberCode</p>
-            <p>Status: @Model.MemberStatus</p>
+            <p>@L["MemberCode"]: @Model.MemberCode</p>
+            <p>@L["Status"]: @Model.MemberStatus</p>
         </article>
 
         <article class="panel">
-            <h2>Memberships</h2>
+            <h2>@L["Memberships"]</h2>
             @if (Model.Memberships.Count == 0)
             {
-                <p class="muted-text">No memberships found.</p>
+                <p class="muted-text">@L["NoMembershipsFound"]</p>
             }
             else
             {
@@ -41,10 +42,10 @@ else
         </article>
 
         <article class="panel">
-            <h2>Bookings</h2>
+            <h2>@L["Bookings"]</h2>
             @if (Model.Bookings.Count == 0)
             {
-                <p class="muted-text">No bookings found.</p>
+                <p class="muted-text">@L["NoBookingsYet"]</p>
             }
             else
             {
@@ -58,10 +59,10 @@ else
         </article>
 
         <article class="panel">
-            <h2>Payments</h2>
+            <h2>@L["Payments"]</h2>
             @if (Model.Payments.Count == 0)
             {
-                <p class="muted-text">No payments recorded.</p>
+                <p class="muted-text">@L["NoPaymentsRecorded"]</p>
             }
             else
             {

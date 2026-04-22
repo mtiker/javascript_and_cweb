@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { NoticeBanner } from "../components/NoticeBanner";
 import { useAuth } from "../lib/auth";
+import { useLanguage } from "../lib/language";
 import type { MaintenanceTask, Notice } from "../lib/types";
 import { getErrorMessages, MaintenancePriority, MaintenanceTaskStatus, MaintenanceTaskType } from "../lib/types";
 
 export function MaintenanceTasksPage() {
   const { api, session } = useAuth();
+  const { t } = useLanguage();
   const [tasks, setTasks] = useState<MaintenanceTask[]>([]);
   const [statusByTaskId, setStatusByTaskId] = useState<Record<string, MaintenanceTaskStatus>>({});
   const [notesByTaskId, setNotesByTaskId] = useState<Record<string, string>>({});
@@ -75,8 +77,8 @@ export function MaintenanceTasksPage() {
     <section className="workspace">
       <header className="workspace__header">
         <div>
-          <p className="workspace__eyebrow">Caretaker workflow</p>
-          <h2 className="workspace__title">Maintenance Tasks</h2>
+          <p className="workspace__eyebrow">{t("Caretaker workflow")}</p>
+          <h2 className="workspace__title">{t("Maintenance Tasks")}</h2>
           <p className="workspace__copy">
             Caretakers can review assigned equipment work and update task status through tenant REST endpoints.
           </p>
@@ -87,8 +89,8 @@ export function MaintenanceTasksPage() {
 
       <section className="panel panel--list">
         {pageError ? <p className="state state--error">{pageError}</p> : null}
-        {isLoading ? <p className="state">Loading maintenance tasks...</p> : null}
-        {!isLoading && tasks.length === 0 ? <p className="state">No maintenance tasks are assigned in this gym.</p> : null}
+        {isLoading ? <p className="state">{t("Loading maintenance tasks...")}</p> : null}
+        {!isLoading && tasks.length === 0 ? <p className="state">{t("No maintenance tasks are assigned in this gym.")}</p> : null}
 
         <div className="record-list" role="list">
           {tasks.map((task) => (
@@ -102,7 +104,7 @@ export function MaintenanceTasksPage() {
               </div>
               <div className="inline-controls inline-controls--wide">
                 <label className="field field--compact">
-                  <span>Status</span>
+                  <span>{t("Status")}</span>
                   <select
                     disabled={submittingTaskId === task.id}
                     onChange={(event) =>
@@ -119,7 +121,7 @@ export function MaintenanceTasksPage() {
                   </select>
                 </label>
                 <label className="field field--compact field--notes">
-                  <span>Notes</span>
+                  <span>{t("Notes")}</span>
                   <textarea
                     disabled={submittingTaskId === task.id}
                     onChange={(event) => setNotesByTaskId((current) => ({ ...current, [task.id]: event.target.value }))}
@@ -133,7 +135,7 @@ export function MaintenanceTasksPage() {
                   onClick={() => void updateTask(task.id)}
                   type="button"
                 >
-                  {submittingTaskId === task.id ? "Saving..." : "Update"}
+                  {submittingTaskId === task.id ? t("Saving...") : t("Update")}
                 </button>
               </div>
             </article>

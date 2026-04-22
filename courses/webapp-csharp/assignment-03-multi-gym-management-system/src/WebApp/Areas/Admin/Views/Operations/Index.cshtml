@@ -1,26 +1,27 @@
 @model AdminOperationsPageViewModel
+@inject IStringLocalizer<SharedResources> L
 
 <section class="panel">
-    <p class="eyebrow">Admin workspace</p>
-    <h1>Operations</h1>
-    <p>Active gym: <strong>@Model.GymCode</strong></p>
+    <p class="eyebrow">@L["AdminWorkspace"]</p>
+    <h1>@L["Operations"]</h1>
+    <p>@L["ActiveGym"]: <strong>@Model.GymCode</strong></p>
 </section>
 
 <section class="page-grid">
     <article class="panel">
-        <h2>Opening hours</h2>
+        <h2>@L["OpeningHours"]</h2>
         @if (Model.OpeningHours.Count == 0)
         {
-            <p class="muted-text">No opening-hours template configured.</p>
+            <p class="muted-text">@L["NoOpeningHours"]</p>
         }
         else
         {
             <table class="data-table">
                 <thead>
                 <tr>
-                    <th>Weekday</th>
-                    <th>Opens</th>
-                    <th>Closes</th>
+                    <th>@L["Weekday"]</th>
+                    <th>@L["Opens"]</th>
+                    <th>@L["Closes"]</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -38,19 +39,19 @@
     </article>
 
     <article class="panel">
-        <h2>Equipment</h2>
+        <h2>@L["Equipment"]</h2>
         @if (Model.Equipment.Count == 0)
         {
-            <p class="muted-text">No equipment registered.</p>
+            <p class="muted-text">@L["NoEquipmentRegistered"]</p>
         }
         else
         {
             <table class="data-table">
                 <thead>
                 <tr>
-                    <th>Asset tag</th>
-                    <th>Model</th>
-                    <th>Status</th>
+                    <th>@L["AssetTag"]</th>
+                    <th>@L["Model"]</th>
+                    <th>@L["Status"]</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -68,21 +69,21 @@
     </article>
 
     <article class="panel">
-        <h2>Maintenance tasks</h2>
+        <h2>@L["MaintenanceTasks"]</h2>
         @if (Model.MaintenanceTasks.Count == 0)
         {
-            <p class="muted-text">No maintenance tasks open for this gym.</p>
+            <p class="muted-text">@L["NoMaintenanceTasksOpen"]</p>
         }
         else
         {
             <table class="data-table">
                 <thead>
                 <tr>
-                    <th>Asset</th>
-                    <th>Type</th>
-                    <th>Status</th>
-                    <th>Assigned to</th>
-                    <th>Due</th>
+                    <th>@L["Asset"]</th>
+                    <th>@L["Type"]</th>
+                    <th>@L["Status"]</th>
+                    <th>@L["AssignedTo"]</th>
+                    <th>@L["Due"]</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -92,7 +93,7 @@
                         <td>@task.AssetTag</td>
                         <td>@task.TaskType</td>
                         <td>@task.Status</td>
-                        <td>@(task.AssignedTo ?? "Unassigned")</td>
+                        <td>@(task.AssignedTo ?? L["Unassigned"])</td>
                         <td>@(task.DueAtUtc?.ToLocalTime().ToString("g") ?? "-")</td>
                     </tr>
                 }

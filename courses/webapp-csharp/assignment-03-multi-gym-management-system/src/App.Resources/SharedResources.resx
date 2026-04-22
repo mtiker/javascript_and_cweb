@@ -66,6 +66,114 @@
   <data name="AssignedTasks" xml:space="preserve">
     <value>Assigned Tasks</value>
   </data>
+  <data name="ActiveGym" xml:space="preserve">
+    <value>Active gym</value>
+  </data>
+  <data name="ActiveRole" xml:space="preserve">
+    <value>Active role</value>
+  </data>
+  <data name="AdminWorkspace" xml:space="preserve">
+    <value>Admin workspace</value>
+  </data>
+  <data name="Asset" xml:space="preserve">
+    <value>Asset</value>
+  </data>
+  <data name="AssetTag" xml:space="preserve">
+    <value>Asset tag</value>
+  </data>
+  <data name="AssignedTo" xml:space="preserve">
+    <value>Assigned to</value>
+  </data>
+  <data name="Bookings" xml:space="preserve">
+    <value>Bookings</value>
+  </data>
+  <data name="ClientWorkspace" xml:space="preserve">
+    <value>Client workspace</value>
+  </data>
+  <data name="Closes" xml:space="preserve">
+    <value>Closes</value>
+  </data>
+  <data name="Due" xml:space="preserve">
+    <value>Due</value>
+  </data>
+  <data name="Equipment" xml:space="preserve">
+    <value>Equipment</value>
+  </data>
+  <data name="Gym" xml:space="preserve">
+    <value>Gym</value>
+  </data>
+  <data name="MaintenanceTasks" xml:space="preserve">
+    <value>Maintenance tasks</value>
+  </data>
+  <data name="MemberCode" xml:space="preserve">
+    <value>Member code</value>
+  </data>
+  <data name="MemberRecord" xml:space="preserve">
+    <value>Member record</value>
+  </data>
+  <data name="Memberships" xml:space="preserve">
+    <value>Memberships</value>
+  </data>
+  <data name="Model" xml:space="preserve">
+    <value>Model</value>
+  </data>
+  <data name="NoAssignedTasks" xml:space="preserve">
+    <value>No assigned maintenance tasks.</value>
+  </data>
+  <data name="NoBookingsYet" xml:space="preserve">
+    <value>No bookings yet.</value>
+  </data>
+  <data name="NoEquipmentRegistered" xml:space="preserve">
+    <value>No equipment registered.</value>
+  </data>
+  <data name="NoMaintenanceTasksOpen" xml:space="preserve">
+    <value>No maintenance tasks are open for this gym.</value>
+  </data>
+  <data name="NoMembershipsFound" xml:space="preserve">
+    <value>No memberships found.</value>
+  </data>
+  <data name="NoOpeningHours" xml:space="preserve">
+    <value>No opening-hours template configured.</value>
+  </data>
+  <data name="NoPaymentsRecorded" xml:space="preserve">
+    <value>No payments recorded.</value>
+  </data>
+  <data name="NoProfileInGym" xml:space="preserve">
+    <value>This account does not currently have a member profile in the active gym.</value>
+  </data>
+  <data name="NoUpcomingSessions" xml:space="preserve">
+    <value>No upcoming sessions.</value>
+  </data>
+  <data name="OpeningHours" xml:space="preserve">
+    <value>Opening hours</value>
+  </data>
+  <data name="Operations" xml:space="preserve">
+    <value>Operations</value>
+  </data>
+  <data name="Opens" xml:space="preserve">
+    <value>Opens</value>
+  </data>
+  <data name="Payments" xml:space="preserve">
+    <value>Payments</value>
+  </data>
+  <data name="QuickLinks" xml:space="preserve">
+    <value>Quick links</value>
+  </data>
+  <data name="Role" xml:space="preserve">
+    <value>Role</value>
+  </data>
+  <data name="Status" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="Type" xml:space="preserve">
+    <value>Type</value>
+  </data>
+  <data name="Unassigned" xml:space="preserve">
+    <value>Unassigned</value>
+  </data>
+  <data name="Weekday" xml:space="preserve">
+    <value>Weekday</value>
+  </data>
   <data name="SignInHint" xml:space="preserve">
     <value>Use the seeded demo accounts or your registered user to continue.</value>
   </data>

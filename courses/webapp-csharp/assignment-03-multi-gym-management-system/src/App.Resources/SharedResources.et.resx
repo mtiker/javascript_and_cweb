@@ -66,6 +66,114 @@
   <data name="AssignedTasks" xml:space="preserve">
     <value>Mulle määratud tööd</value>
   </data>
+  <data name="ActiveGym" xml:space="preserve">
+    <value>Aktiivne jõusaal</value>
+  </data>
+  <data name="ActiveRole" xml:space="preserve">
+    <value>Aktiivne roll</value>
+  </data>
+  <data name="AdminWorkspace" xml:space="preserve">
+    <value>Admini töölaud</value>
+  </data>
+  <data name="Asset" xml:space="preserve">
+    <value>Vahend</value>
+  </data>
+  <data name="AssetTag" xml:space="preserve">
+    <value>Vahendi tähis</value>
+  </data>
+  <data name="AssignedTo" xml:space="preserve">
+    <value>Määratud töötajale</value>
+  </data>
+  <data name="Bookings" xml:space="preserve">
+    <value>Broneeringud</value>
+  </data>
+  <data name="ClientWorkspace" xml:space="preserve">
+    <value>Kliendi töölaud</value>
+  </data>
+  <data name="Closes" xml:space="preserve">
+    <value>Sulgeb</value>
+  </data>
+  <data name="Due" xml:space="preserve">
+    <value>Tähtaeg</value>
+  </data>
+  <data name="Equipment" xml:space="preserve">
+    <value>Varustus</value>
+  </data>
+  <data name="Gym" xml:space="preserve">
+    <value>Jõusaal</value>
+  </data>
+  <data name="MaintenanceTasks" xml:space="preserve">
+    <value>Hooldustööd</value>
+  </data>
+  <data name="MemberCode" xml:space="preserve">
+    <value>Liikmekood</value>
+  </data>
+  <data name="MemberRecord" xml:space="preserve">
+    <value>Liikmekaart</value>
+  </data>
+  <data name="Memberships" xml:space="preserve">
+    <value>Liikmesused</value>
+  </data>
+  <data name="Model" xml:space="preserve">
+    <value>Mudel</value>
+  </data>
+  <data name="NoAssignedTasks" xml:space="preserve">
+    <value>Mulle ei ole hooldustöid määratud.</value>
+  </data>
+  <data name="NoBookingsYet" xml:space="preserve">
+    <value>Broneeringuid veel ei ole.</value>
+  </data>
+  <data name="NoEquipmentRegistered" xml:space="preserve">
+    <value>Varustust ei ole registreeritud.</value>
+  </data>
+  <data name="NoMaintenanceTasksOpen" xml:space="preserve">
+    <value>Selles jõusaalis ei ole avatud hooldustöid.</value>
+  </data>
+  <data name="NoMembershipsFound" xml:space="preserve">
+    <value>Liikmesusi ei leitud.</value>
+  </data>
+  <data name="NoOpeningHours" xml:space="preserve">
+    <value>Lahtiolekuaegade malli ei ole seadistatud.</value>
+  </data>
+  <data name="NoPaymentsRecorded" xml:space="preserve">
+    <value>Makseid ei ole salvestatud.</value>
+  </data>
+  <data name="NoProfileInGym" xml:space="preserve">
+    <value>Sellel kontol ei ole aktiivses jõusaalis liikmeprofiili.</value>
+  </data>
+  <data name="NoUpcomingSessions" xml:space="preserve">
+    <value>Tulevasi treeninguid ei ole.</value>
+  </data>
+  <data name="OpeningHours" xml:space="preserve">
+    <value>Lahtiolekuajad</value>
+  </data>
+  <data name="Operations" xml:space="preserve">
+    <value>Operatsioonid</value>
+  </data>
+  <data name="Opens" xml:space="preserve">
+    <value>Avab</value>
+  </data>
+  <data name="Payments" xml:space="preserve">
+    <value>Maksed</value>
+  </data>
+  <data name="QuickLinks" xml:space="preserve">
+    <value>Kiirlingid</value>
+  </data>
+  <data name="Role" xml:space="preserve">
+    <value>Roll</value>
+  </data>
+  <data name="Status" xml:space="preserve">
+    <value>Staatus</value>
+  </data>
+  <data name="Type" xml:space="preserve">
+    <value>Tüüp</value>
+  </data>
+  <data name="Unassigned" xml:space="preserve">
+    <value>Määramata</value>
+  </data>
+  <data name="Weekday" xml:space="preserve">
+    <value>Nädalapäev</value>
+  </data>
   <data name="SignInHint" xml:space="preserve">
     <value>Kasuta eelnevalt lisatud demo kontosid või enda kasutajat.</value>
   </data>

@@ -23,7 +23,7 @@ This assignment currently covers:
 - MVC client UX
 - a separate React client that uses the REST API with JWT + refresh tokens
 - React platform/tenant SaaS console for system, billing, support, onboarding, account, and tenant operations
-- React language switching that sends `Accept-Language` for localized API data
+- React language switching for the client shell/login/workflow labels and `Accept-Language` for localized API data
 - production image packaging for the React client under `/client`
 - SVG favicon/logo branding for MVC and React browser tabs
 - UI translations with `.resx`
@@ -164,7 +164,7 @@ Current scope:
 - language selection persisted in `localStorage` and sent as `Accept-Language`
 - system-role access for platform analytics, gym onboarding, activation, snapshots, support tickets, subscriptions, and impersonation
 - tenant owner/admin access to a function console for staff, contracts, vacations, sessions, work shifts, bookings, memberships, payments, facilities, maintenance, settings, and gym users
-- one active gym at a time based on `ActiveGymCode`, with switch-gym/switch-role actions available in the console
+- one active gym at a time based on `ActiveGymCode`, with SystemAdmin tenant picking in the shell and switch-gym/switch-role actions available in the console
 - CRUD for 3 admin entities:
   - members
   - training categories
@@ -195,6 +195,8 @@ Tenant users:
 Seeded gyms:
 - `peak-forge`
 - `north-star`
+
+`peak-forge` includes realistic demo operating data: full weekly opening hours, multiple members and staff profiles, training categories and upcoming sessions, bookings, memberships, payments, cardio/strength equipment, and open/in-progress maintenance tasks.
 
 Recommended React client demo user:
 - `admin@peakforge.local`
@@ -303,6 +305,6 @@ Repository CI integration:
 ## Known Limitations
 
 - The public deployment URL is documented, but live availability still depends on the VPS/proxy/container state at review time.
-- The React client works with one active gym context at a time; switch actions are available, but there is no polished multi-gym picker yet.
+- The React client works with one active gym context at a time; SystemAdmin can switch the active tenant from the shell, while non-system multi-gym users still use the console switch action.
 - Payments are internal records only; no external payment provider is integrated.
 - Support tickets stay inside the same monolith and are intentionally lightweight.

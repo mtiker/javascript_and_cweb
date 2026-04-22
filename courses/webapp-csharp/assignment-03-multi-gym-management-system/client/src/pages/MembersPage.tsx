@@ -1,6 +1,7 @@
 import { useDeferredValue, useEffect, useState } from "react";
 import { NoticeBanner } from "../components/NoticeBanner";
 import { useAuth } from "../lib/auth";
+import { useLanguage } from "../lib/language";
 import type { MemberDetail, MemberStatus, MemberSummary, Notice } from "../lib/types";
 import { getErrorMessages } from "../lib/types";
 
@@ -30,6 +31,7 @@ const memberStatusOptions = [
 
 export function MembersPage() {
   const { api, session } = useAuth();
+  const { t } = useLanguage();
   const [members, setMembers] = useState<MemberSummary[]>([]);
   const [query, setQuery] = useState("");
   const [activeMemberId, setActiveMemberId] = useState<string | null>(null);
@@ -186,14 +188,14 @@ export function MembersPage() {
     <section className="workspace">
       <header className="workspace__header">
         <div>
-          <p className="workspace__eyebrow">CRUD area 1 / 3</p>
-          <h2 className="workspace__title">Members</h2>
+          <p className="workspace__eyebrow">{t("CRUD area 1 / 3")}</p>
+          <h2 className="workspace__title">{t("members")}</h2>
           <p className="workspace__copy">
             Manage member profiles through the same tenant-scoped API that the ASP.NET Core MVC admin uses.
           </p>
         </div>
         <button className="button button--secondary" onClick={resetForm} type="button">
-          New member
+          {t("New member")}
         </button>
       </header>
 
@@ -203,26 +205,26 @@ export function MembersPage() {
         <section className="panel panel--list">
           <div className="toolbar">
             <label className="field">
-              <span>Search members</span>
+              <span>{t("Search members")}</span>
               <input
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="Name, code, or status"
+                placeholder={t("Name, code, or status")}
                 type="search"
                 value={query}
               />
             </label>
             <button className="button button--ghost" disabled={!query} onClick={() => setQuery("")} type="button">
-              Clear filter
+              {t("Clear filter")}
             </button>
           </div>
 
           {pageError ? <p className="state state--error">{pageError}</p> : null}
-          {isLoading ? <p className="state">Loading members...</p> : null}
+          {isLoading ? <p className="state">{t("Loading members...")}</p> : null}
           {!isLoading && members.length === 0 ? (
-            <p className="state">No members exist in this gym yet. Create the first member from the form.</p>
+            <p className="state">{t("No members exist in this gym yet. Create the first member from the form.")}</p>
           ) : null}
           {!isLoading && members.length > 0 && filteredMembers.length === 0 ? (
-            <p className="state">No members match the current filter.</p>
+            <p className="state">{t("No members match the current filter.")}</p>
           ) : null}
 
           <div className="record-list" role="list">
@@ -238,7 +240,7 @@ export function MembersPage() {
                   onClick={() => void handleDelete(member.id, member.fullName)}
                   type="button"
                 >
-                  Delete
+                  {t("Delete")}
                 </button>
               </article>
             ))}
@@ -257,7 +259,7 @@ export function MembersPage() {
           <form className="form" onSubmit={(event) => void handleSubmit(event)}>
             <div className="form__two-up">
               <label className="field">
-                <span>First name</span>
+                <span>{t("First name")}</span>
                 <input
                   name="firstName"
                   onChange={(event) => setForm((current) => ({ ...current, firstName: event.target.value }))}
@@ -265,7 +267,7 @@ export function MembersPage() {
                 />
               </label>
               <label className="field">
-                <span>Last name</span>
+                <span>{t("Last name")}</span>
                 <input
                   name="lastName"
                   onChange={(event) => setForm((current) => ({ ...current, lastName: event.target.value }))}
@@ -276,7 +278,7 @@ export function MembersPage() {
 
             <div className="form__two-up">
               <label className="field">
-                <span>Member code</span>
+                <span>{t("Member code")}</span>
                 <input
                   name="memberCode"
                   onChange={(event) => setForm((current) => ({ ...current, memberCode: event.target.value }))}
@@ -284,7 +286,7 @@ export function MembersPage() {
                 />
               </label>
               <label className="field">
-                <span>Status</span>
+                <span>{t("Status")}</span>
                 <select
                   name="status"
                   onChange={(event) =>
@@ -303,7 +305,7 @@ export function MembersPage() {
 
             <div className="form__two-up">
               <label className="field">
-                <span>Personal code</span>
+                <span>{t("Personal code")}</span>
                 <input
                   name="personalCode"
                   onChange={(event) => setForm((current) => ({ ...current, personalCode: event.target.value }))}
@@ -311,7 +313,7 @@ export function MembersPage() {
                 />
               </label>
               <label className="field">
-                <span>Date of birth</span>
+                <span>{t("Date of birth")}</span>
                 <input
                   name="dateOfBirth"
                   onChange={(event) => setForm((current) => ({ ...current, dateOfBirth: event.target.value }))}
@@ -323,10 +325,10 @@ export function MembersPage() {
 
             <div className="form__actions">
               <button className="button" disabled={isSubmitting || isEditorLoading} type="submit">
-                {isSubmitting ? "Saving..." : activeMemberId ? "Save member" : "Create member"}
+                {isSubmitting ? t("Saving...") : activeMemberId ? t("Save member") : t("Create member")}
               </button>
               <button className="button button--ghost" disabled={isSubmitting} onClick={resetForm} type="button">
-                Reset
+                {t("Reset")}
               </button>
             </div>
           </form>

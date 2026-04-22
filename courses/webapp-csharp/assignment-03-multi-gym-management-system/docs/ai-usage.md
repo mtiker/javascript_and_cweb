@@ -1,5 +1,40 @@
 # AI Usage Log
 
+## 2026-04-22 - A3 Translation, Tenant Switch, and Demo Data Pass
+
+Task:
+- fix mixed English/Estonian labels in MVC and React client surfaces
+- let SystemAdmin select an active tenant context
+- expand seed data into a realistic gym demo dataset
+
+Files affected:
+- `client/src/components/AppShell.tsx`
+- `client/src/lib/language.tsx`
+- `client/src/pages/LoginPage.tsx`
+- `client/src/pages/SaasConsolePage.tsx`
+- `src/App.BLL/Services/IdentityService.cs`
+- `src/App.DAL.EF/Seeding/AppDataInit.cs`
+- `src/App.Resources/SharedResources*.resx`
+- `src/WebApp/Controllers/HomeController.cs`
+- `src/WebApp/ViewComponents/WorkspaceSwitcherViewComponent.cs`
+- MVC dashboard/profile/operations views
+- integration tests and assignment documentation
+
+What AI helped with:
+- adding localized resource keys for active gym/role, operations, profile, bookings, maintenance, and empty states
+- adding SystemAdmin tenant-context switching for MVC cookies and API JWT sessions
+- adding a React SystemAdmin tenant picker and translated shell/login labels
+- enriching seeded demo data with members, staff, sessions, bookings, memberships, payments, opening hours, equipment, and maintenance tasks
+- adding a regression test for SystemAdmin switching into `north-star`
+
+What needed manual review or correction:
+- existing Estonian strings render differently depending on terminal encoding, so localized files need browser/test verification rather than console-only inspection
+- the React console still exposes developer-style API action titles in English, but the shell, login, and main workflow pages now have Estonian labels for normal demo use
+
+Alternatives considered:
+- making persistent `AppUserGymRole` rows for SystemAdmin in every tenant, but transient tenant claims keep platform ownership explicit and avoid seeding access rows for future gyms
+- building every CRUD page for every entity, but the existing function console already exposes the full API surface and the focused pages cover the core real-life workflows
+
 ## 2026-04-21 - SaaS Console, Localization, and Favicon Parity
 
 Task:

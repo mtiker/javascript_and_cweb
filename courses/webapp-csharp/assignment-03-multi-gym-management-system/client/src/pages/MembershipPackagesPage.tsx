@@ -1,6 +1,7 @@
 import { useDeferredValue, useEffect, useState } from "react";
 import { NoticeBanner } from "../components/NoticeBanner";
 import { useAuth } from "../lib/auth";
+import { useLanguage } from "../lib/language";
 import type {
   DurationUnit,
   MembershipPackage,
@@ -48,6 +49,7 @@ const emptyPackageForm = (): MembershipPackageFormState => ({
 
 export function MembershipPackagesPage() {
   const { api, session } = useAuth();
+  const { t } = useLanguage();
   const [packages, setPackages] = useState<MembershipPackage[]>([]);
   const [query, setQuery] = useState("");
   const [activePackageId, setActivePackageId] = useState<string | null>(null);
@@ -181,14 +183,14 @@ export function MembershipPackagesPage() {
     <section className="workspace">
       <header className="workspace__header">
         <div>
-          <p className="workspace__eyebrow">CRUD area 3 / 3</p>
-          <h2 className="workspace__title">Membership Packages</h2>
+          <p className="workspace__eyebrow">{t("CRUD area 3 / 3")}</p>
+          <h2 className="workspace__title">{t("Membership Packages")}</h2>
           <p className="workspace__copy">
             Price and shape the memberships that power sales, billing, discounts, and member access windows.
           </p>
         </div>
         <button className="button button--secondary" onClick={resetForm} type="button">
-          New package
+          {t("New package")}
         </button>
       </header>
 
@@ -198,26 +200,26 @@ export function MembershipPackagesPage() {
         <section className="panel panel--list">
           <div className="toolbar">
             <label className="field">
-              <span>Search packages</span>
+              <span>{t("Search packages")}</span>
               <input
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="Name, currency, or description"
+                placeholder={t("Name, currency, or description")}
                 type="search"
                 value={query}
               />
             </label>
             <button className="button button--ghost" disabled={!query} onClick={() => setQuery("")} type="button">
-              Clear filter
+              {t("Clear filter")}
             </button>
           </div>
 
           {pageError ? <p className="state state--error">{pageError}</p> : null}
-          {isLoading ? <p className="state">Loading membership packages...</p> : null}
+          {isLoading ? <p className="state">{t("Loading membership packages...")}</p> : null}
           {!isLoading && packages.length === 0 ? (
-            <p className="state">No membership packages exist yet. Add the first offer from the editor.</p>
+            <p className="state">{t("No membership packages exist yet. Add the first offer from the editor.")}</p>
           ) : null}
           {!isLoading && packages.length > 0 && filteredPackages.length === 0 ? (
-            <p className="state">No packages match the current filter.</p>
+            <p className="state">{t("No packages match the current filter.")}</p>
           ) : null}
 
           <div className="record-list" role="list">
@@ -245,7 +247,7 @@ export function MembershipPackagesPage() {
                   onClick={() => void handleDelete(membershipPackage.id, membershipPackage.name)}
                   type="button"
                 >
-                  Delete
+                  {t("Delete")}
                 </button>
               </article>
             ))}
@@ -262,7 +264,7 @@ export function MembershipPackagesPage() {
 
           <form className="form" onSubmit={(event) => void handleSubmit(event)}>
             <label className="field">
-              <span>Name</span>
+              <span>{t("Name")}</span>
               <input
                 name="name"
                 onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
@@ -272,7 +274,7 @@ export function MembershipPackagesPage() {
 
             <div className="form__two-up">
               <label className="field">
-                <span>Package type</span>
+                <span>{t("Package type")}</span>
                 <select
                   name="packageType"
                   onChange={(event) =>
@@ -288,7 +290,7 @@ export function MembershipPackagesPage() {
                 </select>
               </label>
               <label className="field">
-                <span>Duration value</span>
+                <span>{t("Duration value")}</span>
                 <input
                   min="1"
                   name="durationValue"
@@ -302,7 +304,7 @@ export function MembershipPackagesPage() {
 
             <div className="form__two-up">
               <label className="field">
-                <span>Duration unit</span>
+                <span>{t("Duration unit")}</span>
                 <select
                   name="durationUnit"
                   onChange={(event) =>
@@ -318,7 +320,7 @@ export function MembershipPackagesPage() {
                 </select>
               </label>
               <label className="field">
-                <span>Base price</span>
+                <span>{t("Base price")}</span>
                 <input
                   min="0"
                   name="basePrice"
@@ -332,7 +334,7 @@ export function MembershipPackagesPage() {
 
             <div className="form__two-up">
               <label className="field">
-                <span>Currency code</span>
+                <span>{t("Currency code")}</span>
                 <input
                   maxLength={8}
                   name="currencyCode"
@@ -341,7 +343,7 @@ export function MembershipPackagesPage() {
                 />
               </label>
               <label className="field">
-                <span>Training discount %</span>
+                <span>{t("Training discount %")}</span>
                 <input
                   max="100"
                   min="0"
@@ -363,11 +365,11 @@ export function MembershipPackagesPage() {
                 onChange={(event) => setForm((current) => ({ ...current, isTrainingFree: event.target.checked }))}
                 type="checkbox"
               />
-              <span>Training sessions are free with this package</span>
+              <span>{t("Training sessions are free with this package")}</span>
             </label>
 
             <label className="field">
-              <span>Description</span>
+              <span>{t("Description")}</span>
               <textarea
                 name="description"
                 onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))}
@@ -378,10 +380,10 @@ export function MembershipPackagesPage() {
 
             <div className="form__actions">
               <button className="button" disabled={isSubmitting} type="submit">
-                {isSubmitting ? "Saving..." : activePackageId ? "Save package" : "Create package"}
+                {isSubmitting ? t("Saving...") : activePackageId ? t("Save package") : t("Create package")}
               </button>
               <button className="button button--ghost" disabled={isSubmitting} onClick={resetForm} type="button">
-                Reset
+                {t("Reset")}
               </button>
             </div>
           </form>

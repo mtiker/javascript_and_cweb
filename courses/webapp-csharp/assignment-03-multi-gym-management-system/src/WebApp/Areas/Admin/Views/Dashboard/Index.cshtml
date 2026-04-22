@@ -3,8 +3,8 @@
 <section class="dashboard-grid">
     <article class="panel">
         <h1>@L["AdminArea"]</h1>
-        <p>Active gym: <strong>@(Model.ActiveGymCode ?? "platform")</strong></p>
-        <p>Active role: <strong>@(Model.ActiveRole ?? string.Join(", ", Model.SystemRoles))</strong></p>
+        <p>@L["ActiveGym"]: <strong>@(Model.ActiveGymCode ?? "platform")</strong></p>
+        <p>@L["ActiveRole"]: <strong>@(Model.ActiveRole ?? string.Join(", ", Model.SystemRoles))</strong></p>
     </article>
     <article class="metric-card">
         <span>@L["Gyms"]</span>
@@ -24,11 +24,11 @@
     </article>
 </section>
 <section class="panel">
-    <h2>Quick links</h2>
+    <h2>@L["QuickLinks"]</h2>
     <div class="link-strip">
         <a asp-area="Admin" asp-controller="Gyms" asp-action="Index">@L["Gyms"]</a>
-        <a asp-area="Admin" asp-controller="Memberships" asp-action="Index">Memberships</a>
+        <a asp-area="Admin" asp-controller="Memberships" asp-action="Index">@L["Memberships"]</a>
         <a asp-area="Admin" asp-controller="Sessions" asp-action="Index">@L["Sessions"]</a>
-        <a asp-area="Admin" asp-controller="Operations" asp-action="Index">Operations</a>
+        <a asp-area="Admin" asp-controller="Operations" asp-action="Index">@L["Operations"]</a>
     </div>
 </section>

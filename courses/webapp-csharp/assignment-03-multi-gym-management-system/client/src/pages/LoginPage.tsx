@@ -35,8 +35,8 @@ export function LoginPage() {
     if (!email.trim() || !password.trim()) {
       setNotice({
         tone: "error",
-        title: "Enter your login details",
-        messages: ["Email and password are required."],
+        title: t("loginDetailsRequired"),
+        messages: [t("loginDetailsRequiredMessage")],
       });
       return;
     }
@@ -74,7 +74,7 @@ export function LoginPage() {
             </select>
           </label>
         </div>
-        <h1 className="login-card__title">React SaaS client</h1>
+        <h1 className="login-card__title">{t("loginTitle")}</h1>
         <p className="login-card__copy">{t("loginCopy")}</p>
         <NoticeBanner notice={notice} />
         <form className="form" onSubmit={(event) => void handleSubmit(event)}>
@@ -104,22 +104,22 @@ export function LoginPage() {
         </form>
         <div className="login-card__demo-grid">
           <article className="login-card__demo">
-            <strong>System admin</strong>
+            <strong>{t("systemAdmin")}</strong>
             <span>`systemadmin@gym.local`</span>
             <span>`Gym123!`</span>
           </article>
           <article className="login-card__demo">
-            <strong>Gym admin</strong>
+            <strong>{t("gymAdmin")}</strong>
             <span>`admin@peakforge.local`</span>
             <span>`Gym123!`</span>
           </article>
           <article className="login-card__demo">
-            <strong>Member</strong>
+            <strong>{t("member")}</strong>
             <span>`member@peakforge.local`</span>
             <span>`Gym123!`</span>
           </article>
           <article className="login-card__demo">
-            <strong>Trainer / caretaker</strong>
+            <strong>{t("trainerCaretaker")}</strong>
             <span>`trainer@peakforge.local`</span>
             <span>`caretaker@peakforge.local`</span>
           </article>

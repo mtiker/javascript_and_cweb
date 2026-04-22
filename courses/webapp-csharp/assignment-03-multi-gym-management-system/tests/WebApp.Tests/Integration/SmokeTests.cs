@@ -124,6 +124,36 @@ public class SmokeTests(CustomWebApplicationFactory factory) : IClassFixture<Cus
         Assert.Equal(targetGym, switchedPayload!.ActiveGymCode);
     }
 
+    [Fact]
+    public async Task SystemAdmin_CanSelectAnyActiveGymContext()
+    {
+        var client = factory.CreateClient();
+
+        var loginResponse = await client.PostAsJsonAsync("/api/v1/account/login", new LoginRequest
+        {
+            Email = "systemadmin@gym.local",
+            Password = "Gym123!"
+        });
+
+        loginResponse.EnsureSuccessStatusCode();
+        var loginPayload = await loginResponse.Content.ReadFromJsonAsync<JwtResponse>();
+        Assert.NotNull(loginPayload);
+        client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", loginPayload!.Jwt);
+
+        var switchResponse = await client.PostAsJsonAsync("/api/v1/account/switch-gym", new SwitchGymRequest
+        {
+            GymCode = "north-star"
+        });
+
+        switchResponse.EnsureSuccessStatusCode();
+        var switchedPayload = await switchResponse.Content.ReadFromJsonAsync<JwtResponse>();
+
+        Assert.NotNull(switchedPayload);
+        Assert.Equal("north-star", switchedPayload!.ActiveGymCode);
+        Assert.Equal("GymOwner", switchedPayload.ActiveRole);
+        Assert.Contains("SystemAdmin", switchedPayload.SystemRoles);
+    }
+
     private static async Task<string> GetAntiforgeryTokenAsync(HttpClient client)
     {
         var response = await client.GetAsync("/");

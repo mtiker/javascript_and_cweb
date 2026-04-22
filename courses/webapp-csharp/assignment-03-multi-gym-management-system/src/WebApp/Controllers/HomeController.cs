@@ -142,6 +142,22 @@ public class HomeController(
             .OrderBy(link => link.RoleName)
             .FirstOrDefaultAsync();
 
+        if (targetLink == null && User.IsInRole(RoleNames.SystemAdmin))
+        {
+            var gym = await dbContext.Gyms.FirstOrDefaultAsync(entity => entity.Code == gymCode && entity.IsActive);
+            if (gym != null)
+            {
+                targetLink = new App.Domain.Entities.AppUserGymRole
+                {
+                    AppUserId = user.Id,
+                    GymId = gym.Id,
+                    Gym = gym,
+                    RoleName = RoleNames.GymOwner,
+                    IsActive = true
+                };
+            }
+        }
+
         if (targetLink == null)
         {
             return RedirectToAction(nameof(AccessDenied));
@@ -175,6 +191,22 @@ public class HomeController(
                 link.IsActive &&
                 link.RoleName == roleName &&
                 link.Gym!.Code == activeGymCode);
+
+        if (targetLink == null && User.IsInRole(RoleNames.SystemAdmin) && IsSystemAdminTenantRole(roleName))
+        {
+            var gym = await dbContext.Gyms.FirstOrDefaultAsync(entity => entity.Code == activeGymCode && entity.IsActive);
+            if (gym != null)
+            {
+                targetLink = new App.Domain.Entities.AppUserGymRole
+                {
+                    AppUserId = user.Id,
+                    GymId = gym.Id,
+                    Gym = gym,
+                    RoleName = roleName,
+                    IsActive = true
+                };
+            }
+        }
 
         if (targetLink == null)
         {
@@ -218,5 +250,11 @@ public class HomeController(
         }
 
         return claims;
+    }
+
+    private static bool IsSystemAdminTenantRole(string roleName)
+    {
+        return string.Equals(roleName, RoleNames.GymOwner, StringComparison.OrdinalIgnoreCase) ||
+               string.Equals(roleName, RoleNames.GymAdmin, StringComparison.OrdinalIgnoreCase);
     }
 }

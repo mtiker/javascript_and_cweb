@@ -16,6 +16,16 @@ Record AI-assisted development evidence here.
 
 ## Entries
 
+- Date: 2026-04-22
+- Subject: webapp-csharp
+- Assignment: assignment-03-multi-gym-management-system
+- Prompt: cweb assignment 3: profile is not translated to Estonian, active gym/role and admin/client workspace text is inconsistent, SystemAdmin cannot change active tenant, seed a typical gym with full data, make booking/client/maintenance functions available like a real gym system, and ensure the separate client app also has translation.
+- Files affected: `courses/webapp-csharp/assignment-03-multi-gym-management-system/client/src/components/AppShell.tsx`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/client/src/lib/language.tsx`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/client/src/pages/LoginPage.tsx`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/client/src/pages/SaasConsolePage.tsx`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/src/App.BLL/Services/IdentityService.cs`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/src/App.DAL.EF/Seeding/AppDataInit.cs`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/src/App.Resources/SharedResources*.resx`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/src/WebApp/Controllers/HomeController.cs`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/src/WebApp/ViewComponents/WorkspaceSwitcherViewComponent.cs`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/src/WebApp/Areas/Admin/Views/*`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/src/WebApp/Areas/Client/Views/*`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/tests/WebApp.Tests/Integration/SmokeTests.cs`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/README.md`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/docs/a3-saas-plan.md`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/docs/ai-usage.md`, `docs/ai-prompts.md`
+- AI output used: Added missing MVC Estonian resource keys and wired the affected Admin/Client Razor views to them, allowed SystemAdmin to enter any active gym as a transient `GymOwner` context through MVC and JWT switch flows, added a React SystemAdmin tenant picker, expanded the React translation dictionary for login/shell labels, enriched seed data for a fuller gym demo, and added an integration test for SystemAdmin tenant switching.
+- What AI got wrong / needed correction: Terminal output can display UTF-8 Estonian text as mojibake even when the file content is correct, so string verification must rely on tests/browser rendering rather than PowerShell display alone.
+- Changes made manually: Reviewed the official Web Applications with C# assignment framing before coding, kept the existing demo account credentials stable, and documented that detailed React workflow form copy can still be translated incrementally after the shell/login pass.
+- Alternatives considered: Persisting tenant role rows for SystemAdmin in every gym, but transient switch claims better express platform-level access and scale to newly onboarded gyms.
+
 - Date: 2026-04-21
 - Subject: webapp-csharp
 - Assignment: assignment-03-multi-gym-management-system

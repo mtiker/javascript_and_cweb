@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { NoticeBanner } from "../components/NoticeBanner";
 import { useAuth } from "../lib/auth";
+import { useLanguage } from "../lib/language";
 import type {
   Booking,
   Equipment,
@@ -86,6 +87,7 @@ const emptyOverview = (): OverviewState => ({
 
 export function SaasConsolePage() {
   const { api, session, switchGym, switchRole } = useAuth();
+  const { t } = useLanguage();
   const [overview, setOverview] = useState<OverviewState>(() => emptyOverview());
   const [isLoading, setIsLoading] = useState(true);
   const [notice, setNotice] = useState<Notice | null>(null);
@@ -254,14 +256,14 @@ export function SaasConsolePage() {
       <header className="workspace__header">
         <div>
           <p className="workspace__eyebrow">SaaS coverage</p>
-          <h2 className="workspace__title">Platform and Tenant Console</h2>
+          <h2 className="workspace__title">{t("platformTenantConsole")}</h2>
           <p className="workspace__copy workspace__copy--dark">
             The same REST client now exposes platform, support, billing, onboarding, tenant administration, scheduling,
             membership, facility, and account functions.
           </p>
         </div>
         <button className="button button--secondary" disabled={isLoading} onClick={() => void loadOverview()} type="button">
-          {isLoading ? "Refreshing..." : "Refresh"}
+          {isLoading ? t("refreshing") : t("refresh")}
         </button>
       </header>
 

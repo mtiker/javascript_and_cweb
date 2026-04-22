@@ -1,8 +1,8 @@
-import type { PropsWithChildren } from "react";
+import { useEffect, useState, type PropsWithChildren } from "react";
 import { NavLink } from "react-router-dom";
 import { useAuth } from "../lib/auth";
 import { useLanguage, type AppLanguage } from "../lib/language";
-import type { AuthSession } from "../lib/types";
+import type { AuthSession, GymSummary } from "../lib/types";
 
 const tenantAdminNavigationItems = [
   { to: "/members", label: "Members" },
@@ -13,10 +13,39 @@ const tenantAdminNavigationItems = [
 ];
 
 export function AppShell({ children }: PropsWithChildren) {
-  const { logout, session } = useAuth();
+  const { api, logout, session, switchGym, switchRole } = useAuth();
   const { language, setLanguage, t } = useLanguage();
+  const [gyms, setGyms] = useState<GymSummary[]>([]);
+  const [isSwitchingTenant, setIsSwitchingTenant] = useState(false);
+  const systemRole = hasSystemRole(session);
+  const canSwitchTenant = Boolean(session?.systemRoles.includes("SystemAdmin"));
+
+  useEffect(() => {
+    if (!canSwitchTenant) {
+      setGyms([]);
+      return;
+    }
+
+    let isMounted = true;
+    api
+      .getGyms()
+      .then((loadedGyms) => {
+        if (isMounted) {
+          setGyms(loadedGyms.filter((gym) => gym.isActive));
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setGyms([]);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [api, canSwitchTenant]);
   const navigationItems = [
-    ...(hasSystemRole(session) ? [{ to: "/platform", label: t("platform") }, { to: "/console", label: t("console") }] : []),
+    ...(systemRole ? [{ to: "/platform", label: t("platform") }, { to: "/console", label: t("console") }] : []),
     ...(canUseAdminTools(session?.activeRole)
       ? tenantAdminNavigationItems.map((item) => ({ ...item, label: translateNavigationLabel(item.label, t) }))
       : session?.activeGymCode
@@ -31,7 +60,7 @@ export function AppShell({ children }: PropsWithChildren) {
       <aside className="shell__sidebar">
         <p className="shell__eyebrow">SaaS client</p>
         <h1 className="shell__title">{t("appTitle")}</h1>
-        <p className="shell__subtitle">JWT, refresh tokens, platform administration, tenant operations, and role workspaces.</p>
+        <p className="shell__subtitle">{t("shellSubtitle")}</p>
         <nav aria-label="Primary" className="shell__nav">
           {navigationItems.map((item) => (
             <NavLink
@@ -48,12 +77,29 @@ export function AppShell({ children }: PropsWithChildren) {
         <header className="shell__header">
           <div>
             <p className="shell__meta-label">{t("activeGym")}</p>
-            <strong className="shell__meta-value">{session?.activeGymCode ?? "System"}</strong>
+            <strong className="shell__meta-value">{session?.activeGymCode ?? t("system")}</strong>
           </div>
           <div>
-            <p className="shell__meta-label">{session?.activeRole ? t("role") : t("systemRoles")}</p>
+            <p className="shell__meta-label">{session?.activeRole ? t("activeRole") : t("systemRoles")}</p>
             <strong className="shell__meta-value">{session?.activeRole ?? session?.systemRoles.join(", ")}</strong>
           </div>
+          {canSwitchTenant && gyms.length > 0 ? (
+            <label className="language-select">
+              <span>{t("switchTenant")}</span>
+              <select
+                disabled={isSwitchingTenant}
+                onChange={(event) => void handleTenantSwitch(event.target.value)}
+                value={session?.activeGymCode ?? ""}
+              >
+                <option value="">{t("system")}</option>
+                {gyms.map((gym) => (
+                  <option key={gym.gymId} value={gym.code}>
+                    {gym.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
           <label className="language-select">
             <span>{t("language")}</span>
             <select onChange={(event) => setLanguage(event.target.value as AppLanguage)} value={language}>
@@ -69,6 +115,20 @@ export function AppShell({ children }: PropsWithChildren) {
       </div>
     </div>
   );
+
+  async function handleTenantSwitch(gymCode: string) {
+    if (!gymCode) {
+      return;
+    }
+
+    setIsSwitchingTenant(true);
+    try {
+      await switchGym(gymCode);
+      await switchRole("GymOwner");
+    } finally {
+      setIsSwitchingTenant(false);
+    }
+  }
 }
 
 function hasSystemRole(session: AuthSession | null) {

@@ -1,6 +1,7 @@
 import { useDeferredValue, useEffect, useState } from "react";
 import { NoticeBanner } from "../components/NoticeBanner";
 import { useAuth } from "../lib/auth";
+import { useLanguage } from "../lib/language";
 import type { Notice, TrainingCategory } from "../lib/types";
 import { getErrorMessages } from "../lib/types";
 
@@ -16,6 +17,7 @@ const emptyCategoryForm = (): CategoryFormState => ({
 
 export function TrainingCategoriesPage() {
   const { api, session } = useAuth();
+  const { t } = useLanguage();
   const [categories, setCategories] = useState<TrainingCategory[]>([]);
   const [query, setQuery] = useState("");
   const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
@@ -156,14 +158,14 @@ export function TrainingCategoriesPage() {
     <section className="workspace">
       <header className="workspace__header">
         <div>
-          <p className="workspace__eyebrow">CRUD area 2 / 3</p>
-          <h2 className="workspace__title">Training Categories</h2>
+          <p className="workspace__eyebrow">{t("CRUD area 2 / 3")}</p>
+          <h2 className="workspace__title">{t("Training Categories")}</h2>
           <p className="workspace__copy">
             Keep session taxonomy clean so planners and coaches can reuse translated training category definitions.
           </p>
         </div>
         <button className="button button--secondary" onClick={resetForm} type="button">
-          New category
+          {t("New category")}
         </button>
       </header>
 
@@ -173,26 +175,26 @@ export function TrainingCategoriesPage() {
         <section className="panel panel--list">
           <div className="toolbar">
             <label className="field">
-              <span>Search categories</span>
+              <span>{t("Search categories")}</span>
               <input
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="Name or description"
+                placeholder={t("Name or description")}
                 type="search"
                 value={query}
               />
             </label>
             <button className="button button--ghost" disabled={!query} onClick={() => setQuery("")} type="button">
-              Clear filter
+              {t("Clear filter")}
             </button>
           </div>
 
           {pageError ? <p className="state state--error">{pageError}</p> : null}
-          {isLoading ? <p className="state">Loading categories...</p> : null}
+          {isLoading ? <p className="state">{t("Loading categories...")}</p> : null}
           {!isLoading && categories.length === 0 ? (
-            <p className="state">No training categories exist yet. Add the first one from the editor.</p>
+            <p className="state">{t("No training categories exist yet. Add the first one from the editor.")}</p>
           ) : null}
           {!isLoading && categories.length > 0 && filteredCategories.length === 0 ? (
-            <p className="state">No categories match the current filter.</p>
+            <p className="state">{t("No categories match the current filter.")}</p>
           ) : null}
 
           <div className="record-list" role="list">
@@ -217,7 +219,7 @@ export function TrainingCategoriesPage() {
                   onClick={() => void handleDelete(category.id, category.name)}
                   type="button"
                 >
-                  Delete
+                  {t("Delete")}
                 </button>
               </article>
             ))}
@@ -234,7 +236,7 @@ export function TrainingCategoriesPage() {
 
           <form className="form" onSubmit={(event) => void handleSubmit(event)}>
             <label className="field">
-              <span>Name</span>
+              <span>{t("Name")}</span>
               <input
                 name="name"
                 onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
@@ -242,7 +244,7 @@ export function TrainingCategoriesPage() {
               />
             </label>
             <label className="field">
-              <span>Description</span>
+              <span>{t("Description")}</span>
               <textarea
                 name="description"
                 onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))}
@@ -253,10 +255,10 @@ export function TrainingCategoriesPage() {
 
             <div className="form__actions">
               <button className="button" disabled={isSubmitting} type="submit">
-                {isSubmitting ? "Saving..." : activeCategoryId ? "Save category" : "Create category"}
+                {isSubmitting ? t("Saving...") : activeCategoryId ? t("Save category") : t("Create category")}
               </button>
               <button className="button button--ghost" disabled={isSubmitting} onClick={resetForm} type="button">
-                Reset
+                {t("Reset")}
               </button>
             </div>
           </form>

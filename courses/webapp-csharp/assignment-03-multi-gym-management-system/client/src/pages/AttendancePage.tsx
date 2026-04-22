@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { NoticeBanner } from "../components/NoticeBanner";
 import { useAuth } from "../lib/auth";
+import { useLanguage } from "../lib/language";
 import type { Booking, Notice, TrainingSession } from "../lib/types";
 import { BookingStatus, getErrorMessages } from "../lib/types";
 
 export function AttendancePage() {
   const { api, session } = useAuth();
+  const { t } = useLanguage();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [sessions, setSessions] = useState<TrainingSession[]>([]);
   const [statusByBookingId, setStatusByBookingId] = useState<Record<string, BookingStatus>>({});
@@ -79,8 +81,8 @@ export function AttendancePage() {
     <section className="workspace">
       <header className="workspace__header">
         <div>
-          <p className="workspace__eyebrow">Trainer workflow</p>
-          <h2 className="workspace__title">Attendance</h2>
+          <p className="workspace__eyebrow">{t("Trainer workflow")}</p>
+          <h2 className="workspace__title">{t("Attendance")}</h2>
           <p className="workspace__copy">
             Trainers can mark attendance for assigned sessions through the same REST endpoint used by the MVC roster.
           </p>
@@ -91,8 +93,8 @@ export function AttendancePage() {
 
       <section className="panel panel--list">
         {pageError ? <p className="state state--error">{pageError}</p> : null}
-        {isLoading ? <p className="state">Loading assigned bookings...</p> : null}
-        {!isLoading && bookings.length === 0 ? <p className="state">No assigned bookings are ready for attendance.</p> : null}
+        {isLoading ? <p className="state">{t("Loading assigned bookings...")}</p> : null}
+        {!isLoading && bookings.length === 0 ? <p className="state">{t("No assigned bookings are ready for attendance.")}</p> : null}
 
         <div className="record-list" role="list">
           {bookings.map((booking) => {
@@ -108,7 +110,7 @@ export function AttendancePage() {
                 </div>
                 <div className="inline-controls">
                   <label className="field field--compact">
-                    <span>Attendance</span>
+                    <span>{t("Attendance")}</span>
                     <select
                       disabled={submittingBookingId === booking.id}
                       onChange={(event) =>
@@ -131,7 +133,7 @@ export function AttendancePage() {
                     onClick={() => void updateAttendance(booking.id)}
                     type="button"
                   >
-                    {submittingBookingId === booking.id ? "Saving..." : "Update"}
+                    {submittingBookingId === booking.id ? t("Saving...") : t("Update")}
                   </button>
                 </div>
               </article>

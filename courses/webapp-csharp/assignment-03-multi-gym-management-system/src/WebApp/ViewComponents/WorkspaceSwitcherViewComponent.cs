@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using App.DAL.EF;
+using App.Domain;
 using App.Domain.Identity;
 using App.Domain.Security;
 using Microsoft.AspNetCore.Identity;
@@ -26,6 +27,7 @@ public class WorkspaceSwitcherViewComponent(
             return Content(string.Empty);
         }
 
+        var isSystemAdmin = HttpContext.User.IsInRole(RoleNames.SystemAdmin);
         var links = await dbContext.AppUserGymRoles
             .Include(link => link.Gym)
             .Where(link => link.AppUserId == user.Id && link.IsActive)
@@ -33,20 +35,24 @@ public class WorkspaceSwitcherViewComponent(
             .ThenBy(link => link.RoleName)
             .ToListAsync();
 
-        if (links.Count == 0)
+        if (links.Count == 0 && !isSystemAdmin)
         {
             return Content(string.Empty);
         }
 
         var activeGymCode = HttpContext.User.FindFirstValue(AppClaimTypes.GymCode);
         var activeRole = HttpContext.User.FindFirstValue(AppClaimTypes.ActiveRole);
-
-        var model = new WorkspaceSwitcherViewModel
-        {
-            ActiveGymCode = activeGymCode,
-            ActiveRole = activeRole,
-            ReturnUrl = HttpContext.Request.PathBase + HttpContext.Request.Path + HttpContext.Request.QueryString,
-            Gyms = links
+        var gyms = isSystemAdmin
+            ? await dbContext.Gyms
+                .Where(gym => gym.IsActive)
+                .OrderBy(gym => gym.Name)
+                .Select(gym => new WorkspaceGymOptionViewModel
+                {
+                    Code = gym.Code,
+                    Name = gym.Name
+                })
+                .ToArrayAsync()
+            : links
                 .Where(link => link.Gym != null)
                 .GroupBy(link => link.Gym!.Code)
                 .Select(group => new WorkspaceGymOptionViewModel
@@ -54,8 +60,17 @@ public class WorkspaceSwitcherViewComponent(
                     Code = group.Key,
                     Name = group.First().Gym!.Name
                 })
-                .ToArray(),
-            RolesInActiveGym = links
+                .ToArray();
+
+        var model = new WorkspaceSwitcherViewModel
+        {
+            ActiveGymCode = activeGymCode,
+            ActiveRole = activeRole,
+            ReturnUrl = HttpContext.Request.PathBase + HttpContext.Request.Path + HttpContext.Request.QueryString,
+            Gyms = gyms,
+            RolesInActiveGym = isSystemAdmin && !string.IsNullOrWhiteSpace(activeGymCode)
+                ? [RoleNames.GymOwner, RoleNames.GymAdmin]
+                : links
                 .Where(link => link.Gym?.Code == activeGymCode)
                 .Select(link => link.RoleName)
                 .Distinct(StringComparer.OrdinalIgnoreCase)
