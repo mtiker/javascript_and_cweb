@@ -196,6 +196,11 @@ Why add a separate client instead of replacing MVC:
 - the assignment requires both working MVC UX and a real API client
 - keeping MVC plus React makes the domain easier to demo from multiple angles
 
+Why keep EF Core + `IAppDbContext` + focused BLL services instead of a larger rewrite:
+- the course assignment needs a defendable layered monolith, not a framework-heavy architecture migration
+- direct EF Core usage behind `IAppDbContext` keeps query behavior explicit and testable without adding repository/unit-of-work/CQRS overhead
+- focused service splits (for example membership and authorization internals) reduce god classes while preserving existing routes, DTOs, and business rules
+
 Why use a console for the broad SaaS surface:
 - the dental clinic reference exposes platform and tenant operations from a client UI, so Assignment 03 now does the same without replacing the existing focused pages
 - the console keeps every REST function reachable while the higher-use workflows still have dedicated pages

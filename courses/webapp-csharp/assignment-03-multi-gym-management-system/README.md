@@ -110,6 +110,8 @@ Backend organization now follows the Assignment 18 reference style:
 - `App.DTO/v1` is split by API resource instead of grouped DTO files.
 - BLL service interfaces live beside their implementations in `App.BLL/Services`; infrastructure-only contracts live under `App.BLL/Contracts`.
 - `WebApp/Setup` is split into focused database, identity, service, API, middleware, and data-initialization extension files.
+- `App.DAL.EF/AppDbContext` keeps cross-cutting behavior while entity mapping/index/precision rules are split into grouped `IEntityTypeConfiguration<T>` classes under `App.DAL.EF/Configurations`.
+- membership and authorization workflows keep the existing public contracts, but are internally split into focused services for package/membership/payment/pricing and actor/tenant/resource authorization responsibilities.
 
 ## Local Run
 
@@ -325,6 +327,10 @@ Backend:
 dotnet build multi-gym-management-system.slnx
 dotnet test multi-gym-management-system.slnx
 ```
+
+PostgreSQL provider-integration slice:
+- the default `dotnet test` run keeps fast coverage and skips Testcontainers-based PostgreSQL tests
+- to execute the PostgreSQL slice, run with Docker available and set `RUN_POSTGRES_TESTS=1`
 
 Separate client:
 

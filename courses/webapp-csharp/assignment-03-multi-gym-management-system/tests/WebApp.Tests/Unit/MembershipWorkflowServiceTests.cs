@@ -59,7 +59,7 @@ public class MembershipWorkflowServiceTests
 
         await dbContext.SaveChangesAsync();
 
-        var service = new MembershipWorkflowService(dbContext, new TestAuthorizationService(gymId));
+        var service = CreateService(dbContext, new TestAuthorizationService(gymId));
 
         var result = await service.SellMembershipAsync("test-gym", new App.DTO.v1.Memberships.SellMembershipRequest
         {
@@ -107,7 +107,7 @@ public class MembershipWorkflowServiceTests
         dbContext.Memberships.Add(membership);
         await dbContext.SaveChangesAsync();
 
-        var service = new MembershipWorkflowService(dbContext, new TestAuthorizationService(gymId));
+        var service = CreateService(dbContext, new TestAuthorizationService(gymId));
         var result = await service.UpdateMembershipStatusAsync("test-gym", membership.Id, new MembershipStatusUpdateRequest
         {
             Status = MembershipStatus.Paused,
@@ -152,12 +152,21 @@ public class MembershipWorkflowServiceTests
         dbContext.Memberships.Add(membership);
         await dbContext.SaveChangesAsync();
 
-        var service = new MembershipWorkflowService(dbContext, new TestAuthorizationService(gymId));
+        var service = CreateService(dbContext, new TestAuthorizationService(gymId));
 
         await Assert.ThrowsAsync<ValidationAppException>(() => service.UpdateMembershipStatusAsync(
             "test-gym",
             membership.Id,
             new MembershipStatusUpdateRequest { Status = MembershipStatus.Refunded }));
+    }
+
+    private static IMembershipWorkflowService CreateService(AppDbContext dbContext, IAuthorizationService authorizationService)
+    {
+        return new MembershipWorkflowService(
+            new MembershipPackageService(dbContext, authorizationService),
+            new MembershipService(dbContext, authorizationService),
+            new PaymentService(dbContext, authorizationService),
+            new BookingPricingService(dbContext));
     }
 
     private sealed class TestGymContext(Guid gymId) : IGymContext
@@ -180,3 +189,4 @@ public class MembershipWorkflowServiceTests
         public Task EnsureMaintenanceTaskAccessAsync(MaintenanceTask task, CancellationToken cancellationToken = default) => Task.CompletedTask;
     }
 }
+

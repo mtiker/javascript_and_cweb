@@ -271,6 +271,8 @@ Not implemented in this pass:
 - tenant members, training, memberships/payments, facilities, and client workspace reads are handled through BLL service interfaces
 - coaching-plan, finance-workspace, and member-workspace workflows are service-first and controller-thin
 - BLL services depend on `IAppDbContext` rather than the concrete EF `AppDbContext`
+- membership workflow internals are split into focused package, membership, payment, and booking-pricing services behind `IMembershipWorkflowService`
+- authorization internals are split into current-actor resolution, tenant-access checks, and resource-specific checks behind `IAuthorizationService`
 - API controllers are thin boundary adapters and do not expose direct `AppDbContext` access through `ApiControllerBase`
 - API controller actions accept request cancellation tokens and pass them through BLL services to EF async calls
 - remaining direct `AppDbContext` usage is documented as pragmatic read composition in broad MVC/admin surfaces and application infrastructure
@@ -288,6 +290,7 @@ Backend:
 - subscription-tier limit unit tests for starter-limit rejection and enterprise allowance
 - API-contract metadata unit tests for required `ProblemDetails` response documentation on public controllers
 - integration tests for login, register, multi-gym user switch, SystemAdmin tenant-context switch, refresh-token rotation, expired/reused refresh tokens, cross-gym denial, member self-only denial, system-route denial, unknown/inactive gym early rejection, API `ProblemDetails`, MVC HTML error handling, `/client` fallback serving, MVC Admin/Client layout rendering, member roster denial, nullable session descriptions, member duplicate validation, booking payment-reference and duplicate-booking enforcement, trainer attendance authorization, caretaker task authorization, and impersonation actor/target/reason/claim/audit/refresh-token behavior
+- a focused PostgreSQL Testcontainers slice validates provider-realistic behavior (tenant query filtering, unique constraints, `LangStr`/JSONB persistence); run when `RUN_POSTGRES_TESTS=1` and Docker is available
 
 Frontend:
 - auth guard tests

@@ -1,7 +1,4 @@
-using System.Security.Claims;
 using App.Domain.Entities;
-using App.Domain.Enums;
-using App.Domain.Identity;
 using App.DTO.v1.MembershipPackages;
 using App.DTO.v1.Memberships;
 using App.DTO.v1.Payments;

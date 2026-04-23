@@ -1,4 +1,3 @@
-using System.Linq.Expressions;
 using System.Security.Claims;
 using System.Text.Json;
 using App.BLL.Contracts.Infrastructure;
@@ -102,106 +101,7 @@ public class AppDbContext(
             relationship.DeleteBehavior = DeleteBehavior.Restrict;
         }
 
-        builder.Entity<AppUser>().HasOne(user => user.Person).WithOne(person => person.AppUser).HasForeignKey<AppUser>(user => user.PersonId);
-        builder.Entity<AppUser>().Property(user => user.DisplayName).HasMaxLength(128);
-        builder.Entity<AppUser>().HasIndex(user => user.PersonId).IsUnique();
-
-        builder.Entity<AppRefreshToken>().HasIndex(token => token.RefreshToken).IsUnique();
-
-        builder.Entity<Gym>().HasIndex(gym => gym.Code).IsUnique();
-        builder.Entity<Gym>().Property(gym => gym.Name).HasMaxLength(128);
-        builder.Entity<Gym>().Property(gym => gym.Code).HasMaxLength(64);
-        builder.Entity<GymSettings>().HasIndex(settings => settings.GymId).IsUnique();
-        builder.Entity<GymSettings>().HasOne(settings => settings.Gym).WithOne(gym => gym.Settings).HasForeignKey<GymSettings>(settings => settings.GymId);
-        builder.Entity<Subscription>().HasOne(subscription => subscription.Gym).WithMany(gym => gym.Subscriptions).HasForeignKey(subscription => subscription.GymId);
-        builder.Entity<SupportTicket>().HasOne(ticket => ticket.Gym).WithMany(gym => gym.SupportTickets).HasForeignKey(ticket => ticket.GymId);
-        builder.Entity<AppUserGymRole>().HasIndex(link => new { link.AppUserId, link.GymId, link.RoleName }).IsUnique();
-        builder.Entity<AppUserGymRole>().HasOne(link => link.AppUser).WithMany(user => user.GymRoles).HasForeignKey(link => link.AppUserId);
-        builder.Entity<AppUserGymRole>().HasOne(link => link.Gym).WithMany(gym => gym.UserRoles).HasForeignKey(link => link.GymId);
-        builder.Entity<AuditLog>().HasIndex(log => new { log.GymId, log.ChangedAtUtc });
-
-        builder.Entity<Person>().HasIndex(person => person.PersonalCode).IsUnique();
-        builder.Entity<Contact>().HasIndex(contact => new { contact.Type, contact.Value }).IsUnique();
-        builder.Entity<PersonContact>().HasIndex(link => new { link.PersonId, link.ContactId }).IsUnique();
-        builder.Entity<GymContact>().HasIndex(link => new { link.GymId, link.ContactId }).IsUnique();
-        builder.Entity<Member>().HasOne(entity => entity.Person).WithMany(entity => entity.MemberProfiles).HasForeignKey(entity => entity.PersonId);
-        builder.Entity<Member>().HasIndex(member => new { member.GymId, member.MemberCode }).IsUnique();
-        builder.Entity<Member>().HasIndex(member => new { member.GymId, member.PersonId }).IsUnique();
-        builder.Entity<Staff>().HasOne(entity => entity.Person).WithMany(entity => entity.StaffProfiles).HasForeignKey(entity => entity.PersonId);
-        builder.Entity<Staff>().HasIndex(staff => new { staff.GymId, staff.StaffCode }).IsUnique();
-        builder.Entity<Staff>().HasIndex(staff => new { staff.GymId, staff.PersonId }).IsUnique();
-        builder.Entity<JobRole>().HasIndex(role => new { role.GymId, role.Code }).IsUnique();
-        builder.Entity<EmploymentContract>().HasOne(entity => entity.Staff).WithMany(entity => entity.Contracts).HasForeignKey(entity => entity.StaffId);
-        builder.Entity<EmploymentContract>().HasOne(entity => entity.PrimaryJobRole).WithMany(entity => entity.Contracts).HasForeignKey(entity => entity.PrimaryJobRoleId);
-        builder.Entity<EmploymentContract>().HasIndex(contract => new { contract.GymId, contract.StaffId, contract.StartDate });
-        builder.Entity<Vacation>().HasOne(entity => entity.Contract).WithMany(entity => entity.Vacations).HasForeignKey(entity => entity.ContractId);
-        builder.Entity<Vacation>().HasIndex(vacation => new { vacation.GymId, vacation.ContractId, vacation.StartDate, vacation.EndDate });
-
-        builder.Entity<TrainingSession>().HasOne(entity => entity.Category).WithMany(entity => entity.Sessions).HasForeignKey(entity => entity.CategoryId);
-        builder.Entity<TrainingSession>().HasIndex(session => new { session.GymId, session.StartAtUtc, session.EndAtUtc });
-        builder.Entity<WorkShift>().HasOne(entity => entity.Contract).WithMany(entity => entity.WorkShifts).HasForeignKey(entity => entity.ContractId);
-        builder.Entity<WorkShift>().HasOne(entity => entity.TrainingSession).WithMany(entity => entity.WorkShifts).HasForeignKey(entity => entity.TrainingSessionId);
-        builder.Entity<WorkShift>().HasIndex(shift => new { shift.GymId, shift.ContractId, shift.StartAtUtc, shift.EndAtUtc });
-        builder.Entity<Booking>().HasOne(entity => entity.TrainingSession).WithMany(entity => entity.Bookings).HasForeignKey(entity => entity.TrainingSessionId);
-        builder.Entity<Booking>().HasOne(entity => entity.Member).WithMany(entity => entity.Bookings).HasForeignKey(entity => entity.MemberId);
-        builder.Entity<Booking>().HasIndex(booking => new { booking.GymId, booking.MemberId, booking.TrainingSessionId }).IsUnique();
-        builder.Entity<Membership>().HasOne(entity => entity.Member).WithMany(entity => entity.Memberships).HasForeignKey(entity => entity.MemberId);
-        builder.Entity<Membership>().HasOne(entity => entity.MembershipPackage).WithMany(entity => entity.Memberships).HasForeignKey(entity => entity.MembershipPackageId);
-        builder.Entity<Membership>().HasIndex(membership => new { membership.GymId, membership.MemberId, membership.StartDate, membership.EndDate });
-        builder.Entity<Payment>().HasOne(entity => entity.Membership).WithMany(entity => entity.Payments).HasForeignKey(entity => entity.MembershipId);
-        builder.Entity<Payment>().HasOne(entity => entity.Booking).WithMany(entity => entity.Payments).HasForeignKey(entity => entity.BookingId);
-        builder.Entity<CoachingPlan>().HasOne(entity => entity.Member).WithMany(entity => entity.CoachingPlans).HasForeignKey(entity => entity.MemberId);
-        builder.Entity<CoachingPlan>().HasOne(entity => entity.TrainerStaff).WithMany(entity => entity.CoachingPlans).HasForeignKey(entity => entity.TrainerStaffId);
-        builder.Entity<CoachingPlan>().HasOne(entity => entity.CreatedByStaff).WithMany().HasForeignKey(entity => entity.CreatedByStaffId);
-        builder.Entity<CoachingPlan>().HasIndex(entity => new { entity.GymId, entity.MemberId, entity.Status, entity.CreatedAtUtc });
-        builder.Entity<CoachingPlanItem>().HasOne(entity => entity.CoachingPlan).WithMany(entity => entity.Items).HasForeignKey(entity => entity.CoachingPlanId);
-        builder.Entity<CoachingPlanItem>().HasOne(entity => entity.DecisionByStaff).WithMany(entity => entity.CoachingPlanItemDecisions).HasForeignKey(entity => entity.DecisionByStaffId);
-        builder.Entity<CoachingPlanItem>().HasIndex(entity => new { entity.GymId, entity.CoachingPlanId, entity.Sequence }).IsUnique();
-        builder.Entity<Invoice>().HasOne(entity => entity.Member).WithMany(entity => entity.Invoices).HasForeignKey(entity => entity.MemberId);
-        builder.Entity<Invoice>().HasIndex(entity => new { entity.GymId, entity.InvoiceNumber }).IsUnique();
-        builder.Entity<Invoice>().HasIndex(entity => new { entity.GymId, entity.MemberId, entity.DueAtUtc, entity.Status });
-        builder.Entity<InvoiceLine>().HasOne(entity => entity.Invoice).WithMany(entity => entity.Lines).HasForeignKey(entity => entity.InvoiceId);
-        builder.Entity<InvoicePayment>().HasOne(entity => entity.Invoice).WithMany(entity => entity.Payments).HasForeignKey(entity => entity.InvoiceId);
-        builder.Entity<InvoicePayment>().HasOne(entity => entity.Payment).WithMany().HasForeignKey(entity => entity.PaymentId);
-        builder.Entity<OpeningHours>().HasIndex(hours => new { hours.GymId, hours.Weekday, hours.ValidFrom, hours.ValidTo });
-        builder.Entity<OpeningHoursException>().HasIndex(exception => new { exception.GymId, exception.ExceptionDate }).IsUnique();
-        builder.Entity<Equipment>().HasOne(entity => entity.EquipmentModel).WithMany(entity => entity.EquipmentItems).HasForeignKey(entity => entity.EquipmentModelId);
-        builder.Entity<Equipment>().HasIndex(item => new { item.GymId, item.AssetTag }).IsUnique();
-        builder.Entity<Equipment>().HasIndex(item => new { item.GymId, item.SerialNumber }).IsUnique();
-        builder.Entity<MaintenanceTask>().HasOne(entity => entity.Equipment).WithMany(entity => entity.MaintenanceTasks).HasForeignKey(entity => entity.EquipmentId);
-        builder.Entity<MaintenanceTask>().HasOne(entity => entity.AssignedStaff).WithMany(entity => entity.AssignedTasks).HasForeignKey(entity => entity.AssignedStaffId);
-        builder.Entity<MaintenanceTask>().HasOne(entity => entity.CreatedByStaff).WithMany(entity => entity.CreatedTasks).HasForeignKey(entity => entity.CreatedByStaffId);
-        builder.Entity<MaintenanceTask>().HasIndex(task => new { task.GymId, task.EquipmentId, task.Status, task.DueAtUtc });
-        builder.Entity<MaintenanceTaskAssignmentHistory>()
-            .HasOne(entity => entity.MaintenanceTask)
-            .WithMany(entity => entity.AssignmentHistory)
-            .HasForeignKey(entity => entity.MaintenanceTaskId);
-        builder.Entity<MaintenanceTaskAssignmentHistory>()
-            .HasOne(entity => entity.AssignedStaff)
-            .WithMany(entity => entity.MaintenanceAssignmentEvents)
-            .HasForeignKey(entity => entity.AssignedStaffId);
-        builder.Entity<MaintenanceTaskAssignmentHistory>()
-            .HasOne(entity => entity.AssignedByStaff)
-            .WithMany(entity => entity.MaintenanceAssignmentChanges)
-            .HasForeignKey(entity => entity.AssignedByStaffId);
-        builder.Entity<MaintenanceTaskAssignmentHistory>().HasIndex(entity => new { entity.GymId, entity.MaintenanceTaskId, entity.AssignedAtUtc });
-
-        builder.Entity<EmploymentContract>().Property(contract => contract.WorkloadPercent).HasPrecision(5, 2);
-        builder.Entity<TrainingSession>().Property(session => session.BasePrice).HasPrecision(12, 2);
-        builder.Entity<Booking>().Property(booking => booking.ChargedPrice).HasPrecision(12, 2);
-        builder.Entity<MembershipPackage>().Property(package => package.BasePrice).HasPrecision(12, 2);
-        builder.Entity<Membership>().Property(membership => membership.PriceAtPurchase).HasPrecision(12, 2);
-        builder.Entity<Payment>().Property(payment => payment.Amount).HasPrecision(12, 2);
-        builder.Entity<Invoice>().Property(entity => entity.SubtotalAmount).HasPrecision(12, 2);
-        builder.Entity<Invoice>().Property(entity => entity.CreditAmount).HasPrecision(12, 2);
-        builder.Entity<Invoice>().Property(entity => entity.TotalAmount).HasPrecision(12, 2);
-        builder.Entity<Invoice>().Property(entity => entity.PaidAmount).HasPrecision(12, 2);
-        builder.Entity<Invoice>().Property(entity => entity.OutstandingAmount).HasPrecision(12, 2);
-        builder.Entity<InvoiceLine>().Property(entity => entity.Quantity).HasPrecision(12, 2);
-        builder.Entity<InvoiceLine>().Property(entity => entity.UnitPrice).HasPrecision(12, 2);
-        builder.Entity<InvoiceLine>().Property(entity => entity.LineTotal).HasPrecision(12, 2);
-        builder.Entity<InvoicePayment>().Property(entity => entity.Amount).HasPrecision(12, 2);
-        builder.Entity<Subscription>().Property(subscription => subscription.MonthlyPrice).HasPrecision(12, 2);
+        builder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
 
         ConfigureTenantFilter<GymSettings>(builder);
         ConfigureTenantFilter<Subscription>(builder);

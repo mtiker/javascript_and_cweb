@@ -21,14 +21,14 @@ public class AuthorizationServiceTests
         dbContext.Gyms.Add(gym);
         await dbContext.SaveChangesAsync();
 
-        var service = new AuthorizationService(dbContext, new TestUserContextService(new UserExecutionContext(
+        var service = CreateService(dbContext, new UserExecutionContext(
             UserId: Guid.NewGuid(),
             PersonId: null,
             ActiveGymId: null,
             ActiveGymCode: null,
             ActiveRole: null,
             AllRoles: [],
-            SystemRoles: [])));
+            SystemRoles: []));
 
         await Assert.ThrowsAsync<ForbiddenException>(() =>
             service.EnsureTenantAccessAsync(gym.Code, CancellationToken.None, RoleNames.GymAdmin));
@@ -43,11 +43,11 @@ public class AuthorizationServiceTests
         dbContext.Gyms.AddRange(activeGym, routeGym);
         await dbContext.SaveChangesAsync();
 
-        var service = new AuthorizationService(dbContext, new TestUserContextService(CreateContext(
+        var service = CreateService(dbContext, CreateContext(
             activeGym.Id,
             activeGym.Code,
             personId: Guid.NewGuid(),
-            RoleNames.GymAdmin)));
+            RoleNames.GymAdmin));
 
         await Assert.ThrowsAsync<ForbiddenException>(() =>
             service.EnsureTenantAccessAsync(routeGym.Code, CancellationToken.None, RoleNames.GymAdmin));
@@ -61,11 +61,11 @@ public class AuthorizationServiceTests
         dbContext.Gyms.Add(gym);
         await dbContext.SaveChangesAsync();
 
-        var service = new AuthorizationService(dbContext, new TestUserContextService(CreateContext(
+        var service = CreateService(dbContext, CreateContext(
             gym.Id,
             gym.Code,
             personId: Guid.NewGuid(),
-            RoleNames.Member)));
+            RoleNames.Member));
 
         await Assert.ThrowsAsync<ForbiddenException>(() =>
             service.EnsureTenantAccessAsync(gym.Code, CancellationToken.None, RoleNames.GymOwner, RoleNames.GymAdmin));
@@ -84,11 +84,11 @@ public class AuthorizationServiceTests
         dbContext.Members.AddRange(ownMember, otherMember);
         await dbContext.SaveChangesAsync();
 
-        var service = new AuthorizationService(dbContext, new TestUserContextService(CreateContext(
+        var service = CreateService(dbContext, CreateContext(
             gym.Id,
             gym.Code,
             ownPersonId,
-            RoleNames.Member)));
+            RoleNames.Member));
 
         await service.EnsureMemberSelfAccessAsync(gym.Id, ownMember.Id, CancellationToken.None);
 
@@ -133,11 +133,11 @@ public class AuthorizationServiceTests
         dbContext.WorkShifts.Add(assignedShift);
         await dbContext.SaveChangesAsync();
 
-        var service = new AuthorizationService(dbContext, new TestUserContextService(CreateContext(
+        var service = CreateService(dbContext, CreateContext(
             gym.Id,
             gym.Code,
             trainerPersonId,
-            RoleNames.Trainer)));
+            RoleNames.Trainer));
 
         await service.EnsureBookingAccessAsync(assignedBooking, CancellationToken.None);
 
@@ -177,16 +177,27 @@ public class AuthorizationServiceTests
         dbContext.MaintenanceTasks.AddRange(assignedTask, unassignedTask);
         await dbContext.SaveChangesAsync();
 
-        var service = new AuthorizationService(dbContext, new TestUserContextService(CreateContext(
+        var service = CreateService(dbContext, CreateContext(
             gym.Id,
             gym.Code,
             caretakerPersonId,
-            RoleNames.Caretaker)));
+            RoleNames.Caretaker));
 
         await service.EnsureMaintenanceTaskAccessAsync(assignedTask, CancellationToken.None);
 
         await Assert.ThrowsAsync<ForbiddenException>(() =>
             service.EnsureMaintenanceTaskAccessAsync(unassignedTask, CancellationToken.None));
+    }
+
+    private static IAuthorizationService CreateService(AppDbContext dbContext, UserExecutionContext context)
+    {
+        var userContextService = new TestUserContextService(context);
+        var currentActorResolver = new CurrentActorResolver(dbContext, userContextService);
+
+        return new AuthorizationService(
+            currentActorResolver,
+            new TenantAccessChecker(dbContext, currentActorResolver),
+            new ResourceAuthorizationChecker(dbContext, currentActorResolver));
     }
 
     private static UserExecutionContext CreateContext(Guid gymId, string gymCode, Guid? personId, params string[] roles) =>
