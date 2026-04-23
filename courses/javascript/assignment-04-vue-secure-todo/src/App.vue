@@ -9,22 +9,26 @@ const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
 
-const useShell = computed(() => authStore.isAuthenticated && route.path.startsWith("/app"));
+const requiresAuth = computed(() => route.meta.requiresAuth === true);
+const useShell = computed(() => authStore.isAuthenticated && requiresAuth.value);
 
 watch(
-  () => [authStore.isAuthenticated, route.path, route.fullPath] as const,
-  ([isAuthenticated, currentPath, currentFullPath]) => {
-    if (isAuthenticated || !currentPath.startsWith("/app")) {
+  () => authStore.isAuthenticated,
+  (isAuthenticated) => {
+    if (isAuthenticated || !requiresAuth.value) {
       return;
     }
 
+    // Router guards cover navigation-time access control.
+    // This watcher handles in-place token loss without a new navigation.
     void router.replace({
       name: "login",
       query: {
-        redirect: currentFullPath,
+        redirect: route.fullPath,
       },
     });
   },
+  { immediate: true },
 );
 </script>
 

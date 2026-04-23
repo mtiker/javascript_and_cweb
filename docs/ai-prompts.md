@@ -17,6 +17,16 @@ Record AI-assisted development evidence here.
 ## Entries
 
 - Date: 2026-04-23
+- Subject: javascript
+- Assignment: assignment-04-vue-secure-todo
+- Prompt: Perform a senior-level audit of Assignment 04 Vue project and implement focused improvements: fix catalog schema usage, review auth guard duplication, improve first-run Catalogs UX, add safe catalog deletion behavior for referenced items, apply route lazy loading/base URL history, enrich dashboard recent-task cards, reduce duplicated initial-loading logic, and keep tests/docs synchronized.
+- Files affected: `courses/javascript/assignment-04-vue-secure-todo/src/{App.vue,router/index.ts,components/CatalogFormModal.vue,views/CatalogsView.vue,views/DashboardView.vue,views/TasksView.vue,composables/use-view-loader.ts,README.md}`, `courses/javascript/assignment-04-vue-secure-todo/tests/catalogs-view.spec.ts`, `docs/ai-prompts.md`
+- AI output used: Switched router views to lazy imports and `createWebHistory(import.meta.env.BASE_URL)`, kept router guards for navigation while simplifying App-level mid-session auth-loss redirect logic, fixed CatalogFormModal to use priority-specific validation behavior, removed overlapping first-run Catalogs empty-state layering, added deletion guards that block removing categories/priorities still used by tasks, added category/priority badges on dashboard recent cards, extracted shared view-loader composable, and added regression tests for first-run state/deletion safety/priority-mode validation behavior.
+- What AI got wrong / needed correction: An initial regression test expected a priority submit event from direct modal interaction and was adjusted to assert the intended validation behavior reliably in this component setup.
+- Changes made manually: Executed `npm test`, `npm run check`, and `npm run build` after changes and updated Assignment 04 README bullets/routing notes to match the implemented behavior.
+- Alternatives considered: Removing App-level auth-loss handling and relying only on router guards, but that would miss token-loss redirects without navigation; introducing broader store/service abstractions for load states, but a tiny composable kept duplication low without overengineering.
+
+- Date: 2026-04-23
 - Subject: webapp-csharp
 - Assignment: assignment-03-multi-gym-management-system
 - Prompt: Implement Batch 4 of the A18-parity plan for Assignment 03: add dedicated React workflow pages (member/coaching/finance/maintenance), align compatible create/delete/cancel endpoint semantics to `201`/`204`, add defense-oriented study guides and request-flow diagram, and keep docs/tests synchronized.

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useForm } from "vee-validate";
 import { ref, watch } from "vue";
-import { categorySchema } from "@/schemas/todo";
+import { categorySchema, prioritySchema } from "@/schemas/todo";
 import type {
   TodoCategoryDraft,
   TodoCategoryEntity,
@@ -24,17 +24,26 @@ const emit = defineEmits<{
 }>();
 
 const submitAttempted = ref(false);
+const validationSchema = props.kind === "category" ? categorySchema : prioritySchema;
 
 function buildInitialValues(entity: CatalogEntity) {
-  return {
+  const baseValues = {
     name: entity?.name ?? "",
     sortOrder: entity?.sortOrder ?? 10,
-    tag: "tag" in (entity ?? {}) ? entity?.tag ?? "" : "",
   };
+
+  if (props.kind === "category") {
+    return {
+      ...baseValues,
+      tag: "tag" in (entity ?? {}) ? entity?.tag ?? "" : "",
+    };
+  }
+
+  return baseValues;
 }
 
 const { errors, handleSubmit, resetForm, setFieldValue, values } = useForm({
-  validationSchema: categorySchema,
+  validationSchema,
   initialValues: buildInitialValues(null),
 });
 
@@ -54,7 +63,7 @@ const submitForm = handleSubmit((values) => {
     emit("save", {
       name: values.name.trim(),
       sortOrder: Number(values.sortOrder),
-      tag: values.tag.trim(),
+      tag: (values.tag ?? "").trim(),
     });
     return;
   }

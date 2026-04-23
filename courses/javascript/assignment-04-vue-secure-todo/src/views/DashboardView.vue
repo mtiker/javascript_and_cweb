@@ -1,34 +1,33 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
+import { computed } from "vue";
 import { RouterLink } from "vue-router";
 import EmptyStatePanel from "@/components/EmptyStatePanel.vue";
 import StatCard from "@/components/StatCard.vue";
-import { getErrorMessage } from "@/lib/error-utils";
+import { useViewLoader } from "@/composables/use-view-loader";
 import { getTaskMetrics } from "@/lib/task-utils";
 import { useCatalogStore } from "@/stores/catalogs";
 import { useTodoStore } from "@/stores/todo";
 
 const catalogStore = useCatalogStore();
 const todoStore = useTodoStore();
-const loadError = ref<string | null>(null);
-
-async function loadInitialData() {
-  loadError.value = null;
-
-  try {
+const { loadError, loadInitialData } = useViewLoader(
+  async () => {
     await Promise.all([catalogStore.ensureLoaded(), todoStore.ensureLoaded()]);
-  } catch (error) {
-    loadError.value = getErrorMessage(error, "Unable to load the dashboard.");
-  }
-}
-
-onMounted(loadInitialData);
+  },
+  "Unable to load the dashboard.",
+);
 
 const metrics = computed(() => getTaskMetrics(todoStore.tasks));
 const recentTasks = computed(() =>
   [...todoStore.tasks]
     .sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime())
     .slice(0, 4),
+);
+const categoryNameById = computed(() =>
+  new Map(catalogStore.categories.map((category) => [category.id, category.name] as const)),
+);
+const priorityNameById = computed(() =>
+  new Map(catalogStore.priorities.map((priority) => [priority.id, priority.name] as const)),
 );
 </script>
 
@@ -111,6 +110,10 @@ const recentTasks = computed(() =>
           <article v-for="task in recentTasks" :key="task.id" class="task-card">
             <div class="task-card__content">
               <div>
+                <span class="pill">{{ priorityNameById.get(task.priorityId) ?? "Unknown priority" }}</span>
+                <span class="pill pill--muted">
+                  {{ categoryNameById.get(task.categoryId) ?? "Unknown category" }}
+                </span>
                 <span class="pill">{{ task.isCompleted ? "Completed" : "Open" }}</span>
                 <span v-if="task.isArchived" class="pill pill--muted">Archived</span>
               </div>

@@ -8,7 +8,9 @@ The app is intentionally structured as a reusable secure frontend base:
 - Vue Router with auth-aware redirects
 - Pinia stores for auth, catalogs, tasks, and toasts
 - JWT access-token handling with refresh-token retry on `401`
+- route-level lazy loading plus base-URL-aware router history
 - first-run onboarding for empty category/priority catalogs
+- guarded category/priority deletion when tasks still reference catalog items
 - UTF-8-safe Estonian demo data and a browser favicon/logo
 - assignment-local Docker, CI/CD, and deployment files
 
@@ -25,6 +27,7 @@ The backend was overhauled on April 5, 2026, so fresh accounts start with empty 
 - Todo priority CRUD
 - dashboard summary view
 - first-run catalog onboarding and quick-start preset
+- catalog delete protection for referenced categories and priorities
 - one-click manual-testing seed data with categories, priorities, and varied task states
 - UTF-8 text delivery for Estonian characters such as `ä`, `ö`, and `ü`
 - responsive UI with loading, empty, filtered-empty, success, and error states
@@ -43,6 +46,7 @@ Routing rules:
 - anonymous users trying to open `/app/...` are redirected to `/login`
 - signed-in users opening guest routes are redirected back into the app
 - signed-in users without at least one category and one priority are redirected to `/app/catalogs`
+- if auth is lost while still on `/app/...`, the app redirects immediately to `/login` with `redirect` preserved
 
 ## Security Design
 

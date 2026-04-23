@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
+import { computed, ref } from "vue";
 import CatalogFormModal from "@/components/CatalogFormModal.vue";
 import ConfirmDialog from "@/components/ConfirmDialog.vue";
 import EmptyStatePanel from "@/components/EmptyStatePanel.vue";
+import { useViewLoader } from "@/composables/use-view-loader";
 import { getErrorMessage } from "@/lib/error-utils";
 import { useCatalogStore } from "@/stores/catalogs";
 import { useTodoStore } from "@/stores/todo";
@@ -19,24 +20,20 @@ const todoStore = useTodoStore();
 const toastStore = useToastStore();
 
 const busy = ref(false);
-const loadError = ref<string | null>(null);
 const modalOpen = ref(false);
 const modalKind = ref<"category" | "priority">("category");
 const selectedCategory = ref<TodoCategoryEntity | null>(null);
 const selectedPriority = ref<TodoPriorityEntity | null>(null);
 const deleteMode = ref<"category" | "priority" | null>(null);
-
-async function loadInitialData() {
-  loadError.value = null;
-
-  try {
+const { loadError, loadInitialData } = useViewLoader(
+  async () => {
     await catalogStore.ensureLoaded();
-  } catch (error) {
-    loadError.value = getErrorMessage(error, "Unable to load categories and priorities.");
-  }
-}
-
-onMounted(loadInitialData);
+  },
+  "Unable to load categories and priorities.",
+);
+const isFirstRun = computed(
+  () => !catalogStore.categories.length && !catalogStore.priorities.length,
+);
 
 const activeEntity = computed(() =>
   modalKind.value === "category" ? selectedCategory.value : selectedPriority.value,
@@ -135,16 +132,99 @@ async function applyDemoSeed() {
   }
 }
 
+async function ensureNotReferencedByTasks(
+  mode: "category" | "priority",
+  id: string,
+  name: string,
+) {
+  await todoStore.ensureLoaded();
+  const referencedByCount = todoStore.tasks.filter((task) =>
+    mode === "category" ? task.categoryId === id : task.priorityId === id,
+  ).length;
+
+  if (referencedByCount === 0) {
+    return true;
+  }
+
+  const taskLabel = referencedByCount === 1 ? "task still uses it" : "tasks still use it";
+  toastStore.push(
+    `Cannot delete ${mode} "${name}" because ${referencedByCount} ${taskLabel}. Reassign those tasks first.`,
+    "error",
+  );
+
+  return false;
+}
+
+async function requestDeleteCategory(category: TodoCategoryEntity) {
+  busy.value = true;
+
+  try {
+    if (!(await ensureNotReferencedByTasks("category", category.id, category.name))) {
+      return;
+    }
+
+    selectedCategory.value = category;
+    selectedPriority.value = null;
+    deleteMode.value = "category";
+  } catch (error) {
+    toastStore.push(getErrorMessage(error, "Unable to validate category usage."), "error");
+  } finally {
+    busy.value = false;
+  }
+}
+
+async function requestDeletePriority(priority: TodoPriorityEntity) {
+  busy.value = true;
+
+  try {
+    if (!(await ensureNotReferencedByTasks("priority", priority.id, priority.name))) {
+      return;
+    }
+
+    selectedPriority.value = priority;
+    selectedCategory.value = null;
+    deleteMode.value = "priority";
+  } catch (error) {
+    toastStore.push(getErrorMessage(error, "Unable to validate priority usage."), "error");
+  } finally {
+    busy.value = false;
+  }
+}
+
 async function confirmDelete() {
   busy.value = true;
 
   try {
     if (deleteMode.value === "category" && selectedCategory.value) {
+      if (
+        !(await ensureNotReferencedByTasks(
+          "category",
+          selectedCategory.value.id,
+          selectedCategory.value.name,
+        ))
+      ) {
+        deleteMode.value = null;
+        selectedCategory.value = null;
+        return;
+      }
+
       await catalogStore.deleteCategory(selectedCategory.value.id);
       toastStore.push("Category deleted successfully.", "success");
     }
 
     if (deleteMode.value === "priority" && selectedPriority.value) {
+      if (
+        !(await ensureNotReferencedByTasks(
+          "priority",
+          selectedPriority.value.id,
+          selectedPriority.value.name,
+        ))
+      ) {
+        deleteMode.value = null;
+        selectedPriority.value = null;
+        return;
+      }
+
       await catalogStore.deletePriority(selectedPriority.value.id);
       toastStore.push("Priority deleted successfully.", "success");
     }
@@ -205,23 +285,26 @@ async function confirmDelete() {
     </section>
 
     <section
-      v-else-if="!catalogStore.categories.length && !catalogStore.priorities.length"
+      v-else-if="isFirstRun"
       class="panel"
     >
       <EmptyStatePanel
         title="This account is brand new"
-        description="Use the quick-start preset for a fast setup, or add the first category and priority manually."
+        description="Choose the quick-start preset for defaults, or add the first category and priority manually."
       >
         <button class="button" type="button" :disabled="busy" @click="applyQuickStartPreset">
           Apply quick-start preset
         </button>
-        <button class="button button--ghost" type="button" :disabled="busy" @click="applyDemoSeed">
-          Seed demo workspace
+        <button class="button button--ghost" type="button" :disabled="busy" @click="openCreate('category')">
+          Add category
+        </button>
+        <button class="button button--ghost" type="button" :disabled="busy" @click="openCreate('priority')">
+          Add priority
         </button>
       </EmptyStatePanel>
     </section>
 
-    <section v-if="!loadError && !catalogStore.loading" class="catalog-grid">
+    <section v-if="!loadError && !catalogStore.loading && !isFirstRun" class="catalog-grid">
       <article class="panel">
         <div class="panel__heading">
           <div>
@@ -256,11 +339,8 @@ async function confirmDelete() {
               <button
                 class="button button--danger"
                 type="button"
-                @click="
-                  selectedCategory = category;
-                  selectedPriority = null;
-                  deleteMode = 'category';
-                "
+                :disabled="busy"
+                @click="requestDeleteCategory(category)"
               >
                 Delete
               </button>
@@ -303,11 +383,8 @@ async function confirmDelete() {
               <button
                 class="button button--danger"
                 type="button"
-                @click="
-                  selectedPriority = priority;
-                  selectedCategory = null;
-                  deleteMode = 'priority';
-                "
+                :disabled="busy"
+                @click="requestDeletePriority(priority)"
               >
                 Delete
               </button>
@@ -318,6 +395,7 @@ async function confirmDelete() {
     </section>
 
     <CatalogFormModal
+      :key="modalKind"
       :open="modalOpen"
       :kind="modalKind"
       :busy="busy"

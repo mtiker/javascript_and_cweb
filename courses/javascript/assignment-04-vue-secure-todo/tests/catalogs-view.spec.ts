@@ -128,6 +128,7 @@ vi.mock("@/api/todos", () => ({
 
 import CatalogsView from "@/views/CatalogsView.vue";
 import CatalogFormModal from "@/components/CatalogFormModal.vue";
+import ConfirmDialog from "@/components/ConfirmDialog.vue";
 
 describe("catalogs view", () => {
   beforeEach(() => {
@@ -216,6 +217,24 @@ describe("catalogs view", () => {
     expect(wrapper.findAll("button").some((button) => button.text() === "Retry")).toBe(true);
   });
 
+  it("shows a single first-run onboarding state without nested catalog empty cards", async () => {
+    api.state.categories = [];
+    api.state.priorities = [];
+    api.state.tasks = [];
+
+    const wrapper = mount(CatalogsView, {
+      global: {
+        plugins: [createPinia()],
+      },
+    });
+
+    await flushPromises();
+
+    expect(wrapper.text()).toContain("This account is brand new");
+    expect(wrapper.text()).not.toContain("No categories yet");
+    expect(wrapper.text()).not.toContain("No priorities yet");
+  });
+
   it("prevents saving an invalid category in the modal", async () => {
     const wrapper = mount(CatalogFormModal, {
       props: {
@@ -233,5 +252,121 @@ describe("catalogs view", () => {
     await flushPromises();
 
     expect(wrapper.emitted("save")).toBeUndefined();
+  });
+
+  it("does not apply category tag validation rules in priority mode", async () => {
+    const wrapper = mount(CatalogFormModal, {
+      props: {
+        open: true,
+        kind: "priority",
+        entity: {
+          id: "priority-1",
+          name: "High",
+          sortOrder: 10,
+          syncAt: "2026-04-16T10:00:00.000Z",
+          tag: "invalid tag value",
+        },
+      },
+      global: {
+        plugins: [createPinia()],
+      },
+    });
+
+    await flushPromises();
+    await wrapper.get("form").trigger("submit");
+    await flushPromises();
+
+    expect(wrapper.text()).not.toContain("Use letters, numbers, and hyphens only.");
+    expect(wrapper.text()).not.toContain("Tag must stay under 32 characters.");
+  });
+
+  it("blocks deleting a category that is still referenced by tasks", async () => {
+    api.state.categories = [
+      {
+        id: "category-1",
+        name: "Work",
+        sortOrder: 10,
+        syncAt: "2026-04-16T10:00:00.000Z",
+        tag: "work",
+      },
+    ];
+    api.state.priorities = [
+      {
+        id: "priority-1",
+        name: "High",
+        sortOrder: 10,
+        syncAt: "2026-04-16T10:00:00.000Z",
+        tag: null,
+      },
+    ];
+    api.state.tasks = [
+      {
+        id: "task-1",
+        name: "Keep reference",
+        sortOrder: 10,
+        createdAt: "2026-04-16T12:00:00.000Z",
+        dueAt: null,
+        isCompleted: false,
+        isArchived: false,
+        categoryId: "category-1",
+        priorityId: "priority-1",
+        syncAt: "2026-04-16T12:00:00.000Z",
+      },
+    ];
+
+    const wrapper = mount(CatalogsView, {
+      global: {
+        plugins: [createPinia()],
+      },
+    });
+
+    await flushPromises();
+    const deleteButton = wrapper.findAll("button").find((button) => button.text() === "Delete");
+    expect(deleteButton).toBeTruthy();
+    await deleteButton!.trigger("click");
+    await flushPromises();
+
+    expect(api.deleteCategory).not.toHaveBeenCalled();
+    expect(wrapper.getComponent(ConfirmDialog).props("open")).toBe(false);
+  });
+
+  it("allows deleting an unreferenced category after confirmation", async () => {
+    api.state.categories = [
+      {
+        id: "category-1",
+        name: "Work",
+        sortOrder: 10,
+        syncAt: "2026-04-16T10:00:00.000Z",
+        tag: "work",
+      },
+    ];
+    api.state.priorities = [
+      {
+        id: "priority-1",
+        name: "High",
+        sortOrder: 10,
+        syncAt: "2026-04-16T10:00:00.000Z",
+        tag: null,
+      },
+    ];
+    api.state.tasks = [];
+
+    const wrapper = mount(CatalogsView, {
+      global: {
+        plugins: [createPinia()],
+      },
+    });
+
+    await flushPromises();
+    const deleteButton = wrapper.findAll("button").find((button) => button.text() === "Delete");
+    expect(deleteButton).toBeTruthy();
+    await deleteButton!.trigger("click");
+    await flushPromises();
+
+    expect(wrapper.getComponent(ConfirmDialog).props("open")).toBe(true);
+    wrapper.getComponent(ConfirmDialog).vm.$emit("confirm");
+    await flushPromises();
+
+    expect(api.deleteCategory).toHaveBeenCalledWith("category-1");
   });
 });

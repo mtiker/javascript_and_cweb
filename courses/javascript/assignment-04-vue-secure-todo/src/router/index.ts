@@ -1,9 +1,4 @@
 import { createRouter, createWebHistory } from "vue-router";
-import DashboardView from "@/views/DashboardView.vue";
-import CatalogsView from "@/views/CatalogsView.vue";
-import LoginView from "@/views/LoginView.vue";
-import RegisterView from "@/views/RegisterView.vue";
-import TasksView from "@/views/TasksView.vue";
 import { useAuthStore } from "@/stores/auth";
 import { useCatalogStore } from "@/stores/catalogs";
 
@@ -16,7 +11,7 @@ declare module "vue-router" {
 }
 
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: "/",
@@ -25,7 +20,7 @@ const router = createRouter({
     {
       path: "/login",
       name: "login",
-      component: LoginView,
+      component: () => import("@/views/LoginView.vue"),
       meta: {
         guestOnly: true,
         title: "Login",
@@ -34,7 +29,7 @@ const router = createRouter({
     {
       path: "/register",
       name: "register",
-      component: RegisterView,
+      component: () => import("@/views/RegisterView.vue"),
       meta: {
         guestOnly: true,
         title: "Register",
@@ -43,7 +38,7 @@ const router = createRouter({
     {
       path: "/app/dashboard",
       name: "dashboard",
-      component: DashboardView,
+      component: () => import("@/views/DashboardView.vue"),
       meta: {
         requiresAuth: true,
         title: "Dashboard",
@@ -52,7 +47,7 @@ const router = createRouter({
     {
       path: "/app/tasks",
       name: "tasks",
-      component: TasksView,
+      component: () => import("@/views/TasksView.vue"),
       meta: {
         requiresAuth: true,
         title: "Tasks",
@@ -61,7 +56,7 @@ const router = createRouter({
     {
       path: "/app/catalogs",
       name: "catalogs",
-      component: CatalogsView,
+      component: () => import("@/views/CatalogsView.vue"),
       meta: {
         requiresAuth: true,
         title: "Catalogs",

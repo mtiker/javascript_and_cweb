@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
+import { computed, ref } from "vue";
 import ConfirmDialog from "@/components/ConfirmDialog.vue";
 import EmptyStatePanel from "@/components/EmptyStatePanel.vue";
 import TaskFilterBar from "@/components/TaskFilterBar.vue";
 import TaskFormModal from "@/components/TaskFormModal.vue";
+import { useViewLoader } from "@/composables/use-view-loader";
 import { formatDateTime, isPastDue } from "@/lib/date-utils";
 import { getErrorMessage } from "@/lib/error-utils";
 import { filterAndSortTasks } from "@/lib/task-utils";
@@ -18,21 +19,14 @@ const toastStore = useToastStore();
 
 const formOpen = ref(false);
 const busy = ref(false);
-const loadError = ref<string | null>(null);
 const editingTask = ref<TodoTaskEntity | null>(null);
 const deleteTarget = ref<TodoTaskEntity | null>(null);
-
-async function loadInitialData() {
-  loadError.value = null;
-
-  try {
+const { loadError, loadInitialData } = useViewLoader(
+  async () => {
     await Promise.all([catalogStore.ensureLoaded(), todoStore.ensureLoaded()]);
-  } catch (error) {
-    loadError.value = getErrorMessage(error, "Unable to load tasks and catalogs.");
-  }
-}
-
-onMounted(loadInitialData);
+  },
+  "Unable to load tasks and catalogs.",
+);
 
 const filteredTasks = computed(() =>
   filterAndSortTasks(
