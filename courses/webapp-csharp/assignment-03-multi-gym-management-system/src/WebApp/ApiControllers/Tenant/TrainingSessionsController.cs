@@ -1,5 +1,4 @@
 using App.BLL.Services;
-using App.DTO.v1;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
 using WebApp.ApiControllers;
@@ -26,10 +25,11 @@ public class TrainingSessionsController(ITrainingWorkflowService trainingWorkflo
     }
 
     [HttpPost("training-sessions")]
-    [ProducesResponseType(typeof(TrainingSessionResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(TrainingSessionResponse), StatusCodes.Status201Created)]
     public async Task<ActionResult<TrainingSessionResponse>> CreateSession(string gymCode, [FromBody] TrainingSessionUpsertRequest request, CancellationToken cancellationToken)
     {
-        return Ok(await trainingWorkflowService.UpsertTrainingSessionAsync(gymCode, null, request, cancellationToken));
+        var created = await trainingWorkflowService.UpsertTrainingSessionAsync(gymCode, null, request, cancellationToken);
+        return CreatedAtAction(nameof(GetSession), new { version = "1.0", gymCode, id = created.Id }, created);
     }
 
     [HttpPut("training-sessions/{id:guid}")]
@@ -40,10 +40,10 @@ public class TrainingSessionsController(ITrainingWorkflowService trainingWorkflo
     }
 
     [HttpDelete("training-sessions/{id:guid}")]
-    [ProducesResponseType(typeof(Message), StatusCodes.Status200OK)]
-    public async Task<ActionResult<Message>> DeleteSession(string gymCode, Guid id, CancellationToken cancellationToken)
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> DeleteSession(string gymCode, Guid id, CancellationToken cancellationToken)
     {
         await trainingWorkflowService.DeleteSessionAsync(gymCode, id, cancellationToken);
-        return Ok(new Message("Training session deleted."));
-}
+        return NoContent();
+    }
 }

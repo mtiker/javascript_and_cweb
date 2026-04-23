@@ -80,7 +80,7 @@ public class SmokeTests(CustomWebApplicationFactory factory) : IClassFixture<Cus
         var response = await client.PostAsJsonAsync("/api/v1/account/register", new RegisterRequest
         {
             Email = "new.user@test.local",
-            Password = "Gym123!",
+            Password = "GymStrong123!",
             FirstName = "New",
             LastName = "User"
         });
@@ -101,7 +101,7 @@ public class SmokeTests(CustomWebApplicationFactory factory) : IClassFixture<Cus
         var loginResponse = await client.PostAsJsonAsync("/api/v1/account/login", new LoginRequest
         {
             Email = "multigym.admin@gym.local",
-            Password = "Gym123!"
+            Password = "GymStrong123!"
         });
 
         loginResponse.EnsureSuccessStatusCode();
@@ -137,7 +137,7 @@ public class SmokeTests(CustomWebApplicationFactory factory) : IClassFixture<Cus
         var loginResponse = await client.PostAsJsonAsync("/api/v1/account/login", new LoginRequest
         {
             Email = "systemadmin@gym.local",
-            Password = "Gym123!"
+            Password = "GymStrong123!"
         });
 
         loginResponse.EnsureSuccessStatusCode();
@@ -216,7 +216,7 @@ public class SmokeTests(CustomWebApplicationFactory factory) : IClassFixture<Cus
         var response = await client.PostAsync("/login", new FormUrlEncodedContent(new Dictionary<string, string>
         {
             ["Email"] = email,
-            ["Password"] = "Gym123!",
+            ["Password"] = "GymStrong123!",
             ["__RequestVerificationToken"] = antiForgeryToken
         }));
 
@@ -238,7 +238,7 @@ public class SmokeTests(CustomWebApplicationFactory factory) : IClassFixture<Cus
         var loginResponse = await client.PostAsJsonAsync("/api/v1/account/login", new LoginRequest
         {
             Email = email,
-            Password = "Gym123!"
+            Password = "GymStrong123!"
         });
 
         loginResponse.EnsureSuccessStatusCode();

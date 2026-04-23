@@ -99,7 +99,12 @@ describe("role operation pages", () => {
             dueAtUtc: "2026-04-30T12:00:00Z",
             startedAtUtc: null,
             completedAtUtc: null,
+            downtimeStartedAtUtc: null,
+            downtimeEndedAtUtc: null,
+            isOverdue: false,
             notes: "Quarterly inspection",
+            completionNotes: null,
+            assignmentHistory: [],
           },
         ]),
       )
@@ -132,7 +137,12 @@ describe("role operation pages", () => {
           dueAtUtc: "2026-04-30T12:00:00Z",
           startedAtUtc: "2026-04-21T09:00:00Z",
           completedAtUtc: null,
+          downtimeStartedAtUtc: null,
+          downtimeEndedAtUtc: null,
+          isOverdue: false,
           notes: "Started chain inspection",
+          completionNotes: null,
+          assignmentHistory: [],
         }),
       );
 
@@ -202,7 +212,12 @@ describe("role operation pages", () => {
           dueAtUtc: "2026-04-25T12:00:00Z",
           startedAtUtc: null,
           completedAtUtc: null,
+          downtimeStartedAtUtc: null,
+          downtimeEndedAtUtc: null,
+          isOverdue: false,
           notes: "Inspect belt",
+          completionNotes: null,
+          assignmentHistory: [],
         }),
       );
 

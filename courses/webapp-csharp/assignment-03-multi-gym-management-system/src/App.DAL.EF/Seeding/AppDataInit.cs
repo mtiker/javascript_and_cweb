@@ -6,7 +6,7 @@ namespace App.DAL.EF.Seeding;
 
 public static partial class AppDataInit
 {
-    public const string DefaultPassword = "Gym123!";
+    public const string DefaultPassword = "GymStrong123!";
 
     public static async Task SeedAsync(
         AppDbContext context,

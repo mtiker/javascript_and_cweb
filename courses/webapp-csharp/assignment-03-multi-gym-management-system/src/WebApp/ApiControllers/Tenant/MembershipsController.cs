@@ -25,6 +25,13 @@ public class MembershipsController(IMembershipWorkflowService membershipWorkflow
         return Ok(await membershipWorkflowService.SellMembershipAsync(gymCode, request, cancellationToken));
     }
 
+    [HttpPut("memberships/{id:guid}/status")]
+    [ProducesResponseType(typeof(MembershipResponse), StatusCodes.Status200OK)]
+    public async Task<ActionResult<MembershipResponse>> UpdateMembershipStatus(string gymCode, Guid id, [FromBody] MembershipStatusUpdateRequest request, CancellationToken cancellationToken)
+    {
+        return Ok(await membershipWorkflowService.UpdateMembershipStatusAsync(gymCode, id, request, cancellationToken));
+    }
+
     [HttpDelete("memberships/{id:guid}")]
     [ProducesResponseType(typeof(Message), StatusCodes.Status200OK)]
     public async Task<ActionResult<Message>> DeleteMembership(string gymCode, Guid id, CancellationToken cancellationToken)

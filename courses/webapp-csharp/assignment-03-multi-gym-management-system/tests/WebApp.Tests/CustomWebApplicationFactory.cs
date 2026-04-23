@@ -19,6 +19,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
         Environment.SetEnvironmentVariable("Jwt__Key", "Test.Jwt.Key.For.Assignment03.Backend.Tests.AtLeast64Characters.Long");
         Environment.SetEnvironmentVariable("Jwt__Issuer", "MultiGymManagementSystem");
         Environment.SetEnvironmentVariable("Jwt__Audience", "MultiGymManagementSystem");
+        Environment.SetEnvironmentVariable("Cors__AllowedOrigins__0", "https://tests.multi-gym.local");
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)

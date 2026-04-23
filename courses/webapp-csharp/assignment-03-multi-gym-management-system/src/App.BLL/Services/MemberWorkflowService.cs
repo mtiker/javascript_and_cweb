@@ -8,7 +8,8 @@ namespace App.BLL.Services;
 
 public class MemberWorkflowService(
     IAppDbContext dbContext,
-    IAuthorizationService authorizationService) : IMemberWorkflowService
+    IAuthorizationService authorizationService,
+    ISubscriptionTierLimitService subscriptionTierLimitService) : IMemberWorkflowService
 {
     public async Task<IReadOnlyCollection<MemberResponse>> GetMembersAsync(string gymCode, CancellationToken cancellationToken = default)
     {
@@ -69,6 +70,7 @@ public class MemberWorkflowService(
     public async Task<MemberDetailResponse> CreateMemberAsync(string gymCode, MemberUpsertRequest request, CancellationToken cancellationToken = default)
     {
         var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, App.Domain.RoleNames.GymOwner, App.Domain.RoleNames.GymAdmin);
+        await subscriptionTierLimitService.EnsureCanCreateMemberAsync(gymId, cancellationToken);
         var normalized = NormalizeRequest(request);
 
         await EnsureUniqueMemberFieldsAsync(gymId, normalized.MemberCode, normalized.PersonalCode, null, null);

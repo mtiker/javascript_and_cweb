@@ -243,6 +243,22 @@ export interface MaintenanceTask {
   dueAtUtc?: string | null;
   startedAtUtc?: string | null;
   completedAtUtc?: string | null;
+  downtimeStartedAtUtc?: string | null;
+  downtimeEndedAtUtc?: string | null;
+  isOverdue: boolean;
+  notes?: string | null;
+  completionNotes?: string | null;
+  assignmentHistory: MaintenanceTaskAssignmentHistory[];
+}
+
+export interface MaintenanceTaskAssignmentHistory {
+  id: string;
+  maintenanceTaskId: string;
+  assignedStaffId?: string | null;
+  assignedStaffName?: string | null;
+  assignedByStaffId?: string | null;
+  assignedByStaffName?: string | null;
+  assignedAtUtc: string;
   notes?: string | null;
 }
 
@@ -259,6 +275,13 @@ export interface MaintenanceTaskUpsertRequest {
 
 export interface MaintenanceStatusUpdateRequest {
   status: MaintenanceTaskStatus;
+  notes?: string | null;
+  completionNotes?: string | null;
+}
+
+export interface MaintenanceAssignmentUpdateRequest {
+  assignedStaffId?: string | null;
+  assignedByStaffId?: string | null;
   notes?: string | null;
 }
 
@@ -313,6 +336,23 @@ export interface Staff {
   status: StaffStatus;
 }
 
+export enum MembershipStatus {
+  Pending = 0,
+  Active = 1,
+  Expired = 2,
+  Cancelled = 3,
+  Paused = 4,
+  Refunded = 5,
+  Renewed = 6,
+}
+
+export enum PaymentStatus {
+  Pending = 0,
+  Completed = 1,
+  Failed = 2,
+  Refunded = 3,
+}
+
 export interface Membership {
   id: string;
   memberId: string;
@@ -321,7 +361,7 @@ export interface Membership {
   endDate: string;
   priceAtPurchase: number;
   currencyCode: string;
-  status: number;
+  status: MembershipStatus;
 }
 
 export interface Payment {
@@ -329,10 +369,199 @@ export interface Payment {
   amount: number;
   currencyCode: string;
   paidAtUtc: string;
-  status: number;
+  status: PaymentStatus;
   reference?: string | null;
   membershipId?: string | null;
   bookingId?: string | null;
+}
+
+export enum InvoiceStatus {
+  Draft = 0,
+  Issued = 1,
+  PartiallyPaid = 2,
+  Paid = 3,
+  Overdue = 4,
+  Cancelled = 5,
+  Refunded = 6,
+}
+
+export interface InvoiceLine {
+  id: string;
+  description: string;
+  quantity: number;
+  unitPrice: number;
+  lineTotal: number;
+  isCredit: boolean;
+  notes?: string | null;
+}
+
+export interface InvoicePayment {
+  id: string;
+  amount: number;
+  isRefund: boolean;
+  appliedAtUtc: string;
+  reference?: string | null;
+  notes?: string | null;
+}
+
+export interface Invoice {
+  id: string;
+  memberId: string;
+  memberName: string;
+  invoiceNumber: string;
+  issuedAtUtc: string;
+  dueAtUtc: string;
+  currencyCode: string;
+  subtotalAmount: number;
+  creditAmount: number;
+  totalAmount: number;
+  paidAmount: number;
+  outstandingAmount: number;
+  isOverdue: boolean;
+  status: InvoiceStatus;
+  notes?: string | null;
+  lines: InvoiceLine[];
+  payments: InvoicePayment[];
+}
+
+export interface InvoiceLineRequest {
+  description: string;
+  quantity: number;
+  unitPrice: number;
+  isCredit: boolean;
+  notes?: string | null;
+}
+
+export interface InvoiceCreateRequest {
+  memberId: string;
+  dueAtUtc: string;
+  currencyCode: string;
+  notes?: string | null;
+  lines: InvoiceLineRequest[];
+}
+
+export interface InvoicePaymentRequest {
+  amount: number;
+  reference?: string | null;
+  notes?: string | null;
+}
+
+export interface FinanceWorkspace {
+  memberId: string;
+  memberName: string;
+  memberCode: string;
+  outstandingBalance: number;
+  totalRefundCredits: number;
+  overdueInvoiceCount: number;
+  invoices: Invoice[];
+  paymentHistory: InvoicePayment[];
+}
+
+export interface MemberWorkspaceBooking {
+  bookingId: string;
+  trainingSessionId: string;
+  trainingSessionName: string;
+  startAtUtc: string;
+  endAtUtc: string;
+  status: BookingStatus;
+  chargedPrice: number;
+  currencyCode: string;
+  paymentRequired: boolean;
+}
+
+export interface MemberOutstandingAction {
+  code: string;
+  title: string;
+  detail: string;
+}
+
+export interface MemberWorkspace {
+  profile: MemberDetail;
+  memberships: Membership[];
+  payments: Payment[];
+  bookings: MemberWorkspaceBooking[];
+  invoices: Invoice[];
+  attendedSessionCount: number;
+  upcomingBookingCount: number;
+  outstandingBalance: number;
+  outstandingActions: MemberOutstandingAction[];
+}
+
+export enum CoachingPlanStatus {
+  Draft = 0,
+  Published = 1,
+  Active = 2,
+  Completed = 3,
+  Cancelled = 4,
+}
+
+export enum CoachingPlanItemDecision {
+  Accepted = 0,
+  Deferred = 1,
+  Completed = 2,
+  Skipped = 3,
+}
+
+export interface CoachingPlanItem {
+  id: string;
+  sequence: number;
+  title: string;
+  notes?: string | null;
+  targetDate?: string | null;
+  decision?: CoachingPlanItemDecision | null;
+  decisionAtUtc?: string | null;
+  decisionByStaffName?: string | null;
+  decisionNotes?: string | null;
+}
+
+export interface CoachingPlan {
+  id: string;
+  memberId: string;
+  memberName: string;
+  trainerStaffId?: string | null;
+  trainerStaffName?: string | null;
+  createdByStaffId?: string | null;
+  title: string;
+  notes?: string | null;
+  status: CoachingPlanStatus;
+  publishedAtUtc?: string | null;
+  activatedAtUtc?: string | null;
+  completedAtUtc?: string | null;
+  cancelledAtUtc?: string | null;
+  items: CoachingPlanItem[];
+}
+
+export interface CoachingPlanItemRequest {
+  sequence: number;
+  title: string;
+  notes?: string | null;
+  targetDate?: string | null;
+}
+
+export interface CoachingPlanCreateRequest {
+  memberId: string;
+  trainerStaffId?: string | null;
+  createdByStaffId?: string | null;
+  title: string;
+  notes?: string | null;
+  items: CoachingPlanItemRequest[];
+}
+
+export interface CoachingPlanUpdateRequest {
+  trainerStaffId?: string | null;
+  title: string;
+  notes?: string | null;
+  items: CoachingPlanItemRequest[];
+}
+
+export interface CoachingPlanStatusUpdateRequest {
+  status: CoachingPlanStatus;
+  notes?: string | null;
+}
+
+export interface CoachingPlanItemDecisionRequest {
+  decision: CoachingPlanItemDecision;
+  notes?: string | null;
 }
 
 export interface OpeningHours {

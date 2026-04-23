@@ -6,4 +6,5 @@ public class MaintenanceStatusUpdateRequest
 {
     public MaintenanceTaskStatus Status { get; set; }
     public string? Notes { get; set; }
+    public string? CompletionNotes { get; set; }
 }

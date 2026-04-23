@@ -1,3 +1,5 @@
+using System.Security.Claims;
+using System.Text.Json;
 using App.BLL.Contracts.Infrastructure;
 using App.BLL.Exceptions;
 using App.Domain;
@@ -5,6 +7,7 @@ using App.Domain.Common;
 using App.Domain.Entities;
 using App.Domain.Enums;
 using App.Domain.Identity;
+using App.Domain.Security;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using App.DTO.v1.System.Billing;
@@ -260,6 +263,18 @@ public class PlatformService(
 
     public async Task<StartImpersonationResponse> StartImpersonationAsync(StartImpersonationRequest request, CancellationToken cancellationToken = default)
     {
+        var actorContext = userContextService.GetCurrent();
+        if (!actorContext.UserId.HasValue || !actorContext.HasRole(RoleNames.SystemAdmin))
+        {
+            throw new ForbiddenException("Only SystemAdmin can start impersonation.");
+        }
+
+        var reason = request.Reason?.Trim();
+        if (string.IsNullOrWhiteSpace(reason) || reason.Length < 8)
+        {
+            throw new ValidationAppException("Impersonation reason must be at least 8 characters.");
+        }
+
         var user = await userManager.FindByIdAsync(request.UserId.ToString())
                    ?? throw new NotFoundException("User was not found.");
 
@@ -289,11 +304,54 @@ public class PlatformService(
                 .FirstOrDefaultAsync(cancellationToken);
         }
 
+        if (activeLink == null)
+        {
+            throw new ValidationAppException("The target user does not have an active gym role for impersonation.");
+        }
+
+        var refreshToken = tokenService.CreateRefreshToken(user.Id);
+        dbContext.RefreshTokens.Add(refreshToken);
+
+        dbContext.AuditLogs.Add(new AuditLog
+        {
+            ActorUserId = actorContext.UserId.Value,
+            GymId = activeLink.GymId,
+            EntityName = "ImpersonationSession",
+            EntityId = user.Id,
+            Action = "ImpersonationStart",
+            ChangedAtUtc = DateTime.UtcNow,
+            ChangesJson = JsonSerializer.Serialize(new
+            {
+                ActorUserId = actorContext.UserId.Value,
+                TargetUserId = user.Id,
+                ActiveGymCode = activeLink.Gym?.Code,
+                ActiveRole = activeLink.RoleName,
+                Reason = reason
+            })
+        });
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        var additionalClaims = new Claim[]
+        {
+            new(AppClaimTypes.ImpersonatedUserId, user.Id.ToString()),
+            new(AppClaimTypes.ImpersonatedByUserId, actorContext.UserId.Value.ToString()),
+            new(AppClaimTypes.ImpersonationReason, reason),
+            new(AppClaimTypes.IsImpersonated, "true")
+        };
+
         return new StartImpersonationResponse
         {
-            Jwt = tokenService.CreateJwt(user, systemRoles, activeLink),
+            Jwt = tokenService.CreateJwt(user, systemRoles, activeLink, additionalClaims),
+            RefreshToken = refreshToken.RefreshToken,
+            ExpiresInSeconds = tokenService.AccessTokenLifetimeSeconds,
             UserId = user.Id,
-            GymCode = activeLink?.Gym?.Code
+            TargetUserId = user.Id,
+            ImpersonatedByUserId = actorContext.UserId.Value,
+            ImpersonationReason = reason,
+            ActiveGymId = activeLink.GymId,
+            GymCode = activeLink.Gym?.Code,
+            ActiveRole = activeLink.RoleName
         };
     }
 }

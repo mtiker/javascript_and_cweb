@@ -122,7 +122,10 @@ public enum MembershipStatus
     Pending = 0,
     Active = 1,
     Expired = 2,
-    Cancelled = 3
+    Cancelled = 3,
+    Paused = 4,
+    Refunded = 5,
+    Renewed = 6
 }
 
 public enum PaymentStatus
@@ -169,4 +172,32 @@ public enum MaintenanceTaskStatus
     Open = 0,
     InProgress = 1,
     Done = 2
+}
+
+public enum CoachingPlanStatus
+{
+    Draft = 0,
+    Published = 1,
+    Active = 2,
+    Completed = 3,
+    Cancelled = 4
+}
+
+public enum CoachingPlanItemDecision
+{
+    Accepted = 0,
+    Deferred = 1,
+    Completed = 2,
+    Skipped = 3
+}
+
+public enum InvoiceStatus
+{
+    Draft = 0,
+    Issued = 1,
+    PartiallyPaid = 2,
+    Paid = 3,
+    Overdue = 4,
+    Cancelled = 5,
+    Refunded = 6
 }

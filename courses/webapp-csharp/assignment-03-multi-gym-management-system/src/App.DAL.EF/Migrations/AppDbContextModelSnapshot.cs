@@ -159,6 +159,149 @@ namespace App.DAL.EF.Migrations
                     b.ToTable("Bookings");
                 });
 
+            modelBuilder.Entity("App.Domain.Entities.CoachingPlan", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("ActivatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("CancelledAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("CompletedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedByStaffId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("DeletedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("GymId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("MemberId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<DateTime?>("PublishedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<Guid?>("TrainerStaffId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedByStaffId");
+
+                    b.HasIndex("MemberId");
+
+                    b.HasIndex("TrainerStaffId");
+
+                    b.HasIndex("GymId", "MemberId", "Status", "CreatedAtUtc");
+
+                    b.ToTable("CoachingPlans");
+                });
+
+            modelBuilder.Entity("App.Domain.Entities.CoachingPlanItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CoachingPlanId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int?>("Decision")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("DecisionAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("DecisionByStaffId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("DecisionNotes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<DateTime?>("DeletedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("GymId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<int>("Sequence")
+                        .HasColumnType("integer");
+
+                    b.Property<DateOnly?>("TargetDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CoachingPlanId");
+
+                    b.HasIndex("DecisionByStaffId");
+
+                    b.HasIndex("GymId", "CoachingPlanId", "Sequence")
+                        .IsUnique();
+
+                    b.ToTable("CoachingPlanItems");
+                });
+
             modelBuilder.Entity("App.Domain.Entities.Contact", b =>
                 {
                     b.Property<Guid>("Id")
@@ -493,6 +636,212 @@ namespace App.DAL.EF.Migrations
                     b.ToTable("GymSettings");
                 });
 
+            modelBuilder.Entity("App.Domain.Entities.Invoice", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("CreditAmount")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.Property<string>("CurrencyCode")
+                        .IsRequired()
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)");
+
+                    b.Property<DateTime?>("DeletedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("DueAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("GymId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("InvoiceNumber")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime>("IssuedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("MemberId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<decimal>("OutstandingAmount")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.Property<decimal>("PaidAmount")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("SubtotalAmount")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.Property<decimal>("TotalAmount")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MemberId");
+
+                    b.HasIndex("GymId", "InvoiceNumber")
+                        .IsUnique();
+
+                    b.HasIndex("GymId", "MemberId", "DueAtUtc", "Status");
+
+                    b.ToTable("Invoices");
+                });
+
+            modelBuilder.Entity("App.Domain.Entities.InvoiceLine", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("DeletedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<Guid>("GymId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("InvoiceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsCredit")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<decimal>("LineTotal")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<decimal>("Quantity")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.Property<decimal>("UnitPrice")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InvoiceId");
+
+                    b.ToTable("InvoiceLines");
+                });
+
+            modelBuilder.Entity("App.Domain.Entities.InvoicePayment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)");
+
+                    b.Property<DateTime>("AppliedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("DeletedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("GymId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("InvoiceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsRefund")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<Guid?>("PaymentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Reference")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InvoiceId");
+
+                    b.HasIndex("PaymentId");
+
+                    b.ToTable("InvoicePayments");
+                });
+
             modelBuilder.Entity("App.Domain.Entities.JobRole", b =>
                 {
                     b.Property<Guid>("Id")
@@ -558,6 +907,10 @@ namespace App.DAL.EF.Migrations
                     b.Property<DateTime?>("CompletedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("CompletionNotes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
@@ -568,6 +921,12 @@ namespace App.DAL.EF.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<DateTime?>("DeletedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DowntimeEndedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("DowntimeStartedAtUtc")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime?>("DueAtUtc")
@@ -615,6 +974,62 @@ namespace App.DAL.EF.Migrations
                     b.HasIndex("GymId", "EquipmentId", "Status", "DueAtUtc");
 
                     b.ToTable("MaintenanceTasks");
+                });
+
+            modelBuilder.Entity("App.Domain.Entities.MaintenanceTaskAssignmentHistory", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("AssignedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("AssignedByStaffId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("AssignedStaffId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("DeletedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("GymId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("MaintenanceTaskId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("ModifiedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AssignedByStaffId");
+
+                    b.HasIndex("AssignedStaffId");
+
+                    b.HasIndex("MaintenanceTaskId");
+
+                    b.HasIndex("GymId", "MaintenanceTaskId", "AssignedAtUtc");
+
+                    b.ToTable("MaintenanceTaskAssignmentHistory");
                 });
 
             modelBuilder.Entity("App.Domain.Entities.Member", b =>
@@ -1695,6 +2110,47 @@ namespace App.DAL.EF.Migrations
                     b.Navigation("TrainingSession");
                 });
 
+            modelBuilder.Entity("App.Domain.Entities.CoachingPlan", b =>
+                {
+                    b.HasOne("App.Domain.Entities.Staff", "CreatedByStaff")
+                        .WithMany()
+                        .HasForeignKey("CreatedByStaffId");
+
+                    b.HasOne("App.Domain.Entities.Member", "Member")
+                        .WithMany("CoachingPlans")
+                        .HasForeignKey("MemberId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("App.Domain.Entities.Staff", "TrainerStaff")
+                        .WithMany("CoachingPlans")
+                        .HasForeignKey("TrainerStaffId");
+
+                    b.Navigation("CreatedByStaff");
+
+                    b.Navigation("Member");
+
+                    b.Navigation("TrainerStaff");
+                });
+
+            modelBuilder.Entity("App.Domain.Entities.CoachingPlanItem", b =>
+                {
+                    b.HasOne("App.Domain.Entities.CoachingPlan", "CoachingPlan")
+                        .WithMany("Items")
+                        .HasForeignKey("CoachingPlanId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("App.Domain.Entities.Staff", "DecisionByStaff")
+                        .WithMany("CoachingPlanItemDecisions")
+                        .HasForeignKey("DecisionByStaffId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("CoachingPlan");
+
+                    b.Navigation("DecisionByStaff");
+                });
+
             modelBuilder.Entity("App.Domain.Entities.EmploymentContract", b =>
                 {
                     b.HasOne("App.Domain.Entities.JobRole", "PrimaryJobRole")
@@ -1755,6 +2211,46 @@ namespace App.DAL.EF.Migrations
                     b.Navigation("Gym");
                 });
 
+            modelBuilder.Entity("App.Domain.Entities.Invoice", b =>
+                {
+                    b.HasOne("App.Domain.Entities.Member", "Member")
+                        .WithMany("Invoices")
+                        .HasForeignKey("MemberId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Member");
+                });
+
+            modelBuilder.Entity("App.Domain.Entities.InvoiceLine", b =>
+                {
+                    b.HasOne("App.Domain.Entities.Invoice", "Invoice")
+                        .WithMany("Lines")
+                        .HasForeignKey("InvoiceId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Invoice");
+                });
+
+            modelBuilder.Entity("App.Domain.Entities.InvoicePayment", b =>
+                {
+                    b.HasOne("App.Domain.Entities.Invoice", "Invoice")
+                        .WithMany("Payments")
+                        .HasForeignKey("InvoiceId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("App.Domain.Entities.Payment", "Payment")
+                        .WithMany()
+                        .HasForeignKey("PaymentId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Invoice");
+
+                    b.Navigation("Payment");
+                });
+
             modelBuilder.Entity("App.Domain.Entities.MaintenanceTask", b =>
                 {
                     b.HasOne("App.Domain.Entities.Staff", "AssignedStaff")
@@ -1776,6 +2272,29 @@ namespace App.DAL.EF.Migrations
                     b.Navigation("CreatedByStaff");
 
                     b.Navigation("Equipment");
+                });
+
+            modelBuilder.Entity("App.Domain.Entities.MaintenanceTaskAssignmentHistory", b =>
+                {
+                    b.HasOne("App.Domain.Entities.Staff", "AssignedByStaff")
+                        .WithMany("MaintenanceAssignmentChanges")
+                        .HasForeignKey("AssignedByStaffId");
+
+                    b.HasOne("App.Domain.Entities.Staff", "AssignedStaff")
+                        .WithMany("MaintenanceAssignmentEvents")
+                        .HasForeignKey("AssignedStaffId");
+
+                    b.HasOne("App.Domain.Entities.MaintenanceTask", "MaintenanceTask")
+                        .WithMany("AssignmentHistory")
+                        .HasForeignKey("MaintenanceTaskId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("AssignedByStaff");
+
+                    b.Navigation("AssignedStaff");
+
+                    b.Navigation("MaintenanceTask");
                 });
 
             modelBuilder.Entity("App.Domain.Entities.Member", b =>
@@ -2001,6 +2520,11 @@ namespace App.DAL.EF.Migrations
                     b.Navigation("Payments");
                 });
 
+            modelBuilder.Entity("App.Domain.Entities.CoachingPlan", b =>
+                {
+                    b.Navigation("Items");
+                });
+
             modelBuilder.Entity("App.Domain.Entities.Contact", b =>
                 {
                     b.Navigation("GymLinks");
@@ -2038,14 +2562,30 @@ namespace App.DAL.EF.Migrations
                     b.Navigation("UserRoles");
                 });
 
+            modelBuilder.Entity("App.Domain.Entities.Invoice", b =>
+                {
+                    b.Navigation("Lines");
+
+                    b.Navigation("Payments");
+                });
+
             modelBuilder.Entity("App.Domain.Entities.JobRole", b =>
                 {
                     b.Navigation("Contracts");
                 });
 
+            modelBuilder.Entity("App.Domain.Entities.MaintenanceTask", b =>
+                {
+                    b.Navigation("AssignmentHistory");
+                });
+
             modelBuilder.Entity("App.Domain.Entities.Member", b =>
                 {
                     b.Navigation("Bookings");
+
+                    b.Navigation("CoachingPlans");
+
+                    b.Navigation("Invoices");
 
                     b.Navigation("Memberships");
                 });
@@ -2075,9 +2615,17 @@ namespace App.DAL.EF.Migrations
                 {
                     b.Navigation("AssignedTasks");
 
+                    b.Navigation("CoachingPlanItemDecisions");
+
+                    b.Navigation("CoachingPlans");
+
                     b.Navigation("Contracts");
 
                     b.Navigation("CreatedTasks");
+
+                    b.Navigation("MaintenanceAssignmentChanges");
+
+                    b.Navigation("MaintenanceAssignmentEvents");
                 });
 
             modelBuilder.Entity("App.Domain.Entities.TrainingCategory", b =>

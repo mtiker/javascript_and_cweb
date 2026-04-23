@@ -52,11 +52,17 @@ public class AppDbContext(
     public DbSet<MembershipPackage> MembershipPackages { get; set; } = default!;
     public DbSet<Membership> Memberships { get; set; } = default!;
     public DbSet<Payment> Payments { get; set; } = default!;
+    public DbSet<CoachingPlan> CoachingPlans { get; set; } = default!;
+    public DbSet<CoachingPlanItem> CoachingPlanItems { get; set; } = default!;
+    public DbSet<Invoice> Invoices { get; set; } = default!;
+    public DbSet<InvoiceLine> InvoiceLines { get; set; } = default!;
+    public DbSet<InvoicePayment> InvoicePayments { get; set; } = default!;
     public DbSet<OpeningHours> OpeningHours { get; set; } = default!;
     public DbSet<OpeningHoursException> OpeningHoursExceptions { get; set; } = default!;
     public DbSet<EquipmentModel> EquipmentModels { get; set; } = default!;
     public DbSet<Equipment> Equipment { get; set; } = default!;
     public DbSet<MaintenanceTask> MaintenanceTasks { get; set; } = default!;
+    public DbSet<MaintenanceTaskAssignmentHistory> MaintenanceTaskAssignmentHistory { get; set; } = default!;
 
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
@@ -144,6 +150,19 @@ public class AppDbContext(
         builder.Entity<Membership>().HasIndex(membership => new { membership.GymId, membership.MemberId, membership.StartDate, membership.EndDate });
         builder.Entity<Payment>().HasOne(entity => entity.Membership).WithMany(entity => entity.Payments).HasForeignKey(entity => entity.MembershipId);
         builder.Entity<Payment>().HasOne(entity => entity.Booking).WithMany(entity => entity.Payments).HasForeignKey(entity => entity.BookingId);
+        builder.Entity<CoachingPlan>().HasOne(entity => entity.Member).WithMany(entity => entity.CoachingPlans).HasForeignKey(entity => entity.MemberId);
+        builder.Entity<CoachingPlan>().HasOne(entity => entity.TrainerStaff).WithMany(entity => entity.CoachingPlans).HasForeignKey(entity => entity.TrainerStaffId);
+        builder.Entity<CoachingPlan>().HasOne(entity => entity.CreatedByStaff).WithMany().HasForeignKey(entity => entity.CreatedByStaffId);
+        builder.Entity<CoachingPlan>().HasIndex(entity => new { entity.GymId, entity.MemberId, entity.Status, entity.CreatedAtUtc });
+        builder.Entity<CoachingPlanItem>().HasOne(entity => entity.CoachingPlan).WithMany(entity => entity.Items).HasForeignKey(entity => entity.CoachingPlanId);
+        builder.Entity<CoachingPlanItem>().HasOne(entity => entity.DecisionByStaff).WithMany(entity => entity.CoachingPlanItemDecisions).HasForeignKey(entity => entity.DecisionByStaffId);
+        builder.Entity<CoachingPlanItem>().HasIndex(entity => new { entity.GymId, entity.CoachingPlanId, entity.Sequence }).IsUnique();
+        builder.Entity<Invoice>().HasOne(entity => entity.Member).WithMany(entity => entity.Invoices).HasForeignKey(entity => entity.MemberId);
+        builder.Entity<Invoice>().HasIndex(entity => new { entity.GymId, entity.InvoiceNumber }).IsUnique();
+        builder.Entity<Invoice>().HasIndex(entity => new { entity.GymId, entity.MemberId, entity.DueAtUtc, entity.Status });
+        builder.Entity<InvoiceLine>().HasOne(entity => entity.Invoice).WithMany(entity => entity.Lines).HasForeignKey(entity => entity.InvoiceId);
+        builder.Entity<InvoicePayment>().HasOne(entity => entity.Invoice).WithMany(entity => entity.Payments).HasForeignKey(entity => entity.InvoiceId);
+        builder.Entity<InvoicePayment>().HasOne(entity => entity.Payment).WithMany().HasForeignKey(entity => entity.PaymentId);
         builder.Entity<OpeningHours>().HasIndex(hours => new { hours.GymId, hours.Weekday, hours.ValidFrom, hours.ValidTo });
         builder.Entity<OpeningHoursException>().HasIndex(exception => new { exception.GymId, exception.ExceptionDate }).IsUnique();
         builder.Entity<Equipment>().HasOne(entity => entity.EquipmentModel).WithMany(entity => entity.EquipmentItems).HasForeignKey(entity => entity.EquipmentModelId);
@@ -153,6 +172,19 @@ public class AppDbContext(
         builder.Entity<MaintenanceTask>().HasOne(entity => entity.AssignedStaff).WithMany(entity => entity.AssignedTasks).HasForeignKey(entity => entity.AssignedStaffId);
         builder.Entity<MaintenanceTask>().HasOne(entity => entity.CreatedByStaff).WithMany(entity => entity.CreatedTasks).HasForeignKey(entity => entity.CreatedByStaffId);
         builder.Entity<MaintenanceTask>().HasIndex(task => new { task.GymId, task.EquipmentId, task.Status, task.DueAtUtc });
+        builder.Entity<MaintenanceTaskAssignmentHistory>()
+            .HasOne(entity => entity.MaintenanceTask)
+            .WithMany(entity => entity.AssignmentHistory)
+            .HasForeignKey(entity => entity.MaintenanceTaskId);
+        builder.Entity<MaintenanceTaskAssignmentHistory>()
+            .HasOne(entity => entity.AssignedStaff)
+            .WithMany(entity => entity.MaintenanceAssignmentEvents)
+            .HasForeignKey(entity => entity.AssignedStaffId);
+        builder.Entity<MaintenanceTaskAssignmentHistory>()
+            .HasOne(entity => entity.AssignedByStaff)
+            .WithMany(entity => entity.MaintenanceAssignmentChanges)
+            .HasForeignKey(entity => entity.AssignedByStaffId);
+        builder.Entity<MaintenanceTaskAssignmentHistory>().HasIndex(entity => new { entity.GymId, entity.MaintenanceTaskId, entity.AssignedAtUtc });
 
         builder.Entity<EmploymentContract>().Property(contract => contract.WorkloadPercent).HasPrecision(5, 2);
         builder.Entity<TrainingSession>().Property(session => session.BasePrice).HasPrecision(12, 2);
@@ -160,6 +192,15 @@ public class AppDbContext(
         builder.Entity<MembershipPackage>().Property(package => package.BasePrice).HasPrecision(12, 2);
         builder.Entity<Membership>().Property(membership => membership.PriceAtPurchase).HasPrecision(12, 2);
         builder.Entity<Payment>().Property(payment => payment.Amount).HasPrecision(12, 2);
+        builder.Entity<Invoice>().Property(entity => entity.SubtotalAmount).HasPrecision(12, 2);
+        builder.Entity<Invoice>().Property(entity => entity.CreditAmount).HasPrecision(12, 2);
+        builder.Entity<Invoice>().Property(entity => entity.TotalAmount).HasPrecision(12, 2);
+        builder.Entity<Invoice>().Property(entity => entity.PaidAmount).HasPrecision(12, 2);
+        builder.Entity<Invoice>().Property(entity => entity.OutstandingAmount).HasPrecision(12, 2);
+        builder.Entity<InvoiceLine>().Property(entity => entity.Quantity).HasPrecision(12, 2);
+        builder.Entity<InvoiceLine>().Property(entity => entity.UnitPrice).HasPrecision(12, 2);
+        builder.Entity<InvoiceLine>().Property(entity => entity.LineTotal).HasPrecision(12, 2);
+        builder.Entity<InvoicePayment>().Property(entity => entity.Amount).HasPrecision(12, 2);
         builder.Entity<Subscription>().Property(subscription => subscription.MonthlyPrice).HasPrecision(12, 2);
 
         ConfigureTenantFilter<GymSettings>(builder);
@@ -180,11 +221,17 @@ public class AppDbContext(
         ConfigureTenantSoftDeleteFilter<MembershipPackage>(builder);
         ConfigureTenantSoftDeleteFilter<Membership>(builder);
         ConfigureTenantSoftDeleteFilter<Payment>(builder);
+        ConfigureTenantSoftDeleteFilter<CoachingPlan>(builder);
+        ConfigureTenantSoftDeleteFilter<CoachingPlanItem>(builder);
+        ConfigureTenantSoftDeleteFilter<Invoice>(builder);
+        ConfigureTenantSoftDeleteFilter<InvoiceLine>(builder);
+        ConfigureTenantSoftDeleteFilter<InvoicePayment>(builder);
         ConfigureTenantSoftDeleteFilter<OpeningHours>(builder);
         ConfigureTenantSoftDeleteFilter<OpeningHoursException>(builder);
         ConfigureTenantSoftDeleteFilter<EquipmentModel>(builder);
         ConfigureTenantSoftDeleteFilter<Equipment>(builder);
         ConfigureTenantSoftDeleteFilter<MaintenanceTask>(builder);
+        ConfigureTenantSoftDeleteFilter<MaintenanceTaskAssignmentHistory>(builder);
     }
 
     private sealed class LangStrValueConverter() : ValueConverter<LangStr, string>(

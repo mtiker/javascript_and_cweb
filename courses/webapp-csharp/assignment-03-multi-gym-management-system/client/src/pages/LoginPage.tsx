@@ -18,7 +18,7 @@ export function LoginPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const [email, setEmail] = useState("admin@peakforge.local");
-  const [password, setPassword] = useState("Gym123!");
+  const [password, setPassword] = useState("GymStrong123!");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [notice, setNotice] = useState<Notice | null>(null);
 
@@ -106,17 +106,17 @@ export function LoginPage() {
           <article className="login-card__demo">
             <strong>{t("systemAdmin")}</strong>
             <span>`systemadmin@gym.local`</span>
-            <span>`Gym123!`</span>
+            <span>`GymStrong123!`</span>
           </article>
           <article className="login-card__demo">
             <strong>{t("gymAdmin")}</strong>
             <span>`admin@peakforge.local`</span>
-            <span>`Gym123!`</span>
+            <span>`GymStrong123!`</span>
           </article>
           <article className="login-card__demo">
             <strong>{t("member")}</strong>
             <span>`member@peakforge.local`</span>
-            <span>`Gym123!`</span>
+            <span>`GymStrong123!`</span>
           </article>
           <article className="login-card__demo">
             <strong>{t("trainerCaretaker")}</strong>

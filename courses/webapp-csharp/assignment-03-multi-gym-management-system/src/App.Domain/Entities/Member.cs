@@ -20,4 +20,6 @@ public class Member : TenantBaseEntity
 
     public ICollection<Booking> Bookings { get; set; } = new List<Booking>();
     public ICollection<Membership> Memberships { get; set; } = new List<Membership>();
+    public ICollection<CoachingPlan> CoachingPlans { get; set; } = new List<CoachingPlan>();
+    public ICollection<Invoice> Invoices { get; set; } = new List<Invoice>();
 }

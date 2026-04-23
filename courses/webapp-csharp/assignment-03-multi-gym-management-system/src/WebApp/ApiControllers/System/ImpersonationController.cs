@@ -10,6 +10,12 @@ namespace WebApp.ApiControllers.System;
 [ApiVersion("1.0")]
 [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "SystemAdmin")]
 [Route("api/v{version:apiVersion}/system/impersonation")]
+[ProducesErrorResponseType(typeof(ProblemDetails))]
+[ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+[ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+[ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+[ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+[ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
 public class ImpersonationController(IPlatformService platformService) : ControllerBase
 {
     [HttpPost]

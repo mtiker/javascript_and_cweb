@@ -149,11 +149,7 @@ describe("CRUD pages", () => {
           },
         ]),
       )
-      .mockResolvedValueOnce(
-        jsonResponse({
-          messages: ["Membership package deleted."],
-        }),
-      )
+      .mockResolvedValueOnce(new Response(null, { status: 204 }))
       .mockResolvedValueOnce(jsonResponse([]));
 
     renderWithAuth(<MembershipPackagesPage />);

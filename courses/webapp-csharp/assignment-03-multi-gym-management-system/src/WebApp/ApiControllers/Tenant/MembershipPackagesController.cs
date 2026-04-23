@@ -1,5 +1,4 @@
 using App.BLL.Services;
-using App.DTO.v1;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
 using WebApp.ApiControllers;
@@ -19,10 +18,11 @@ public class MembershipPackagesController(IMembershipWorkflowService membershipW
     }
 
     [HttpPost("membership-packages")]
-    [ProducesResponseType(typeof(MembershipPackageResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(MembershipPackageResponse), StatusCodes.Status201Created)]
     public async Task<ActionResult<MembershipPackageResponse>> CreatePackage(string gymCode, [FromBody] MembershipPackageUpsertRequest request, CancellationToken cancellationToken)
     {
-        return Ok(await membershipWorkflowService.CreatePackageAsync(gymCode, request, cancellationToken));
+        var created = await membershipWorkflowService.CreatePackageAsync(gymCode, request, cancellationToken);
+        return Created(string.Empty, created);
     }
 
     [HttpPut("membership-packages/{id:guid}")]
@@ -33,10 +33,10 @@ public class MembershipPackagesController(IMembershipWorkflowService membershipW
     }
 
     [HttpDelete("membership-packages/{id:guid}")]
-    [ProducesResponseType(typeof(Message), StatusCodes.Status200OK)]
-    public async Task<ActionResult<Message>> DeletePackage(string gymCode, Guid id, CancellationToken cancellationToken)
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> DeletePackage(string gymCode, Guid id, CancellationToken cancellationToken)
     {
         await membershipWorkflowService.DeletePackageAsync(gymCode, id, cancellationToken);
-        return Ok(new Message("Membership package deleted."));
-}
+        return NoContent();
+    }
 }

@@ -22,7 +22,14 @@ public class MaintenanceTask : TenantBaseEntity
     public DateTime? DueAtUtc { get; set; }
     public DateTime? StartedAtUtc { get; set; }
     public DateTime? CompletedAtUtc { get; set; }
+    public DateTime? DowntimeStartedAtUtc { get; set; }
+    public DateTime? DowntimeEndedAtUtc { get; set; }
 
     [MaxLength(2000)]
     public string? Notes { get; set; }
+
+    [MaxLength(2000)]
+    public string? CompletionNotes { get; set; }
+
+    public ICollection<MaintenanceTaskAssignmentHistory> AssignmentHistory { get; set; } = new List<MaintenanceTaskAssignmentHistory>();
 }

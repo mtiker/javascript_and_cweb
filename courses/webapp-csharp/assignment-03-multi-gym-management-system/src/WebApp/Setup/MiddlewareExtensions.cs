@@ -7,6 +7,8 @@ public static class MiddlewareExtensions
 {
     public static WebApplication UseAppPipeline(this WebApplication app)
     {
+        app.UseForwardedHeaders();
+
         if (!app.Environment.IsDevelopment())
         {
             app.UseExceptionHandler("/Home/Error");
@@ -20,6 +22,7 @@ public static class MiddlewareExtensions
         app.UseCors("ClientApp");
         app.UseRequestLocalization();
         app.UseAuthentication();
+        app.UseMiddleware<GymResolutionMiddleware>();
         app.UseAuthorization();
 
         return app;

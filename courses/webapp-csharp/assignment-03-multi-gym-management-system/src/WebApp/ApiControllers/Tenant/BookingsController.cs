@@ -1,5 +1,4 @@
 using App.BLL.Services;
-using App.DTO.v1;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
 using WebApp.ApiControllers;
@@ -19,10 +18,11 @@ public class BookingsController(ITrainingWorkflowService trainingWorkflowService
     }
 
     [HttpPost("bookings")]
-    [ProducesResponseType(typeof(BookingResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(BookingResponse), StatusCodes.Status201Created)]
     public async Task<ActionResult<BookingResponse>> CreateBooking(string gymCode, [FromBody] BookingCreateRequest request, CancellationToken cancellationToken)
     {
-        return Ok(await trainingWorkflowService.CreateBookingAsync(gymCode, request, cancellationToken));
+        var created = await trainingWorkflowService.CreateBookingAsync(gymCode, request, cancellationToken);
+        return Created(string.Empty, created);
     }
 
     [HttpPut("bookings/{id:guid}/attendance")]
@@ -33,10 +33,10 @@ public class BookingsController(ITrainingWorkflowService trainingWorkflowService
     }
 
     [HttpDelete("bookings/{id:guid}")]
-    [ProducesResponseType(typeof(Message), StatusCodes.Status200OK)]
-    public async Task<ActionResult<Message>> CancelBooking(string gymCode, Guid id, CancellationToken cancellationToken)
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> CancelBooking(string gymCode, Guid id, CancellationToken cancellationToken)
     {
         await trainingWorkflowService.CancelBookingAsync(gymCode, id, cancellationToken);
-        return Ok(new Message("Booking cancelled."));
+        return NoContent();
     }
 }

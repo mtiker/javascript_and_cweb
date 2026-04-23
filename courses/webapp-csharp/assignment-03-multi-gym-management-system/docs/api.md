@@ -8,6 +8,8 @@ All API routes use URL-segment versioning:
 - `/api/v1/system/...`
 - `/api/v1/{gymCode}/...`
 
+Tenant routes also pass through `GymResolutionMiddleware`, which resolves `gymCode` early and rejects unknown or inactive gyms before controller/BLL execution.
+
 Controllers return public DTOs from `src/App.DTO/v1`.
 
 ## Authentication
@@ -68,6 +70,8 @@ Members:
 - `POST /api/v1/{gymCode}/members`
 - `PUT /api/v1/{gymCode}/members/{id}`
 - `DELETE /api/v1/{gymCode}/members/{id}`
+- `GET /api/v1/{gymCode}/member-workspace/me`
+- `GET /api/v1/{gymCode}/member-workspace/members/{memberId}`
 
 Training:
 - `GET|POST /api/v1/{gymCode}/training-categories`
@@ -82,13 +86,24 @@ Training:
 - `GET|POST /api/v1/{gymCode}/bookings`
 - `PUT /api/v1/{gymCode}/bookings/{id}/attendance`
 - `DELETE /api/v1/{gymCode}/bookings/{id}`
+- `GET|POST /api/v1/{gymCode}/coaching-plans`
+- `GET|PUT|DELETE /api/v1/{gymCode}/coaching-plans/{id}`
+- `PUT /api/v1/{gymCode}/coaching-plans/{id}/status`
+- `PUT /api/v1/{gymCode}/coaching-plans/{id}/items/{itemId}/decision`
 
 Memberships and payments:
 - `GET|POST /api/v1/{gymCode}/membership-packages`
 - `PUT|DELETE /api/v1/{gymCode}/membership-packages/{id}`
 - `GET|POST /api/v1/{gymCode}/memberships`
+- `PUT /api/v1/{gymCode}/memberships/{id}/status`
 - `DELETE /api/v1/{gymCode}/memberships/{id}`
 - `GET|POST /api/v1/{gymCode}/payments`
+- `GET /api/v1/{gymCode}/finance-workspace/me`
+- `GET /api/v1/{gymCode}/finance-workspace/members/{memberId}`
+- `GET|POST /api/v1/{gymCode}/invoices`
+- `GET /api/v1/{gymCode}/invoices/{id}`
+- `POST /api/v1/{gymCode}/invoices/{id}/payments`
+- `POST /api/v1/{gymCode}/invoices/{id}/refunds`
 
 Staff:
 - `GET|POST /api/v1/{gymCode}/staff`
@@ -111,6 +126,8 @@ Facilities:
 - `PUT|DELETE /api/v1/{gymCode}/equipment/{id}`
 - `GET|POST /api/v1/{gymCode}/maintenance-tasks`
 - `PUT /api/v1/{gymCode}/maintenance-tasks/{id}/status`
+- `PUT /api/v1/{gymCode}/maintenance-tasks/{id}/assignment`
+- `GET /api/v1/{gymCode}/maintenance-tasks/{id}/assignment-history`
 - `POST /api/v1/{gymCode}/maintenance-tasks/generate-due`
 - `DELETE /api/v1/{gymCode}/maintenance-tasks/{id}`
 - `GET /api/v1/{gymCode}/gym-settings`
@@ -120,7 +137,7 @@ Facilities:
 
 ## Separate Client Contract
 
-The React client now consumes both focused role pages and a broader SaaS function console:
+The React client now consumes focused role workspaces plus a broader SaaS function console:
 - `POST /api/v1/account/login`
 - `POST /api/v1/account/logout`
 - `POST /api/v1/account/renew-refresh-token`
@@ -136,7 +153,10 @@ The React client now consumes both focused role pages and a broader SaaS functio
 - session list/detail through `GET /api/v1/{gymCode}/training-sessions`
 - member/admin booking through `POST /api/v1/{gymCode}/bookings`
 - trainer/admin attendance through `GET /api/v1/{gymCode}/bookings` and `PUT /api/v1/{gymCode}/bookings/{id}/attendance`
-- caretaker/admin task updates through `GET /api/v1/{gymCode}/maintenance-tasks` and `PUT /api/v1/{gymCode}/maintenance-tasks/{id}/status`
+- member workspace through `GET /api/v1/{gymCode}/member-workspace/me`
+- coaching workspace through `GET|POST /api/v1/{gymCode}/coaching-plans`, plan status updates, and item decisions
+- finance workspace through `GET /api/v1/{gymCode}/finance-workspace/me`, invoice creation, payments, and refunds
+- caretaker/admin maintenance workspace through maintenance status + assignment + history + due-generation endpoints
 - the remaining tenant endpoints listed above through the function console with editable path parameters and JSON request bodies
 
 The member detail route returns a fuller payload than the member list route so the client can edit person fields without inventing a second contract.
@@ -160,11 +180,27 @@ Important enforced rules:
 
 Unhandled API errors return `application/problem+json`.
 
+Public API controllers document standard `ProblemDetails` error responses for:
+- `400`
+- `401`
+- `403`
+- `404`
+- `409`
+
 Typical mappings:
 - validation failures -> `400`
+- missing/invalid auth -> `401`
 - forbidden access -> `403`
 - missing resources -> `404`
+- conflicts -> `409`
 - unexpected server failures -> `500`
+
+## REST Semantics Notes
+
+Workflow endpoints used by the React client now follow these response rules:
+- create actions return `201` with payload (`Created` or `CreatedAtAction`)
+- delete/cancel actions return `204 NoContent`
+- update/read actions return `200` with payload
 
 ## Swagger
 

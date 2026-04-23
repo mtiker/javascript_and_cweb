@@ -284,7 +284,7 @@ public class ProposalWorkflowTests(CustomWebApplicationFactory factory) : IClass
         var loginResponse = await client.PostAsJsonAsync("/api/v1/account/login", new LoginRequest
         {
             Email = email,
-            Password = "Gym123!"
+            Password = "GymStrong123!"
         });
 
         loginResponse.EnsureSuccessStatusCode();

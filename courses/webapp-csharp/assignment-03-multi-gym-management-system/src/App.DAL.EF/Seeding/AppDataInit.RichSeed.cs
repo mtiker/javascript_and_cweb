@@ -608,6 +608,125 @@ public static partial class AppDataInit
                     DueAtUtc = DateTime.UtcNow.Date.AddDays(7).AddHours(10),
                     Notes = "Belt alignment, incline calibration, and cleaning."
                 };
+
+                var coachingPlan = new CoachingPlan
+                {
+                    GymId = gym.Id,
+                    MemberId = member.Id,
+                    TrainerStaffId = trainerStaff.Id,
+                    CreatedByStaffId = adminStaff.Id,
+                    Title = "12-week strength baseline plan",
+                    Notes = "Weekly progressive overload with recovery deload every fourth week.",
+                    Status = CoachingPlanStatus.Active,
+                    PublishedAtUtc = DateTime.UtcNow.AddDays(-7),
+                    ActivatedAtUtc = DateTime.UtcNow.AddDays(-6)
+                };
+
+                var coachingPlanItem1 = new CoachingPlanItem
+                {
+                    GymId = gym.Id,
+                    CoachingPlanId = coachingPlan.Id,
+                    Sequence = 1,
+                    Title = "Squat progression",
+                    Notes = "Add 2.5kg weekly while maintaining depth and tempo.",
+                    TargetDate = DateOnly.FromDateTime(DateTime.UtcNow.Date.AddDays(14)),
+                    Decision = CoachingPlanItemDecision.Accepted,
+                    DecisionAtUtc = DateTime.UtcNow.AddDays(-5),
+                    DecisionByStaffId = trainerStaff.Id
+                };
+
+                var coachingPlanItem2 = new CoachingPlanItem
+                {
+                    GymId = gym.Id,
+                    CoachingPlanId = coachingPlan.Id,
+                    Sequence = 2,
+                    Title = "Conditioning interval block",
+                    Notes = "Two interval sessions per week with heart-rate cap.",
+                    TargetDate = DateOnly.FromDateTime(DateTime.UtcNow.Date.AddDays(21)),
+                    Decision = CoachingPlanItemDecision.Deferred,
+                    DecisionAtUtc = DateTime.UtcNow.AddDays(-4),
+                    DecisionByStaffId = trainerStaff.Id,
+                    DecisionNotes = "Start after current travel period."
+                };
+
+                var invoice = new Invoice
+                {
+                    GymId = gym.Id,
+                    MemberId = member.Id,
+                    InvoiceNumber = $"INV-{DateTime.UtcNow:yyyyMMdd}-0001",
+                    IssuedAtUtc = DateTime.UtcNow.AddDays(-10),
+                    DueAtUtc = DateTime.UtcNow.AddDays(-2),
+                    CurrencyCode = "EUR",
+                    SubtotalAmount = 92m,
+                    CreditAmount = 10m,
+                    TotalAmount = 82m,
+                    PaidAmount = 40m,
+                    OutstandingAmount = 42m,
+                    Status = InvoiceStatus.Overdue,
+                    Notes = "Membership renewal and coaching add-on."
+                };
+
+                var invoiceLine1 = new InvoiceLine
+                {
+                    GymId = gym.Id,
+                    InvoiceId = invoice.Id,
+                    Description = "Monthly membership renewal",
+                    Quantity = 1m,
+                    UnitPrice = 79m,
+                    LineTotal = 79m
+                };
+
+                var invoiceLine2 = new InvoiceLine
+                {
+                    GymId = gym.Id,
+                    InvoiceId = invoice.Id,
+                    Description = "Coaching add-on",
+                    Quantity = 1m,
+                    UnitPrice = 13m,
+                    LineTotal = 13m
+                };
+
+                var invoiceCreditLine = new InvoiceLine
+                {
+                    GymId = gym.Id,
+                    InvoiceId = invoice.Id,
+                    Description = "Loyalty credit",
+                    Quantity = 1m,
+                    UnitPrice = 10m,
+                    LineTotal = 10m,
+                    IsCredit = true
+                };
+
+                var invoicePayment = new InvoicePayment
+                {
+                    GymId = gym.Id,
+                    InvoiceId = invoice.Id,
+                    Amount = 40m,
+                    IsRefund = false,
+                    AppliedAtUtc = DateTime.UtcNow.AddDays(-6),
+                    Reference = "INV-PAY-2026-0001",
+                    Notes = "Partial transfer"
+                };
+
+                var maintenanceAssignmentHistory1 = new MaintenanceTaskAssignmentHistory
+                {
+                    GymId = gym.Id,
+                    MaintenanceTaskId = maintenanceTask.Id,
+                    AssignedStaffId = caretakerStaff.Id,
+                    AssignedByStaffId = adminStaff.Id,
+                    AssignedAtUtc = DateTime.UtcNow.AddDays(-3),
+                    Notes = "Initial assignment"
+                };
+
+                var maintenanceAssignmentHistory2 = new MaintenanceTaskAssignmentHistory
+                {
+                    GymId = gym.Id,
+                    MaintenanceTaskId = rackMaintenanceTask.Id,
+                    AssignedStaffId = caretakerStaff.Id,
+                    AssignedByStaffId = adminStaff.Id,
+                    AssignedAtUtc = DateTime.UtcNow.AddDays(-1),
+                    Notes = "Breakdown reassigned as priority repair"
+                };
         
                 var supportTicket = new SupportTicket
                 {
@@ -700,6 +819,16 @@ public static partial class AppDataInit
                     maintenanceTask,
                     rackMaintenanceTask,
                     treadmillMaintenanceTask,
+                    coachingPlan,
+                    coachingPlanItem1,
+                    coachingPlanItem2,
+                    invoice,
+                    invoiceLine1,
+                    invoiceLine2,
+                    invoiceCreditLine,
+                    invoicePayment,
+                    maintenanceAssignmentHistory1,
+                    maintenanceAssignmentHistory2,
                     supportTicket,
                     ownerLink,
                     adminLink,

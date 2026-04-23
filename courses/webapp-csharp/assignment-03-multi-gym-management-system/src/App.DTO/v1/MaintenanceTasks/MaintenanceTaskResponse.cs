@@ -17,5 +17,10 @@ public class MaintenanceTaskResponse
     public DateTime? DueAtUtc { get; set; }
     public DateTime? StartedAtUtc { get; set; }
     public DateTime? CompletedAtUtc { get; set; }
+    public DateTime? DowntimeStartedAtUtc { get; set; }
+    public DateTime? DowntimeEndedAtUtc { get; set; }
+    public bool IsOverdue { get; set; }
     public string? Notes { get; set; }
+    public string? CompletionNotes { get; set; }
+    public IReadOnlyCollection<MaintenanceTaskAssignmentHistoryResponse> AssignmentHistory { get; set; } = [];
 }

@@ -497,7 +497,7 @@ function buildActionGroups({
         action("reset-password", "Reset password with token", "POST", "/api/v1/account/reset-password", {
           email: "member@peakforge.local",
           resetToken: "paste-token-here",
-          newPassword: "Gym123!",
+          newPassword: "GymStrong123!",
         }),
       ],
     },
@@ -518,7 +518,7 @@ function buildActionGroups({
           postalCode: "10111",
           country: "Estonia",
           ownerEmail: "owner@harbor-strength.local",
-          ownerPassword: "Gym123!",
+          ownerPassword: "GymStrong123!",
           ownerFirstName: "Harbor",
           ownerLastName: "Owner",
         }),
@@ -542,6 +542,7 @@ function buildActionGroups({
         action("impersonation-start", "Start impersonation", "POST", "/api/v1/system/impersonation", {
           userId: defaults.userId,
           gymCode: defaults.gymCode,
+          reason: "Support troubleshooting for tenant workflow",
         }),
       ],
     });

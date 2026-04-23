@@ -14,7 +14,8 @@ namespace App.BLL.Services;
 
 public class StaffWorkflowService(
     IAppDbContext dbContext,
-    IAuthorizationService authorizationService) : IStaffWorkflowService
+    IAuthorizationService authorizationService,
+    ISubscriptionTierLimitService subscriptionTierLimitService) : IStaffWorkflowService
 {
     public async Task<IReadOnlyCollection<StaffResponse>> GetStaffAsync(string gymCode, CancellationToken cancellationToken = default)
     {
@@ -37,6 +38,7 @@ public class StaffWorkflowService(
     public async Task<StaffResponse> CreateStaffAsync(string gymCode, StaffUpsertRequest request, CancellationToken cancellationToken = default)
     {
         var gymId = await EnsureStaffAdminAccessAsync(gymCode, cancellationToken);
+        await subscriptionTierLimitService.EnsureCanCreateStaffAsync(gymId, cancellationToken);
         var staff = new Staff
         {
             GymId = gymId,

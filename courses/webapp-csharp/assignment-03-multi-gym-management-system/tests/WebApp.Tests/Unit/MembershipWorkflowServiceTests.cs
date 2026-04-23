@@ -1,4 +1,5 @@
 using App.BLL.Services;
+using App.BLL.Exceptions;
 using App.DAL.EF;
 using App.DAL.EF.Tenant;
 using App.Domain.Entities;
@@ -69,6 +70,94 @@ public class MembershipWorkflowServiceTests
 
         Assert.True(result.OverlapDetected);
         Assert.Equal(new DateOnly(2026, 5, 1), result.SuggestedStartDate);
+    }
+
+    [Fact]
+    public async Task UpdateMembershipStatusAsync_UpdatesStatus_ForValidTransition()
+    {
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString("N"))
+            .Options;
+
+        var gymId = Guid.NewGuid();
+        await using var dbContext = new AppDbContext(options, new TestGymContext(gymId), new HttpContextAccessor());
+
+        var membership = new Membership
+        {
+            GymId = gymId,
+            MemberId = Guid.NewGuid(),
+            MembershipPackageId = Guid.NewGuid(),
+            StartDate = new DateOnly(2026, 4, 1),
+            EndDate = new DateOnly(2026, 4, 30),
+            PriceAtPurchase = 79m,
+            CurrencyCode = "EUR",
+            Status = MembershipStatus.Active
+        };
+
+        dbContext.Gyms.Add(new Gym
+        {
+            Id = gymId,
+            Name = "Test Gym",
+            Code = "test-gym",
+            AddressLine = "Street 1",
+            City = "Tallinn",
+            PostalCode = "10111",
+            Country = "Estonia"
+        });
+        dbContext.Memberships.Add(membership);
+        await dbContext.SaveChangesAsync();
+
+        var service = new MembershipWorkflowService(dbContext, new TestAuthorizationService(gymId));
+        var result = await service.UpdateMembershipStatusAsync("test-gym", membership.Id, new MembershipStatusUpdateRequest
+        {
+            Status = MembershipStatus.Paused,
+            Reason = "Vacation pause"
+        });
+
+        Assert.Equal(MembershipStatus.Paused, result.Status);
+    }
+
+    [Fact]
+    public async Task UpdateMembershipStatusAsync_Throws_ForInvalidTransition()
+    {
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString("N"))
+            .Options;
+
+        var gymId = Guid.NewGuid();
+        await using var dbContext = new AppDbContext(options, new TestGymContext(gymId), new HttpContextAccessor());
+
+        var membership = new Membership
+        {
+            GymId = gymId,
+            MemberId = Guid.NewGuid(),
+            MembershipPackageId = Guid.NewGuid(),
+            StartDate = new DateOnly(2026, 6, 1),
+            EndDate = new DateOnly(2026, 6, 30),
+            PriceAtPurchase = 79m,
+            CurrencyCode = "EUR",
+            Status = MembershipStatus.Pending
+        };
+
+        dbContext.Gyms.Add(new Gym
+        {
+            Id = gymId,
+            Name = "Test Gym",
+            Code = "test-gym",
+            AddressLine = "Street 1",
+            City = "Tallinn",
+            PostalCode = "10111",
+            Country = "Estonia"
+        });
+        dbContext.Memberships.Add(membership);
+        await dbContext.SaveChangesAsync();
+
+        var service = new MembershipWorkflowService(dbContext, new TestAuthorizationService(gymId));
+
+        await Assert.ThrowsAsync<ValidationAppException>(() => service.UpdateMembershipStatusAsync(
+            "test-gym",
+            membership.Id,
+            new MembershipStatusUpdateRequest { Status = MembershipStatus.Refunded }));
     }
 
     private sealed class TestGymContext(Guid gymId) : IGymContext

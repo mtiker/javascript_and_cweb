@@ -2,13 +2,20 @@ using System.Security.Claims;
 using App.DAL.EF.Tenant;
 using App.Domain;
 using App.Domain.Security;
+using WebApp.Middleware;
 
 namespace WebApp.Setup;
 
 public class HttpGymContext(IHttpContextAccessor httpContextAccessor) : IGymContext
 {
-    public Guid? GymId => TryParseGuid(httpContextAccessor.HttpContext?.User.FindFirstValue(AppClaimTypes.GymId));
-    public string? GymCode => httpContextAccessor.HttpContext?.User.FindFirstValue(AppClaimTypes.GymCode);
+    public Guid? GymId =>
+        TryParseGuid(httpContextAccessor.HttpContext?.Items[GymResolutionMiddleware.ResolvedGymIdItemKey]?.ToString()) ??
+        TryParseGuid(httpContextAccessor.HttpContext?.User.FindFirstValue(AppClaimTypes.GymId));
+
+    public string? GymCode =>
+        httpContextAccessor.HttpContext?.Items[GymResolutionMiddleware.ResolvedGymCodeItemKey]?.ToString() ??
+        httpContextAccessor.HttpContext?.User.FindFirstValue(AppClaimTypes.GymCode);
+
     public string? ActiveRole => httpContextAccessor.HttpContext?.User.FindFirstValue(AppClaimTypes.ActiveRole);
 
     public bool IgnoreGymFilter

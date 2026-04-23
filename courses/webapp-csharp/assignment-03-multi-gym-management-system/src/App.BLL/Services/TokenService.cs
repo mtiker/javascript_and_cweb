@@ -20,7 +20,11 @@ public class TokenService(IConfiguration configuration) : ITokenService
 {
     public int AccessTokenLifetimeSeconds => (int)TimeSpan.FromMinutes(GetAccessTokenLifetimeMinutes()).TotalSeconds;
 
-    public string CreateJwt(AppUser user, IReadOnlyCollection<string> systemRoles, AppUserGymRole? activeGymRole)
+    public string CreateJwt(
+        AppUser user,
+        IReadOnlyCollection<string> systemRoles,
+        AppUserGymRole? activeGymRole,
+        IReadOnlyCollection<Claim>? additionalClaims = null)
     {
         var claims = new List<Claim>
         {
@@ -45,6 +49,11 @@ public class TokenService(IConfiguration configuration) : ITokenService
             claims.Add(new Claim(AppClaimTypes.GymCode, activeGymRole.Gym?.Code ?? string.Empty));
             claims.Add(new Claim(AppClaimTypes.ActiveRole, activeGymRole.RoleName));
             claims.Add(new Claim(ClaimTypes.Role, activeGymRole.RoleName));
+        }
+
+        if (additionalClaims is { Count: > 0 })
+        {
+            claims.AddRange(additionalClaims);
         }
 
         var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(GetJwtKey()));

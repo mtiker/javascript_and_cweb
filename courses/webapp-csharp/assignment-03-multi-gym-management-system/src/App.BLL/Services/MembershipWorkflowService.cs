@@ -157,9 +157,8 @@ public class MembershipWorkflowService(
             EndDate = endDate,
             PriceAtPurchase = package.BasePrice,
             CurrencyCode = package.CurrencyCode,
-            Status = startDate <= DateOnly.FromDateTime(DateTime.UtcNow.Date)
-                ? MembershipStatus.Active
-                : MembershipStatus.Pending
+            Status = ResolveInitialStatus(startDate, overlappingMemberships.Count == 0 &&
+                await dbContext.Memberships.AnyAsync(entity => entity.GymId == gymId && entity.MemberId == member.Id, cancellationToken))
         };
 
         dbContext.Memberships.Add(membership);
@@ -185,6 +184,37 @@ public class MembershipWorkflowService(
             StartDate = membership.StartDate,
             EndDate = membership.EndDate,
             OverlapDetected = false
+        };
+    }
+
+    public async Task<MembershipResponse> UpdateMembershipStatusAsync(string gymCode, Guid id, MembershipStatusUpdateRequest request, CancellationToken cancellationToken = default)
+    {
+        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin, RoleNames.Member);
+        var membership = await dbContext.Memberships.FirstOrDefaultAsync(entity => entity.GymId == gymId && entity.Id == id, cancellationToken)
+                         ?? throw new NotFoundException("Membership was not found.");
+
+        await authorizationService.EnsureMemberSelfAccessAsync(gymId, membership.MemberId, cancellationToken);
+        EnsureMembershipStatusTransition(membership.Status, request.Status);
+
+        membership.Status = request.Status;
+
+        if (request.Status == MembershipStatus.Expired && membership.EndDate > DateOnly.FromDateTime(DateTime.UtcNow.Date))
+        {
+            membership.EndDate = DateOnly.FromDateTime(DateTime.UtcNow.Date);
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        return new MembershipResponse
+        {
+            Id = membership.Id,
+            MemberId = membership.MemberId,
+            MembershipPackageId = membership.MembershipPackageId,
+            StartDate = membership.StartDate,
+            EndDate = membership.EndDate,
+            PriceAtPurchase = membership.PriceAtPurchase,
+            CurrencyCode = membership.CurrencyCode,
+            Status = membership.Status
         };
     }
 
@@ -316,6 +346,43 @@ public class MembershipWorkflowService(
             DurationUnit.Year => startDate.AddYears(durationValue).AddDays(-1),
             _ => startDate
         };
+    }
+
+    private static MembershipStatus ResolveInitialStatus(DateOnly startDate, bool hasPreviousMembership)
+    {
+        if (startDate > DateOnly.FromDateTime(DateTime.UtcNow.Date))
+        {
+            return MembershipStatus.Pending;
+        }
+
+        return hasPreviousMembership
+            ? MembershipStatus.Renewed
+            : MembershipStatus.Active;
+    }
+
+    private static void EnsureMembershipStatusTransition(MembershipStatus current, MembershipStatus next)
+    {
+        if (current == next)
+        {
+            return;
+        }
+
+        var allowed = current switch
+        {
+            MembershipStatus.Pending => next is MembershipStatus.Active or MembershipStatus.Cancelled,
+            MembershipStatus.Active => next is MembershipStatus.Paused or MembershipStatus.Expired or MembershipStatus.Cancelled or MembershipStatus.Refunded or MembershipStatus.Renewed,
+            MembershipStatus.Paused => next is MembershipStatus.Active or MembershipStatus.Cancelled or MembershipStatus.Expired,
+            MembershipStatus.Expired => next is MembershipStatus.Renewed or MembershipStatus.Cancelled,
+            MembershipStatus.Cancelled => next is MembershipStatus.Renewed,
+            MembershipStatus.Refunded => next is MembershipStatus.Renewed or MembershipStatus.Cancelled,
+            MembershipStatus.Renewed => next is MembershipStatus.Active or MembershipStatus.Paused or MembershipStatus.Expired or MembershipStatus.Cancelled,
+            _ => false
+        };
+
+        if (!allowed)
+        {
+            throw new ValidationAppException($"Invalid membership status transition from {current} to {next}.");
+        }
     }
 
     private static MembershipPackageResponse ToPackageResponse(MembershipPackage package)

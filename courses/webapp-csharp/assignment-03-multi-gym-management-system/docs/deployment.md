@@ -39,13 +39,13 @@ The Dockerfile has a dedicated Node 20 build stage for `client/`. It runs `npm c
 
 Minimum production variables:
 - `JWT__Key`
+- `CORS_ALLOWED_ORIGIN`
 - `POSTGRES_DB`
 - `POSTGRES_USER`
 - `POSTGRES_PASSWORD`
 - `WEBAPP_PORT` when overriding the default host port `83`
 
 Optional variables:
-- `CORS_ALLOWED_ORIGIN`
 - `JWT__Issuer`
 - `JWT__Audience`
 - `JWT__AccessTokenMinutes`
@@ -54,6 +54,8 @@ Optional variables:
 - `COMPOSE_PROJECT_NAME`
 
 `JWT__Key` must be a long secret value and must not be committed to `appsettings.json` or any tracked documentation. `docker-compose.prod.yml` refuses to start without it. `JWT__Issuer` and `JWT__Audience` default to `MultiGymManagementSystem` in production Compose, but can be set explicitly in GitLab CI/CD variables.
+
+`CORS_ALLOWED_ORIGIN` must be a safe absolute public origin in production (no `localhost`, loopback IPs, or wildcard origins). The backend now fails fast on startup if production CORS origins are missing or unsafe.
 
 For local development, store JWT values as ASP.NET Core user secrets from `src/WebApp`:
 
@@ -64,6 +66,8 @@ dotnet user-secrets set "Jwt:Audience" "MultiGymManagementSystem"
 ```
 
 Data Protection keys are persisted in the application database via `AppDbContext`, so protected MVC/cookie payloads remain valid across container restarts as long as the database volume is preserved.
+
+Forwarded headers are enabled in the middleware pipeline before HTTPS redirection and authentication so reverse-proxy deployments keep correct scheme/client metadata for auth and redirect behavior.
 
 ## GitLab CI/CD
 
@@ -97,6 +101,7 @@ curl http://127.0.0.1:83/client
 Also verify:
 - `https://mtiker-cweb-4.proxy.itcollege.ee` loads
 - Swagger loads
-- `/client/members` serves the React app shell
+- `/client/members`, `/client/member-workspace`, `/client/coaching-workspace`, and `/client/finance-workspace` serve the React app shell
 - a seeded user can log in
 - `multigym.admin@gym.local` can switch gyms
+- one workflow mutation succeeds (for example invoice payment POST, coaching item decision PUT, or maintenance assignment PUT)

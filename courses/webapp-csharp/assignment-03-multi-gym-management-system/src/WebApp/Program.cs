@@ -5,11 +5,12 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddHealthChecks();
 builder.Services.AddAppDatabase(builder.Configuration, builder.Environment);
-builder.Services.AddAppIdentity(builder.Configuration);
+builder.Services.AddAppIdentity(builder.Configuration, builder.Environment);
 builder.Services.AddAppServices();
 builder.Services.AddAppLocalization();
 builder.Services.AddAppControllers();
-builder.Services.AddAppCors(builder.Configuration);
+builder.Services.AddAppForwardedHeaders();
+builder.Services.AddAppCors(builder.Configuration, builder.Environment);
 builder.Services.AddAppApiVersioning();
 builder.Services.AddAppSwagger();
 

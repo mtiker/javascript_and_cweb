@@ -17,7 +17,8 @@ public class TrainingWorkflowService(
     IAppDbContext dbContext,
     IAuthorizationService authorizationService,
     IUserContextService userContextService,
-    IMembershipWorkflowService membershipWorkflowService) : ITrainingWorkflowService
+    IMembershipWorkflowService membershipWorkflowService,
+    ISubscriptionTierLimitService subscriptionTierLimitService) : ITrainingWorkflowService
 {
     public async Task<IReadOnlyCollection<TrainingCategoryResponse>> GetCategoriesAsync(string gymCode, CancellationToken cancellationToken = default)
     {
@@ -138,6 +139,7 @@ public class TrainingWorkflowService(
 
         if (session == null)
         {
+            await subscriptionTierLimitService.EnsureCanCreateTrainingSessionAsync(gymId, cancellationToken);
             session = new TrainingSession { GymId = gymId };
             dbContext.TrainingSessions.Add(session);
         }

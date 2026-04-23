@@ -145,4 +145,77 @@ describe("App routing and auth", () => {
       );
     });
   });
+
+  it("routes member role to the member workspace landing page", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockResolvedValueOnce(
+          jsonResponse({
+            profile: {
+              id: "member-1",
+              memberCode: "MEM-001",
+              firstName: "Liis",
+              lastName: "Lill",
+              fullName: "Liis Lill",
+              status: 0,
+            },
+            memberships: [],
+            payments: [],
+            bookings: [],
+            invoices: [],
+            attendedSessionCount: 0,
+            upcomingBookingCount: 0,
+            outstandingBalance: 0,
+            outstandingActions: [],
+          }),
+        ),
+    );
+
+    render(
+      <LanguageProvider>
+        <AuthProvider
+          initialSession={{
+            ...defaultSession,
+            activeRole: "Member",
+          }}
+        >
+          <MemoryRouter initialEntries={["/"]}>
+            <AppRoutes />
+          </MemoryRouter>
+        </AuthProvider>
+      </LanguageProvider>,
+    );
+
+    expect(await screen.findByRole("heading", { name: "My profile and actions" })).toBeInTheDocument();
+  });
+
+  it("routes trainer role to the coaching workspace landing page", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockResolvedValueOnce(jsonResponse([]))
+        .mockResolvedValueOnce(jsonResponse([]))
+        .mockResolvedValueOnce(jsonResponse([])),
+    );
+
+    render(
+      <LanguageProvider>
+        <AuthProvider
+          initialSession={{
+            ...defaultSession,
+            activeRole: "Trainer",
+          }}
+        >
+          <MemoryRouter initialEntries={["/"]}>
+            <AppRoutes />
+          </MemoryRouter>
+        </AuthProvider>
+      </LanguageProvider>,
+    );
+
+    expect(await screen.findByRole("heading", { name: "Coaching workspace" })).toBeInTheDocument();
+  });
 });

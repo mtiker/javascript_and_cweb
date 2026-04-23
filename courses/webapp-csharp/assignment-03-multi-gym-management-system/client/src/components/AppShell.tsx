@@ -7,6 +7,9 @@ import type { AuthSession, GymSummary, TenantAccess } from "../lib/types";
 const tenantAdminNavigationItems = [
   { to: "/members", label: "Members" },
   { to: "/sessions", label: "Sessions" },
+  { to: "/coaching-workspace", label: "Coaching Workspace" },
+  { to: "/finance-workspace", label: "Finance Workspace" },
+  { to: "/maintenance", label: "Maintenance Workspace" },
   { to: "/training-categories", label: "Training Categories" },
   { to: "/membership-packages", label: "Membership Packages" },
   { to: "/console", label: "Function Console" },
@@ -50,16 +53,7 @@ export function AppShell({ children }: PropsWithChildren) {
       isMounted = false;
     };
   }, [api, canSwitchAllTenants]);
-  const navigationItems = [
-    ...(systemRole ? [{ to: "/platform", label: t("platform") }, { to: "/console", label: t("console") }] : []),
-    ...(canUseAdminTools(session?.activeRole)
-      ? tenantAdminNavigationItems.map((item) => ({ ...item, label: translateNavigationLabel(item.label, t) }))
-      : session?.activeGymCode
-        ? [{ to: "/sessions", label: t("sessions") }]
-        : []),
-    ...(canUseAttendance(session?.activeRole) ? [{ to: "/attendance", label: t("attendance") }] : []),
-    ...(canUseMaintenance(session?.activeRole) ? [{ to: "/maintenance", label: t("caretaker") }] : []),
-  ];
+  const navigationItems = resolveNavigationItems(systemRole, session?.activeRole, Boolean(session?.activeGymCode), t);
 
   return (
     <div className="shell">
@@ -176,14 +170,6 @@ function canUseAdminTools(role?: string | null) {
   return role === "GymAdmin" || role === "GymOwner";
 }
 
-function canUseAttendance(role?: string | null) {
-  return role === "GymAdmin" || role === "GymOwner" || role === "Trainer";
-}
-
-function canUseMaintenance(role?: string | null) {
-  return role === "GymAdmin" || role === "GymOwner" || role === "Caretaker";
-}
-
 function translateNavigationLabel(label: string, t: ReturnType<typeof useLanguage>["t"]) {
   switch (label) {
     case "Members":
@@ -196,6 +182,14 @@ function translateNavigationLabel(label: string, t: ReturnType<typeof useLanguag
       return t("membershipPackages");
     case "Function Console":
       return t("console");
+    case "Member Workspace":
+      return "Member Workspace";
+    case "Coaching Workspace":
+      return "Coaching Workspace";
+    case "Finance Workspace":
+      return "Finance Workspace";
+    case "Maintenance Workspace":
+      return "Maintenance Workspace";
     default:
       return label;
   }
@@ -220,4 +214,45 @@ function getRoleOptions(session: AuthSession | null, activeTenantOption?: Tenant
   }
 
   return activeTenantOption?.roles ?? [];
+}
+
+function resolveNavigationItems(
+  hasSystemRole: boolean,
+  activeRole: string | null | undefined,
+  hasActiveGym: boolean,
+  t: ReturnType<typeof useLanguage>["t"],
+) {
+  const systemItems = hasSystemRole ? [{ to: "/platform", label: t("platform") }, { to: "/console", label: t("console") }] : [];
+
+  if (!hasActiveGym) {
+    return systemItems;
+  }
+
+  if (canUseAdminTools(activeRole)) {
+    return [...systemItems, ...tenantAdminNavigationItems.map((item) => ({ ...item, label: translateNavigationLabel(item.label, t) }))];
+  }
+
+  if (activeRole === "Member") {
+    return [
+      ...systemItems,
+      { to: "/member-workspace", label: "Member Workspace" },
+      { to: "/finance-workspace", label: "Finance Workspace" },
+      { to: "/sessions", label: t("sessions") },
+    ];
+  }
+
+  if (activeRole === "Trainer") {
+    return [
+      ...systemItems,
+      { to: "/coaching-workspace", label: "Coaching Workspace" },
+      { to: "/attendance", label: t("attendance") },
+      { to: "/sessions", label: t("sessions") },
+    ];
+  }
+
+  if (activeRole === "Caretaker") {
+    return [...systemItems, { to: "/maintenance", label: "Maintenance Workspace" }, { to: "/sessions", label: t("sessions") }];
+  }
+
+  return [...systemItems, { to: "/sessions", label: t("sessions") }];
 }

@@ -30,6 +30,17 @@ This assignment currently covers:
 - DB translations with `LangStr`
 - IDOR protection through active-gym, role, and self-only checks
 - configurable CORS for the separate client app
+- fail-fast production CORS validation with explicit non-localhost origins
+- forwarded-header handling for reverse-proxy HTTPS deployments
+- tenant route gym-resolution middleware for early unknown/inactive gym rejection
+- standardized `ProblemDetails` error metadata (`400`, `401`, `403`, `404`, `409`) across public API controllers
+- member/coaching/finance/maintenance workspace APIs and React workflow pages
+- coaching-plan workflow states and item-decision lifecycle
+- finance workflow records for invoices, lines, payment history, refunds/credits, overdue state, and outstanding balances
+- expanded membership lifecycle statuses (`Pending`, `Active`, `Paused`, `Expired`, `Cancelled`, `Refunded`, `Renewed`)
+- subscription-tier enforcement for starter/growth/enterprise limits in BLL with explicit unit tests
+- expanded maintenance workflow with recurring due-task generation, assignment history, completion notes, and equipment downtime fields
+- workflow-aligned REST semantics for React paths (`201` on create, `204` on delete/cancel where compatibility is handled)
 - Docker, GitLab child pipeline jobs, and deploy scripts
 - unit and integration tests plus frontend Vitest coverage
 
@@ -49,9 +60,13 @@ Tenant scope:
 - members
 - staff, job roles, contracts, vacations, and shifts
 - training categories, sessions, and bookings
+- member workspace aggregation (profile, memberships, payments, bookings, attendance, outstanding actions)
+- coaching plans and coaching plan items
 - membership packages, memberships, and payments
+- finance workspace with invoices, invoice lines, payment history, refunds/credits, overdue and outstanding balances
 - opening hours and exceptions
 - equipment, maintenance intervals, and maintenance tasks
+- maintenance assignment history, recurring due generation, completion notes, and downtime tracking
 
 ## Roles
 
@@ -170,6 +185,7 @@ Client environment notes:
 - production default is same-origin, so `/client` calls the deployed backend host without another environment variable
 - example file: `client/.env.example`
 - backend CORS defaults allow `http://localhost:5173`, `https://localhost:5173`, and `http://127.0.0.1:5173`
+- outside development, `Cors:AllowedOrigins` must be explicitly configured with safe public origins (no localhost or wildcard entries)
 
 ## Separate Client Scope
 
@@ -195,12 +211,17 @@ Current scope:
 - attendance lists show member/session names instead of raw identifiers
 - maintenance task scheduling from active equipment with optional staff assignment
 - caretaker maintenance task status updates
+- member workspace page with aggregated profile/memberships/payments/bookings/attendance summaries
+- trainer coaching workspace page with coaching-plan CRUD, status transitions, and per-item decisions
+- finance workspace page with invoice creation, payment posting, refund posting, and outstanding-balance visibility
+- maintenance workspace extensions for assignment updates/history and due-task generation
+- role-based landing routes (`/member-workspace`, `/coaching-workspace`, `/finance-workspace`, `/maintenance`)
 
 The client accepts `SystemAdmin`, `SystemSupport`, `SystemBilling`, `GymAdmin`, `GymOwner`, `Member`, `Trainer`, and `Caretaker` sessions.
 
 ## Seed Demo Users
 
-All seeded demo users use password `Gym123!`.
+All seeded demo users use password `GymStrong123!`.
 
 Platform users:
 - `systemadmin@gym.local`
@@ -261,16 +282,36 @@ React client API coverage:
 - all documented platform API endpoints
 - `GET|POST|PUT|DELETE /api/v1/{gymCode}/members`
 - `GET /api/v1/{gymCode}/members/me`
+- `GET /api/v1/{gymCode}/member-workspace/me`
+- `GET /api/v1/{gymCode}/member-workspace/members/{memberId}`
 - `GET|POST|PUT|DELETE /api/v1/{gymCode}/training-categories`
 - `GET /api/v1/{gymCode}/training-sessions`
 - `GET /api/v1/{gymCode}/training-sessions/{id}`
 - `GET /api/v1/{gymCode}/bookings`
 - `POST /api/v1/{gymCode}/bookings`
 - `PUT /api/v1/{gymCode}/bookings/{id}/attendance`
+- `GET|POST /api/v1/{gymCode}/coaching-plans`
+- `GET|PUT|DELETE /api/v1/{gymCode}/coaching-plans/{id}`
+- `PUT /api/v1/{gymCode}/coaching-plans/{id}/status`
+- `PUT /api/v1/{gymCode}/coaching-plans/{id}/items/{itemId}/decision`
 - `GET /api/v1/{gymCode}/maintenance-tasks`
 - `PUT /api/v1/{gymCode}/maintenance-tasks/{id}/status`
+- `PUT /api/v1/{gymCode}/maintenance-tasks/{id}/assignment`
+- `GET /api/v1/{gymCode}/maintenance-tasks/{id}/assignment-history`
+- `POST /api/v1/{gymCode}/maintenance-tasks/generate-due`
 - `GET|POST|PUT|DELETE /api/v1/{gymCode}/membership-packages`
+- `PUT /api/v1/{gymCode}/memberships/{id}/status`
+- `GET /api/v1/{gymCode}/finance-workspace/me`
+- `GET /api/v1/{gymCode}/finance-workspace/members/{memberId}`
+- `GET|POST /api/v1/{gymCode}/invoices`
+- `GET /api/v1/{gymCode}/invoices/{id}`
+- `POST /api/v1/{gymCode}/invoices/{id}/payments`
+- `POST /api/v1/{gymCode}/invoices/{id}/refunds`
 - the `/platform` and `/console` routes expose the remaining tenant endpoints listed in `docs/api.md`
+
+REST semantics note:
+- create actions used by the React workflow pages return `201` (`Created` / `CreatedAtAction`)
+- delete/cancel actions used by the React workflow pages return `204 NoContent`
 
 MVC areas:
 - `Areas/Admin`: platform dashboards and tenant admin pages
@@ -331,6 +372,13 @@ Repository CI integration:
 - testing: [docs/testing.md](docs/testing.md)
 - deployment: [docs/deployment.md](docs/deployment.md)
 - A3 scope plan: [docs/a3-saas-plan.md](docs/a3-saas-plan.md)
+- request-flow diagram: [docs/request-flow-diagram.md](docs/request-flow-diagram.md)
+- study guide (domain): [docs/study-guide-domain.md](docs/study-guide-domain.md)
+- study guide (DAL/EF): [docs/study-guide-dal-ef.md](docs/study-guide-dal-ef.md)
+- study guide (BLL): [docs/study-guide-bll.md](docs/study-guide-bll.md)
+- study guide (DTO/API): [docs/study-guide-dto-api.md](docs/study-guide-dto-api.md)
+- study guide (auth/tenant flow): [docs/study-guide-auth-tenant-flow.md](docs/study-guide-auth-tenant-flow.md)
+- study guide (deployment): [docs/study-guide-deployment.md](docs/study-guide-deployment.md)
 - AI usage: [docs/ai-usage.md](docs/ai-usage.md)
 
 ## Known Limitations

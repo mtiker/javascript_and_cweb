@@ -1,5 +1,4 @@
 using App.BLL.Services;
-using App.DTO.v1;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
 using WebApp.ApiControllers;
@@ -19,7 +18,7 @@ public class MembersController(IMemberWorkflowService memberWorkflowService) : A
     }
 
     [HttpGet("me")]
-    [ProducesResponseType(typeof(MemberDetailResponse), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(MemberDetailResponse), StatusCodes.Status200OK)]
     public async Task<ActionResult<MemberDetailResponse>> GetCurrentMember(string gymCode, CancellationToken cancellationToken)
     {
         return Ok(await memberWorkflowService.GetCurrentMemberAsync(gymCode, cancellationToken));
@@ -33,7 +32,7 @@ public class MembersController(IMemberWorkflowService memberWorkflowService) : A
     }
 
     [HttpPost]
-    [ProducesResponseType(typeof(MemberDetailResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(MemberDetailResponse), StatusCodes.Status201Created)]
     public async Task<ActionResult<MemberDetailResponse>> CreateMember(string gymCode, [FromBody] MemberUpsertRequest request, CancellationToken cancellationToken)
     {
         var member = await memberWorkflowService.CreateMemberAsync(gymCode, request, cancellationToken);
@@ -48,10 +47,10 @@ public class MembersController(IMemberWorkflowService memberWorkflowService) : A
     }
 
     [HttpDelete("{id:guid}")]
-    [ProducesResponseType(typeof(Message), StatusCodes.Status200OK)]
-    public async Task<ActionResult<Message>> DeleteMember(string gymCode, Guid id, CancellationToken cancellationToken)
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> DeleteMember(string gymCode, Guid id, CancellationToken cancellationToken)
     {
         await memberWorkflowService.DeleteMemberAsync(gymCode, id, cancellationToken);
-        return Ok(new Message("Member deleted."));
+        return NoContent();
     }
 }

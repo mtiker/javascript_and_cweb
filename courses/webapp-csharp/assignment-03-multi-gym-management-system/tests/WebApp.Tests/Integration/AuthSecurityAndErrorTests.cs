@@ -18,7 +18,7 @@ public class AuthSecurityAndErrorTests(CustomWebApplicationFactory factory) : IC
     public async Task RenewRefreshToken_RotatesToken_AndRejectsReuse()
     {
         var client = factory.CreateClient();
-        var loginPayload = await LoginAsync(client, "admin@peakforge.local", "Gym123!");
+        var loginPayload = await LoginAsync(client, "admin@peakforge.local", "GymStrong123!");
 
         var renewedResponse = await client.PostAsJsonAsync("/api/v1/account/renew-refresh-token", new RefreshTokenRequest
         {
@@ -45,7 +45,7 @@ public class AuthSecurityAndErrorTests(CustomWebApplicationFactory factory) : IC
     public async Task RenewRefreshToken_RejectsExpiredRefreshToken()
     {
         var client = factory.CreateClient();
-        var loginPayload = await LoginAsync(client, "admin@peakforge.local", "Gym123!");
+        var loginPayload = await LoginAsync(client, "admin@peakforge.local", "GymStrong123!");
 
         using (var scope = factory.Services.CreateScope())
         {
@@ -68,12 +68,60 @@ public class AuthSecurityAndErrorTests(CustomWebApplicationFactory factory) : IC
     public async Task MembersEndpoint_RejectsActiveGymMismatch()
     {
         var client = factory.CreateClient();
-        var loginPayload = await LoginAsync(client, "admin@peakforge.local", "Gym123!");
+        var loginPayload = await LoginAsync(client, "admin@peakforge.local", "GymStrong123!");
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", loginPayload.Jwt);
 
         var response = await client.GetAsync("/api/v1/north-star/members");
 
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task MembersEndpoint_RejectsUnknownGym_Early()
+    {
+        var client = factory.CreateClient();
+        var loginPayload = await LoginAsync(client, "admin@peakforge.local", "GymStrong123!");
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", loginPayload.Jwt);
+
+        var response = await client.GetAsync("/api/v1/does-not-exist/members");
+        var content = await response.Content.ReadAsStringAsync();
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.Equal("application/problem+json; charset=utf-8", response.Content.Headers.ContentType?.ToString());
+        Assert.Contains("was not found", content, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task MembersEndpoint_RejectsInactiveGym_Early()
+    {
+        var inactiveGym = new Gym
+        {
+            Name = "Inactive Gym",
+            Code = "inactive-gym",
+            AddressLine = "Test street 1",
+            City = "Tallinn",
+            PostalCode = "10000",
+            Country = "Estonia",
+            IsActive = false
+        };
+
+        using (var scope = factory.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            dbContext.Gyms.Add(inactiveGym);
+            await dbContext.SaveChangesAsync();
+        }
+
+        var client = factory.CreateClient();
+        var loginPayload = await LoginAsync(client, "admin@peakforge.local", "GymStrong123!");
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", loginPayload.Jwt);
+
+        var response = await client.GetAsync("/api/v1/inactive-gym/members");
+        var content = await response.Content.ReadAsStringAsync();
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        Assert.Equal("application/problem+json; charset=utf-8", response.Content.Headers.ContentType?.ToString());
+        Assert.Contains("inactive", content, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -105,7 +153,7 @@ public class AuthSecurityAndErrorTests(CustomWebApplicationFactory factory) : IC
         }
 
         var client = factory.CreateClient();
-        var loginPayload = await LoginAsync(client, "member@peakforge.local", "Gym123!");
+        var loginPayload = await LoginAsync(client, "member@peakforge.local", "GymStrong123!");
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", loginPayload.Jwt);
 
         var response = await client.GetAsync($"/api/v1/peak-forge/members/{otherMemberId}");
@@ -117,7 +165,7 @@ public class AuthSecurityAndErrorTests(CustomWebApplicationFactory factory) : IC
     public async Task SystemPlatformAnalytics_RejectsTenantOnlyUser()
     {
         var client = factory.CreateClient();
-        var loginPayload = await LoginAsync(client, "member@peakforge.local", "Gym123!");
+        var loginPayload = await LoginAsync(client, "member@peakforge.local", "GymStrong123!");
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", loginPayload.Jwt);
 
         var response = await client.GetAsync("/api/v1/system/platform/analytics");
@@ -129,7 +177,7 @@ public class AuthSecurityAndErrorTests(CustomWebApplicationFactory factory) : IC
     public async Task ApiErrors_ReturnProblemDetailsJson()
     {
         var client = factory.CreateClient();
-        var loginPayload = await LoginAsync(client, "admin@peakforge.local", "Gym123!");
+        var loginPayload = await LoginAsync(client, "admin@peakforge.local", "GymStrong123!");
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", loginPayload.Jwt);
 
         var response = await client.GetAsync($"/api/v1/peak-forge/members/{Guid.NewGuid()}");
@@ -143,7 +191,7 @@ public class AuthSecurityAndErrorTests(CustomWebApplicationFactory factory) : IC
     {
         var client = factory.CreateClient();
         client.DefaultRequestHeaders.AcceptLanguage.ParseAdd("et-EE");
-        var loginPayload = await LoginAsync(client, "admin@peakforge.local", "Gym123!");
+        var loginPayload = await LoginAsync(client, "admin@peakforge.local", "GymStrong123!");
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", loginPayload.Jwt);
 
         var response = await client.GetAsync("/api/v1/peak-forge/training-categories");

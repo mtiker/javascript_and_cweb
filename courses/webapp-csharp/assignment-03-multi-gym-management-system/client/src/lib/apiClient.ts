@@ -3,18 +3,30 @@ import type {
   AttendanceUpdateRequest,
   Booking,
   BookingCreateRequest,
+  CoachingPlan,
+  CoachingPlanCreateRequest,
+  CoachingPlanItemDecisionRequest,
+  CoachingPlanStatusUpdateRequest,
+  CoachingPlanUpdateRequest,
   Equipment,
   EquipmentModel,
+  FinanceWorkspace,
   GymSettings,
   GymSnapshot,
   GymSummary,
   GymUser,
   HttpMethod,
+  Invoice,
+  InvoiceCreateRequest,
+  InvoicePaymentRequest,
   LoginRequest,
+  MaintenanceAssignmentUpdateRequest,
+  MaintenanceTaskAssignmentHistory,
   MaintenanceStatusUpdateRequest,
   MaintenanceTask,
   MaintenanceTaskUpsertRequest,
   MemberDetail,
+  MemberWorkspace,
   MemberSummary,
   MemberUpsertRequest,
   Membership,
@@ -121,6 +133,14 @@ export class ApiClient {
     return this.request<MemberDetail>(`${this.tenantBase(gymCode)}/members/me`);
   }
 
+  async getMemberWorkspace(gymCode: string): Promise<MemberWorkspace> {
+    return this.request<MemberWorkspace>(`${this.tenantBase(gymCode)}/member-workspace/me`);
+  }
+
+  async getMemberWorkspaceForMember(gymCode: string, memberId: string): Promise<MemberWorkspace> {
+    return this.request<MemberWorkspace>(`${this.tenantBase(gymCode)}/member-workspace/members/${memberId}`);
+  }
+
   async createMember(gymCode: string, request: MemberUpsertRequest): Promise<MemberDetail> {
     return this.request<MemberDetail>(`${this.tenantBase(gymCode)}/members`, {
       method: "POST",
@@ -135,8 +155,8 @@ export class ApiClient {
     });
   }
 
-  async deleteMember(gymCode: string, memberId: string): Promise<MessageResponse> {
-    return this.request<MessageResponse>(`${this.tenantBase(gymCode)}/members/${memberId}`, {
+  async deleteMember(gymCode: string, memberId: string): Promise<void> {
+    return this.request<void>(`${this.tenantBase(gymCode)}/members/${memberId}`, {
       method: "DELETE",
     });
   }
@@ -159,8 +179,8 @@ export class ApiClient {
     });
   }
 
-  async deleteTrainingCategory(gymCode: string, categoryId: string): Promise<MessageResponse> {
-    return this.request<MessageResponse>(`${this.tenantBase(gymCode)}/training-categories/${categoryId}`, {
+  async deleteTrainingCategory(gymCode: string, categoryId: string): Promise<void> {
+    return this.request<void>(`${this.tenantBase(gymCode)}/training-categories/${categoryId}`, {
       method: "DELETE",
     });
   }
@@ -209,6 +229,52 @@ export class ApiClient {
     });
   }
 
+  async getCoachingPlans(gymCode: string, memberId?: string): Promise<CoachingPlan[]> {
+    const path = memberId
+      ? `${this.tenantBase(gymCode)}/coaching-plans?memberId=${encodeURIComponent(memberId)}`
+      : `${this.tenantBase(gymCode)}/coaching-plans`;
+    return this.request<CoachingPlan[]>(path);
+  }
+
+  async createCoachingPlan(gymCode: string, request: CoachingPlanCreateRequest): Promise<CoachingPlan> {
+    return this.request<CoachingPlan>(`${this.tenantBase(gymCode)}/coaching-plans`, {
+      method: "POST",
+      body: JSON.stringify(request),
+    });
+  }
+
+  async updateCoachingPlan(gymCode: string, planId: string, request: CoachingPlanUpdateRequest): Promise<CoachingPlan> {
+    return this.request<CoachingPlan>(`${this.tenantBase(gymCode)}/coaching-plans/${planId}`, {
+      method: "PUT",
+      body: JSON.stringify(request),
+    });
+  }
+
+  async updateCoachingPlanStatus(gymCode: string, planId: string, request: CoachingPlanStatusUpdateRequest): Promise<CoachingPlan> {
+    return this.request<CoachingPlan>(`${this.tenantBase(gymCode)}/coaching-plans/${planId}/status`, {
+      method: "PUT",
+      body: JSON.stringify(request),
+    });
+  }
+
+  async decideCoachingPlanItem(
+    gymCode: string,
+    planId: string,
+    itemId: string,
+    request: CoachingPlanItemDecisionRequest,
+  ): Promise<CoachingPlan> {
+    return this.request<CoachingPlan>(`${this.tenantBase(gymCode)}/coaching-plans/${planId}/items/${itemId}/decision`, {
+      method: "PUT",
+      body: JSON.stringify(request),
+    });
+  }
+
+  async deleteCoachingPlan(gymCode: string, planId: string): Promise<void> {
+    return this.request<void>(`${this.tenantBase(gymCode)}/coaching-plans/${planId}`, {
+      method: "DELETE",
+    });
+  }
+
   async getMaintenanceTasks(gymCode: string): Promise<MaintenanceTask[]> {
     return this.request<MaintenanceTask[]>(`${this.tenantBase(gymCode)}/maintenance-tasks`);
   }
@@ -231,6 +297,33 @@ export class ApiClient {
     });
   }
 
+  async updateMaintenanceTaskAssignment(
+    gymCode: string,
+    taskId: string,
+    request: MaintenanceAssignmentUpdateRequest,
+  ): Promise<MaintenanceTask> {
+    return this.request<MaintenanceTask>(`${this.tenantBase(gymCode)}/maintenance-tasks/${taskId}/assignment`, {
+      method: "PUT",
+      body: JSON.stringify(request),
+    });
+  }
+
+  async getMaintenanceTaskAssignmentHistory(gymCode: string, taskId: string): Promise<MaintenanceTaskAssignmentHistory[]> {
+    return this.request<MaintenanceTaskAssignmentHistory[]>(`${this.tenantBase(gymCode)}/maintenance-tasks/${taskId}/assignment-history`);
+  }
+
+  async generateDueMaintenanceTasks(gymCode: string): Promise<MessageResponse> {
+    return this.request<MessageResponse>(`${this.tenantBase(gymCode)}/maintenance-tasks/generate-due`, {
+      method: "POST",
+    });
+  }
+
+  async deleteMaintenanceTask(gymCode: string, taskId: string): Promise<void> {
+    return this.request<void>(`${this.tenantBase(gymCode)}/maintenance-tasks/${taskId}`, {
+      method: "DELETE",
+    });
+  }
+
   async getMembershipPackages(gymCode: string): Promise<MembershipPackage[]> {
     return this.request<MembershipPackage[]>(`${this.tenantBase(gymCode)}/membership-packages`);
   }
@@ -249,8 +342,8 @@ export class ApiClient {
     });
   }
 
-  async deleteMembershipPackage(gymCode: string, packageId: string): Promise<MessageResponse> {
-    return this.request<MessageResponse>(`${this.tenantBase(gymCode)}/membership-packages/${packageId}`, {
+  async deleteMembershipPackage(gymCode: string, packageId: string): Promise<void> {
+    return this.request<void>(`${this.tenantBase(gymCode)}/membership-packages/${packageId}`, {
       method: "DELETE",
     });
   }
@@ -261,6 +354,44 @@ export class ApiClient {
 
   async getPayments(gymCode: string): Promise<Payment[]> {
     return this.request<Payment[]>(`${this.tenantBase(gymCode)}/payments`);
+  }
+
+  async getFinanceWorkspace(gymCode: string): Promise<FinanceWorkspace> {
+    return this.request<FinanceWorkspace>(`${this.tenantBase(gymCode)}/finance-workspace/me`);
+  }
+
+  async getFinanceWorkspaceForMember(gymCode: string, memberId: string): Promise<FinanceWorkspace> {
+    return this.request<FinanceWorkspace>(`${this.tenantBase(gymCode)}/finance-workspace/members/${memberId}`);
+  }
+
+  async getInvoices(gymCode: string, memberId?: string): Promise<Invoice[]> {
+    const path = memberId ? `${this.tenantBase(gymCode)}/invoices?memberId=${encodeURIComponent(memberId)}` : `${this.tenantBase(gymCode)}/invoices`;
+    return this.request<Invoice[]>(path);
+  }
+
+  async getInvoice(gymCode: string, invoiceId: string): Promise<Invoice> {
+    return this.request<Invoice>(`${this.tenantBase(gymCode)}/invoices/${invoiceId}`);
+  }
+
+  async createInvoice(gymCode: string, request: InvoiceCreateRequest): Promise<Invoice> {
+    return this.request<Invoice>(`${this.tenantBase(gymCode)}/invoices`, {
+      method: "POST",
+      body: JSON.stringify(request),
+    });
+  }
+
+  async addInvoicePayment(gymCode: string, invoiceId: string, request: InvoicePaymentRequest): Promise<Invoice> {
+    return this.request<Invoice>(`${this.tenantBase(gymCode)}/invoices/${invoiceId}/payments`, {
+      method: "POST",
+      body: JSON.stringify(request),
+    });
+  }
+
+  async addInvoiceRefund(gymCode: string, invoiceId: string, request: InvoicePaymentRequest): Promise<Invoice> {
+    return this.request<Invoice>(`${this.tenantBase(gymCode)}/invoices/${invoiceId}/refunds`, {
+      method: "POST",
+      body: JSON.stringify(request),
+    });
   }
 
   async getOpeningHours(gymCode: string): Promise<OpeningHours[]> {

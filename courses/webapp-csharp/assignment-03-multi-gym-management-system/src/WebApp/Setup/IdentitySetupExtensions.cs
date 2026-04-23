@@ -9,14 +9,15 @@ namespace WebApp.Setup;
 
 public static class IdentitySetupExtensions
 {
-    public static IServiceCollection AddAppIdentity(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddAppIdentity(this IServiceCollection services, IConfiguration configuration, IWebHostEnvironment environment)
     {
         services.AddIdentity<AppUser, AppRole>(options =>
             {
                 options.Password.RequireDigit = true;
-                options.Password.RequireNonAlphanumeric = false;
-                options.Password.RequireUppercase = false;
-                options.Password.RequiredLength = 6;
+                options.Password.RequireLowercase = true;
+                options.Password.RequireUppercase = true;
+                options.Password.RequireNonAlphanumeric = true;
+                options.Password.RequiredLength = 8;
                 options.User.RequireUniqueEmail = true;
             })
             .AddEntityFrameworkStores<AppDbContext>()
@@ -39,6 +40,7 @@ public static class IdentitySetupExtensions
         services.AddAuthentication()
             .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
             {
+                options.RequireHttpsMetadata = !environment.IsDevelopment();
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuer = true,

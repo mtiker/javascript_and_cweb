@@ -1,5 +1,163 @@
 # AI Usage Log
 
+## 2026-04-23 - Batch 4 Client Workspaces, REST Semantics, and Study Docs
+
+Task:
+- implement Batch 4 by adding dedicated React workspace pages, aligning selected endpoint REST semantics with client compatibility, and adding defense-study documentation artifacts
+
+Files affected:
+- `client/src/App.tsx`
+- `client/src/components/AppShell.tsx`
+- `client/src/pages/{MemberWorkspacePage.tsx,TrainerCoachingWorkspacePage.tsx,FinanceWorkspacePage.tsx,MaintenanceTasksPage.tsx}`
+- `client/src/lib/{apiClient.ts,types.ts}`
+- frontend tests (`client/src/App.test.tsx`, `client/src/pages/{CrudPages.test.tsx,OperationsPages.test.tsx,WorkspacePages.test.tsx}`)
+- selected tenant controllers returning workflow-compatible `201`/`204` responses
+- `tests/WebApp.Tests/Helpers/ControllerTestHelpers.cs`
+- controller unit tests (`TenantControllerTests.cs`, `AdditionalControllerTests.cs`)
+- assignment docs (`README.md`, `docs/{a3-saas-plan.md,api.md,testing.md,deployment.md}`)
+- new study docs:
+  - `docs/request-flow-diagram.md`
+  - `docs/study-guide-domain.md`
+  - `docs/study-guide-dal-ef.md`
+  - `docs/study-guide-bll.md`
+  - `docs/study-guide-dto-api.md`
+  - `docs/study-guide-auth-tenant-flow.md`
+  - `docs/study-guide-deployment.md`
+
+What AI helped with:
+- added role-specific React workflow pages for member workspace, trainer coaching workspace, finance workspace, and expanded maintenance workspace
+- wired role landing routes and shell navigation for workspace-first UX
+- aligned create/delete/cancel semantics for workflow endpoints to return `201` and `204` where client handling was updated
+- extended controller tests and frontend Vitest coverage for routing and workspace mutations
+- produced assignment-specific study guides and a request-flow Mermaid diagram for defense explanations
+
+What needed manual review or correction:
+- UTF-8 display in terminal output was unreliable for one localized example string; docs were normalized to an ASCII fallback example text
+- response-shape assertions in controller unit tests were updated together with the endpoint semantics to avoid stale expectations
+
+Alternatives considered:
+- converting every create/delete endpoint in one pass, but only workflow-covered endpoints were switched to avoid breaking unchanged consumers
+
+## 2026-04-23 - Batch 3 Functional Depth (Workspaces, Coaching, Finance, Lifecycle, Limits, Maintenance)
+
+Task:
+- implement Batch 3 functional depth while preserving the Assignment 03 service-first architecture and existing route structure
+
+Files affected:
+- domain entities (`CoachingPlan`, `CoachingPlanItem`, `Invoice`, `InvoiceLine`, `InvoicePayment`, `MaintenanceTaskAssignmentHistory`) and enum updates
+- DTO resource folders under `src/App.DTO/v1/{CoachingPlans,Finance,MemberWorkspace,MaintenanceTasks,Memberships}`
+- BLL service contracts/implementations:
+  - `MemberWorkspaceService`
+  - `CoachingPlanService`
+  - `FinanceWorkspaceService`
+  - `SubscriptionTierLimitService`
+  - updates in `MembershipWorkflowService` and `MaintenanceWorkflowService`
+- EF context + migration:
+  - `src/App.DAL.EF/AppDbContext.cs`
+  - `src/App.DAL.EF/Migrations/20260422204122_Batch3WorkspacesAndFinance*`
+- tenant controllers:
+  - `MemberWorkspaceController`
+  - `CoachingPlansController`
+  - `FinanceController`
+  - extended `MembershipsController` and `MaintenanceTasksController`
+- tests:
+  - `tests/WebApp.Tests/Unit/SubscriptionTierLimitServiceTests.cs`
+  - `tests/WebApp.Tests/Unit/MembershipWorkflowServiceTests.cs`
+  - controller-forwarding coverage in `AdditionalControllerTests.cs`
+
+What AI helped with:
+- added member workspace aggregation APIs
+- added coaching-plan workflow with plan statuses and item decisions
+- added finance workspace APIs with invoices, lines, payments, refunds, overdue/outstanding logic
+- expanded membership status lifecycle handling in BLL
+- added starter/growth/enterprise subscription-limit enforcement service with tests
+- expanded maintenance workflow with recurring due-generation, assignment history, completion notes, and downtime fields
+
+What needed manual review or correction:
+- migration and seed updates were reviewed to ensure existing gym-domain data stayed coherent and tenant-isolated
+- public routes were kept stable; no route-shape migration was introduced during Batch 3
+
+Alternatives considered:
+- embedding workflow read logic directly in controllers, but service-first BLL orchestration was kept for consistency and defense clarity
+
+## 2026-04-22 - Batch 2 Tenant Resolution And API Contract Polish
+
+Task:
+- implement Assignment 03 Batch 2 API foundation work: tenant gym-code middleware resolution, API error contract metadata, and broader controller verification coverage without route changes
+
+Files affected:
+- `src/WebApp/Middleware/GymResolutionMiddleware.cs`
+- `src/WebApp/Setup/HttpGymContext.cs`
+- `src/WebApp/Setup/MiddlewareExtensions.cs`
+- `src/WebApp/ApiControllers/ApiControllerBase.cs`
+- `src/WebApp/ApiControllers/Identity/AccountController.cs`
+- `src/WebApp/ApiControllers/System/{GymsController.cs,PlatformController.cs,SubscriptionsController.cs,SupportController.cs,ImpersonationController.cs}`
+- `tests/WebApp.Tests/Helpers/ControllerTestHelpers.cs`
+- `tests/WebApp.Tests/Unit/{AdditionalControllerTests.cs,ApiContractMetadataTests.cs}`
+- `tests/WebApp.Tests/Integration/AuthSecurityAndErrorTests.cs`
+- assignment README and docs (`a3-saas-plan.md`, `api.md`, `testing.md`)
+
+What AI helped with:
+- added middleware that resolves `/api/v{version}/{gymCode}/...` gym codes early in the pipeline, rejecting unknown gyms with `404` and inactive gyms with `403` before controller/BLL execution
+- stored resolved gym data in request items and surfaced it through `HttpGymContext` without changing BLL authorization flow
+- standardized public API error metadata to advertise `ProblemDetails` for `400`, `401`, `403`, `404`, and `409`
+- expanded unit tests from members/bookings/memberships to training sessions, maintenance, staff, identity, platform, support, subscriptions, and impersonation controllers
+- added integration tests that prove early unknown/inactive gym rejection behavior
+- added metadata regression tests so future API controllers keep the same documented error contract
+
+What needed manual review or correction:
+- initial enum values in new unit tests (`Scheduled`, `Inspection`, `Completed`) did not match Assignment 03 domain enums and were corrected to `Published`, `Scheduled`, and `Done`
+
+Alternatives considered:
+- adding repetitive `[ProducesResponseType]` attributes to every action, but class-level metadata plus base-controller inheritance keeps the contract explicit with less duplication
+
+## 2026-04-22 - Batch 1 Security Hardening And Credential Upgrade
+
+Task:
+- implement Assignment 03 Batch 1 hardening priorities for startup security, tenant authorization verification depth, audit/soft-delete verification, and impersonation workflow evidence
+- replace weak seeded/demo passwords with a strong default credential compatible with strict password policy
+
+Files affected:
+- `src/WebApp/Program.cs`
+- `src/WebApp/Setup/IdentitySetupExtensions.cs`
+- `src/WebApp/Setup/WebApiExtensions.cs`
+- `src/WebApp/Setup/MiddlewareExtensions.cs`
+- `src/WebApp/appsettings.json`
+- `src/App.Domain/Security/AppClaimTypes.cs`
+- `src/App.BLL/Services/ITokenService.cs`
+- `src/App.BLL/Services/TokenService.cs`
+- `src/App.BLL/Services/PlatformService.cs`
+- `src/App.DTO/v1/System/StartImpersonationRequest.cs`
+- `src/App.DTO/v1/System/StartImpersonationResponse.cs`
+- `src/App.DAL.EF/Seeding/AppDataInit.cs`
+- `src/App.DAL.EF/Seeding/AppDataInit.Helpers.cs`
+- `src/WebApp/Views/Home/Index.cshtml`
+- `client/src/pages/LoginPage.tsx`
+- `client/src/pages/SaasConsolePage.tsx`
+- `tests/WebApp.Tests/CustomWebApplicationFactory.cs`
+- `tests/WebApp.Tests/Unit/RuntimeConfigurationTests.cs`
+- `tests/WebApp.Tests/Unit/AppDbContextBehaviorTests.cs`
+- `tests/WebApp.Tests/Unit/AuthorizationServiceTests.cs`
+- `tests/WebApp.Tests/Integration/ImpersonationTests.cs`
+- updated integration tests using seeded credentials
+- assignment README and docs (`a3-saas-plan.md`, `testing.md`, `deployment.md`)
+
+What AI helped with:
+- tightened Identity password policy to require minimum length, digit, uppercase, lowercase, and symbol
+- enforced `RequireHttpsMetadata` outside development
+- enabled forwarded-header processing before HTTPS/auth middleware for reverse-proxy hosting
+- added production CORS fail-fast validation for missing/unsafe origins
+- deepened impersonation behavior to include reason validation, actor/target metadata, refresh-token creation, JWT impersonation claims, and audit-log writes
+- added targeted unit/integration coverage for runtime config, authorization invariants, EF audit/soft-delete behavior, and impersonation evidence
+- upgraded weak seeded/demo/test passwords to `GymStrong123!` and synchronized UI/test references
+
+What needed manual review or correction:
+- initial strict policy broke seeded credentials; seed defaults and test credentials were then upgraded to a strong value instead of keeping legacy weak passwords
+- production-only CORS fail-fast required test host environment configuration updates
+
+Alternatives considered:
+- preserving `Gym123!` via seed-only password-hash bypass, but this was removed after switching all seed/demo/test credentials to a strong password baseline
+
 ## 2026-04-22 - Backend Structure Alignment With Assignment 18
 
 Task:

@@ -30,11 +30,17 @@ public interface IAppDbContext
     DbSet<MembershipPackage> MembershipPackages { get; }
     DbSet<Membership> Memberships { get; }
     DbSet<Payment> Payments { get; }
+    DbSet<CoachingPlan> CoachingPlans { get; }
+    DbSet<CoachingPlanItem> CoachingPlanItems { get; }
+    DbSet<Invoice> Invoices { get; }
+    DbSet<InvoiceLine> InvoiceLines { get; }
+    DbSet<InvoicePayment> InvoicePayments { get; }
     DbSet<OpeningHours> OpeningHours { get; }
     DbSet<OpeningHoursException> OpeningHoursExceptions { get; }
     DbSet<EquipmentModel> EquipmentModels { get; }
     DbSet<Equipment> Equipment { get; }
     DbSet<MaintenanceTask> MaintenanceTasks { get; }
+    DbSet<MaintenanceTaskAssignmentHistory> MaintenanceTaskAssignmentHistory { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

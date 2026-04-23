@@ -1,5 +1,7 @@
 using System.Globalization;
+using System.Net;
 using Asp.Versioning;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.Extensions.Options;
 using Swashbuckle.AspNetCore.SwaggerGen;
@@ -38,13 +40,34 @@ public static class WebApiExtensions
         return services;
     }
 
-    public static IServiceCollection AddAppCors(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddAppForwardedHeaders(this IServiceCollection services)
     {
-        var allowedCorsOrigins = configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
-                                 ?.Where(origin => !string.IsNullOrWhiteSpace(origin))
-                                 .Distinct(StringComparer.OrdinalIgnoreCase)
-                                 .ToArray()
-                             ?? ["http://localhost:5173", "https://localhost:5173", "http://127.0.0.1:5173"];
+        services.Configure<ForwardedHeadersOptions>(options =>
+        {
+            options.ForwardLimit = null;
+            options.ForwardedHeaders = ForwardedHeaders.All;
+            options.KnownIPNetworks.Clear();
+            options.KnownProxies.Clear();
+            options.KnownIPNetworks.Add(new System.Net.IPNetwork(IPAddress.Any, 0));
+            options.KnownIPNetworks.Add(new System.Net.IPNetwork(IPAddress.IPv6Any, 0));
+        });
+
+        return services;
+    }
+
+    public static IServiceCollection AddAppCors(this IServiceCollection services, IConfiguration configuration, IWebHostEnvironment environment)
+    {
+        var configuredOrigins = configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
+            ?.Where(origin => !string.IsNullOrWhiteSpace(origin))
+            .Select(origin => origin.Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        var allowedCorsOrigins = environment.IsDevelopment()
+            ? configuredOrigins is { Length: > 0 }
+                ? configuredOrigins
+                : ["http://localhost:5173", "https://localhost:5173", "http://127.0.0.1:5173"]
+            : ValidateProductionCorsOrigins(configuredOrigins);
 
         services.AddCors(options =>
         {
@@ -57,6 +80,43 @@ public static class WebApiExtensions
         });
 
         return services;
+    }
+
+    private static string[] ValidateProductionCorsOrigins(string[]? configuredOrigins)
+    {
+        if (configuredOrigins is not { Length: > 0 })
+        {
+            throw new InvalidOperationException("Cors:AllowedOrigins must be configured outside Development.");
+        }
+
+        var normalizedOrigins = new List<string>(configuredOrigins.Length);
+
+        foreach (var configuredOrigin in configuredOrigins)
+        {
+            if (configuredOrigin.Contains('*', StringComparison.Ordinal))
+            {
+                throw new InvalidOperationException("Cors:AllowedOrigins must not contain wildcard origins outside Development.");
+            }
+
+            if (!Uri.TryCreate(configuredOrigin, UriKind.Absolute, out var originUri) ||
+                !string.Equals(originUri.GetLeftPart(UriPartial.Authority), configuredOrigin, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException($"Cors:AllowedOrigins entry '{configuredOrigin}' must be an absolute origin without path, query, or fragment.");
+            }
+
+            if (string.Equals(originUri.Host, "localhost", StringComparison.OrdinalIgnoreCase) ||
+                originUri.Host.EndsWith(".localhost", StringComparison.OrdinalIgnoreCase) ||
+                IPAddress.TryParse(originUri.Host, out var hostIp) && IPAddress.IsLoopback(hostIp))
+            {
+                throw new InvalidOperationException($"Cors:AllowedOrigins entry '{configuredOrigin}' is not allowed outside Development.");
+            }
+
+            normalizedOrigins.Add(originUri.GetLeftPart(UriPartial.Authority));
+        }
+
+        return normalizedOrigins
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
     }
 
     public static IServiceCollection AddAppApiVersioning(this IServiceCollection services)

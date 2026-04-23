@@ -8,11 +8,15 @@ public static class ServiceExtensions
     {
         services.AddScoped<IUserContextService, UserContextService>();
         services.AddScoped<IAuthorizationService, AuthorizationService>();
+        services.AddScoped<ISubscriptionTierLimitService, SubscriptionTierLimitService>();
         services.AddScoped<ITokenService, TokenService>();
         services.AddScoped<IIdentityService, IdentityService>();
         services.AddScoped<IPlatformService, PlatformService>();
         services.AddScoped<IMemberWorkflowService, MemberWorkflowService>();
+        services.AddScoped<IMemberWorkspaceService, MemberWorkspaceService>();
         services.AddScoped<IMembershipWorkflowService, MembershipWorkflowService>();
+        services.AddScoped<ICoachingPlanService, CoachingPlanService>();
+        services.AddScoped<IFinanceWorkspaceService, FinanceWorkspaceService>();
         services.AddScoped<ITrainingWorkflowService, TrainingWorkflowService>();
         services.AddScoped<IMaintenanceWorkflowService, MaintenanceWorkflowService>();
         services.AddScoped<IStaffWorkflowService, StaffWorkflowService>();

@@ -105,7 +105,7 @@ public class TenantControllerTests
         Assert.Same(detailResponse, ControllerAssert.AssertOk(update));
 
         var delete = await controller.DeleteMember(GymCode, memberId, cancellationToken);
-        ControllerAssert.AssertMessage(delete, "Member deleted.");
+        ControllerAssert.AssertNoContent(delete);
     }
 
     [Fact]
@@ -175,13 +175,13 @@ public class TenantControllerTests
         Assert.Same(bookings, ControllerAssert.AssertOk(list));
 
         var create = await controller.CreateBooking(GymCode, createRequest, cancellationToken);
-        Assert.Same(booking, ControllerAssert.AssertOk(create));
+        Assert.Same(booking, ControllerAssert.AssertCreated(create));
 
         var update = await controller.UpdateAttendance(GymCode, bookingId, attendanceRequest, cancellationToken);
         Assert.Same(booking, ControllerAssert.AssertOk(update));
 
         var cancel = await controller.CancelBooking(GymCode, bookingId, cancellationToken);
-        ControllerAssert.AssertMessage(cancel, "Booking cancelled.");
+        ControllerAssert.AssertNoContent(cancel);
     }
 
     [Fact]
@@ -211,6 +211,22 @@ public class TenantControllerTests
             RequestedStartDate = new DateOnly(2026, 1, 1),
             PaymentReference = "PAY-2"
         };
+        var statusRequest = new MembershipStatusUpdateRequest
+        {
+            Status = MembershipStatus.Paused,
+            Reason = "Freeze"
+        };
+        var updatedMembership = new MembershipResponse
+        {
+            Id = membershipId,
+            MemberId = memberId,
+            MembershipPackageId = packageId,
+            StartDate = membership.StartDate,
+            EndDate = membership.EndDate,
+            PriceAtPurchase = membership.PriceAtPurchase,
+            CurrencyCode = membership.CurrencyCode,
+            Status = MembershipStatus.Paused
+        };
         var sale = new MembershipSaleResponse
         {
             MembershipId = membershipId,
@@ -233,6 +249,14 @@ public class TenantControllerTests
                 Assert.Equal(cancellationToken, token);
                 return Task.FromResult(sale);
             },
+            UpdateMembershipStatusAsyncHandler = (gymCode, id, forwardedRequest, token) =>
+            {
+                Assert.Equal(GymCode, gymCode);
+                Assert.Equal(membershipId, id);
+                Assert.Same(statusRequest, forwardedRequest);
+                Assert.Equal(cancellationToken, token);
+                return Task.FromResult(updatedMembership);
+            },
             DeleteMembershipAsyncHandler = (gymCode, id, token) =>
             {
                 Assert.Equal(GymCode, gymCode);
@@ -249,6 +273,9 @@ public class TenantControllerTests
 
         var sell = await controller.SellMembership(GymCode, request, cancellationToken);
         Assert.Same(sale, ControllerAssert.AssertOk(sell));
+
+        var updateStatus = await controller.UpdateMembershipStatus(GymCode, membershipId, statusRequest, cancellationToken);
+        Assert.Same(updatedMembership, ControllerAssert.AssertOk(updateStatus));
 
         var delete = await controller.DeleteMembership(GymCode, membershipId, cancellationToken);
         ControllerAssert.AssertMessage(delete, "Membership deleted.");

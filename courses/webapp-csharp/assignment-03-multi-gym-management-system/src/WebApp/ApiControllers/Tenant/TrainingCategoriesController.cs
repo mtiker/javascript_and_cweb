@@ -1,5 +1,4 @@
 using App.BLL.Services;
-using App.DTO.v1;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
 using WebApp.ApiControllers;
@@ -19,10 +18,11 @@ public class TrainingCategoriesController(ITrainingWorkflowService trainingWorkf
     }
 
     [HttpPost("training-categories")]
-    [ProducesResponseType(typeof(TrainingCategoryResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(TrainingCategoryResponse), StatusCodes.Status201Created)]
     public async Task<ActionResult<TrainingCategoryResponse>> CreateCategory(string gymCode, [FromBody] TrainingCategoryUpsertRequest request, CancellationToken cancellationToken)
     {
-        return Ok(await trainingWorkflowService.CreateCategoryAsync(gymCode, request, cancellationToken));
+        var created = await trainingWorkflowService.CreateCategoryAsync(gymCode, request, cancellationToken);
+        return Created(string.Empty, created);
     }
 
     [HttpPut("training-categories/{id:guid}")]
@@ -33,10 +33,10 @@ public class TrainingCategoriesController(ITrainingWorkflowService trainingWorkf
     }
 
     [HttpDelete("training-categories/{id:guid}")]
-    [ProducesResponseType(typeof(Message), StatusCodes.Status200OK)]
-    public async Task<ActionResult<Message>> DeleteCategory(string gymCode, Guid id, CancellationToken cancellationToken)
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> DeleteCategory(string gymCode, Guid id, CancellationToken cancellationToken)
     {
         await trainingWorkflowService.DeleteCategoryAsync(gymCode, id, cancellationToken);
-        return Ok(new Message("Training category deleted."));
-}
+        return NoContent();
+    }
 }

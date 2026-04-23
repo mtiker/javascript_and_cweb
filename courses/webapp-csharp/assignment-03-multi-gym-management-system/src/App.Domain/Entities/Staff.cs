@@ -21,4 +21,8 @@ public class Staff : TenantBaseEntity
     public ICollection<EmploymentContract> Contracts { get; set; } = new List<EmploymentContract>();
     public ICollection<MaintenanceTask> AssignedTasks { get; set; } = new List<MaintenanceTask>();
     public ICollection<MaintenanceTask> CreatedTasks { get; set; } = new List<MaintenanceTask>();
+    public ICollection<CoachingPlan> CoachingPlans { get; set; } = new List<CoachingPlan>();
+    public ICollection<CoachingPlanItem> CoachingPlanItemDecisions { get; set; } = new List<CoachingPlanItem>();
+    public ICollection<MaintenanceTaskAssignmentHistory> MaintenanceAssignmentEvents { get; set; } = new List<MaintenanceTaskAssignmentHistory>();
+    public ICollection<MaintenanceTaskAssignmentHistory> MaintenanceAssignmentChanges { get; set; } = new List<MaintenanceTaskAssignmentHistory>();
 }

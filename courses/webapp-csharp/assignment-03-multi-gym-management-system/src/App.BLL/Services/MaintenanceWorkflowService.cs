@@ -18,7 +18,8 @@ namespace App.BLL.Services;
 
 public class MaintenanceWorkflowService(
     IAppDbContext dbContext,
-    IAuthorizationService authorizationService) : IMaintenanceWorkflowService
+    IAuthorizationService authorizationService,
+    ISubscriptionTierLimitService subscriptionTierLimitService) : IMaintenanceWorkflowService
 {
     public async Task<IReadOnlyCollection<OpeningHoursResponse>> GetOpeningHoursAsync(string gymCode, CancellationToken cancellationToken = default)
     {
@@ -211,6 +212,7 @@ public class MaintenanceWorkflowService(
     public async Task<EquipmentResponse> CreateEquipmentAsync(string gymCode, EquipmentUpsertRequest request, CancellationToken cancellationToken = default)
     {
         var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin);
+        await subscriptionTierLimitService.EnsureCanCreateEquipmentAsync(gymId, cancellationToken);
         var entity = new Equipment
         {
             GymId = gymId,
@@ -255,29 +257,22 @@ public class MaintenanceWorkflowService(
     public async Task<IReadOnlyCollection<MaintenanceTaskResponse>> GetMaintenanceTasksAsync(string gymCode, CancellationToken cancellationToken = default)
     {
         var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin, RoleNames.Caretaker);
-        return await dbContext.MaintenanceTasks
+        var tasks = await dbContext.MaintenanceTasks
             .Where(entity => entity.GymId == gymId)
+            .Include(entity => entity.AssignedStaff)
+                .ThenInclude(entity => entity!.Person)
+            .Include(entity => entity.Equipment)
+                .ThenInclude(entity => entity!.EquipmentModel)
+            .Include(entity => entity.AssignmentHistory)
+                .ThenInclude(entity => entity.AssignedStaff)
+                    .ThenInclude(entity => entity!.Person)
+            .Include(entity => entity.AssignmentHistory)
+                .ThenInclude(entity => entity.AssignedByStaff)
+                    .ThenInclude(entity => entity!.Person)
             .OrderByDescending(entity => entity.CreatedAtUtc)
-            .Select(entity => new MaintenanceTaskResponse
-            {
-                Id = entity.Id,
-                EquipmentId = entity.EquipmentId,
-                EquipmentAssetTag = entity.Equipment!.AssetTag,
-                EquipmentName = Translate(entity.Equipment.EquipmentModel!.Name) ?? entity.Equipment.AssetTag ?? "Equipment",
-                AssignedStaffId = entity.AssignedStaffId,
-                AssignedStaffName = entity.AssignedStaff == null
-                    ? null
-                    : $"{entity.AssignedStaff.Person!.FirstName} {entity.AssignedStaff.Person.LastName}".Trim(),
-                CreatedByStaffId = entity.CreatedByStaffId,
-                TaskType = entity.TaskType,
-                Priority = entity.Priority,
-                Status = entity.Status,
-                DueAtUtc = entity.DueAtUtc,
-                StartedAtUtc = entity.StartedAtUtc,
-                CompletedAtUtc = entity.CompletedAtUtc,
-                Notes = entity.Notes
-            })
-            .ToArrayAsync(cancellationToken);
+            .ToListAsync(cancellationToken);
+
+        return tasks.Select(ToMaintenanceResponse).ToArray();
     }
 
     public async Task<MaintenanceTaskResponse> CreateTaskAsync(string gymCode, MaintenanceTaskUpsertRequest request, CancellationToken cancellationToken = default)
@@ -317,10 +312,39 @@ public class MaintenanceWorkflowService(
             Notes = request.Notes
         };
 
+        if (task.TaskType == MaintenanceTaskType.Breakdown && task.Status == MaintenanceTaskStatus.InProgress)
+        {
+            task.StartedAtUtc = DateTime.UtcNow;
+            task.DowntimeStartedAtUtc = DateTime.UtcNow;
+            equipment.CurrentStatus = EquipmentStatus.Maintenance;
+        }
+
         dbContext.MaintenanceTasks.Add(task);
+        dbContext.MaintenanceTaskAssignmentHistory.Add(new MaintenanceTaskAssignmentHistory
+        {
+            GymId = gymId,
+            MaintenanceTask = task,
+            AssignedStaffId = task.AssignedStaffId,
+            AssignedByStaffId = request.CreatedByStaffId,
+            Notes = "Initial assignment"
+        });
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return ToMaintenanceResponse(task);
+        var saved = await dbContext.MaintenanceTasks
+            .Where(entity => entity.GymId == gymId && entity.Id == task.Id)
+            .Include(entity => entity.Equipment)
+                .ThenInclude(entity => entity!.EquipmentModel)
+            .Include(entity => entity.AssignedStaff)
+                .ThenInclude(entity => entity!.Person)
+            .Include(entity => entity.AssignmentHistory)
+                .ThenInclude(entity => entity.AssignedStaff)
+                    .ThenInclude(entity => entity!.Person)
+            .Include(entity => entity.AssignmentHistory)
+                .ThenInclude(entity => entity.AssignedByStaff)
+                    .ThenInclude(entity => entity!.Person)
+            .FirstAsync(cancellationToken);
+
+        return ToMaintenanceResponse(saved);
     }
 
     public async Task<MaintenanceTaskResponse> UpdateTaskStatusAsync(string gymCode, Guid taskId, MaintenanceStatusUpdateRequest request, CancellationToken cancellationToken = default)
@@ -332,6 +356,12 @@ public class MaintenanceWorkflowService(
                        .ThenInclude(entity => entity!.EquipmentModel)
                    .Include(entity => entity.AssignedStaff)
                        .ThenInclude(entity => entity!.Person)
+                   .Include(entity => entity.AssignmentHistory)
+                       .ThenInclude(entity => entity.AssignedStaff)
+                           .ThenInclude(entity => entity!.Person)
+                   .Include(entity => entity.AssignmentHistory)
+                       .ThenInclude(entity => entity.AssignedByStaff)
+                           .ThenInclude(entity => entity!.Person)
                    .FirstOrDefaultAsync(entity => entity.Id == taskId)
                    ?? throw new NotFoundException("Maintenance task was not found.");
 
@@ -343,15 +373,138 @@ public class MaintenanceWorkflowService(
         if (request.Status == MaintenanceTaskStatus.InProgress && !task.StartedAtUtc.HasValue)
         {
             task.StartedAtUtc = DateTime.UtcNow;
+            if (task.TaskType == MaintenanceTaskType.Breakdown)
+            {
+                task.DowntimeStartedAtUtc ??= DateTime.UtcNow;
+                if (task.Equipment != null && task.Equipment.CurrentStatus == EquipmentStatus.Active)
+                {
+                    task.Equipment.CurrentStatus = EquipmentStatus.Maintenance;
+                }
+            }
         }
 
         if (request.Status == MaintenanceTaskStatus.Done)
         {
-            task.CompletedAtUtc = DateTime.UtcNow;
+            var completedAt = DateTime.UtcNow;
+            task.CompletedAtUtc = completedAt;
+            task.CompletionNotes = string.IsNullOrWhiteSpace(request.CompletionNotes)
+                ? task.CompletionNotes
+                : request.CompletionNotes.Trim();
+
+            if (task.TaskType == MaintenanceTaskType.Breakdown)
+            {
+                task.DowntimeStartedAtUtc ??= task.StartedAtUtc ?? completedAt;
+                task.DowntimeEndedAtUtc = completedAt;
+                if (task.Equipment != null && task.Equipment.CurrentStatus == EquipmentStatus.Maintenance)
+                {
+                    task.Equipment.CurrentStatus = EquipmentStatus.Active;
+                }
+            }
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
         return ToMaintenanceResponse(task);
+    }
+
+    public async Task<MaintenanceTaskResponse> UpdateTaskAssignmentAsync(string gymCode, Guid taskId, MaintenanceAssignmentUpdateRequest request, CancellationToken cancellationToken = default)
+    {
+        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin);
+
+        var task = await dbContext.MaintenanceTasks
+            .Include(entity => entity.AssignedStaff)
+                .ThenInclude(entity => entity!.Person)
+            .Include(entity => entity.Equipment)
+                .ThenInclude(entity => entity!.EquipmentModel)
+            .Include(entity => entity.AssignmentHistory)
+                .ThenInclude(entity => entity.AssignedStaff)
+                    .ThenInclude(entity => entity!.Person)
+            .Include(entity => entity.AssignmentHistory)
+                .ThenInclude(entity => entity.AssignedByStaff)
+                    .ThenInclude(entity => entity!.Person)
+            .FirstOrDefaultAsync(entity => entity.GymId == gymId && entity.Id == taskId, cancellationToken)
+            ?? throw new NotFoundException("Maintenance task was not found.");
+
+        Staff? assignedStaff = null;
+        if (request.AssignedStaffId.HasValue)
+        {
+            assignedStaff = await dbContext.Staff
+                .Include(entity => entity.Person)
+                .FirstOrDefaultAsync(entity => entity.GymId == gymId && entity.Id == request.AssignedStaffId.Value, cancellationToken)
+                ?? throw new ValidationAppException("Assigned staff member was not found in the active gym.");
+        }
+
+        if (request.AssignedByStaffId.HasValue)
+        {
+            var assignedByExists = await dbContext.Staff.AnyAsync(entity => entity.GymId == gymId && entity.Id == request.AssignedByStaffId.Value, cancellationToken);
+            if (!assignedByExists)
+            {
+                throw new ValidationAppException("Assignment actor staff member was not found in the active gym.");
+            }
+        }
+
+        task.AssignedStaffId = request.AssignedStaffId;
+        task.AssignedStaff = assignedStaff;
+
+        dbContext.MaintenanceTaskAssignmentHistory.Add(new MaintenanceTaskAssignmentHistory
+        {
+            GymId = gymId,
+            MaintenanceTaskId = task.Id,
+            AssignedStaffId = request.AssignedStaffId,
+            AssignedByStaffId = request.AssignedByStaffId,
+            Notes = string.IsNullOrWhiteSpace(request.Notes) ? "Assignment updated" : request.Notes.Trim()
+        });
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        var saved = await dbContext.MaintenanceTasks
+            .Where(entity => entity.GymId == gymId && entity.Id == task.Id)
+            .Include(entity => entity.AssignedStaff)
+                .ThenInclude(entity => entity!.Person)
+            .Include(entity => entity.Equipment)
+                .ThenInclude(entity => entity!.EquipmentModel)
+            .Include(entity => entity.AssignmentHistory)
+                .ThenInclude(entity => entity.AssignedStaff)
+                    .ThenInclude(entity => entity!.Person)
+            .Include(entity => entity.AssignmentHistory)
+                .ThenInclude(entity => entity.AssignedByStaff)
+                    .ThenInclude(entity => entity!.Person)
+            .FirstAsync(cancellationToken);
+
+        return ToMaintenanceResponse(saved);
+    }
+
+    public async Task<IReadOnlyCollection<MaintenanceTaskAssignmentHistoryResponse>> GetTaskAssignmentHistoryAsync(string gymCode, Guid taskId, CancellationToken cancellationToken = default)
+    {
+        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin, RoleNames.Caretaker);
+        var exists = await dbContext.MaintenanceTasks.AnyAsync(entity => entity.GymId == gymId && entity.Id == taskId, cancellationToken);
+        if (!exists)
+        {
+            throw new NotFoundException("Maintenance task was not found.");
+        }
+
+        return await dbContext.MaintenanceTaskAssignmentHistory
+            .Where(entity => entity.GymId == gymId && entity.MaintenanceTaskId == taskId)
+            .Include(entity => entity.AssignedStaff)
+                .ThenInclude(entity => entity!.Person)
+            .Include(entity => entity.AssignedByStaff)
+                .ThenInclude(entity => entity!.Person)
+            .OrderByDescending(entity => entity.AssignedAtUtc)
+            .Select(entity => new MaintenanceTaskAssignmentHistoryResponse
+            {
+                Id = entity.Id,
+                MaintenanceTaskId = entity.MaintenanceTaskId,
+                AssignedStaffId = entity.AssignedStaffId,
+                AssignedStaffName = entity.AssignedStaff == null
+                    ? null
+                    : $"{entity.AssignedStaff.Person!.FirstName} {entity.AssignedStaff.Person.LastName}".Trim(),
+                AssignedByStaffId = entity.AssignedByStaffId,
+                AssignedByStaffName = entity.AssignedByStaff == null
+                    ? null
+                    : $"{entity.AssignedByStaff.Person!.FirstName} {entity.AssignedByStaff.Person.LastName}".Trim(),
+                AssignedAtUtc = entity.AssignedAtUtc,
+                Notes = entity.Notes
+            })
+            .ToArrayAsync(cancellationToken);
     }
 
     public async Task<int> GenerateDueScheduledTasksAsync(string gymCode, CancellationToken cancellationToken = default)
@@ -587,6 +740,25 @@ public class MaintenanceWorkflowService(
 
     private static MaintenanceTaskResponse ToMaintenanceResponse(MaintenanceTask task)
     {
+        var assignmentHistory = task.AssignmentHistory
+            .OrderByDescending(entity => entity.AssignedAtUtc)
+            .Select(entity => new MaintenanceTaskAssignmentHistoryResponse
+            {
+                Id = entity.Id,
+                MaintenanceTaskId = entity.MaintenanceTaskId,
+                AssignedStaffId = entity.AssignedStaffId,
+                AssignedStaffName = entity.AssignedStaff == null
+                    ? null
+                    : $"{entity.AssignedStaff.Person?.FirstName} {entity.AssignedStaff.Person?.LastName}".Trim(),
+                AssignedByStaffId = entity.AssignedByStaffId,
+                AssignedByStaffName = entity.AssignedByStaff == null
+                    ? null
+                    : $"{entity.AssignedByStaff.Person?.FirstName} {entity.AssignedByStaff.Person?.LastName}".Trim(),
+                AssignedAtUtc = entity.AssignedAtUtc,
+                Notes = entity.Notes
+            })
+            .ToArray();
+
         return new MaintenanceTaskResponse
         {
             Id = task.Id,
@@ -604,7 +776,12 @@ public class MaintenanceWorkflowService(
             DueAtUtc = task.DueAtUtc,
             StartedAtUtc = task.StartedAtUtc,
             CompletedAtUtc = task.CompletedAtUtc,
-            Notes = task.Notes
+            DowntimeStartedAtUtc = task.DowntimeStartedAtUtc,
+            DowntimeEndedAtUtc = task.DowntimeEndedAtUtc,
+            IsOverdue = task.Status != MaintenanceTaskStatus.Done && task.DueAtUtc.HasValue && task.DueAtUtc.Value < DateTime.UtcNow,
+            Notes = task.Notes,
+            CompletionNotes = task.CompletionNotes,
+            AssignmentHistory = assignmentHistory
         };
     }
 
