@@ -26,8 +26,6 @@ public static partial class AppDataInit
         var existingUser = await userManager.FindByEmailAsync(email);
         if (existingUser != null)
         {
-            var token = await userManager.GeneratePasswordResetTokenAsync(existingUser);
-            await userManager.ResetPasswordAsync(existingUser, token, DefaultPassword);
             return existingUser;
         }
 
