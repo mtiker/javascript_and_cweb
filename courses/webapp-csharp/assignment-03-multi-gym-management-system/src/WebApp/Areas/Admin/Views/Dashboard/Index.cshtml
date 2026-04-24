@@ -1,5 +1,11 @@
 @model AdminDashboardViewModel
 @inject IStringLocalizer<SharedResources> L
+@inject IConfiguration Configuration
+@{
+    var hasSystemRole = Model.SystemRoles.Count > 0;
+    var hasTenantAdminRole = Model.ActiveRole == "GymOwner" || Model.ActiveRole == "GymAdmin";
+    var clientAppBaseUrl = ClientAppUrlResolver.GetBaseUrl(Configuration);
+}
 <section class="dashboard-grid">
     <article class="panel">
         <h1>@L["AdminArea"]</h1>
@@ -26,6 +32,21 @@
 <section class="panel">
     <h2>@L["QuickLinks"]</h2>
     <div class="link-strip">
+        <a href="@clientAppBaseUrl">@L["ClientArea"]</a>
+        @if (hasSystemRole)
+        {
+            <a href="@ClientAppUrlResolver.GetRouteUrl(Configuration, "/platform")">@L["AdminArea"]</a>
+            <a href="@ClientAppUrlResolver.GetRouteUrl(Configuration, "/console")">@L["Operations"]</a>
+        }
+        @if (hasTenantAdminRole)
+        {
+            <a href="@ClientAppUrlResolver.GetRouteUrl(Configuration, "/members")">@L["Members"]</a>
+            <a href="@ClientAppUrlResolver.GetRouteUrl(Configuration, "/sessions")">@L["Sessions"]</a>
+            <a href="@ClientAppUrlResolver.GetRouteUrl(Configuration, "/training-categories")">Training categories</a>
+            <a href="@ClientAppUrlResolver.GetRouteUrl(Configuration, "/membership-packages")">@L["Memberships"]</a>
+            <a href="@ClientAppUrlResolver.GetRouteUrl(Configuration, "/finance-workspace")">Finance workspace</a>
+            <a href="@ClientAppUrlResolver.GetRouteUrl(Configuration, "/maintenance")">@L["Maintenance"]</a>
+        }
         <a asp-area="Admin" asp-controller="Gyms" asp-action="Index">@L["Gyms"]</a>
         <a asp-area="Admin" asp-controller="Memberships" asp-action="Index">@L["Memberships"]</a>
         <a asp-area="Admin" asp-controller="Sessions" asp-action="Index">@L["Sessions"]</a>

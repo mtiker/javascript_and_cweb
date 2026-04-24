@@ -31,18 +31,28 @@ public class SmokeTests(CustomWebApplicationFactory factory) : IClassFixture<Cus
     }
 
     [Fact]
+    public async Task AdminDashboard_QuickLinks_ExposeFunctionalSaasRoutes()
+    {
+        var client = await CreateMvcClientAsync("admin@peakforge.local");
+
+        var response = await client.GetAsync("/Admin");
+        var html = await response.Content.ReadAsStringAsync();
+
+        response.EnsureSuccessStatusCode();
+        Assert.Contains("href=\"/client\"", html);
+        Assert.Contains("href=\"/client/members\"", html);
+        Assert.Contains("href=\"/client/sessions\"", html);
+        Assert.Contains("href=\"/client/training-categories\"", html);
+        Assert.Contains("href=\"/client/membership-packages\"", html);
+        Assert.Contains("href=\"/client/finance-workspace\"", html);
+        Assert.Contains("href=\"/client/maintenance\"", html);
+    }
+
+    [Fact]
     public async Task SeededMvcPages_RenderWithSharedLayoutAndStyles()
     {
         var sessionId = await GetPeakForgeSessionIdAsync();
         var maintenanceTaskId = await GetPeakForgeMaintenanceTaskIdAsync();
-
-        var systemAdminClient = await CreateMvcClientAsync("systemadmin@gym.local");
-        await AssertStyledPageAsync(systemAdminClient, "/Admin/Gyms", "Peak Forge Gym");
-
-        var adminClient = await CreateMvcClientAsync("admin@peakforge.local");
-        await AssertStyledPageAsync(adminClient, "/Admin/Memberships", "Memberships");
-        await AssertStyledPageAsync(adminClient, "/Admin/Sessions", "Sessions");
-        await AssertStyledPageAsync(adminClient, "/Admin/Operations", "Operations");
 
         var memberClient = await CreateMvcClientAsync("member@peakforge.local");
         await AssertStyledPageAsync(memberClient, "/mvc-client", "peak-forge");
@@ -58,6 +68,24 @@ public class SmokeTests(CustomWebApplicationFactory factory) : IClassFixture<Cus
         await AssertStyledPageAsync(caretakerClient, "/mvc-client/Sessions", "peak-forge");
         await AssertStyledPageAsync(caretakerClient, "/mvc-client/Maintenance", "Maintenance");
         await AssertStyledPageAsync(caretakerClient, $"/mvc-client/Maintenance/Details/{maintenanceTaskId}", "Maintenance task");
+    }
+
+    [Fact]
+    public async Task SystemAdmin_GymsRoute_RedirectsToClientPlatform()
+    {
+        var client = await CreateMvcClientAsync("systemadmin@gym.local", allowAutoRedirect: false);
+
+        await AssertRedirectAsync(client, "/Admin/Gyms", "/client/platform");
+    }
+
+    [Fact]
+    public async Task TenantAdmin_WorkspaceRoutes_RedirectToClientWorkspaces()
+    {
+        var client = await CreateMvcClientAsync("admin@peakforge.local", allowAutoRedirect: false);
+
+        await AssertRedirectAsync(client, "/Admin/Memberships", "/client/finance-workspace");
+        await AssertRedirectAsync(client, "/Admin/Sessions", "/client/sessions");
+        await AssertRedirectAsync(client, "/Admin/Operations", "/client/maintenance");
     }
 
     [Fact]
@@ -256,6 +284,18 @@ public class SmokeTests(CustomWebApplicationFactory factory) : IClassFixture<Cus
         Assert.Contains("/css/site.css", html);
         Assert.Contains("class=\"topbar\"", html);
         Assert.Contains(expectedContent, html);
+    }
+
+    private static async Task AssertRedirectAsync(HttpClient client, string sourcePath, string expectedTargetPath)
+    {
+        var response = await client.GetAsync(sourcePath);
+        var location = response.Headers.Location?.OriginalString;
+
+        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+        Assert.True(
+            string.Equals(location, expectedTargetPath, StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(location, $"http://localhost{expectedTargetPath}", StringComparison.OrdinalIgnoreCase),
+            $"Expected redirect to '{expectedTargetPath}' but was '{location}'.");
     }
 
     private async Task<Guid> GetPeakForgeSessionIdAsync()

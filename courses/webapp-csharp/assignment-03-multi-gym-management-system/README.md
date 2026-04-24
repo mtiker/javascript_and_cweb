@@ -9,6 +9,9 @@ The project now has three user-facing surfaces:
 - MVC client UX inside `src/WebApp/Areas/Client`, served under `/mvc-client`
 - a separate React + TypeScript SaaS client under `client/`
 
+Admin route note:
+- `/Admin/Gyms`, `/Admin/Memberships`, `/Admin/Sessions`, and `/Admin/Operations` now redirect into `/client/*` SaaS routes so admin users land on functional write workflows instead of read-only summary pages.
+
 The backend remains one ASP.NET Core host that serves the MVC areas, Swagger, the versioned REST API, and the production React client at `/client`. The MVC client area uses `/mvc-client` so it does not collide with the React client mount.
 
 ## Requirement Coverage

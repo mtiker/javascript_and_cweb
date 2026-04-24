@@ -8,6 +8,7 @@ Assignment 03 is implemented as one SaaS backend plus two UI approaches:
 - a separate React + TypeScript SaaS client in `client/`
 
 The project keeps the ASP.NET Core monolith for backend responsibilities while adding the separate client required for REST API consumption. The production Docker image now builds that client separately and serves it from the backend at `/client`; the MVC client area uses `/mvc-client` to avoid route collision with the React bundle.
+Admin handoff now routes `/Admin/Gyms`, `/Admin/Memberships`, `/Admin/Sessions`, and `/Admin/Operations` into the React `/client` workflows to avoid read-only duplication.
 
 ## Scope
 

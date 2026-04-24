@@ -1,5 +1,32 @@
 # AI Usage Log
 
+## 2026-04-24 - Restore Functional SaaS Admin Routing After Mirror Rollback
+
+Task:
+- restore functional SaaS operations in Assignment 03 after rollback left Admin routes on read-only MVC summaries
+
+Files affected:
+- `src/WebApp/Helpers/ClientAppUrlResolver.cs`
+- `src/WebApp/Views/Shared/_Layout.cshtml`
+- `src/WebApp/Areas/Admin/Views/Dashboard/Index.cshtml`
+- `src/WebApp/Areas/Admin/Controllers/{GymsController.cs,MembershipsController.cs,SessionsController.cs,OperationsController.cs}`
+- `tests/WebApp.Tests/Integration/SmokeTests.cs`
+- `README.md`
+- `docs/a3-saas-plan.md`
+- `docs/ai-usage.md`
+
+What AI helped with:
+- added a shared client-route resolver and rewired Admin quick links/layout to `/client` SaaS routes
+- changed read-only Admin resource controllers to role-gated redirects into functional React workspace routes
+- added smoke tests proving quick-link presence and redirect behavior for system and tenant admins
+- synchronized assignment README and SaaS plan docs with the new admin handoff behavior
+
+What needed manual review or correction:
+- ensured role gates stayed intact while redirecting to React routes so non-admin users are still denied/redirected safely
+
+Alternatives considered:
+- reintroducing the old MVC SaaS mirror controller, but it was intentionally not brought back; route handoff to the real client is simpler and less error-prone
+
 ## 2026-04-23 - Batch 4 Client Workspaces, REST Semantics, and Study Docs
 
 Task:

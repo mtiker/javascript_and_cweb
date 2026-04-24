@@ -17,6 +17,16 @@ Record AI-assisted development evidence here.
 ## Entries
 
 - Date: 2026-04-24
+- Subject: webapp-csharp
+- Assignment: assignment-03-multi-gym-management-system
+- Prompt: After rollback, SaaS admin was effectively dashboard/read-only; restore practical SaaS functionality like the dental-clinic reference by routing admin surfaces into functional client workflows.
+- Files affected: `courses/webapp-csharp/assignment-03-multi-gym-management-system/src/WebApp/{Helpers/ClientAppUrlResolver.cs,Views/Shared/_Layout.cshtml,Areas/Admin/Views/Dashboard/Index.cshtml,Areas/Admin/Controllers/{GymsController.cs,MembershipsController.cs,SessionsController.cs,OperationsController.cs},Views/_ViewImports.cshtml,Areas/_ViewImports.cshtml}`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/tests/WebApp.Tests/Integration/SmokeTests.cs`, assignment README/docs (`README.md`, `docs/a3-saas-plan.md`, `docs/ai-usage.md`), `docs/ai-prompts.md`
+- AI output used: Added a shared client URL resolver, rewired admin navigation/quick links to `/client/*` SaaS workflows, replaced read-only admin subpages with role-gated redirects to functional React workspace routes, and added smoke tests for links/redirects.
+- What AI got wrong / needed correction: Avoided bringing back the previous SaaS mirror controller implementation that had been explicitly rolled back; used direct routing handoff instead.
+- Changes made manually: Reviewed role checks for system vs tenant admin before redirecting and updated assignment docs to explicitly describe the admin-to-client handoff.
+- Alternatives considered: Rebuilding write functionality inside MVC admin pages, but that would duplicate workflow logic and diverge from the already functional React SaaS client.
+
+- Date: 2026-04-24
 - Subject: javascript
 - Assignment: assignment-04-vue-secure-todo
 - Prompt: Implement TSConfig deprecation hardening for TypeScript 6/7 readiness in Assignment 04 by removing deprecated `baseUrl`, enforcing project-reference type-checking in `npm run check`, and verifying full check/build/test flow.

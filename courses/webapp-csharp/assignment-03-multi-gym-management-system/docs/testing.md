@@ -53,6 +53,9 @@ Backend integration tests:
 - `SmokeTests.Register_ReturnsJwtPayload`
 - `SmokeTests.Login_SeededMultiGymAdmin_CanSwitchGym`
 - `SmokeTests.SplitTenantApiControllers_KeepExistingReadRoutes`
+- `SmokeTests.AdminDashboard_QuickLinks_ExposeFunctionalSaasRoutes`
+- `SmokeTests.SystemAdmin_GymsRoute_RedirectsToClientPlatform`
+- `SmokeTests.TenantAdmin_WorkspaceRoutes_RedirectToClientWorkspaces`
 - `AuthSecurityAndErrorTests.RenewRefreshToken_RotatesToken_AndRejectsReuse`
 - `AuthSecurityAndErrorTests.RenewRefreshToken_RejectsExpiredRefreshToken`
 - `AuthSecurityAndErrorTests.MembersEndpoint_RejectsActiveGymMismatch`
@@ -103,6 +106,7 @@ Recommended manual verification before defense:
 2. Start `WebApp`.
 3. Open `/swagger` and `/health`.
 4. Log in to the MVC admin area with `multigym.admin@gym.local` and switch between `peak-forge` and `north-star`.
+   - verify Admin quick links route into `/client/*` functional workflows
 5. Open the MVC client area with `member@peakforge.local`.
 6. Start the React client and log in with `admin@peakforge.local`.
    - seeded/demo password: `GymStrong123!`

@@ -1,5 +1,19 @@
 @using System.Globalization
+@using App.BLL.Services
+@using App.Domain
 @inject IStringLocalizer<SharedResources> L
+@inject IConfiguration Configuration
+@inject IUserContextService UserContextService
+@{
+    var clientAppBaseUrl = ClientAppUrlResolver.GetBaseUrl(Configuration);
+    var userContext = User.Identity?.IsAuthenticated == true ? UserContextService.GetCurrent() : null;
+    var canAccessAdminArea = userContext is not null &&
+                             (userContext.HasRole(RoleNames.SystemAdmin) ||
+                              userContext.HasRole(RoleNames.SystemSupport) ||
+                              userContext.HasRole(RoleNames.SystemBilling) ||
+                              userContext.HasRole(RoleNames.GymOwner) ||
+                              userContext.HasRole(RoleNames.GymAdmin));
+}
 <!DOCTYPE html>
 <html lang="@CultureInfo.CurrentUICulture.Name">
 <head>
@@ -17,8 +31,11 @@
         <nav class="topnav">
             @if (User.Identity?.IsAuthenticated == true)
             {
-                <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index">@L["AdminArea"]</a>
-                <a asp-area="Client" asp-controller="Dashboard" asp-action="Index">@L["ClientArea"]</a>
+                @if (canAccessAdminArea)
+                {
+                    <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index">@L["AdminArea"]</a>
+                }
+                <a href="@clientAppBaseUrl">@L["ClientArea"]</a>
                 <a asp-area="Client" asp-controller="Profile" asp-action="Index">@L["Profile"]</a>
             }
         </nav>
