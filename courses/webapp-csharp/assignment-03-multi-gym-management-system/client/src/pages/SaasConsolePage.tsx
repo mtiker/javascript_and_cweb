@@ -371,8 +371,9 @@ function ActionCard({
   const [paramValues, setParamValues] = useState<Record<string, string>>(() => buildParamValues(action, defaults));
   const [bodyText, setBodyText] = useState(() => (action.body === undefined ? "" : JSON.stringify(action.body, null, 2)));
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [result, setResult] = useState<string>("");
+  const [result, setResult] = useState<unknown>(undefined);
   const [error, setError] = useState<string>("");
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     setParamValues(buildParamValues(action, defaults));
@@ -386,17 +387,24 @@ function ActionCard({
 
   async function submit() {
     setIsSubmitting(true);
-    setResult("");
+    setResult(undefined);
     setError("");
 
     try {
       const data = await onRun(action, path, bodyText);
-      setResult(JSON.stringify(data ?? { ok: true }, null, 2));
+      setResult(data ?? { ok: true });
     } catch (exception) {
       setError(getErrorMessages(exception)[0] ?? "Request failed.");
     } finally {
       setIsSubmitting(false);
     }
+  }
+
+  function copyResult() {
+    void navigator.clipboard.writeText(JSON.stringify(result, null, 2)).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    });
   }
 
   return (
@@ -429,9 +437,88 @@ function ActionCard({
         {isSubmitting ? "Running..." : "Run"}
       </button>
       {error ? <p className="state state--error">{error}</p> : null}
-      {result ? <pre className="response-preview">{result}</pre> : null}
+      {result !== undefined ? (
+        <div className="response-preview">
+          <div className="response-preview__toolbar">
+            <span className="response-preview__label">Response</span>
+            <button className="button button--ghost response-preview__copy" onClick={copyResult} type="button">
+              {copied ? "Copied!" : "Copy"}
+            </button>
+          </div>
+          <div className="response-preview__body">
+            <JsonViewer value={result} />
+          </div>
+        </div>
+      ) : null}
     </article>
   );
+}
+
+function JsonViewer({ value, depth = 0 }: { value: unknown; depth?: number }) {
+  const [collapsed, setCollapsed] = useState(() => depth > 1);
+
+  if (value === null) return <span className="jv-null">null</span>;
+  if (value === undefined) return <span className="jv-null">undefined</span>;
+  if (typeof value === "boolean") return <span className="jv-bool">{String(value)}</span>;
+  if (typeof value === "number") return <span className="jv-num">{value}</span>;
+  if (typeof value === "string") return <span className="jv-str">&ldquo;{value}&rdquo;</span>;
+
+  if (Array.isArray(value)) {
+    if (value.length === 0) return <span className="jv-bracket">[]</span>;
+    return (
+      <span>
+        <button className="jv-toggle" onClick={() => setCollapsed((c) => !c)} type="button">
+          <span className="jv-bracket">[</span>
+          {collapsed ? <span className="jv-summary">{value.length} item{value.length !== 1 ? "s" : ""}</span> : null}
+          {collapsed ? <span className="jv-bracket">]</span> : null}
+        </button>
+        {!collapsed ? (
+          <>
+            <span className="jv-block">
+              {value.map((item, i) => (
+                <span className="jv-row" key={i}>
+                  <JsonViewer depth={depth + 1} value={item} />
+                  {i < value.length - 1 ? <span className="jv-comma">,</span> : null}
+                </span>
+              ))}
+            </span>
+            <span className="jv-bracket">]</span>
+          </>
+        ) : null}
+      </span>
+    );
+  }
+
+  if (typeof value === "object") {
+    const entries = Object.entries(value as Record<string, unknown>);
+    if (entries.length === 0) return <span className="jv-bracket">{"{}"}</span>;
+    return (
+      <span>
+        <button className="jv-toggle" onClick={() => setCollapsed((c) => !c)} type="button">
+          <span className="jv-bracket">{"{"}</span>
+          {collapsed ? <span className="jv-summary">{entries.length} field{entries.length !== 1 ? "s" : ""}</span> : null}
+          {collapsed ? <span className="jv-bracket">{"}"}</span> : null}
+        </button>
+        {!collapsed ? (
+          <>
+            <span className="jv-block">
+              {entries.map(([key, val], i) => (
+                <span className="jv-row" key={key}>
+                  <span className="jv-key">{key}</span>
+                  <span className="jv-colon">: </span>
+                  <JsonViewer depth={depth + 1} value={val} />
+                  {i < entries.length - 1 ? <span className="jv-comma">,</span> : null}
+                </span>
+              ))}
+            </span>
+            <span className="jv-bracket">{"}"}</span>
+          </>
+        ) : null}
+      </span>
+    );
+  }
+
+  return <span>{String(value)}</span>;
 }
 
 function Metric({ label, value }: { label: string; value: number | string }) {
