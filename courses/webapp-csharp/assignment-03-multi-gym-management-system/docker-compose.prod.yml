@@ -28,7 +28,7 @@ services:
       ASPNETCORE_URLS: http://+:8080
       Cors__AllowedOrigins__0: ${CORS_ALLOWED_ORIGIN:-https://mtiker-cweb-4.proxy.itcollege.ee}
       ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=${POSTGRES_DB:-multi_gym_management_system};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-postgres}
-      JWT__Key: ${DentalClinicPlatform.SuperSecret.Key.2026.AtLeast64Characters.Long}
+      JWT__Key: ${JWT__Key:?JWT__Key must be set}
       JWT__Issuer: ${JWT__Issuer:-MultiGymManagementSystem}
       JWT__Audience: ${JWT__Audience:-MultiGymManagementSystem}
       Jwt__AccessTokenMinutes: ${JWT__AccessTokenMinutes:-60}
