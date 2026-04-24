@@ -6,6 +6,10 @@ interface MessagePayload {
   detail?: string;
 }
 
+function isMessagePayload(value: unknown): value is MessagePayload {
+  return typeof value === "object" && value !== null;
+}
+
 export function getErrorMessage(error: unknown, fallback = "Something went wrong.") {
   if (axios.isAxiosError(error)) {
     const payload = error.response?.data as MessagePayload | string | undefined;
@@ -14,15 +18,15 @@ export function getErrorMessage(error: unknown, fallback = "Something went wrong
       return payload;
     }
 
-    if (payload?.messages?.length) {
+    if (isMessagePayload(payload) && payload.messages?.length) {
       return payload.messages.join(" ");
     }
 
-    if (payload?.detail) {
+    if (isMessagePayload(payload) && payload.detail) {
       return payload.detail;
     }
 
-    if (payload?.title) {
+    if (isMessagePayload(payload) && payload.title) {
       return payload.title;
     }
   }

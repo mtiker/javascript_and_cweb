@@ -16,6 +16,16 @@ Record AI-assisted development evidence here.
 
 ## Entries
 
+- Date: 2026-04-24
+- Subject: javascript
+- Assignment: assignment-04-vue-secure-todo
+- Prompt: Implement TSConfig deprecation hardening for TypeScript 6/7 readiness in Assignment 04 by removing deprecated `baseUrl`, enforcing project-reference type-checking in `npm run check`, and verifying full check/build/test flow.
+- Files affected: `courses/javascript/assignment-04-vue-secure-todo/{tsconfig.app.json,tsconfig.node.json,package.json,vite.config.ts,src/components/CatalogFormModal.vue,src/lib/error-utils.ts}`, `docs/ai-prompts.md`
+- AI output used: Removed deprecated `baseUrl` from app/node tsconfig while preserving `@/*` path alias, switched `check` to `vue-tsc --build`, and fixed newly surfaced strict type errors (catalog modal form typing, Axios error payload narrowing, and Vite config typing compatibility) so project-reference checks pass.
+- What AI got wrong / needed correction: An initial attempt to type Vitest config via `defineConfig` from `vitest/config` caused a plugin type mismatch with this dependency set; the fix was adjusted to keep `defineConfig` from `vite` and avoid excess-property rejection by exporting a config variable through `defineConfig`.
+- Changes made manually: Re-ran Assignment 04 validation end-to-end (`npm run check`, `npm run build`, `npm test`) and reviewed README command consistency (no command-name changes required).
+- Alternatives considered: Silencing TS6 deprecations with `ignoreDeprecations`, but migrating away from deprecated `baseUrl` is safer for TS7 and keeps checks future-proof.
+
 - Date: 2026-04-23
 - Subject: webapp-csharp
 - Assignment: assignment-03-multi-gym-management-system

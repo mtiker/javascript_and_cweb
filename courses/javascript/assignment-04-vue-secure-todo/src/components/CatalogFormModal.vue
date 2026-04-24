@@ -10,6 +10,11 @@ import type {
 } from "@/types/todo";
 
 type CatalogEntity = TodoCategoryEntity | TodoPriorityEntity | null;
+type CatalogFormValues = {
+  name: string;
+  sortOrder: number;
+  tag: string;
+};
 
 const props = defineProps<{
   open: boolean;
@@ -27,9 +32,10 @@ const submitAttempted = ref(false);
 const validationSchema = props.kind === "category" ? categorySchema : prioritySchema;
 
 function buildInitialValues(entity: CatalogEntity) {
-  const baseValues = {
+  const baseValues: CatalogFormValues = {
     name: entity?.name ?? "",
     sortOrder: entity?.sortOrder ?? 10,
+    tag: "",
   };
 
   if (props.kind === "category") {
@@ -42,7 +48,7 @@ function buildInitialValues(entity: CatalogEntity) {
   return baseValues;
 }
 
-const { errors, handleSubmit, resetForm, setFieldValue, values } = useForm({
+const { errors, handleSubmit, resetForm, setFieldValue, values } = useForm<CatalogFormValues>({
   validationSchema,
   initialValues: buildInitialValues(null),
 });
