@@ -1,0 +1,84 @@
+using App.BLL.Contracts.Persistence;
+using App.Domain.Entities;
+using App.Domain.Enums;
+using Microsoft.EntityFrameworkCore;
+
+namespace App.DAL.EF.Repositories;
+
+public sealed class EfBookingRepository(AppDbContext dbContext) : IBookingRepository
+{
+    public async Task<IReadOnlyList<Booking>> ListByGymAsync(Guid gymId, CancellationToken cancellationToken = default)
+    {
+        return await BaseListQuery(gymId)
+            .OrderByDescending(booking => booking.BookedAtUtc)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<Booking>> ListForMemberAsync(Guid gymId, Guid memberId, CancellationToken cancellationToken = default)
+    {
+        return await BaseListQuery(gymId)
+            .Where(booking => booking.MemberId == memberId)
+            .OrderByDescending(booking => booking.BookedAtUtc)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<Booking>> ListForTrainerAsync(Guid gymId, Guid staffId, CancellationToken cancellationToken = default)
+    {
+        return await BaseListQuery(gymId)
+            .Where(booking => dbContext.WorkShifts.Any(shift =>
+                shift.GymId == gymId &&
+                shift.TrainingSessionId == booking.TrainingSessionId &&
+                shift.ShiftType == ShiftType.Training &&
+                shift.Contract != null &&
+                shift.Contract.StaffId == staffId))
+            .OrderByDescending(booking => booking.BookedAtUtc)
+            .ToListAsync(cancellationToken);
+    }
+
+    public Task<Booking?> FindAsync(Guid gymId, Guid bookingId, CancellationToken cancellationToken = default)
+    {
+        return dbContext.Bookings
+            .FirstOrDefaultAsync(booking => booking.GymId == gymId && booking.Id == bookingId, cancellationToken);
+    }
+
+    public Task<Booking?> FindWithTrainingSessionAndMemberAsync(Guid gymId, Guid bookingId, CancellationToken cancellationToken = default)
+    {
+        return BaseListQuery(gymId)
+            .FirstOrDefaultAsync(booking => booking.Id == bookingId, cancellationToken);
+    }
+
+    public Task<bool> ExistsForMemberSessionAsync(Guid gymId, Guid memberId, Guid trainingSessionId, CancellationToken cancellationToken = default)
+    {
+        return dbContext.Bookings.AnyAsync(
+            booking =>
+                booking.GymId == gymId &&
+                booking.MemberId == memberId &&
+                booking.TrainingSessionId == trainingSessionId &&
+                booking.Status != BookingStatus.Cancelled,
+            cancellationToken);
+    }
+
+    public Task<int> CountActiveForSessionAsync(Guid trainingSessionId, CancellationToken cancellationToken = default)
+    {
+        return dbContext.Bookings.CountAsync(
+            booking =>
+                booking.TrainingSessionId == trainingSessionId &&
+                booking.Status == BookingStatus.Booked,
+            cancellationToken);
+    }
+
+    public async Task AddAsync(Booking booking, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(booking);
+        await dbContext.Bookings.AddAsync(booking, cancellationToken);
+    }
+
+    private IQueryable<Booking> BaseListQuery(Guid gymId)
+    {
+        return dbContext.Bookings
+            .Include(booking => booking.TrainingSession)
+            .Include(booking => booking.Member)
+                .ThenInclude(member => member!.Person)
+            .Where(booking => booking.GymId == gymId);
+    }
+}

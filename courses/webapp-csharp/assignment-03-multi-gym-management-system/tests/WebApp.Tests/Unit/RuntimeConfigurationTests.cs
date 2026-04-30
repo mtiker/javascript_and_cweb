@@ -78,6 +78,8 @@ public class RuntimeConfigurationTests
     [Theory]
     [InlineData("http://localhost:5173")]
     [InlineData("https://*.example.com")]
+    [InlineData("http://127.0.0.1:5173")]
+    [InlineData("https://example.com/path")]
     public void AddAppCors_ProductionRejectsUnsafeOrigins(string origin)
     {
         var services = new ServiceCollection();

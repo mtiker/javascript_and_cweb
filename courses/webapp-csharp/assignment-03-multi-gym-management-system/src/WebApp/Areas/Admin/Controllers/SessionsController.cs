@@ -2,15 +2,17 @@ using App.BLL.Services;
 using App.Domain;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using WebApp.Helpers;
+using WebApp.Areas.Admin.Services;
 
 namespace WebApp.Areas.Admin.Controllers;
 
 [Area("Admin")]
 [Authorize]
-public class SessionsController(IUserContextService userContextService, IConfiguration configuration) : Controller
+public class SessionsController(
+    IUserContextService userContextService,
+    IAdminSessionsPageService sessionsPageService) : Controller
 {
-    public IActionResult Index()
+    public async Task<IActionResult> Index(CancellationToken cancellationToken)
     {
         var context = userContextService.GetCurrent();
         if (!context.ActiveGymId.HasValue || !(context.HasRole(RoleNames.GymOwner) || context.HasRole(RoleNames.GymAdmin)))
@@ -18,6 +20,9 @@ public class SessionsController(IUserContextService userContextService, IConfigu
             return RedirectToAction("Index", "Dashboard");
         }
 
-        return Redirect(ClientAppUrlResolver.GetRouteUrl(configuration, "/sessions"));
+        return View(await sessionsPageService.BuildAsync(
+            context.ActiveGymId.Value,
+            context.ActiveGymCode ?? string.Empty,
+            cancellationToken));
     }
 }

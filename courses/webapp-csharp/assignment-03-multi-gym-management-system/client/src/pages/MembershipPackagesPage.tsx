@@ -235,7 +235,7 @@ export function MembershipPackagesPage() {
                 >
                   <strong>{membershipPackage.name}</strong>
                   <span>
-                    {packageTypeLabel(membershipPackage.packageType)} • {membershipPackage.durationValue}{" "}
+                    {packageTypeLabel(membershipPackage.packageType)} / {membershipPackage.durationValue}{" "}
                     {durationUnitLabel(membershipPackage.durationUnit)}
                   </span>
                   <span>
@@ -262,7 +262,7 @@ export function MembershipPackagesPage() {
             </div>
           </div>
 
-          <form className="form" onSubmit={(event) => void handleSubmit(event)}>
+          <form className="form" noValidate onSubmit={(event) => void handleSubmit(event)}>
             <label className="field">
               <span>{t("Name")}</span>
               <input

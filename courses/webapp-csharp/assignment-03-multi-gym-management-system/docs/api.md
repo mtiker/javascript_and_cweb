@@ -94,6 +94,7 @@ Training:
 Memberships and payments:
 - `GET|POST /api/v1/{gymCode}/membership-packages`
 - `PUT|DELETE /api/v1/{gymCode}/membership-packages/{id}`
+  - Package create/update validation, unused soft-delete, and used-package conflict semantics are locked in `membership-package-contract.md` and `package-validation-rules.md`.
 - `GET|POST /api/v1/{gymCode}/memberships`
 - `PUT /api/v1/{gymCode}/memberships/{id}/status`
 - `DELETE /api/v1/{gymCode}/memberships/{id}`

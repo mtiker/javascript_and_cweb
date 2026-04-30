@@ -34,8 +34,8 @@ Separate client:
 
 Projects:
 - `App.Domain`: entities, enums, role names, claim types, shared abstractions
-- `App.DAL.EF`: `AppDbContext`, mappings, migrations, tenant filters, seeding
-- `App.BLL`: business services, `IAppDbContext` boundary, authorization helpers, token and SaaS workflows
+- `App.DAL.EF`: `AppDbContext`, mappings, migrations, tenant filters, seeding, repository implementations, EF Unit of Work
+- `App.BLL`: business services, `IAppDbContext` boundary, repository/UOW contracts, authorization helpers, token and SaaS workflows
 - `App.DTO`: public API contracts
 - `App.Resources`: `.resx` localization resources
 - `WebApp`: API controllers, MVC controllers, middleware, views, startup
@@ -66,6 +66,12 @@ Separate client flow:
 3. `ApiClient` adds the bearer token and selected `Accept-Language` to API requests
 4. a `401` triggers one refresh attempt through `/api/v1/account/renew-refresh-token`
 5. refresh failure clears auth state and sends the user back to login
+
+Auth application flow:
+1. account-session endpoints delegate from `AccountController` to `IAccountAuthService`
+2. refresh-token persistence goes through `IAppUnitOfWork.RefreshTokens`
+3. `EfRefreshTokenRepository` performs EF-specific refresh-token lookup, add, and remove operations
+4. `AuthResponseMapper` maps tokens, active tenant context, system roles, and tenant assignments into `JwtResponse`
 
 Production client flow:
 1. Docker builds `client/` with Node 20
@@ -171,8 +177,9 @@ Frontend structure:
 - `src/components/*`: shell and notice components
 
 Boundary note:
-- tenant members, staff, contracts, vacations, training, membership/payment, and facilities workflows now run through BLL services backed by `IAppDbContext`
-- the remaining direct `AppDbContext` injection is intentionally limited to broad MVC/admin read composition and framework infrastructure such as Identity/EF setup
+- tenant members, training, membership, payment, invoice, refund, and finance workspace workflows now run through BLL services backed by repository contracts, Unit of Work, and BLL mappers
+- account login, logout, and refresh-token renewal now run through `IAccountAuthService`, `IRefreshTokenRepository`, `IAppUnitOfWork`, and `AuthResponseMapper`
+- staff, contracts, vacations, maintenance, and broader platform workflows still use focused BLL services; remaining direct `AppDbContext` usage is intentionally limited to slices not yet migrated and framework infrastructure such as Identity/EF setup
 
 ## CORS
 
@@ -196,10 +203,10 @@ Why add a separate client instead of replacing MVC:
 - the assignment requires both working MVC UX and a real API client
 - keeping MVC plus React makes the domain easier to demo from multiple angles
 
-Why keep EF Core + `IAppDbContext` + focused BLL services instead of a larger rewrite:
+Why migrate one vertical slice at a time instead of a larger rewrite:
 - the course assignment needs a defendable layered monolith, not a framework-heavy architecture migration
-- direct EF Core usage behind `IAppDbContext` keeps query behavior explicit and testable without adding repository/unit-of-work/CQRS overhead
-- focused service splits (for example membership and authorization internals) reduce god classes while preserving existing routes, DTOs, and business rules
+- focused service splits preserve existing routes, DTOs, and business rules while moving concrete persistence outward
+- repositories and Unit of Work are introduced per slice where they remove concrete persistence coupling without forcing a speculative rewrite of every query path at once
 
 Why use a console for the broad SaaS surface:
 - the dental clinic reference exposes platform and tenant operations from a client UI, so Assignment 03 now does the same without replacing the existing focused pages

@@ -16,6 +16,56 @@ Record AI-assisted development evidence here.
 
 ## Entries
 
+- Date: 2026-04-30
+- Subject: webapp-csharp
+- Assignment: assignment-03-multi-gym-management-system
+- Prompt: Phase 14 Final1 maintenance/admin clean slice; finish maintenance/facilities/platform admin migration and Admin UX requirements; create/update final1 maintenance/admin plan, maintenance rules audit, admin UX completion audit, and platform role audit; tests first for caretaker assigned/unassigned updates, due-task generation, assignment history, equipment downtime/status behavior, platform role access, Admin view-model-only rendering, and no ViewBag/ViewData; implement maintenance repository/service/mapper, Admin view models, and thin controllers; do not add new SaaS features.
+- Files affected: `courses/webapp-csharp/assignment-03-multi-gym-management-system/src/App.BLL/Contracts/Persistence/IMaintenanceRepository.cs`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/src/App.BLL/Mapping/{IMaintenanceMapper.cs,MaintenanceMapper.cs}`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/src/App.BLL/Services/MaintenanceWorkflowService.cs`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/src/App.DAL.EF/Repositories/{EfAppUnitOfWork.cs,EfMaintenanceRepository.cs}`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/src/WebApp/Areas/Admin/{Controllers,Services}`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/tests/WebApp.Tests/{Architecture/ArchitectureTests.cs,Integration/AuthSecurityAndErrorTests.cs,Integration/MvcComplianceTests.cs,Unit/MaintenanceWorkflowServiceTests.cs}`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/docs/{final1-maintenance-admin-slice-plan.md,maintenance-rules-audit.md,admin-ux-completion-audit.md,platform-role-audit.md,ai-usage.md}`, `docs/ai-prompts.md`
+- AI output used: Added maintenance/admin/platform regression tests, migrated maintenance/facility persistence and mapping behind repository/mapper boundaries, moved Admin page composition out of controllers, and wrote the requested audits.
+- What AI got wrong / needed correction: An initial MVC compliance assertion still assumed Admin controllers construct concrete view models directly; after introducing Admin page services, the assertion was corrected to verify typed views and untyped/dynamic-data avoidance.
+- Changes made manually: Ran the focused backend test set covering maintenance, architecture, MVC compliance, and platform role access.
+- Alternatives considered: Adding MVC Admin write forms was rejected because REST API and React remain the mutation surface; fully migrating platform persistence was deferred because this slice requested maintenance/facilities migration and platform role access, not a platform persistence refactor.
+
+- Date: 2026-04-28
+- Subject: webapp-csharp
+- Assignment: assignment-03-multi-gym-management-system
+- Prompt: Phase 7 MVC admin and MVC client compliance pass; make MVC UX defendable for Assignment 3; create/update MVC admin/client/view-model/no-ViewBag audits; tests first for Admin access, MVC Client routes, no ViewBag/ViewData, anti-forgery, and view-model usage; do not replace MVC Admin with React-only redirects.
+- Files affected: `courses/webapp-csharp/assignment-03-multi-gym-management-system/src/WebApp/Areas/Admin/Controllers/{GymsController.cs,MembershipsController.cs,SessionsController.cs,OperationsController.cs}`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/src/WebApp/Areas/Admin/Views/Gyms/Index.cshtml`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/src/WebApp/Models/AdminGymsPageViewModel.cs`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/src/App.BLL/Services/IdentityService.cs`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/tests/WebApp.Tests/Integration/{MvcComplianceTests.cs,SmokeTests.cs}`, assignment docs including `docs/{mvc-admin-audit.md,mvc-client-audit.md,viewmodel-audit.md,no-viewbag-viewdata-audit.md,testing.md,current-route-inventory.md,current-test-inventory.md,a3-saas-plan.md,ai-usage.md}`, assignment `README.md`, `docs/ai-prompts.md`
+- AI output used: Added MVC compliance tests first, replaced Admin React redirects with read-only Razor pages backed by view models, moved `/Admin/Gyms` off direct domain entity models, and synchronized MVC compliance documentation.
+- What AI got wrong / needed correction: Initial login helper rejected expected `302` responses when redirects were disabled; older smoke tests and docs also still expected Admin-to-React redirects and had to be realigned with the new MVC contract. The full backend suite exposed an existing malformed-JWT refresh-token error-shaping regression, which was corrected to return validation `ProblemDetails` instead of `500`.
+- Changes made manually: Verified targeted `MvcComplianceTests` after implementation and reviewed stale documentation references with `rg` before updating them.
+- Alternatives considered: Keeping redirects and documenting them as acceptable, but real MVC Admin pages provide stronger defense evidence; duplicating MVC write forms was rejected to keep REST + React as the single mutation workflow.
+
+- Date: 2026-04-28
+- Subject: webapp-csharp
+- Assignment: assignment-03-multi-gym-management-system
+- Prompt: Phase 6 Membership packages CRUD vertical slice; complete the third required separate-client CRUD entity; create/update membership-package audit, contract, and validation docs; write tests first for list/create 201/invalid price/invalid duration/missing currency/update/delete/used delete/React states/wrong gym; fix only package-related code; do not implement external payments or redesign finance.
+- Files affected: `courses/webapp-csharp/assignment-03-multi-gym-management-system/src/App.BLL/Services/MembershipPackageService.cs`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/src/App.DTO/v1/MembershipPackages/MembershipPackageUpsertRequest.cs`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/tests/WebApp.Tests/Integration/MembershipPackageCrudTests.cs`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/client/src/pages/{MembershipPackagesPage.tsx,CrudPages.test.tsx}`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/docs/{membership-package-audit.md,membership-package-contract.md,package-validation-rules.md,a3-saas-plan.md,ai-usage.md}`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/README.md`, `docs/ai-prompts.md`
+- AI output used: Added backend package CRUD/validation/tenant-isolation/soft-delete integration tests, expanded React package page tests, implemented BLL validation and tenant-scoped package mutation lookups, and documented the package API contract plus safe used-package soft-delete behavior.
+- What AI got wrong / needed correction: Initial omitted-currency test was intercepted by ASP.NET Core model validation before BLL validation; the request DTO boundary was made nullable so package validation remains in the application layer. The React validation test also exposed native number constraints blocking the custom banner, so the package form now uses its explicit validation path.
+- Changes made manually: Verified targeted backend and frontend package test slices after implementation and kept finance/external payments untouched.
+- Alternatives considered: Returning `409 Conflict` for used package delete, but documented soft delete matches the existing `TenantBaseEntity` design and preserves historical membership price/currency snapshots without finance redesign.
+
+- Date: 2026-04-28
+- Subject: webapp-csharp
+- Assignment: assignment-03-multi-gym-management-system
+- Prompt: Phase 4 Members CRUD vertical slice; make member CRUD defensible through REST API, MVC Admin, React client, and tests; create/update member audit, contract, and test-map docs; test list/detail/create/update/delete/duplicate ProblemDetails/wrong gym/React states/MVC view-model usage first; fix only member-related code.
+- Files affected: `courses/webapp-csharp/assignment-03-multi-gym-management-system/src/App.BLL/Services/MemberWorkflowService.cs`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/src/WebApp/ApiControllers/Tenant/MembersController.cs`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/src/WebApp/Areas/Admin/{Controllers/MembersController.cs,Views/Members/Index.cshtml,Views/Dashboard/Index.cshtml}`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/src/WebApp/Models/AdminMembersPageViewModel.cs`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/tests/WebApp.Tests/{Integration/MemberCrudTests.cs,Integration/AdminMembersPageTests.cs,Unit/TenantControllerTests.cs}`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/client/src/pages/CrudPages.test.tsx`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/docs/{member-crud-audit.md,member-contract.md,member-tests-map.md,a3-saas-plan.md,ai-usage.md}`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/README.md`, `docs/ai-prompts.md`
+- AI output used: Added member API/MVC/React regression coverage, implemented a strongly typed MVC Admin Members directory, aligned member create `Location` to `/api/v1/...`, hardened member service lookups with explicit `GymId` predicates, and documented member soft-delete semantics and test coverage.
+- What AI got wrong / needed correction: Initial docs described member delete as hard delete; verification showed `TenantBaseEntity` soft-delete behavior, so the contract and tests were corrected. The new cross-gym update test exposed missing explicit `GymId` predicates when EF filters are disabled in the test host.
+- Changes made manually: Ran member-focused backend and React test slices after the fixes and updated assignment/root AI evidence logs.
+- Alternatives considered: Building duplicate MVC write forms for members, but the slice keeps REST + React as mutation surfaces and makes MVC Admin a defendable read-only directory.
+
+- Date: 2026-04-28
+- Subject: webapp-csharp
+- Assignment: assignment-03-multi-gym-management-system
+- Prompt: Phase 5 training categories + DB i18n vertical slice; prove DB translations via `LangStr` and UI translations via `.resx`, write tests first for training category CRUD, `Accept-Language` `en`/`et`/`et-EE`, fallback behavior, React language header, MVC labels, and validation `ProblemDetails`; fix only training-category/localization-related code.
+- Files affected: `courses/webapp-csharp/assignment-03-multi-gym-management-system/src/App.BLL/Services/TrainingWorkflowService.cs`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/src/App.DTO/v1/TrainingCategories/TrainingCategoryUpsertRequest.cs`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/tests/WebApp.Tests/Integration/TrainingCategoryLocalizationTests.cs`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/client/src/pages/CrudPages.test.tsx`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/docs/{training-category-audit.md,localization-audit.md,langstr-contract.md,a3-saas-plan.md,ai-usage.md}`, `courses/webapp-csharp/assignment-03-multi-gym-management-system/README.md`, `docs/ai-prompts.md`
+- AI output used: Added backend and frontend regression coverage, implemented minimal category validation and tenant-scoped category update/delete lookup, and documented the training-category/localization contract.
+- What AI got wrong / needed correction: Initial validation test failed because blank category names were still accepted; the implementation was corrected through BLL validation and DTO annotations.
+- Changes made manually: Reviewed course localization requirements, kept the existing request localization and `LangStr` system intact, and synchronized assignment docs.
+- Alternatives considered: Adding multi-language edit payloads or broader architecture changes, but both were outside the requested vertical slice.
+
 - Date: 2026-04-24
 - Subject: webapp-csharp
 - Assignment: assignment-03-multi-gym-management-system
@@ -657,3 +707,43 @@ Record AI-assisted development evidence here.
 - What AI got wrong / needed correction: The first test-host configuration attempt injected JWT settings too late for minimal-host startup; the test factory was corrected to set test JWT environment variables before host creation. One staff regression test initially assumed North Star staff seed data and was changed to create its own cross-gym fixture.
 - Changes made manually: Verified the full Assignment 03 backend test suite passes after the refactor and kept the provided JWT key out of tracked source and documentation.
 - Alternatives considered: Adding a new gym-resolution middleware was deferred because the existing active-gym claim and authorization service flow is stable and lower risk for this pass.
+
+- Date: 2026-04-28
+- Subject: webapp-csharp
+- Assignment: assignment-03-multi-gym-management-system
+- Prompt: Phase 10 Final1 Users/Auth clean slice: move Account login, refresh-token rotation, refresh-token reuse rejection, and logout invalidation into Clean/Onion-style services, repositories, Unit of Work, and mappers while preserving public routes and DTOs.
+- Files affected: `src/App.BLL/Services/IAccountAuthService.cs`, `src/App.BLL/Services/AccountAuthService.cs`, `src/App.BLL/Contracts/Persistence/IRefreshTokenRepository.cs`, `src/App.BLL/Contracts/Persistence/IAppUnitOfWork.cs`, `src/App.BLL/Mapping/AuthResponseMapper.cs`, `src/App.BLL/Mapping/IAuthResponseMapper.cs`, `src/App.DAL.EF/Repositories/EfRefreshTokenRepository.cs`, `src/App.DAL.EF/Repositories/EfAppUnitOfWork.cs`, `src/App.DAL.EF/PersistenceServiceExtensions.cs`, `src/WebApp/ApiControllers/Identity/AccountController.cs`, `src/WebApp/Setup/ServiceExtensions.cs`, `tests/WebApp.Tests`, assignment architecture/auth docs.
+- AI output used: Added a dedicated account auth application service, refresh-token repository contract and EF implementation, UOW access to refresh tokens, auth response mapper, controller delegation, boundary/API contract tests, and Final1 auth slice documentation.
+- What AI got wrong / needed correction: The first documentation update attempt targeted exact mojibake text in an existing plan file and had to be adjusted to append an explicit Phase 10 note instead of replacing the corrupted line.
+- Changes made manually: Ran focused backend tests for auth security, controller delegation, API contract metadata, and architecture boundaries.
+- Alternatives considered: Keeping auth behavior in `IdentityService`, but a dedicated auth-session service gives clearer Final1 Clean/Onion boundary evidence without migrating unrelated registration/profile behavior.
+
+- Date: 2026-04-30
+- Subject: webapp-csharp
+- Assignment: assignment-03-multi-gym-management-system
+- Prompt: Phase 12 Final1 Training and booking clean slice. Migrate training categories, sessions, bookings, and trainer attendance into CLEAN/ONION pattern; create/update slice plan, repository contract, booking audit, and trainer authorization audit; preserve API contracts and avoid membership finance migration.
+- Files affected: `courses/webapp-csharp/assignment-03-multi-gym-management-system/src/App.BLL/Contracts/Persistence/*Training*`, `*BookingRepository.cs`, `*WorkShiftRepository.cs`, `src/App.BLL/Mapping/*TrainingMapper.cs`, `src/App.BLL/Services/TrainingWorkflowService.cs`, `src/App.DAL.EF/Repositories/EfTraining*`, `EfBookingRepository.cs`, `EfWorkShiftRepository.cs`, `tests/WebApp.Tests/Architecture/ArchitectureTests.cs`, Phase 12 docs.
+- AI output used: Added dedicated training/booking/work-shift repository contracts and EF implementations, exposed them through Unit of Work, refactored the training workflow service to use repositories and mapper, and added architecture boundary coverage.
+- What AI got wrong / needed correction: Existing docs claimed some repository methods and architecture tests already existed; those were corrected to match the actual implementation.
+- Changes made manually: Ran focused service tests first to confirm the missing mapper/constructor failure, then verified the migrated slice after implementation.
+- Alternatives considered: Keeping direct `IAppDbContext` usage for session and booking queries, but dedicated repository contracts provide clearer Clean/Onion defense evidence and explicit tenant-scoped access rules.
+
+- Date: 2026-04-30
+- Subject: webapp-csharp
+- Assignment: assignment-03-multi-gym-management-system
+- Prompt: Phase 13 Final1 Membership and finance clean slice. Migrate membership packages, memberships, payments, invoices, refunds, and finance workspace into CLEAN/ONION pattern; create/update membership-finance plan, repository contract, finance audit, status transition audit; tests first; no external payment provider.
+- Files affected: membership/finance repository contracts, EF repositories, Unit of Work, membership finance mapper, package/membership/payment/finance services, MVC memberships controller, `ProblemDetailsMiddleware`, backend tests, README, API/architecture/testing docs, and Phase 13 docs.
+- AI output used: Added repository contracts and EF implementations for membership packages, memberships, payments, and finance; moved mapping into `MembershipFinanceMapper`; refactored services to use Unit of Work; added used-package delete conflict handling; expanded tests and documentation.
+- What AI got wrong / needed correction: Existing package docs described used package delete as safe soft delete, so they had to be updated to match the new `409 Conflict` behavior.
+- Changes made manually: Verified the full backend test suite with `dotnet test .\multi-gym-management-system.slnx`.
+- Alternatives considered: Keeping used packages soft-deletable, but conflict semantics better preserve lifecycle clarity until a dedicated deactivate endpoint exists.
+
+- Date: 2026-04-30
+- Subject: webapp-csharp
+- Assignment: assignment-03-multi-gym-management-system
+- Prompt: Phase 15 Final1 mandatory coverage and defense pack. Create/update Final1 defense, coverage audit, test traceability, and architecture diagram; implement only missing test/evidence gaps; no features or modular monolith work.
+- Files affected: `courses/webapp-csharp/assignment-03-multi-gym-management-system/docs/final1-defense.md`, `docs/final1-coverage-audit.md`, `docs/final1-test-traceability.md`, `docs/final1-architecture-diagram.md`, `tests/WebApp.Tests/Integration/Final1CriticalE2ETests.cs`, assignment README/testing/test-inventory docs, `docs/ai-prompts.md`.
+- AI output used: Audited existing Final1 evidence, added an explicit API-level critical E2E integration test class for login, member CRUD, training category CRUD, membership package CRUD, and cross-tenant IDOR, and produced the requested defense-pack documents.
+- What AI got wrong / needed correction: The repository has no Playwright suite, so the defense pack explicitly labels critical E2E coverage as API-level integration coverage rather than browser automation.
+- Changes made manually: Reviewed the new traceability against existing architecture, auth, IDOR, i18n, CRUD, and CI evidence.
+- Alternatives considered: Adding Playwright as a new browser test dependency was rejected for this phase because the required evidence can be covered by existing test infrastructure without adding product features or broad tooling.

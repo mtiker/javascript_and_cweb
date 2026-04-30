@@ -43,6 +43,7 @@ public class ProblemDetailsMiddleware(RequestDelegate next, ILogger<ProblemDetai
         {
             NotFoundException => ((int)HttpStatusCode.NotFound, "Not Found"),
             ForbiddenException => ((int)HttpStatusCode.Forbidden, "Forbidden"),
+            ConflictAppException => ((int)HttpStatusCode.Conflict, "Conflict"),
             ValidationAppException => ((int)HttpStatusCode.BadRequest, "Validation Failed"),
             _ => ((int)HttpStatusCode.InternalServerError, "Server Error")
         };

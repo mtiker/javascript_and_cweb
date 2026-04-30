@@ -1,5 +1,178 @@
 # AI Usage Log
 
+## 2026-04-30 - Phase 14 Final1 Maintenance/Admin Clean Slice
+
+Task:
+- finish Final1 migration for maintenance/facilities/platform admin and complete Admin UX requirements without adding new SaaS features
+
+Files affected:
+- `src/App.BLL/Contracts/Persistence/IMaintenanceRepository.cs`
+- `src/App.BLL/Mapping/{IMaintenanceMapper.cs,MaintenanceMapper.cs}`
+- `src/App.BLL/Services/MaintenanceWorkflowService.cs`
+- `src/App.DAL.EF/Repositories/{EfAppUnitOfWork.cs,EfMaintenanceRepository.cs}`
+- `src/App.DAL.EF/PersistenceServiceExtensions.cs`
+- `src/WebApp/Areas/Admin/Controllers/{DashboardController.cs,GymsController.cs,OperationsController.cs,SessionsController.cs}`
+- `src/WebApp/Areas/Admin/Services/AdminViewModelServices.cs`
+- `src/WebApp/Setup/ServiceExtensions.cs`
+- `tests/WebApp.Tests/Architecture/ArchitectureTests.cs`
+- `tests/WebApp.Tests/Integration/{AuthSecurityAndErrorTests.cs,MvcComplianceTests.cs}`
+- `tests/WebApp.Tests/Unit/MaintenanceWorkflowServiceTests.cs`
+- `docs/{final1-maintenance-admin-slice-plan.md,maintenance-rules-audit.md,admin-ux-completion-audit.md,platform-role-audit.md}`
+
+What AI helped with:
+- added tests first for caretaker assigned/unassigned maintenance updates, due-task generation, assignment history, equipment downtime/status transitions, platform-role access, Admin view-model rendering, and no Admin dynamic data bags
+- migrated maintenance/facilities persistence to `IMaintenanceRepository` behind `IAppUnitOfWork.Maintenance`
+- moved maintenance/facility DTO projection into `MaintenanceMapper`
+- moved Admin dashboard/gyms/sessions/operations page composition out of controllers and into view-model services
+- documented maintenance rules, Admin UX completion, platform role boundaries, and the Final1 slice plan
+
+What needed manual review or correction:
+- the first Admin controller compliance assertion still expected controllers to mention concrete view-model class names; after moving composition to services, the assertion was corrected to require typed `View(...)` rendering and keep view-model verification in Razor source tests
+
+Alternatives considered:
+- adding MVC Admin write forms, but that would duplicate the REST/React mutation surface and was outside the clean-slice goal
+- fully migrating platform service persistence, but this slice preserved the existing platform service boundary and focused the requested repository migration on maintenance/facilities
+
+## 2026-04-28 - Phase 7 MVC Admin and MVC Client Compliance Pass
+
+Task:
+- make Assignment 03 MVC UX defendable by proving Admin/Client role access, replacing Admin React redirects with small functional MVC pages, and documenting view-model/no-ViewBag compliance
+
+Files affected:
+- `src/WebApp/Areas/Admin/Controllers/GymsController.cs`
+- `src/WebApp/Areas/Admin/Controllers/MembershipsController.cs`
+- `src/WebApp/Areas/Admin/Controllers/SessionsController.cs`
+- `src/WebApp/Areas/Admin/Controllers/OperationsController.cs`
+- `src/App.BLL/Services/IdentityService.cs`
+- `src/WebApp/Areas/Admin/Views/Gyms/Index.cshtml`
+- `src/WebApp/Models/AdminGymsPageViewModel.cs`
+- `tests/WebApp.Tests/Integration/MvcComplianceTests.cs`
+- `tests/WebApp.Tests/Integration/SmokeTests.cs`
+- `docs/mvc-admin-audit.md`
+- `docs/mvc-client-audit.md`
+- `docs/viewmodel-audit.md`
+- `docs/no-viewbag-viewdata-audit.md`
+- related README/testing/route-inventory documentation
+
+What AI helped with:
+- added tests first for anonymous/wrong-role Admin denial, `GymAdmin`/`GymOwner` tenant Admin access, MVC Client routes for member/trainer/caretaker, Admin no-`ViewBag`/`ViewData`, Admin anti-forgery guardrails, and Admin view-model usage
+- replaced tenant Admin React redirects with read-only Razor summary pages for memberships, sessions, and operations
+- replaced `/Admin/Gyms` direct domain-entity view usage with `AdminGymsPageViewModel`
+- documented why React remains the write-heavy API client while MVC Admin provides Razor evidence
+
+What needed manual review or correction:
+- the first helper version treated login `302` as a failure when redirects were disabled; the helper was corrected to accept redirect as successful cookie sign-in
+- older smoke tests still asserted Admin-to-React redirects and were updated to assert MVC rendering
+- the full backend suite also exposed an existing malformed-JWT refresh-token error-shaping regression; `IdentityService` now converts malformed JWT parser exceptions into the documented validation response
+
+Alternatives considered:
+- keeping Admin redirects and documenting them as acceptable, but the assignment specifically needs MVC Admin evidence, so small functional MVC pages are stronger and easier to defend
+- duplicating full write forms in MVC Admin, but this would duplicate API/React mutation flows and increase regression risk
+
+## 2026-04-28 - Phase 6 Membership Packages CRUD Vertical Slice
+
+Task:
+- complete the third required separate-client CRUD entity by hardening membership package CRUD, validation, soft-delete behavior, tenant isolation, React page states, and package-specific documentation
+
+Files affected:
+- `src/App.BLL/Services/MembershipPackageService.cs`
+- `src/App.DTO/v1/MembershipPackages/MembershipPackageUpsertRequest.cs`
+- `tests/WebApp.Tests/Integration/MembershipPackageCrudTests.cs`
+- `client/src/pages/MembershipPackagesPage.tsx`
+- `client/src/pages/CrudPages.test.tsx`
+- `docs/membership-package-audit.md`
+- `docs/membership-package-contract.md`
+- `docs/package-validation-rules.md`
+- `README.md`
+- `docs/a3-saas-plan.md`
+- `docs/ai-usage.md`
+- root `docs/ai-prompts.md`
+
+What AI helped with:
+- added package-first backend integration tests for list, create `201`, invalid price/duration/currency `ProblemDetails`, update, unused soft delete, used-package safe soft delete, and wrong-gym ID manipulation
+- added React package page tests for loading, create, update, delete, local validation, and API validation errors
+- added BLL package validation/normalization and explicit `GymId` predicates for update/delete
+- documented package API contract, validation rules, and soft-delete behavior without adding external payment logic or changing finance
+
+What needed manual review or correction:
+- the first wrong-gym package test exposed the same test-host risk as earlier slices: EF filters are disabled in integration tests, so package mutations must scope by active `GymId` directly
+- omitted currency initially hit ASP.NET Core model validation before BLL validation; the DTO boundary was made nullable so the application layer owns the package validation message
+- the React validation test showed native number constraints could block the custom validation banner; the package form now uses its explicit validation path
+
+Alternatives considered:
+- returning `409 Conflict` for deleting used packages was initially deferred in Phase 6, but Phase 13 adopts it to make package lifecycle rules clearer while retaining membership price/currency snapshots
+- expanding package localization editing, but that is separate from the CRUD and validation slice
+
+## 2026-04-28 - Phase 4 Member CRUD Vertical Slice
+
+Task:
+- make member CRUD defensible through REST API, MVC Admin, React client, and tests without touching unrelated entities
+
+Files affected:
+- `src/App.BLL/Services/MemberWorkflowService.cs`
+- `src/WebApp/ApiControllers/Tenant/MembersController.cs`
+- `src/WebApp/Areas/Admin/Controllers/MembersController.cs`
+- `src/WebApp/Areas/Admin/Views/Members/Index.cshtml`
+- `src/WebApp/Areas/Admin/Views/Dashboard/Index.cshtml`
+- `src/WebApp/Models/AdminMembersPageViewModel.cs`
+- `tests/WebApp.Tests/Integration/MemberCrudTests.cs`
+- `tests/WebApp.Tests/Integration/AdminMembersPageTests.cs`
+- `tests/WebApp.Tests/Unit/TenantControllerTests.cs`
+- `client/src/pages/CrudPages.test.tsx`
+- `docs/member-crud-audit.md`
+- `docs/member-contract.md`
+- `docs/member-tests-map.md`
+- `README.md`
+- `docs/a3-saas-plan.md`
+- `docs/ai-usage.md`
+- root `docs/ai-prompts.md`
+
+What AI helped with:
+- added member API integration coverage for list, detail, create `201`, update `200`, delete `204`, soft-delete evidence, duplicate `ProblemDetails`, and cross-gym ID manipulation
+- added a strongly typed MVC Admin Members directory with no `ViewBag` or `ViewData`
+- added React Members page tests for loading, validation-before-submit, and delete success
+- aligned member create `Location` with the documented `/api/v1/...` route shape
+- hardened member detail/update/delete service lookups with explicit `GymId` predicates
+- documented the member contract, test map, and soft-delete semantics
+
+What needed manual review or correction:
+- the first cross-gym member update test exposed that the test host disables EF tenant filters; the service was corrected to enforce `GymId` explicitly rather than relying on query filters
+- initial member docs incorrectly described delete as hard delete; the implemented and verified behavior is soft delete through `TenantBaseEntity`
+
+Alternatives considered:
+- duplicating full member write forms in MVC Admin, but that would split workflow behavior; MVC Admin now provides a read-only directory while REST + React remain the mutation surfaces
+- changing public member routes broadly, but only the create `Location` route value was aligned to existing `/api/v1/...` examples
+
+## 2026-04-28 - Phase 5 Training Category Localization Slice
+
+Task:
+- prove database translations through `LangStr` and UI translations through `.resx` for the training-category/localization vertical slice
+
+Files affected:
+- `src/App.BLL/Services/TrainingWorkflowService.cs`
+- `src/App.DTO/v1/TrainingCategories/TrainingCategoryUpsertRequest.cs`
+- `tests/WebApp.Tests/Integration/TrainingCategoryLocalizationTests.cs`
+- `client/src/pages/CrudPages.test.tsx`
+- `docs/training-category-audit.md`
+- `docs/localization-audit.md`
+- `docs/langstr-contract.md`
+- `README.md`
+- `docs/a3-saas-plan.md`
+- `docs/ai-usage.md`
+- root `docs/ai-prompts.md`
+
+What AI helped with:
+- added tests for training-category CRUD, `Accept-Language` `en`/`et`/`et-EE`, missing translation fallback, MVC `.resx` label rendering, React language header behavior, and validation `ProblemDetails`
+- added minimal training-category validation and tenant-scoped category update/delete lookups
+- documented the current localization boundaries and `LangStr` read/write contract
+
+What needed manual review or correction:
+- the first validation regression exposed that whitespace names were accepted; the fix used the existing BLL validation exception path instead of changing the localization system
+
+Alternatives considered:
+- adding a multi-culture category edit DTO, but that would broaden the public API beyond this vertical slice
+- moving to a new architecture layer, but the current Assignment 03 structure already supports this slice
+
 ## 2026-04-24 - Restore Functional SaaS Admin Routing After Mirror Rollback
 
 Task:
@@ -537,3 +710,156 @@ Alternatives considered:
 Final decision:
 - expose assigned tenant/role choices in the login/refresh/switch responses
 - use the React shell as the primary workspace switcher
+
+## 2026-04-28 - Final1 Auth Clean Slice
+
+Task:
+- move Account login, refresh-token rotation/reuse rejection, and logout invalidation behind Clean/Onion-style service, repository, Unit of Work, and mapper boundaries without changing public endpoint paths or DTOs
+
+Files affected:
+- `src/App.BLL/Services/IAccountAuthService.cs`
+- `src/App.BLL/Services/AccountAuthService.cs`
+- `src/App.BLL/Services/IIdentityService.cs`
+- `src/App.BLL/Services/IdentityService.cs`
+- `src/App.BLL/Contracts/Persistence/IRefreshTokenRepository.cs`
+- `src/App.BLL/Contracts/Persistence/IAppUnitOfWork.cs`
+- `src/App.BLL/Mapping/IAuthResponseMapper.cs`
+- `src/App.BLL/Mapping/AuthResponseMapper.cs`
+- `src/App.DAL.EF/Repositories/EfRefreshTokenRepository.cs`
+- `src/App.DAL.EF/Repositories/EfAppUnitOfWork.cs`
+- `src/App.DAL.EF/PersistenceServiceExtensions.cs`
+- `src/WebApp/ApiControllers/Identity/AccountController.cs`
+- `src/WebApp/Setup/ServiceExtensions.cs`
+- `tests/WebApp.Tests`
+- `docs/final1-auth-slice-plan.md`
+- `docs/auth-service-boundary-audit.md`
+- `docs/refresh-token-repository-contract.md`
+- `docs/architecture.md`
+- `docs/a3-saas-plan.md`
+
+What AI helped with:
+- extracted session use cases into `IAccountAuthService`
+- added a refresh-token repository contract and EF implementation
+- exposed refresh-token persistence through the Unit of Work
+- moved auth response DTO projection into `AuthResponseMapper`
+- updated controller tests, API route/DTO contract tests, architecture boundary tests, and documentation evidence
+
+What needed manual review or correction:
+- verified that register, switch-gym, switch-role, password reset, and unrelated profile/user features were not migrated in this slice
+- kept public `/api/v1/account/*` paths and DTOs unchanged
+
+Alternatives considered:
+- leaving login/refresh/logout in the broader `IdentityService`, but splitting session behavior gives cleaner Final1 defense evidence while keeping unrelated identity features stable
+
+## 2026-04-30 - Phase 12 Final1 Training Clean Slice
+
+Task:
+- migrate training categories, training sessions, bookings, and trainer attendance into the Clean/Onion repository + Unit of Work + mapper pattern while preserving public API contracts
+
+Files affected:
+- `src/App.BLL/Contracts/Persistence/ITrainingCategoryRepository.cs`
+- `src/App.BLL/Contracts/Persistence/ITrainingSessionRepository.cs`
+- `src/App.BLL/Contracts/Persistence/IBookingRepository.cs`
+- `src/App.BLL/Contracts/Persistence/IWorkShiftRepository.cs`
+- `src/App.BLL/Contracts/Persistence/IAppUnitOfWork.cs`
+- `src/App.BLL/Mapping/ITrainingMapper.cs`
+- `src/App.BLL/Mapping/TrainingMapper.cs`
+- `src/App.BLL/Services/TrainingWorkflowService.cs`
+- `src/App.DAL.EF/Repositories/EfTrainingCategoryRepository.cs`
+- `src/App.DAL.EF/Repositories/EfTrainingSessionRepository.cs`
+- `src/App.DAL.EF/Repositories/EfBookingRepository.cs`
+- `src/App.DAL.EF/Repositories/EfWorkShiftRepository.cs`
+- `src/App.DAL.EF/Repositories/EfAppUnitOfWork.cs`
+- `src/App.DAL.EF/PersistenceServiceExtensions.cs`
+- `src/WebApp/Setup/ServiceExtensions.cs`
+- `tests/WebApp.Tests/Architecture/ArchitectureTests.cs`
+- `docs/final1-training-slice-plan.md`
+- `docs/training-repository-contract.md`
+- `docs/booking-rules-audit.md`
+- `docs/trainer-authorization-audit.md`
+
+What AI helped with:
+- added dedicated BLL persistence contracts and EF repositories for the training slice
+- moved training response projection into `TrainingMapper`
+- refactored `TrainingWorkflowService` away from direct `IAppDbContext` usage
+- added architecture regression coverage for the training repository/mapper boundary
+- aligned Phase 12 repository, booking-rule, trainer-authorization, and slice-plan documentation with the implementation
+
+What needed manual review or correction:
+- verified the public tenant API controllers remained thin and retained their existing route/DTO shapes
+- kept membership finance migration out of scope; booking payment creation still uses the existing `Payment` entity path via the generic Unit of Work repository
+
+Alternatives considered:
+- using only the generic repository for all training entities, but dedicated repositories give clearer tenant-scoped query contracts for booking and trainer-assignment rules
+
+## 2026-04-30 - Phase 13 Final1 Membership And Finance Clean Slice
+
+Task:
+- migrate membership packages, memberships, payments, invoices, refunds, and finance workspace into the Clean/Onion repository + Unit of Work + mapper pattern without adding an external payment provider
+
+Files affected:
+- `src/App.BLL/Contracts/Persistence/IMembershipPackageRepository.cs`
+- `src/App.BLL/Contracts/Persistence/IMembershipRepository.cs`
+- `src/App.BLL/Contracts/Persistence/IPaymentRepository.cs`
+- `src/App.BLL/Contracts/Persistence/IFinanceRepository.cs`
+- `src/App.BLL/Contracts/Persistence/IAppUnitOfWork.cs`
+- `src/App.BLL/Mapping/IMembershipFinanceMapper.cs`
+- `src/App.BLL/Mapping/MembershipFinanceMapper.cs`
+- `src/App.BLL/Services/MembershipPackageService.cs`
+- `src/App.BLL/Services/MembershipService.cs`
+- `src/App.BLL/Services/PaymentService.cs`
+- `src/App.BLL/Services/FinanceWorkspaceService.cs`
+- `src/App.DAL.EF/Repositories/EfMembershipPackageRepository.cs`
+- `src/App.DAL.EF/Repositories/EfMembershipRepository.cs`
+- `src/App.DAL.EF/Repositories/EfPaymentRepository.cs`
+- `src/App.DAL.EF/Repositories/EfFinanceRepository.cs`
+- `src/App.DAL.EF/Repositories/EfAppUnitOfWork.cs`
+- `src/WebApp/Areas/Admin/Controllers/MembershipsController.cs`
+- `tests/WebApp.Tests`
+- `docs/final1-membership-finance-slice-plan.md`
+- `docs/membership-repository-contract.md`
+- `docs/finance-rules-audit.md`
+- `docs/membership-status-transition-audit.md`
+
+What AI helped with:
+- added dedicated repository contracts and EF implementations for membership and finance persistence
+- exposed the repositories through Unit of Work and DI
+- moved membership/finance DTO projection into `MembershipFinanceMapper`
+- refactored services away from direct `IAppDbContext` usage
+- added conflict handling for deleting packages already used by memberships
+- updated architecture, API, package, testing, and Final1 slice documentation
+
+What needed manual review or correction:
+- verified public API routes and DTO shapes stayed stable
+- kept external payment provider integration out of scope
+- updated the earlier package delete documentation because used-package delete now returns `409 Conflict`
+
+Alternatives considered:
+- continuing to soft-delete used packages, but returning a conflict is easier to defend because package lifecycle and historical membership references stay explicit until a separate deactivate endpoint exists
+
+## 2026-04-30 - Phase 15 Final1 Defense Pack
+
+Task:
+- prepare Final1 mandatory coverage and defense evidence without adding features or starting modular monolith work
+
+Files affected:
+- `docs/final1-defense.md`
+- `docs/final1-coverage-audit.md`
+- `docs/final1-test-traceability.md`
+- `docs/final1-architecture-diagram.md`
+- `tests/WebApp.Tests/Integration/Final1CriticalE2ETests.cs`
+- `docs/testing.md`
+- `docs/current-test-inventory.md`
+- `README.md`
+
+What AI helped with:
+- audited the existing Clean/Onion, repository/UOW/service/mapper, Admin UX, DTO/API, auth, IDOR, i18n, React CRUD, and CI evidence
+- added an explicit Final1 critical API-level E2E integration test class for login, member CRUD, training category CRUD, membership package CRUD, and IDOR negative coverage
+- created the requested defense, coverage, traceability, and architecture diagram documents
+- linked the new evidence from the assignment README and testing docs
+
+What needed manual review or correction:
+- the project does not currently include Playwright, so the defense documents state that Final1 E2E evidence is HTTP/API-level integration coverage through `WebApplicationFactory` plus React Vitest coverage
+
+Alternatives considered:
+- adding a new browser E2E dependency, but the existing backend integration and frontend Vitest infrastructure provided the missing evidence with less risk and no feature changes

@@ -15,6 +15,65 @@ namespace WebApp.Tests.Integration;
 public class AuthSecurityAndErrorTests(CustomWebApplicationFactory factory) : IClassFixture<CustomWebApplicationFactory>
 {
     [Fact]
+    public async Task Login_ReturnsJwt_RefreshToken_Expiry_AndUserContext()
+    {
+        var client = factory.CreateClient();
+
+        var response = await client.PostAsJsonAsync("/api/v1/account/login", new LoginRequest
+        {
+            Email = "admin@peakforge.local",
+            Password = "GymStrong123!"
+        });
+
+        response.EnsureSuccessStatusCode();
+        var payload = await response.Content.ReadFromJsonAsync<JwtResponse>();
+
+        Assert.NotNull(payload);
+        Assert.False(string.IsNullOrWhiteSpace(payload!.Jwt));
+        Assert.False(string.IsNullOrWhiteSpace(payload.RefreshToken));
+        Assert.True(payload.ExpiresInSeconds > 0);
+        Assert.NotNull(payload.SystemRoles);
+        Assert.NotNull(payload.AvailableTenants);
+        Assert.Equal("peak-forge", payload.ActiveGymCode);
+        Assert.False(string.IsNullOrWhiteSpace(payload.ActiveRole));
+    }
+
+    [Fact]
+    public async Task Logout_InvalidatesRefreshToken()
+    {
+        var client = factory.CreateClient();
+        var loginPayload = await LoginAsync(client, "admin@peakforge.local", "GymStrong123!");
+
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", loginPayload.Jwt);
+        var logoutResponse = await client.PostAsync("/api/v1/account/logout", null);
+        logoutResponse.EnsureSuccessStatusCode();
+
+        client.DefaultRequestHeaders.Authorization = null;
+        var renewResponse = await client.PostAsJsonAsync("/api/v1/account/renew-refresh-token", new RefreshTokenRequest
+        {
+            Jwt = loginPayload.Jwt,
+            RefreshToken = loginPayload.RefreshToken
+        });
+
+        Assert.Equal(HttpStatusCode.Forbidden, renewResponse.StatusCode);
+    }
+
+    [Fact]
+    public async Task RenewRefreshToken_RejectsInvalidJwt()
+    {
+        var client = factory.CreateClient();
+        var loginPayload = await LoginAsync(client, "admin@peakforge.local", "GymStrong123!");
+
+        var response = await client.PostAsJsonAsync("/api/v1/account/renew-refresh-token", new RefreshTokenRequest
+        {
+            Jwt = "not.a.valid.jwt",
+            RefreshToken = loginPayload.RefreshToken
+        });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
     public async Task RenewRefreshToken_RotatesToken_AndRejectsReuse()
     {
         var client = factory.CreateClient();
@@ -171,6 +230,21 @@ public class AuthSecurityAndErrorTests(CustomWebApplicationFactory factory) : IC
         var response = await client.GetAsync("/api/v1/system/platform/analytics");
 
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Theory]
+    [InlineData("systemadmin@gym.local")]
+    [InlineData("support@gym.local")]
+    [InlineData("billing@gym.local")]
+    public async Task SystemPlatformAnalytics_AllowsPlatformRoles(string email)
+    {
+        var client = factory.CreateClient();
+        var loginPayload = await LoginAsync(client, email, "GymStrong123!");
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", loginPayload.Jwt);
+
+        var response = await client.GetAsync("/api/v1/system/platform/analytics");
+
+        response.EnsureSuccessStatusCode();
     }
 
     [Fact]

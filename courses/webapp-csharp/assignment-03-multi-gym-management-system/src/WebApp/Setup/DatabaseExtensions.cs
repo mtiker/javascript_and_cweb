@@ -37,6 +37,7 @@ public static class DatabaseExtensions
         });
 
         services.AddScoped<IAppDbContext>(provider => provider.GetRequiredService<AppDbContext>());
+        services.AddAppPersistence();
         services.AddDataProtection().PersistKeysToDbContext<AppDbContext>();
 
         return services;

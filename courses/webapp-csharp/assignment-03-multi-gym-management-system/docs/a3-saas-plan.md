@@ -8,7 +8,10 @@ Assignment 03 is implemented as one SaaS backend plus two UI approaches:
 - a separate React + TypeScript SaaS client in `client/`
 
 The project keeps the ASP.NET Core monolith for backend responsibilities while adding the separate client required for REST API consumption. The production Docker image now builds that client separately and serves it from the backend at `/client`; the MVC client area uses `/mvc-client` to avoid route collision with the React bundle.
-Admin handoff now routes `/Admin/Gyms`, `/Admin/Memberships`, `/Admin/Sessions`, and `/Admin/Operations` into the React `/client` workflows to avoid read-only duplication.
+MVC Admin now renders focused Razor pages for dashboard, gyms, members, memberships, sessions, and operations using strongly typed view models.
+Admin dashboard/gyms/sessions/operations controllers delegate page composition
+to Admin view-model services and do not depend on `AppDbContext`.
+MVC Admin remains read-only defense evidence, while create/update/delete workflows stay in the tenant REST API and React client.
 
 ## Scope
 
@@ -23,11 +26,12 @@ Platform layer:
 
 Tenant layer:
 - members
+- member CRUD vertical slice with REST contract docs, MVC Admin directory, React CRUD states, and tenant-isolation regression coverage
 - staff, job roles, contracts, vacations, and shifts
 - training categories, sessions, and bookings
 - member workspace aggregation (profile, memberships, payments, bookings, attendance, outstanding actions)
 - coaching plans and coaching plan items
-- membership packages, memberships, and payments with expanded membership lifecycle states
+- membership packages, memberships, and payments with expanded membership lifecycle states; package CRUD now has explicit validation, tenant-scoped mutation lookups, unused-package soft delete, and used-package delete conflict behavior
 - finance workspace with invoices, invoice lines, payment history, refunds/credits, overdue and outstanding balances
 - opening hours and exceptions
 - equipment and maintenance tasks
@@ -63,6 +67,8 @@ Backend structure follows the Assignment 18 reference layout:
 - domain entities are one public class per file
 - DTOs are grouped by resource folder and namespace
 - BLL service interfaces sit beside service implementations
+- auth-session use cases are split into `IAccountAuthService`
+- refresh-token persistence is behind `IRefreshTokenRepository` and `IAppUnitOfWork`
 - startup/setup concerns are split into focused WebApp extension files
 
 Separate client:
@@ -148,6 +154,7 @@ UI localization:
 Database localization:
 - `LangStr` stored through EF value conversion
 - used for business-owned translated content
+- Phase 5 training-category slice documents and tests `.resx` UI labels, `LangStr` category translations, `Accept-Language` handling, and safe fallback behavior in `docs/training-category-audit.md`, `docs/localization-audit.md`, and `docs/langstr-contract.md`.
 
 ## Public Interface Plan
 
@@ -269,14 +276,18 @@ Not implemented in this pass:
 
 ## Architecture Boundary Notes
 
-- tenant members, training, memberships/payments, facilities, and client workspace reads are handled through BLL service interfaces
+- tenant members, training, memberships/payments/finance, facilities, and client workspace reads are handled through BLL service interfaces
+- membership, training, maintenance/facilities, and auth slices now use BLL persistence contracts, EF repository implementations, Unit of Work, and BLL mappers for Final1 Clean/Onion evidence
 - coaching-plan, finance-workspace, and member-workspace workflows are service-first and controller-thin
-- BLL services depend on `IAppDbContext` rather than the concrete EF `AppDbContext`
+- remaining unmigrated BLL services depend on `IAppDbContext` rather than the concrete EF `AppDbContext`
 - membership workflow internals are split into focused package, membership, payment, and booking-pricing services behind `IMembershipWorkflowService`
 - authorization internals are split into current-actor resolution, tenant-access checks, and resource-specific checks behind `IAuthorizationService`
+- account login/logout/refresh-token renewal is split out of broad identity management into `IAccountAuthService`
+- refresh-token lookup, rotation, reuse rejection, and logout invalidation use `IAppUnitOfWork.RefreshTokens`
+- auth response DTO projection uses `AuthResponseMapper`
 - API controllers are thin boundary adapters and do not expose direct `AppDbContext` access through `ApiControllerBase`
 - API controller actions accept request cancellation tokens and pass them through BLL services to EF async calls
-- remaining direct `AppDbContext` usage is documented as pragmatic read composition in broad MVC/admin surfaces and application infrastructure
+- remaining direct `AppDbContext` usage is documented as pragmatic read composition in application infrastructure and Admin page view-model services, not in Admin controllers
 
 ## Test Plan
 
@@ -290,7 +301,11 @@ Backend:
 - controller unit tests for member workspace, finance workspace, and coaching-plan routes
 - subscription-tier limit unit tests for starter-limit rejection and enterprise allowance
 - API-contract metadata unit tests for required `ProblemDetails` response documentation on public controllers
-- integration tests for login, register, multi-gym user switch, SystemAdmin tenant-context switch, refresh-token rotation, expired/reused refresh tokens, cross-gym denial, member self-only denial, system-route denial, unknown/inactive gym early rejection, API `ProblemDetails`, MVC HTML error handling, `/client` fallback serving, MVC Admin/Client layout rendering, member roster denial, nullable session descriptions, member duplicate validation, booking payment-reference and duplicate-booking enforcement, trainer attendance authorization, caretaker task authorization, and impersonation actor/target/reason/claim/audit/refresh-token behavior
+- auth-boundary tests for stable account routes/DTOs and the dedicated auth service/repository/UOW/mapper contracts
+- integration tests for login, register, multi-gym user switch, SystemAdmin tenant-context switch, refresh-token rotation, expired/reused refresh tokens, cross-gym denial, member self-only denial, system-route denial, platform-role access, unknown/inactive gym early rejection, API `ProblemDetails`, MVC HTML error handling, `/client` fallback serving, MVC Admin/Client layout rendering, member roster denial, nullable session descriptions, member duplicate validation, membership package CRUD/validation/unused soft-delete/used conflict/wrong-gym behavior, booking payment-reference and duplicate-booking enforcement, trainer attendance authorization, caretaker task authorization, and impersonation actor/target/reason/claim/audit/refresh-token behavior
+- maintenance workflow unit tests for assigned/unassigned caretaker updates, due scheduled-task generation, assignment history, and breakdown downtime/status transitions
+- MVC compliance integration/source tests for anonymous and wrong-role Admin denial, `GymAdmin`/`GymOwner` tenant Admin access, MVC Client route availability for member/trainer/caretaker, Admin no-`ViewBag`/`ViewData`, Admin POST anti-forgery guardrails, Admin strongly typed view rendering, and Admin controller thinness/no-DbContext boundaries
+- training-category localization integration tests for CRUD, `Accept-Language` `en`/`et`/`et-EE`, safe `LangStr` fallback, MVC `.resx` label rendering, and validation `ProblemDetails`
 - a focused PostgreSQL Testcontainers slice validates provider-realistic behavior (tenant query filtering, unique constraints, `LangStr`/JSONB persistence); run when `RUN_POSTGRES_TESTS=1` and Docker is available
 
 Frontend:
@@ -300,11 +315,12 @@ Frontend:
 - assigned multi-gym user shell tenant/role switching
 - refresh-on-`401` tests
 - selected language is sent through `Accept-Language`
+- shell language selector sends the selected language on training-category API requests
 - production/development API base default tests
 - CRUD happy/error tests for:
   - members
   - training categories
-  - membership packages
+  - membership packages, including loading/create/update/delete and validation-error states
 - sessions detail and booking test
 - session scheduling test
 - trainer attendance update test with member display names

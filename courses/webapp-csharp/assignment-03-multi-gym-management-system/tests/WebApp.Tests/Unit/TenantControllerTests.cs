@@ -97,7 +97,7 @@ public class TenantControllerTests
         Assert.Same(detailResponse, ControllerAssert.AssertCreated(create));
         var createdAt = Assert.IsType<CreatedAtActionResult>(create.Result);
         Assert.Equal(nameof(MembersController.GetMember), createdAt.ActionName);
-        Assert.Equal("1.0", createdAt.RouteValues?["version"]);
+        Assert.Equal("1", createdAt.RouteValues?["version"]);
         Assert.Equal(GymCode, createdAt.RouteValues?["gymCode"]);
         Assert.Equal(memberId, createdAt.RouteValues?["id"]);
 

@@ -315,28 +315,11 @@ public class AdditionalControllerTests
         var forgotResponse = new ForgotPasswordResponse { Message = "OK", ResetToken = "reset" };
         var resetRequest = new ResetPasswordRequest { Email = "user@gym.local", ResetToken = "reset", NewPassword = "GymStrong123!" };
 
-        var service = new DelegatingIdentityService
+        var identityService = new DelegatingIdentityService
         {
             RegisterAsyncHandler = (request, token) =>
             {
                 Assert.Same(registerRequest, request);
-                Assert.Equal(cancellationToken, token);
-                return Task.FromResult(jwtResponse);
-            },
-            LoginAsyncHandler = (request, token) =>
-            {
-                Assert.Same(loginRequest, request);
-                Assert.Equal(cancellationToken, token);
-                return Task.FromResult(jwtResponse);
-            },
-            LogoutAsyncHandler = token =>
-            {
-                Assert.Equal(cancellationToken, token);
-                return Task.CompletedTask;
-            },
-            RenewRefreshTokenAsyncHandler = (request, token) =>
-            {
-                Assert.Same(refreshRequest, request);
                 Assert.Equal(cancellationToken, token);
                 return Task.FromResult(jwtResponse);
             },
@@ -366,7 +349,28 @@ public class AdditionalControllerTests
             }
         };
 
-        var controller = ControllerTestContextFactory.WithUser(new AccountController(service));
+        var authService = new DelegatingAccountAuthService
+        {
+            LoginAsyncHandler = (request, token) =>
+            {
+                Assert.Same(loginRequest, request);
+                Assert.Equal(cancellationToken, token);
+                return Task.FromResult(jwtResponse);
+            },
+            LogoutAsyncHandler = token =>
+            {
+                Assert.Equal(cancellationToken, token);
+                return Task.CompletedTask;
+            },
+            RenewRefreshTokenAsyncHandler = (request, token) =>
+            {
+                Assert.Same(refreshRequest, request);
+                Assert.Equal(cancellationToken, token);
+                return Task.FromResult(jwtResponse);
+            }
+        };
+
+        var controller = ControllerTestContextFactory.WithUser(new AccountController(identityService, authService));
 
         var register = await controller.Register(registerRequest, cancellationToken);
         Assert.Same(jwtResponse, ControllerAssert.AssertOk(register));

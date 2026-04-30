@@ -27,6 +27,7 @@ services:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:8080
       Cors__AllowedOrigins__0: ${CORS_ALLOWED_ORIGIN:-https://mtiker-cweb-4.proxy.itcollege.ee}
+      Cors__AllowedOrigins__1: ${CORS_ALLOWED_ORIGIN_CLIENT:-}
       ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=${POSTGRES_DB:-multi_gym_management_system};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-postgres}
       JWT__Key: ${JWT__Key:?JWT__Key must be set}
       JWT__Issuer: ${JWT__Issuer:-MultiGymManagementSystem}
@@ -36,6 +37,18 @@ services:
       DataInitialization__SeedData: ${DATA_INIT_SEED_DATA:-true}
     ports:
       - "${WEBAPP_PORT:-83}:8080"
+
+  client:
+    profiles: ["client"]
+    image: ${MULTI_GYM_CLIENT_IMAGE:-multi-gym-management-system-client:local}
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-}
+    restart: unless-stopped
+    ports:
+      - "${CLIENT_PORT:-8081}:8080"
 
 volumes:
   multi-gym-postgres-data:

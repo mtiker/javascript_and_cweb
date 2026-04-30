@@ -71,21 +71,21 @@ public class SmokeTests(CustomWebApplicationFactory factory) : IClassFixture<Cus
     }
 
     [Fact]
-    public async Task SystemAdmin_GymsRoute_RedirectsToClientPlatform()
+    public async Task SystemAdmin_GymsRoute_RendersMvcPage()
     {
-        var client = await CreateMvcClientAsync("systemadmin@gym.local", allowAutoRedirect: false);
+        var client = await CreateMvcClientAsync("systemadmin@gym.local");
 
-        await AssertRedirectAsync(client, "/Admin/Gyms", "/client/platform");
+        await AssertStyledPageAsync(client, "/Admin/Gyms", "peak-forge");
     }
 
     [Fact]
-    public async Task TenantAdmin_WorkspaceRoutes_RedirectToClientWorkspaces()
+    public async Task TenantAdmin_WorkspaceRoutes_RenderMvcPages()
     {
-        var client = await CreateMvcClientAsync("admin@peakforge.local", allowAutoRedirect: false);
+        var client = await CreateMvcClientAsync("admin@peakforge.local");
 
-        await AssertRedirectAsync(client, "/Admin/Memberships", "/client/finance-workspace");
-        await AssertRedirectAsync(client, "/Admin/Sessions", "/client/sessions");
-        await AssertRedirectAsync(client, "/Admin/Operations", "/client/maintenance");
+        await AssertStyledPageAsync(client, "/Admin/Memberships", "Active member passes");
+        await AssertStyledPageAsync(client, "/Admin/Sessions", "Capacity");
+        await AssertStyledPageAsync(client, "/Admin/Operations", "Maintenance");
     }
 
     [Fact]
@@ -284,18 +284,6 @@ public class SmokeTests(CustomWebApplicationFactory factory) : IClassFixture<Cus
         Assert.Contains("/css/site.css", html);
         Assert.Contains("class=\"topbar\"", html);
         Assert.Contains(expectedContent, html);
-    }
-
-    private static async Task AssertRedirectAsync(HttpClient client, string sourcePath, string expectedTargetPath)
-    {
-        var response = await client.GetAsync(sourcePath);
-        var location = response.Headers.Location?.OriginalString;
-
-        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
-        Assert.True(
-            string.Equals(location, expectedTargetPath, StringComparison.OrdinalIgnoreCase) ||
-            string.Equals(location, $"http://localhost{expectedTargetPath}", StringComparison.OrdinalIgnoreCase),
-            $"Expected redirect to '{expectedTargetPath}' but was '{location}'.");
     }
 
     private async Task<Guid> GetPeakForgeSessionIdAsync()

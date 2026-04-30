@@ -1,21 +1,21 @@
 using App.Domain;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using WebApp.Helpers;
+using WebApp.Areas.Admin.Services;
 
 namespace WebApp.Areas.Admin.Controllers;
 
 [Area("Admin")]
 [Authorize]
-public class GymsController(IConfiguration configuration) : Controller
+public class GymsController(IAdminGymsPageService gymsPageService) : Controller
 {
-    public IActionResult Index()
+    public async Task<IActionResult> Index(CancellationToken cancellationToken)
     {
         if (!(User.IsInRole(RoleNames.SystemAdmin) || User.IsInRole(RoleNames.SystemSupport) || User.IsInRole(RoleNames.SystemBilling)))
         {
-            return RedirectToAction("Index", "Dashboard");
+            return Forbid();
         }
 
-        return Redirect(ClientAppUrlResolver.GetRouteUrl(configuration, "/platform"));
+        return View(await gymsPageService.BuildAsync(cancellationToken));
     }
 }

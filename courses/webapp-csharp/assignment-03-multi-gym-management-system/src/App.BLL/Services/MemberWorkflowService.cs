@@ -1,70 +1,58 @@
-using App.BLL.Contracts.Infrastructure;
+using App.BLL.Contracts.Persistence;
 using App.BLL.Exceptions;
+using App.BLL.Mapping;
 using App.Domain.Entities;
-using Microsoft.EntityFrameworkCore;
 using App.DTO.v1.Members;
 
 namespace App.BLL.Services;
 
 public class MemberWorkflowService(
-    IAppDbContext dbContext,
+    IAppUnitOfWork unitOfWork,
     IAuthorizationService authorizationService,
-    ISubscriptionTierLimitService subscriptionTierLimitService) : IMemberWorkflowService
+    ISubscriptionTierLimitService subscriptionTierLimitService,
+    IMemberMapper memberMapper) : IMemberWorkflowService
 {
     public async Task<IReadOnlyCollection<MemberResponse>> GetMembersAsync(string gymCode, CancellationToken cancellationToken = default)
     {
         var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, App.Domain.RoleNames.GymOwner, App.Domain.RoleNames.GymAdmin);
 
-        return await dbContext.Members
-            .Include(entity => entity.Person)
-            .Where(entity => entity.GymId == gymId)
-            .OrderBy(entity => entity.Person!.LastName)
-            .ThenBy(entity => entity.Person!.FirstName)
-            .Select(entity => new MemberResponse
-            {
-                Id = entity.Id,
-                MemberCode = entity.MemberCode,
-                FullName = $"{entity.Person!.FirstName} {entity.Person!.LastName}".Trim(),
-                Status = entity.Status
-            })
-            .ToArrayAsync(cancellationToken);
+        var members = await unitOfWork.Members.ListByGymAsync(gymId, cancellationToken);
+        return memberMapper.ToSummaryList(members);
     }
 
     public async Task<MemberDetailResponse> GetCurrentMemberAsync(string gymCode, CancellationToken cancellationToken = default)
     {
         var gymId = await authorizationService.EnsureTenantAccessAsync(
             gymCode,
+            cancellationToken,
             App.Domain.RoleNames.GymOwner,
             App.Domain.RoleNames.GymAdmin,
             App.Domain.RoleNames.Member);
 
-        var currentMember = await authorizationService.GetCurrentMemberAsync(gymId)
+        var currentMember = await authorizationService.GetCurrentMemberAsync(gymId, cancellationToken)
                             ?? throw new NotFoundException("Current user does not have a member profile in the active gym.");
 
-        var member = await dbContext.Members
-            .Include(entity => entity.Person)
-            .FirstOrDefaultAsync(entity => entity.Id == currentMember.Id)
-            ?? throw new NotFoundException("Member was not found.");
+        var member = await unitOfWork.Members.FindWithPersonAsync(gymId, currentMember.Id, cancellationToken)
+                     ?? throw new NotFoundException("Member was not found.");
 
-        return ToMemberDetailResponse(member);
+        return memberMapper.ToDetail(member);
     }
 
     public async Task<MemberDetailResponse> GetMemberAsync(string gymCode, Guid id, CancellationToken cancellationToken = default)
     {
         var gymId = await authorizationService.EnsureTenantAccessAsync(
             gymCode,
+            cancellationToken,
             App.Domain.RoleNames.GymOwner,
             App.Domain.RoleNames.GymAdmin,
             App.Domain.RoleNames.Member);
 
-        await authorizationService.EnsureMemberSelfAccessAsync(gymId, id);
+        await authorizationService.EnsureMemberSelfAccessAsync(gymId, id, cancellationToken);
 
-        var member = await dbContext.Members
-            .Include(entity => entity.Person)
-            .FirstOrDefaultAsync(entity => entity.Id == id)
-            ?? throw new NotFoundException("Member was not found.");
+        var member = await unitOfWork.Members.FindWithPersonAsync(gymId, id, cancellationToken)
+                     ?? throw new NotFoundException("Member was not found.");
 
-        return ToMemberDetailResponse(member);
+        return memberMapper.ToDetail(member);
     }
 
     public async Task<MemberDetailResponse> CreateMemberAsync(string gymCode, MemberUpsertRequest request, CancellationToken cancellationToken = default)
@@ -73,7 +61,7 @@ public class MemberWorkflowService(
         await subscriptionTierLimitService.EnsureCanCreateMemberAsync(gymId, cancellationToken);
         var normalized = NormalizeRequest(request);
 
-        await EnsureUniqueMemberFieldsAsync(gymId, normalized.MemberCode, normalized.PersonalCode, null, null);
+        await EnsureUniqueMemberFieldsAsync(gymId, normalized.MemberCode, normalized.PersonalCode, null, null, cancellationToken);
 
         var person = new Person
         {
@@ -91,10 +79,10 @@ public class MemberWorkflowService(
             Status = normalized.Status
         };
 
-        dbContext.Members.Add(member);
-        await dbContext.SaveChangesAsync(cancellationToken);
+        await unitOfWork.Members.AddAsync(member, cancellationToken);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return ToMemberDetailResponse(member);
+        return memberMapper.ToDetail(member);
     }
 
     public async Task<MemberDetailResponse> UpdateMemberAsync(string gymCode, Guid id, MemberUpsertRequest request, CancellationToken cancellationToken = default)
@@ -102,12 +90,10 @@ public class MemberWorkflowService(
         var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, App.Domain.RoleNames.GymOwner, App.Domain.RoleNames.GymAdmin);
         var normalized = NormalizeRequest(request);
 
-        var member = await dbContext.Members
-            .Include(entity => entity.Person)
-            .FirstOrDefaultAsync(entity => entity.Id == id)
-            ?? throw new NotFoundException("Member was not found.");
+        var member = await unitOfWork.Members.FindWithPersonAsync(gymId, id, cancellationToken)
+                     ?? throw new NotFoundException("Member was not found.");
 
-        await EnsureUniqueMemberFieldsAsync(gymId, normalized.MemberCode, normalized.PersonalCode, member.Id, member.PersonId);
+        await EnsureUniqueMemberFieldsAsync(gymId, normalized.MemberCode, normalized.PersonalCode, member.Id, member.PersonId, cancellationToken);
 
         member.MemberCode = normalized.MemberCode;
         member.Status = normalized.Status;
@@ -116,35 +102,20 @@ public class MemberWorkflowService(
         member.Person.PersonalCode = normalized.PersonalCode;
         member.Person.DateOfBirth = normalized.DateOfBirth;
 
-        await dbContext.SaveChangesAsync(cancellationToken);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return ToMemberDetailResponse(member);
+        return memberMapper.ToDetail(member);
     }
 
     public async Task DeleteMemberAsync(string gymCode, Guid id, CancellationToken cancellationToken = default)
     {
-        await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, App.Domain.RoleNames.GymOwner, App.Domain.RoleNames.GymAdmin);
+        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, App.Domain.RoleNames.GymOwner, App.Domain.RoleNames.GymAdmin);
 
-        var member = await dbContext.Members.FirstOrDefaultAsync(entity => entity.Id == id)
+        var member = await unitOfWork.Members.FindAsync(gymId, id, cancellationToken)
                      ?? throw new NotFoundException("Member was not found.");
 
-        dbContext.Members.Remove(member);
-        await dbContext.SaveChangesAsync(cancellationToken);
-    }
-
-    private static MemberDetailResponse ToMemberDetailResponse(Member member)
-    {
-        return new MemberDetailResponse
-        {
-            Id = member.Id,
-            MemberCode = member.MemberCode,
-            FirstName = member.Person?.FirstName ?? string.Empty,
-            LastName = member.Person?.LastName ?? string.Empty,
-            FullName = $"{member.Person?.FirstName} {member.Person?.LastName}".Trim(),
-            PersonalCode = member.Person?.PersonalCode,
-            DateOfBirth = member.Person?.DateOfBirth,
-            Status = member.Status
-        };
+        unitOfWork.Members.Remove(member);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
     }
 
     private async Task EnsureUniqueMemberFieldsAsync(
@@ -152,13 +123,10 @@ public class MemberWorkflowService(
         string memberCode,
         string? personalCode,
         Guid? currentMemberId,
-        Guid? currentPersonId)
+        Guid? currentPersonId,
+        CancellationToken cancellationToken)
     {
-        var memberCodeExists = await dbContext.Members.AnyAsync(entity =>
-            entity.GymId == gymId &&
-            entity.MemberCode == memberCode &&
-            (!currentMemberId.HasValue || entity.Id != currentMemberId.Value));
-
+        var memberCodeExists = await unitOfWork.Members.MemberCodeExistsAsync(gymId, memberCode, currentMemberId, cancellationToken);
         if (memberCodeExists)
         {
             throw new ValidationAppException("Member code already exists in this gym.");
@@ -169,10 +137,7 @@ public class MemberWorkflowService(
             return;
         }
 
-        var personalCodeExists = await dbContext.People.AnyAsync(entity =>
-            entity.PersonalCode == personalCode &&
-            (!currentPersonId.HasValue || entity.Id != currentPersonId.Value));
-
+        var personalCodeExists = await unitOfWork.Members.PersonalCodeExistsAsync(personalCode, currentPersonId, cancellationToken);
         if (personalCodeExists)
         {
             throw new ValidationAppException("Personal code already belongs to another person.");

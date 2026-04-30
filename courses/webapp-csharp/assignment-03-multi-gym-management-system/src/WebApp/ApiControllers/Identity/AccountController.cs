@@ -16,7 +16,9 @@ namespace WebApp.ApiControllers.Identity;
 [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
 [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
 [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
-public class AccountController(IIdentityService identityService) : ControllerBase
+public class AccountController(
+    IIdentityService identityService,
+    IAccountAuthService accountAuthService) : ControllerBase
 {
     [AllowAnonymous]
     [HttpPost("register")]
@@ -31,7 +33,7 @@ public class AccountController(IIdentityService identityService) : ControllerBas
     [ProducesResponseType(typeof(JwtResponse), StatusCodes.Status200OK)]
     public async Task<ActionResult<JwtResponse>> Login([FromBody] LoginRequest request, CancellationToken cancellationToken)
     {
-        return Ok(await identityService.LoginAsync(request, cancellationToken));
+        return Ok(await accountAuthService.LoginAsync(request, cancellationToken));
     }
 
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
@@ -39,7 +41,7 @@ public class AccountController(IIdentityService identityService) : ControllerBas
     [ProducesResponseType(typeof(Message), StatusCodes.Status200OK)]
     public async Task<ActionResult<Message>> Logout(CancellationToken cancellationToken)
     {
-        await identityService.LogoutAsync(cancellationToken);
+        await accountAuthService.LogoutAsync(cancellationToken);
         return Ok(new Message("Logged out."));
     }
 
@@ -48,7 +50,7 @@ public class AccountController(IIdentityService identityService) : ControllerBas
     [ProducesResponseType(typeof(JwtResponse), StatusCodes.Status200OK)]
     public async Task<ActionResult<JwtResponse>> RenewRefreshToken([FromBody] RefreshTokenRequest request, CancellationToken cancellationToken)
     {
-        return Ok(await identityService.RenewRefreshTokenAsync(request, cancellationToken));
+        return Ok(await accountAuthService.RenewRefreshTokenAsync(request, cancellationToken));
     }
 
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]

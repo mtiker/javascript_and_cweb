@@ -1,6 +1,8 @@
 using App.BLL.Services;
 using App.BLL.Exceptions;
+using App.BLL.Mapping;
 using App.DAL.EF;
+using App.DAL.EF.Repositories;
 using App.DAL.EF.Tenant;
 using App.Domain.Entities;
 using App.Domain.Enums;
@@ -162,10 +164,12 @@ public class MembershipWorkflowServiceTests
 
     private static IMembershipWorkflowService CreateService(AppDbContext dbContext, IAuthorizationService authorizationService)
     {
+        var unitOfWork = new EfAppUnitOfWork(dbContext);
+        var mapper = new MembershipFinanceMapper();
         return new MembershipWorkflowService(
-            new MembershipPackageService(dbContext, authorizationService),
-            new MembershipService(dbContext, authorizationService),
-            new PaymentService(dbContext, authorizationService),
+            new MembershipPackageService(unitOfWork, authorizationService, mapper),
+            new MembershipService(unitOfWork, authorizationService, mapper),
+            new PaymentService(unitOfWork, authorizationService, mapper),
             new BookingPricingService(dbContext));
     }
 

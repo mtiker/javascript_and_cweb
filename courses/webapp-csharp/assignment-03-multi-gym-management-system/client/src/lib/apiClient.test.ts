@@ -86,6 +86,37 @@ describe("ApiClient", () => {
     expect(clearSession).toHaveBeenCalled();
   });
 
+  it("deduplicates concurrent 401s into a single refresh request", async () => {
+    const fetchMock = vi.mocked(fetch);
+    fetchMock
+      .mockResolvedValueOnce(new Response(null, { status: 401 }))
+      .mockResolvedValueOnce(new Response(null, { status: 401 }))
+      .mockResolvedValueOnce(
+        jsonResponse({
+          jwt: "fresh-jwt",
+          refreshToken: "refresh-2",
+          expiresInSeconds: 3600,
+          activeGymCode: "peak-forge",
+          activeRole: "GymAdmin",
+          systemRoles: [],
+        }),
+      )
+      .mockResolvedValueOnce(jsonResponse([]))
+      .mockResolvedValueOnce(jsonResponse([]));
+
+    await Promise.all([
+      client.getMembers("peak-forge"),
+      client.getMembers("peak-forge"),
+    ]);
+
+    expect(fetchMock).toHaveBeenCalledTimes(5);
+    const renewCalls = fetchMock.mock.calls.filter(([url]) =>
+      (url as string).includes("renew-refresh-token"),
+    );
+    expect(renewCalls).toHaveLength(1);
+    expect(setSession).toHaveBeenCalledTimes(1);
+  });
+
   it("sends the selected language to localized API endpoints", async () => {
     setCurrentLanguage("et-EE");
     vi.mocked(fetch).mockResolvedValueOnce(jsonResponse([]));

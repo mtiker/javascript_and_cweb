@@ -63,6 +63,21 @@ assignment03_docker_build:
   script:
     - docker build --pull --tag "$CI_PROJECT_PATH_SLUG-assignment-03:$CI_COMMIT_SHORT_SHA" courses/webapp-csharp/assignment-03-multi-gym-management-system
 
+assignment03_client_image:
+  stage: package
+  tags:
+    - shared
+  needs:
+    - assignment03_client
+  <<: *assignment03_job
+  script:
+    - >-
+      docker build --pull
+      --build-arg "VITE_API_BASE_URL=${VITE_API_BASE_URL:-}"
+      --tag "$CI_PROJECT_PATH_SLUG-assignment-03-client:$CI_COMMIT_SHORT_SHA"
+      -f courses/webapp-csharp/assignment-03-multi-gym-management-system/client/Dockerfile
+      courses/webapp-csharp/assignment-03-multi-gym-management-system/client
+
 assignment03_deploy:
   stage: deploy
   tags:
@@ -76,3 +91,22 @@ assignment03_deploy:
     - cd courses/webapp-csharp/assignment-03-multi-gym-management-system
     - chmod +x scripts/deploy.sh
     - ./scripts/deploy.sh
+
+assignment03_deploy_client:
+  stage: deploy
+  tags:
+    - shared
+  needs:
+    - assignment03_client_image
+  environment:
+    name: assignment-03-client-production
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH || $CI_COMMIT_TAG'
+      changes: *assignment03_changes
+      when: manual
+      allow_failure: true
+    - when: never
+  script:
+    - cd courses/webapp-csharp/assignment-03-multi-gym-management-system
+    - chmod +x scripts/deploy-client.sh
+    - ./scripts/deploy-client.sh

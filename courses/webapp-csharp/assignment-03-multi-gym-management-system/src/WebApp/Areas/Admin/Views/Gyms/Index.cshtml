@@ -1,4 +1,4 @@
-@model IReadOnlyCollection<App.Domain.Entities.Gym>
+@model AdminGymsPageViewModel
 @inject IStringLocalizer<SharedResources> L
 <section class="panel">
     <h1>@L["Gyms"]</h1>
@@ -12,7 +12,7 @@
         </tr>
         </thead>
         <tbody>
-        @foreach (var gym in Model)
+        @foreach (var gym in Model.Gyms)
         {
             <tr>
                 <td>@gym.Name</td>

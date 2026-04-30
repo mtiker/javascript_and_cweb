@@ -1,5 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
+using App.DTO.v1;
+using App.DTO.v1.Identity;
+using WebApp.ApiControllers.Identity;
 
 namespace WebApp.Tests.Unit;
 
@@ -30,6 +33,32 @@ public class ApiContractMetadataTests
         }
     }
 
+    [Fact]
+    public void AccountAuthPublicRoutesAndDtos_RemainStable()
+    {
+        var route = Assert.Single(typeof(AccountController)
+            .GetCustomAttributes(typeof(RouteAttribute), inherit: false)
+            .Cast<RouteAttribute>());
+
+        Assert.Equal("api/v{version:apiVersion}/account", route.Template);
+
+        AssertActionContract(
+            nameof(AccountController.Login),
+            "login",
+            typeof(LoginRequest),
+            typeof(JwtResponse));
+        AssertActionContract(
+            nameof(AccountController.Logout),
+            "logout",
+            null,
+            typeof(Message));
+        AssertActionContract(
+            nameof(AccountController.RenewRefreshToken),
+            "renew-refresh-token",
+            typeof(RefreshTokenRequest),
+            typeof(JwtResponse));
+    }
+
     private static bool HasProducesErrorProblemDetails(Type controllerType)
     {
         return EnumerateControllerHierarchy(controllerType)
@@ -51,6 +80,32 @@ public class ApiContractMetadataTests
         for (var current = controllerType; current != null && typeof(ControllerBase).IsAssignableFrom(current); current = current.BaseType)
         {
             yield return current;
+        }
+    }
+
+    private static void AssertActionContract(string actionName, string expectedTemplate, Type? requestType, Type responseType)
+    {
+        var method = typeof(AccountController).GetMethod(actionName)
+                     ?? throw new InvalidOperationException($"{actionName} was not found.");
+
+        var post = Assert.Single(method
+            .GetCustomAttributes(typeof(HttpPostAttribute), inherit: false)
+            .Cast<HttpPostAttribute>());
+
+        Assert.Equal(expectedTemplate, post.Template);
+        Assert.Equal(typeof(Task<>).MakeGenericType(typeof(ActionResult<>).MakeGenericType(responseType)), method.ReturnType);
+
+        var bodyParameter = method.GetParameters()
+            .FirstOrDefault(parameter => parameter.GetCustomAttributes(typeof(FromBodyAttribute), inherit: false).Any());
+
+        if (requestType is null)
+        {
+            Assert.Null(bodyParameter);
+        }
+        else
+        {
+            Assert.NotNull(bodyParameter);
+            Assert.Equal(requestType, bodyParameter!.ParameterType);
         }
     }
 }

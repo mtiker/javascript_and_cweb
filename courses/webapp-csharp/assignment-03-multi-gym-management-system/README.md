@@ -10,7 +10,8 @@ The project now has three user-facing surfaces:
 - a separate React + TypeScript SaaS client under `client/`
 
 Admin route note:
-- `/Admin/Gyms`, `/Admin/Memberships`, `/Admin/Sessions`, and `/Admin/Operations` now redirect into `/client/*` SaaS routes so admin users land on functional write workflows instead of read-only summary pages.
+- `/Admin/Gyms`, `/Admin/Members`, `/Admin/Memberships`, `/Admin/Sessions`, and `/Admin/Operations` now render focused MVC pages backed by strongly typed view models.
+- MVC Admin pages are read-only defense evidence; create/update/delete workflows remain in the REST API and React client.
 
 The backend remains one ASP.NET Core host that serves the MVC areas, Swagger, the versioned REST API, and the production React client at `/client`. The MVC client area uses `/mvc-client` so it does not collide with the React client mount.
 
@@ -24,6 +25,7 @@ This assignment currently covers:
 - JWT authentication with refresh-token rotation
 - MVC admin UX
 - MVC client UX
+- MVC Admin compliance evidence for role access, strongly typed view models, no `ViewBag`/`ViewData`, and anti-forgery regression coverage
 - a separate React client that uses the REST API with JWT + refresh tokens
 - React platform/tenant SaaS console for system, billing, support, onboarding, account, and tenant operations
 - React language switching for the client shell/login/workflow labels and `Accept-Language` for localized API data
@@ -38,6 +40,8 @@ This assignment currently covers:
 - tenant route gym-resolution middleware for early unknown/inactive gym rejection
 - standardized `ProblemDetails` error metadata (`400`, `401`, `403`, `404`, `409`) across public API controllers
 - member/coaching/finance/maintenance workspace APIs and React workflow pages
+- member CRUD contract documentation and tests across REST API, MVC Admin, and React client (`docs/member-contract.md`, `docs/member-crud-audit.md`, `docs/member-tests-map.md`)
+- membership package CRUD contract, validation, unused-package soft delete, used-package conflict, and tenant-isolation documentation/tests (`docs/membership-package-contract.md`, `docs/package-validation-rules.md`, `docs/membership-package-audit.md`)
 - coaching-plan workflow states and item-decision lifecycle
 - finance workflow records for invoices, lines, payment history, refunds/credits, overdue state, and outstanding balances
 - expanded membership lifecycle statuses (`Pending`, `Active`, `Paused`, `Expired`, `Cancelled`, `Refunded`, `Renewed`)
@@ -114,7 +118,7 @@ Backend organization now follows the Assignment 18 reference style:
 - BLL service interfaces live beside their implementations in `App.BLL/Services`; infrastructure-only contracts live under `App.BLL/Contracts`.
 - `WebApp/Setup` is split into focused database, identity, service, API, middleware, and data-initialization extension files.
 - `App.DAL.EF/AppDbContext` keeps cross-cutting behavior while entity mapping/index/precision rules are split into grouped `IEntityTypeConfiguration<T>` classes under `App.DAL.EF/Configurations`.
-- membership and authorization workflows keep the existing public contracts, but are internally split into focused services for package/membership/payment/pricing and actor/tenant/resource authorization responsibilities.
+- membership and finance workflows keep the existing public contracts, but now use repository contracts, Unit of Work, BLL mappers, and focused services for package/membership/payment/invoice/refund/workspace responsibilities.
 
 ## Local Run
 
@@ -379,8 +383,19 @@ Repository CI integration:
 - data model and ERD: [docs/data-model.md](docs/data-model.md)
 - API overview: [docs/api.md](docs/api.md)
 - testing: [docs/testing.md](docs/testing.md)
+- Final1 defense pack: [docs/final1-defense.md](docs/final1-defense.md)
+- Final1 coverage audit: [docs/final1-coverage-audit.md](docs/final1-coverage-audit.md)
+- Final1 test traceability: [docs/final1-test-traceability.md](docs/final1-test-traceability.md)
+- Final1 architecture diagram: [docs/final1-architecture-diagram.md](docs/final1-architecture-diagram.md)
 - deployment: [docs/deployment.md](docs/deployment.md)
 - A3 scope plan: [docs/a3-saas-plan.md](docs/a3-saas-plan.md)
+- MVC admin audit: [docs/mvc-admin-audit.md](docs/mvc-admin-audit.md)
+- MVC client audit: [docs/mvc-client-audit.md](docs/mvc-client-audit.md)
+- view model audit: [docs/viewmodel-audit.md](docs/viewmodel-audit.md)
+- no ViewBag/ViewData audit: [docs/no-viewbag-viewdata-audit.md](docs/no-viewbag-viewdata-audit.md)
+- training category audit: [docs/training-category-audit.md](docs/training-category-audit.md)
+- localization audit: [docs/localization-audit.md](docs/localization-audit.md)
+- LangStr contract: [docs/langstr-contract.md](docs/langstr-contract.md)
 - request-flow diagram: [docs/request-flow-diagram.md](docs/request-flow-diagram.md)
 - study guide (domain): [docs/study-guide-domain.md](docs/study-guide-domain.md)
 - study guide (DAL/EF): [docs/study-guide-dal-ef.md](docs/study-guide-dal-ef.md)

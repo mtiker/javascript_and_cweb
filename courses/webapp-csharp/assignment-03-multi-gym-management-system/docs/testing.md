@@ -54,8 +54,15 @@ Backend integration tests:
 - `SmokeTests.Login_SeededMultiGymAdmin_CanSwitchGym`
 - `SmokeTests.SplitTenantApiControllers_KeepExistingReadRoutes`
 - `SmokeTests.AdminDashboard_QuickLinks_ExposeFunctionalSaasRoutes`
-- `SmokeTests.SystemAdmin_GymsRoute_RedirectsToClientPlatform`
-- `SmokeTests.TenantAdmin_WorkspaceRoutes_RedirectToClientWorkspaces`
+- `SmokeTests.SystemAdmin_GymsRoute_RendersMvcPage`
+- `SmokeTests.TenantAdmin_WorkspaceRoutes_RenderMvcPages`
+- `MvcComplianceTests.AnonymousUser_CannotAccess_Admin`
+- `MvcComplianceTests.WrongRole_CannotAccess_Admin`
+- `MvcComplianceTests.GymAdminOrGymOwner_CanAccess_TenantAdminPages`
+- `MvcComplianceTests.MvcClientRoute_Works_ForTenantRoles`
+- `MvcComplianceTests.AdminViews_DoNotUse_ViewBagOrViewData`
+- `MvcComplianceTests.AdminPostActions_UseAntiForgery`
+- `MvcComplianceTests.AdminControllers_ReturnStronglyTypedViewModels`
 - `AuthSecurityAndErrorTests.RenewRefreshToken_RotatesToken_AndRejectsReuse`
 - `AuthSecurityAndErrorTests.RenewRefreshToken_RejectsExpiredRefreshToken`
 - `AuthSecurityAndErrorTests.MembersEndpoint_RejectsActiveGymMismatch`
@@ -67,6 +74,11 @@ Backend integration tests:
 - `AuthSecurityAndErrorTests.TenantApi_UsesAcceptLanguageForLangStrResponses`
 - `AuthSecurityAndErrorTests.SetCulture_StoresOnlySupportedCultureCookie`
 - `AuthSecurityAndErrorTests.HtmlErrors_RenderHtmlErrorPage`
+- `Final1CriticalE2ETests.Login_E2E_ReturnsTenantSession`
+- `Final1CriticalE2ETests.MemberCrud_E2E_CreateReadUpdateDelete`
+- `Final1CriticalE2ETests.TrainingCategoryCrud_E2E_CreateReadUpdateDelete`
+- `Final1CriticalE2ETests.MembershipPackageCrud_E2E_CreateReadUpdateDelete`
+- `Final1CriticalE2ETests.IdorNegative_E2E_CrossTenantMemberUpdateReturns404`
 - `ProposalWorkflowTests.ReactClientFallback_ServesClientShell`
 - `ProposalWorkflowTests.TrainingSessions_HandleNullableDescriptionInListAndDetail`
 - `ProposalWorkflowTests.MemberBooking_RequiresPaymentReferenceWhenPaymentIsDue`
@@ -78,6 +90,15 @@ Backend integration tests:
 - `StaffWorkflowTests.StaffRelatedTenantEndpoints_ReturnProblemDetailsForMissingResources`
 - `StaffWorkflowTests.StaffRelatedTenantEndpoints_RejectWrongActiveGym`
 - `StaffWorkflowTests.ContractCreate_RejectsStaffFromAnotherGym`
+- `MembershipPackageCrudTests.GetMembershipPackages_ReturnsListForActiveGym`
+- `MembershipPackageCrudTests.CreateMembershipPackage_Returns201`
+- `MembershipPackageCrudTests.CreateMembershipPackage_InvalidPrice_ReturnsProblemDetails`
+- `MembershipPackageCrudTests.CreateMembershipPackage_InvalidDuration_ReturnsProblemDetails`
+- `MembershipPackageCrudTests.CreateMembershipPackage_MissingCurrency_ReturnsProblemDetails`
+- `MembershipPackageCrudTests.UpdateMembershipPackage_ReturnsUpdatedPackage`
+- `MembershipPackageCrudTests.DeleteUnusedMembershipPackage_SoftDeletesPackage`
+- `MembershipPackageCrudTests.DeleteUsedMembershipPackage_ReturnsConflictAndKeepsMembershipSnapshot`
+- `MembershipPackageCrudTests.UpdateMembershipPackage_ForeignGymPackageId_Returns404`
 - `ImpersonationTests.StartImpersonation_WritesAuditRefreshTokenAndClaims`
 
 Frontend Vitest coverage:
@@ -95,7 +116,7 @@ Frontend Vitest coverage:
 - sessions page detail loading and booking success
 - trainer attendance update success
 - caretaker maintenance task status update success
-- membership packages page delete success and save-error handling
+- membership packages page loading, create, update, delete, local validation, and save-error handling
 - finance workspace invoice-payment action success
 - coaching workspace item-decision update success
 
@@ -106,7 +127,7 @@ Recommended manual verification before defense:
 2. Start `WebApp`.
 3. Open `/swagger` and `/health`.
 4. Log in to the MVC admin area with `multigym.admin@gym.local` and switch between `peak-forge` and `north-star`.
-   - verify Admin quick links route into `/client/*` functional workflows
+   - verify Admin Dashboard, Members, Memberships, Sessions, and Operations render Razor MVC pages
 5. Open the MVC client area with `member@peakforge.local`.
 6. Start the React client and log in with `admin@peakforge.local`.
    - seeded/demo password: `GymStrong123!`
@@ -127,6 +148,7 @@ Recommended manual verification before defense:
 ## Test Notes
 
 - Backend integration tests use EF Core InMemory and seeded demo data.
+- Final1 critical E2E coverage is API-level integration coverage through ASP.NET Core `WebApplicationFactory`; the repository does not currently include Playwright browser automation.
 - Backend integration tests inject test-only JWT configuration through environment variables before the host starts.
 - The HTML error-page test uses a production-style test host because MVC exception handling is only enabled outside development.
 - Frontend tests run in `jsdom` and mock network traffic directly.

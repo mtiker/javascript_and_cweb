@@ -36,7 +36,7 @@ public class MembersController(IMemberWorkflowService memberWorkflowService) : A
     public async Task<ActionResult<MemberDetailResponse>> CreateMember(string gymCode, [FromBody] MemberUpsertRequest request, CancellationToken cancellationToken)
     {
         var member = await memberWorkflowService.CreateMemberAsync(gymCode, request, cancellationToken);
-        return CreatedAtAction(nameof(GetMember), new { version = "1.0", gymCode, id = member.Id }, member);
+        return CreatedAtAction(nameof(GetMember), new { version = "1", gymCode, id = member.Id }, member);
     }
 
     [HttpPut("{id:guid}")]

@@ -613,15 +613,6 @@ public sealed class DelegatingIdentityService : IIdentityService
     public Func<RegisterRequest, CancellationToken, Task<JwtResponse>> RegisterAsyncHandler { get; set; } =
         static (_, _) => Task.FromException<JwtResponse>(new InvalidOperationException("RegisterAsyncHandler not configured."));
 
-    public Func<LoginRequest, CancellationToken, Task<JwtResponse>> LoginAsyncHandler { get; set; } =
-        static (_, _) => Task.FromException<JwtResponse>(new InvalidOperationException("LoginAsyncHandler not configured."));
-
-    public Func<CancellationToken, Task> LogoutAsyncHandler { get; set; } =
-        static _ => Task.CompletedTask;
-
-    public Func<RefreshTokenRequest, CancellationToken, Task<JwtResponse>> RenewRefreshTokenAsyncHandler { get; set; } =
-        static (_, _) => Task.FromException<JwtResponse>(new InvalidOperationException("RenewRefreshTokenAsyncHandler not configured."));
-
     public Func<SwitchGymRequest, CancellationToken, Task<JwtResponse>> SwitchGymAsyncHandler { get; set; } =
         static (_, _) => Task.FromException<JwtResponse>(new InvalidOperationException("SwitchGymAsyncHandler not configured."));
 
@@ -637,15 +628,6 @@ public sealed class DelegatingIdentityService : IIdentityService
     public Task<JwtResponse> RegisterAsync(RegisterRequest request, CancellationToken cancellationToken = default) =>
         RegisterAsyncHandler(request, cancellationToken);
 
-    public Task<JwtResponse> LoginAsync(LoginRequest request, CancellationToken cancellationToken = default) =>
-        LoginAsyncHandler(request, cancellationToken);
-
-    public Task LogoutAsync(CancellationToken cancellationToken = default) =>
-        LogoutAsyncHandler(cancellationToken);
-
-    public Task<JwtResponse> RenewRefreshTokenAsync(RefreshTokenRequest request, CancellationToken cancellationToken = default) =>
-        RenewRefreshTokenAsyncHandler(request, cancellationToken);
-
     public Task<JwtResponse> SwitchGymAsync(SwitchGymRequest request, CancellationToken cancellationToken = default) =>
         SwitchGymAsyncHandler(request, cancellationToken);
 
@@ -657,6 +639,27 @@ public sealed class DelegatingIdentityService : IIdentityService
 
     public Task ResetPasswordAsync(ResetPasswordRequest request, CancellationToken cancellationToken = default) =>
         ResetPasswordAsyncHandler(request, cancellationToken);
+}
+
+public sealed class DelegatingAccountAuthService : IAccountAuthService
+{
+    public Func<LoginRequest, CancellationToken, Task<JwtResponse>> LoginAsyncHandler { get; set; } =
+        static (_, _) => Task.FromException<JwtResponse>(new InvalidOperationException("LoginAsyncHandler not configured."));
+
+    public Func<CancellationToken, Task> LogoutAsyncHandler { get; set; } =
+        static _ => Task.CompletedTask;
+
+    public Func<RefreshTokenRequest, CancellationToken, Task<JwtResponse>> RenewRefreshTokenAsyncHandler { get; set; } =
+        static (_, _) => Task.FromException<JwtResponse>(new InvalidOperationException("RenewRefreshTokenAsyncHandler not configured."));
+
+    public Task<JwtResponse> LoginAsync(LoginRequest request, CancellationToken cancellationToken = default) =>
+        LoginAsyncHandler(request, cancellationToken);
+
+    public Task LogoutAsync(CancellationToken cancellationToken = default) =>
+        LogoutAsyncHandler(cancellationToken);
+
+    public Task<JwtResponse> RenewRefreshTokenAsync(RefreshTokenRequest request, CancellationToken cancellationToken = default) =>
+        RenewRefreshTokenAsyncHandler(request, cancellationToken);
 }
 
 public sealed class DelegatingMemberWorkspaceService : IMemberWorkspaceService

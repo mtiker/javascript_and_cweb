@@ -1,4 +1,6 @@
 using App.BLL.Services;
+using App.BLL.Mapping;
+using WebApp.Areas.Admin.Services;
 
 namespace WebApp.Setup;
 
@@ -13,6 +15,12 @@ public static class ServiceExtensions
         services.AddScoped<IAuthorizationService, AuthorizationService>();
         services.AddScoped<ISubscriptionTierLimitService, SubscriptionTierLimitService>();
         services.AddScoped<ITokenService, TokenService>();
+        services.AddScoped<IAuthResponseMapper, AuthResponseMapper>();
+        services.AddScoped<IMemberMapper, MemberMapper>();
+        services.AddScoped<ITrainingMapper, TrainingMapper>();
+        services.AddScoped<IMembershipFinanceMapper, MembershipFinanceMapper>();
+        services.AddScoped<IMaintenanceMapper, MaintenanceMapper>();
+        services.AddScoped<IAccountAuthService, AccountAuthService>();
         services.AddScoped<IIdentityService, IdentityService>();
         services.AddScoped<IPlatformService, PlatformService>();
         services.AddScoped<IMemberWorkflowService, MemberWorkflowService>();
@@ -27,6 +35,10 @@ public static class ServiceExtensions
         services.AddScoped<ITrainingWorkflowService, TrainingWorkflowService>();
         services.AddScoped<IMaintenanceWorkflowService, MaintenanceWorkflowService>();
         services.AddScoped<IStaffWorkflowService, StaffWorkflowService>();
+        services.AddScoped<IAdminDashboardPageService, AdminDashboardPageService>();
+        services.AddScoped<IAdminGymsPageService, AdminGymsPageService>();
+        services.AddScoped<IAdminOperationsPageService, AdminOperationsPageService>();
+        services.AddScoped<IAdminSessionsPageService, AdminSessionsPageService>();
 
         return services;
     }
