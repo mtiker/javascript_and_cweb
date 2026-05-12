@@ -1,7 +1,11 @@
 # Final-1 CLEAN/ONION Migration Plan
 
-**Status:** Phase 9 (foundation) — boundary contracts and architecture tests
-landed. Service / controller migration deferred to later phases.
+**Status:** 2026-05-11 readiness update. The original Phase 9 foundation has
+expanded into implemented clean slices for auth, members, training,
+membership/finance, maintenance, tenant access, MVC Client page services, and
+selected MVC Admin CRUD controllers. This file remains the migration history
+and should be read with the current evidence in `docs/final2-defense.md`,
+`docs/testing.md`, and `docs/current-test-inventory.md`.
 
 **Phase 10 update:** the auth clean slice is now implemented. Account
 login/logout/refresh-token behavior uses `IAccountAuthService`,
@@ -15,6 +19,21 @@ behavior uses `IMemberWorkflowService`, `IMemberRepository`, `IAppUnitOfWork`,
 and `IMemberMapper`; public member routes, MVC Admin pages, and React member
 pages are unchanged. See `docs/final1-member-slice-plan.md`,
 `docs/member-repository-contract.md`, and `docs/member-mapper-audit.md`.
+
+**Phase 12 incremental update:** `TenantAccessChecker` no longer reads
+`IAppDbContext` directly for route-gym lookup. It depends on the BLL-owned
+`IAuthorizationQueryRepository`, implemented by `EfAuthorizationQueryRepository`
+in DAL, while preserving the existing active-gym, role, and not-found/forbidden
+authorization behavior. `ResourceAuthorizationChecker` remains unchanged for a
+separate phase.
+
+**2026-05-11 readiness update:** API controllers and migrated Admin CRUD
+controllers are guarded against direct `DbContext`/`IAppDbContext` injection.
+MVC Client Dashboard and Sessions controllers delegate to page services that
+use BLL contracts. Admin Operations and Sessions page services have been moved
+off direct EF access. Some Admin CRUD page services still use `AppDbContext`
+for pragmatic read composition, so complete presentation-layer query isolation
+is not claimed.
 
 This is the master plan for getting the assignment to the **mandatory
 CLEAN/ONION shape** required by the Final-1 grading criteria. It is
@@ -110,7 +129,7 @@ data-heavy service phase.
 | **9 (now)** | Foundation contracts, EF adapters, architecture tests, audits | Tests for forbidden deps green; DI resolves `IAppUnitOfWork`; no behavior change |
 | 10 | Migrate `MembershipPackageService` and `MembershipService` to `IAppUnitOfWork` | Those two services drop `using Microsoft.EntityFrameworkCore;`; integration tests still green |
 | 11 | Migrate workflow services (Coaching, Maintenance, Member, Training, Staff, Booking, Payment) | Same pattern; 7 services converted |
-| 12 | Migrate workspace + platform services (Finance, Member workspace, Platform, Subscription tier, Resource auth, Tenant access) | All BLL services off `IAppDbContext` |
+| 12 | Migrate workspace + platform services (Finance, Member workspace, Platform, Subscription tier, Resource auth, remaining Tenant access work) | All BLL services off `IAppDbContext`; tenant gym lookup already moved behind `IAuthorizationQueryRepository` |
 | 13 | Drop `Microsoft.EntityFrameworkCore` package from `App.BLL.csproj`; remove `IAppDbContext` | Architecture test tightened to forbid the package outright |
 | 14 | Migrate MVC controllers + `WorkspaceSwitcherViewComponent` to BLL services / read-models | `controller-dbcontext-audit.md` table empty; widen architecture test to all controllers |
 | 15 | Identity decoupling — extract `App.Domain.Identity` from `Microsoft.AspNetCore.Identity.EntityFrameworkCore` package | Domain has zero infra package refs |

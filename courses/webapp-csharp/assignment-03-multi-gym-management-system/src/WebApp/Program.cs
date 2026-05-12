@@ -7,6 +7,7 @@ builder.Services.AddHealthChecks();
 builder.Services.AddAppDatabase(builder.Configuration, builder.Environment);
 builder.Services.AddAppIdentity(builder.Configuration, builder.Environment);
 builder.Services.AddAppServices();
+builder.Services.AddAppModules();
 builder.Services.AddAppLocalization();
 builder.Services.AddAppControllers();
 builder.Services.AddAppForwardedHeaders();

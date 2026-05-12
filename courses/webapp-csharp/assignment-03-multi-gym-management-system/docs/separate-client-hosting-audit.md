@@ -1,6 +1,6 @@
 # Separate Client Hosting Audit
 
-**Audited:** 2026-04-28
+**Audited:** 2026-05-11
 
 This audit documents what stands between the current "embedded React" deployment
 (client copied into `WebApp/wwwroot/client`) and a deployment where the client
@@ -11,18 +11,36 @@ existing backend API.
 
 ## 1. Current state
 
-The React client is embedded in the ASP.NET Core image:
+The React client supports two deployment shapes:
+
+- embedded in the ASP.NET Core image under `/client`
+- standalone nginx image through the production Compose `client` profile
 
 - `Dockerfile` stage 1 builds `client/` with Node 20.
 - Stage 3 copies `client/dist` into `wwwroot/client`.
 - ASP.NET Core serves it via `app.UseStaticFiles()` and `MapFallbackToFile("/client/{*path:nonfile}", "client/index.html")` (see `src/WebApp/Setup/MiddlewareExtensions.cs:44-47`).
 - Vite is configured with `base: "/client/"` (see `client/vite.config.ts`).
 - Public URL: `https://mtiker-cweb-4.proxy.itcollege.ee/client`.
+- `client/Dockerfile` and `client/nginx.conf` provide the standalone client
+  image for Mode B.
+- `docker-compose.prod.yml` exposes that image through the optional `client`
+  profile.
 
 Because backend and client share an origin in production, no CORS preflight is
-ever triggered against the client UI. `Cors:AllowedOrigins` is set but only
-matters when the client is hosted elsewhere (or for local Vite at
-`http://localhost:5173`).
+triggered in embedded Mode A. `Cors:AllowedOrigins` matters for local Vite and
+for standalone Mode B.
+
+2026-05-11 validation evidence:
+- `cd client && npm test` passed with 34 tests.
+- `cd client && npm run build` passed.
+- `POSTGRES_PASSWORD=dummy JWT__Key=dummy-long-key VITE_API_BASE_URL=https://api.example.test docker compose --profile client -f docker-compose.prod.yml config` rendered the standalone `client` service with `VITE_API_BASE_URL=https://api.example.test`.
+
+Not verified in this pass:
+- no standalone client container was started
+- no public separate client URL was checked
+- no production CORS preflight was run against a live host
+- no browser deep-link smoke test was run for `/client/members`,
+  `/client/member-workspace`, or other direct routes
 
 ---
 

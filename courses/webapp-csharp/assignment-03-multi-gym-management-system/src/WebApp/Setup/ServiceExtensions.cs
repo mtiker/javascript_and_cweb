@@ -1,6 +1,9 @@
 using App.BLL.Services;
+using App.BLL.Services.Admin;
+using App.BLL.Services.Client;
 using App.BLL.Mapping;
 using WebApp.Areas.Admin.Services;
+using WebApp.Areas.Client.Services;
 
 namespace WebApp.Setup;
 
@@ -20,7 +23,6 @@ public static class ServiceExtensions
         services.AddScoped<ITrainingMapper, TrainingMapper>();
         services.AddScoped<IMembershipFinanceMapper, MembershipFinanceMapper>();
         services.AddScoped<IMaintenanceMapper, MaintenanceMapper>();
-        services.AddScoped<IAccountAuthService, AccountAuthService>();
         services.AddScoped<IIdentityService, IdentityService>();
         services.AddScoped<IPlatformService, PlatformService>();
         services.AddScoped<IMemberWorkflowService, MemberWorkflowService>();
@@ -35,10 +37,19 @@ public static class ServiceExtensions
         services.AddScoped<ITrainingWorkflowService, TrainingWorkflowService>();
         services.AddScoped<IMaintenanceWorkflowService, MaintenanceWorkflowService>();
         services.AddScoped<IStaffWorkflowService, StaffWorkflowService>();
+        services.AddScoped<IAdminOperationsQueryService, AdminOperationsQueryService>();
+        services.AddScoped<IAdminSessionsQueryService, AdminSessionsQueryService>();
+        services.AddScoped<IClientDashboardQueryService, ClientDashboardQueryService>();
+        services.AddScoped<IClientSessionsQueryService, ClientSessionsQueryService>();
         services.AddScoped<IAdminDashboardPageService, AdminDashboardPageService>();
         services.AddScoped<IAdminGymsPageService, AdminGymsPageService>();
         services.AddScoped<IAdminOperationsPageService, AdminOperationsPageService>();
         services.AddScoped<IAdminSessionsPageService, AdminSessionsPageService>();
+        services.AddScoped<IAdminMembersPageService, AdminMembersPageService>();
+        services.AddScoped<IAdminMembershipPackagesPageService, AdminMembershipPackagesPageService>();
+        services.AddScoped<IAdminTrainingCategoriesPageService, AdminTrainingCategoriesPageService>();
+        services.AddScoped<IClientDashboardPageService, ClientDashboardPageService>();
+        services.AddScoped<IClientSessionsPageService, ClientSessionsPageService>();
 
         return services;
     }

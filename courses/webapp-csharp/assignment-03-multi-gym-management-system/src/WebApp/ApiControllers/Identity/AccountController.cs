@@ -1,10 +1,12 @@
 using App.BLL.Services;
 using App.DTO.v1;
 using Asp.Versioning;
+using BuildingBlocks.Mediator;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using App.DTO.v1.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Modules.Users.Contracts;
 
 namespace WebApp.ApiControllers.Identity;
 
@@ -18,7 +20,7 @@ namespace WebApp.ApiControllers.Identity;
 [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
 public class AccountController(
     IIdentityService identityService,
-    IAccountAuthService accountAuthService) : ControllerBase
+    IMediator mediator) : ControllerBase
 {
     [AllowAnonymous]
     [HttpPost("register")]
@@ -33,7 +35,7 @@ public class AccountController(
     [ProducesResponseType(typeof(JwtResponse), StatusCodes.Status200OK)]
     public async Task<ActionResult<JwtResponse>> Login([FromBody] LoginRequest request, CancellationToken cancellationToken)
     {
-        return Ok(await accountAuthService.LoginAsync(request, cancellationToken));
+        return Ok(await mediator.SendAsync(new LoginCommand(request), cancellationToken));
     }
 
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
@@ -41,8 +43,7 @@ public class AccountController(
     [ProducesResponseType(typeof(Message), StatusCodes.Status200OK)]
     public async Task<ActionResult<Message>> Logout(CancellationToken cancellationToken)
     {
-        await accountAuthService.LogoutAsync(cancellationToken);
-        return Ok(new Message("Logged out."));
+        return Ok(await mediator.SendAsync(new LogoutCommand(), cancellationToken));
     }
 
     [AllowAnonymous]
@@ -50,7 +51,7 @@ public class AccountController(
     [ProducesResponseType(typeof(JwtResponse), StatusCodes.Status200OK)]
     public async Task<ActionResult<JwtResponse>> RenewRefreshToken([FromBody] RefreshTokenRequest request, CancellationToken cancellationToken)
     {
-        return Ok(await accountAuthService.RenewRefreshTokenAsync(request, cancellationToken));
+        return Ok(await mediator.SendAsync(new RefreshSessionCommand(request), cancellationToken));
     }
 
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
@@ -58,7 +59,7 @@ public class AccountController(
     [ProducesResponseType(typeof(JwtResponse), StatusCodes.Status200OK)]
     public async Task<ActionResult<JwtResponse>> SwitchGym([FromBody] SwitchGymRequest request, CancellationToken cancellationToken)
     {
-        return Ok(await identityService.SwitchGymAsync(request, cancellationToken));
+        return Ok(await mediator.SendAsync(new SwitchGymCommand(request), cancellationToken));
     }
 
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
@@ -66,7 +67,7 @@ public class AccountController(
     [ProducesResponseType(typeof(JwtResponse), StatusCodes.Status200OK)]
     public async Task<ActionResult<JwtResponse>> SwitchRole([FromBody] SwitchRoleRequest request, CancellationToken cancellationToken)
     {
-        return Ok(await identityService.SwitchRoleAsync(request, cancellationToken));
+        return Ok(await mediator.SendAsync(new SwitchRoleCommand(request), cancellationToken));
     }
 
     [AllowAnonymous]

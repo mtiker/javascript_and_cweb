@@ -1,0 +1,26 @@
+@model AdminMembershipPackageDeleteViewModel
+@inject IStringLocalizer<SharedResources> L
+
+<section class="panel">
+    <p class="eyebrow">@L["AdminWorkspace"]</p>
+    <h1>@L["DeleteMembershipPackage"]</h1>
+    <p>@L["ActiveGym"]: <strong>@Model.GymCode</strong></p>
+</section>
+
+<section class="panel">
+    <p>@L["ConfirmPackageRemoval"]</p>
+    <dl class="definition-list">
+        <dt>@L["Name"]</dt>
+        <dd>@Model.Name</dd>
+        <dt>@L["Price"]</dt>
+        <dd>@Model.BasePrice @Model.CurrencyCode</dd>
+    </dl>
+
+    <form asp-area="Admin" asp-controller="MembershipPackages" asp-action="Delete" asp-route-id="@Model.Id" method="post" class="form-grid">
+        <input type="hidden" name="id" value="@Model.Id" />
+        <div class="form-actions">
+            <button type="submit" class="danger">@L["DeletePackage"]</button>
+            <a asp-area="Admin" asp-controller="MembershipPackages" asp-action="Index" class="secondary">@L["Cancel"]</a>
+        </div>
+    </form>
+</section>

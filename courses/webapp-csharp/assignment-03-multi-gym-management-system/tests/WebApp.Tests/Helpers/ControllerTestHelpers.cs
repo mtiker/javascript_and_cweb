@@ -29,8 +29,12 @@ using App.DTO.v1.TrainingCategories;
 using App.DTO.v1.TrainingSessions;
 using App.DTO.v1.Vacations;
 using App.DTO.v1.WorkShifts;
+using BuildingBlocks.Mediator;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Modules.GymManagement.Contracts;
+using Modules.MembershipFinance.Contracts;
+using Modules.Training.Contracts;
 
 namespace WebApp.Tests.Helpers;
 
@@ -227,8 +231,146 @@ public sealed class DelegatingTrainingWorkflowService : ITrainingWorkflowService
         CancelBookingAsyncHandler(gymCode, id, cancellationToken);
 }
 
-public sealed class DelegatingMembershipWorkflowService : IMembershipWorkflowService
+public sealed class TrainingWorkflowMediatorAdapter(ITrainingWorkflowService trainingWorkflowService) : IMediator
 {
+    public Task SendAsync(IRequest request, CancellationToken cancellationToken = default)
+    {
+        return request switch
+        {
+            DeleteTrainingCategoryCommand message => trainingWorkflowService.DeleteCategoryAsync(message.GymCode, message.CategoryId, cancellationToken),
+            DeleteTrainingSessionCommand message => trainingWorkflowService.DeleteSessionAsync(message.GymCode, message.SessionId, cancellationToken),
+            CancelBookingCommand message => trainingWorkflowService.CancelBookingAsync(message.GymCode, message.BookingId, cancellationToken),
+            _ => throw new InvalidOperationException($"Unexpected mediator request {request.GetType().FullName}.")
+        };
+    }
+
+    public async Task<TResponse> SendAsync<TResponse>(IRequest<TResponse> request, CancellationToken cancellationToken = default)
+    {
+        object response = request switch
+        {
+            ListTrainingCategoriesQuery message => await trainingWorkflowService.GetCategoriesAsync(message.GymCode, cancellationToken),
+            CreateTrainingCategoryCommand message => await trainingWorkflowService.CreateCategoryAsync(message.GymCode, message.Request, cancellationToken),
+            UpdateTrainingCategoryCommand message => await trainingWorkflowService.UpdateCategoryAsync(message.GymCode, message.CategoryId, message.Request, cancellationToken),
+            ListTrainingSessionsQuery message => await trainingWorkflowService.GetSessionsAsync(message.GymCode, cancellationToken),
+            GetTrainingSessionQuery message => await trainingWorkflowService.GetSessionAsync(message.GymCode, message.SessionId, cancellationToken),
+            CreateTrainingSessionCommand message => await trainingWorkflowService.UpsertTrainingSessionAsync(message.GymCode, null, message.Request, cancellationToken),
+            UpdateTrainingSessionCommand message => await trainingWorkflowService.UpsertTrainingSessionAsync(message.GymCode, message.SessionId, message.Request, cancellationToken),
+            ListBookingsQuery message => await trainingWorkflowService.GetBookingsAsync(message.GymCode, cancellationToken),
+            CreateBookingCommand message => await trainingWorkflowService.CreateBookingAsync(message.GymCode, message.Request, cancellationToken),
+            UpdateBookingAttendanceCommand message => await trainingWorkflowService.UpdateAttendanceAsync(message.GymCode, message.BookingId, message.Request, cancellationToken),
+            _ => throw new InvalidOperationException($"Unexpected mediator request {request.GetType().FullName}.")
+        };
+
+        return (TResponse)response;
+    }
+}
+
+public sealed class MembershipFinanceMediatorAdapter(
+    IMembershipWorkflowService membershipWorkflowService,
+    IFinanceWorkspaceService? financeWorkspaceService = null) : IMediator
+{
+    public Task SendAsync(IRequest request, CancellationToken cancellationToken = default)
+    {
+        return request switch
+        {
+            DeleteMembershipPackageCommand message => membershipWorkflowService.DeletePackageAsync(message.GymCode, message.PackageId, cancellationToken),
+            DeleteMembershipCommand message => membershipWorkflowService.DeleteMembershipAsync(message.GymCode, message.MembershipId, cancellationToken),
+            _ => throw new InvalidOperationException($"Unexpected mediator request {request.GetType().FullName}.")
+        };
+    }
+
+    public async Task<TResponse> SendAsync<TResponse>(IRequest<TResponse> request, CancellationToken cancellationToken = default)
+    {
+        object response = request switch
+        {
+            ListMembershipPackagesQuery message => await membershipWorkflowService.GetPackagesAsync(message.GymCode, cancellationToken),
+            CreateMembershipPackageCommand message => await membershipWorkflowService.CreatePackageAsync(message.GymCode, message.Request, cancellationToken),
+            UpdateMembershipPackageCommand message => await membershipWorkflowService.UpdatePackageAsync(message.GymCode, message.PackageId, message.Request, cancellationToken),
+            ListMembershipsQuery message => await membershipWorkflowService.GetMembershipsAsync(message.GymCode, cancellationToken),
+            SellMembershipCommand message => await membershipWorkflowService.SellMembershipAsync(message.GymCode, message.Request, cancellationToken),
+            UpdateMembershipStatusCommand message => await membershipWorkflowService.UpdateMembershipStatusAsync(message.GymCode, message.MembershipId, message.Request, cancellationToken),
+            ListPaymentsQuery message => await membershipWorkflowService.GetPaymentsAsync(message.GymCode, cancellationToken),
+            CreatePaymentCommand message => await membershipWorkflowService.CreatePaymentAsync(message.GymCode, message.Request, cancellationToken),
+            GetCurrentFinanceWorkspaceQuery message => await RequiredFinanceService().GetCurrentWorkspaceAsync(message.GymCode, cancellationToken),
+            GetMemberFinanceWorkspaceQuery message => await RequiredFinanceService().GetWorkspaceAsync(message.GymCode, message.MemberId, cancellationToken),
+            ListInvoicesQuery message => await RequiredFinanceService().GetInvoicesAsync(message.GymCode, message.MemberId, cancellationToken),
+            GetInvoiceQuery message => await RequiredFinanceService().GetInvoiceAsync(message.GymCode, message.InvoiceId, cancellationToken),
+            CreateInvoiceCommand message => await RequiredFinanceService().CreateInvoiceAsync(message.GymCode, message.Request, cancellationToken),
+            PostInvoicePaymentCommand message => await RequiredFinanceService().AddInvoicePaymentAsync(message.GymCode, message.InvoiceId, message.Request, cancellationToken),
+            PostInvoiceRefundCommand message => await RequiredFinanceService().AddInvoiceRefundAsync(message.GymCode, message.InvoiceId, message.Request, cancellationToken),
+            _ => throw new InvalidOperationException($"Unexpected mediator request {request.GetType().FullName}.")
+        };
+
+        return (TResponse)response;
+    }
+
+    private IFinanceWorkspaceService RequiredFinanceService() =>
+        financeWorkspaceService ?? throw new InvalidOperationException("Finance workspace service not configured.");
+}
+
+public sealed class MaintenanceWorkflowMediatorAdapter(IMaintenanceWorkflowService maintenanceWorkflowService) : IMediator
+{
+    public Task SendAsync(IRequest request, CancellationToken cancellationToken = default)
+    {
+        return request switch
+        {
+            DeleteOpeningHoursCommand message => maintenanceWorkflowService.DeleteOpeningHoursAsync(message.GymCode, message.OpeningHoursId, cancellationToken),
+            DeleteOpeningHourExceptionCommand message => maintenanceWorkflowService.DeleteOpeningHourExceptionAsync(message.GymCode, message.ExceptionId, cancellationToken),
+            DeleteEquipmentModelCommand message => maintenanceWorkflowService.DeleteEquipmentModelAsync(message.GymCode, message.EquipmentModelId, cancellationToken),
+            DeleteEquipmentCommand message => maintenanceWorkflowService.DeleteEquipmentAsync(message.GymCode, message.EquipmentId, cancellationToken),
+            DeleteMaintenanceTaskCommand message => maintenanceWorkflowService.DeleteMaintenanceTaskAsync(message.GymCode, message.TaskId, cancellationToken),
+            DeleteGymUserCommand message => maintenanceWorkflowService.DeleteGymUserAsync(message.GymCode, message.AppUserId, message.RoleName, cancellationToken),
+            _ => throw new InvalidOperationException($"Unexpected mediator request {request.GetType().FullName}.")
+        };
+    }
+
+    public async Task<TResponse> SendAsync<TResponse>(IRequest<TResponse> request, CancellationToken cancellationToken = default)
+    {
+        object response = request switch
+        {
+            ListOpeningHoursQuery message => await maintenanceWorkflowService.GetOpeningHoursAsync(message.GymCode, cancellationToken),
+            CreateOpeningHoursCommand message => await maintenanceWorkflowService.CreateOpeningHoursAsync(message.GymCode, message.Request, cancellationToken),
+            UpdateOpeningHoursCommand message => await maintenanceWorkflowService.UpdateOpeningHoursAsync(message.GymCode, message.OpeningHoursId, message.Request, cancellationToken),
+            ListOpeningHourExceptionsQuery message => await maintenanceWorkflowService.GetOpeningHourExceptionsAsync(message.GymCode, cancellationToken),
+            CreateOpeningHourExceptionCommand message => await maintenanceWorkflowService.CreateOpeningHourExceptionAsync(message.GymCode, message.Request, cancellationToken),
+            UpdateOpeningHourExceptionCommand message => await maintenanceWorkflowService.UpdateOpeningHourExceptionAsync(message.GymCode, message.ExceptionId, message.Request, cancellationToken),
+            ListEquipmentModelsQuery message => await maintenanceWorkflowService.GetEquipmentModelsAsync(message.GymCode, cancellationToken),
+            CreateEquipmentModelCommand message => await maintenanceWorkflowService.CreateEquipmentModelAsync(message.GymCode, message.Request, cancellationToken),
+            UpdateEquipmentModelCommand message => await maintenanceWorkflowService.UpdateEquipmentModelAsync(message.GymCode, message.EquipmentModelId, message.Request, cancellationToken),
+            ListEquipmentQuery message => await maintenanceWorkflowService.GetEquipmentAsync(message.GymCode, cancellationToken),
+            CreateEquipmentCommand message => await maintenanceWorkflowService.CreateEquipmentAsync(message.GymCode, message.Request, cancellationToken),
+            UpdateEquipmentCommand message => await maintenanceWorkflowService.UpdateEquipmentAsync(message.GymCode, message.EquipmentId, message.Request, cancellationToken),
+            ListMaintenanceTasksQuery message => await maintenanceWorkflowService.GetMaintenanceTasksAsync(message.GymCode, cancellationToken),
+            CreateMaintenanceTaskCommand message => await maintenanceWorkflowService.CreateTaskAsync(message.GymCode, message.Request, cancellationToken),
+            UpdateMaintenanceTaskStatusCommand message => await maintenanceWorkflowService.UpdateTaskStatusAsync(message.GymCode, message.TaskId, message.Request, cancellationToken),
+            UpdateMaintenanceTaskAssignmentCommand message => await maintenanceWorkflowService.UpdateTaskAssignmentAsync(message.GymCode, message.TaskId, message.Request, cancellationToken),
+            ListMaintenanceTaskAssignmentHistoryQuery message => await maintenanceWorkflowService.GetTaskAssignmentHistoryAsync(message.GymCode, message.TaskId, cancellationToken),
+            GenerateDueMaintenanceTasksCommand message => new Message($"Created {await maintenanceWorkflowService.GenerateDueScheduledTasksAsync(message.GymCode, cancellationToken)} scheduled maintenance tasks."),
+            GetGymSettingsQuery message => await maintenanceWorkflowService.GetGymSettingsAsync(message.GymCode, cancellationToken),
+            UpdateGymSettingsCommand message => await maintenanceWorkflowService.UpdateGymSettingsAsync(message.GymCode, message.Request, cancellationToken),
+            ListGymUsersQuery message => await maintenanceWorkflowService.GetGymUsersAsync(message.GymCode, cancellationToken),
+            UpsertGymUserCommand message => await maintenanceWorkflowService.UpsertGymUserAsync(message.GymCode, message.Request, cancellationToken),
+            _ => throw new InvalidOperationException($"Unexpected mediator request {request.GetType().FullName}.")
+        };
+
+        return (TResponse)response;
+    }
+}
+
+public class DelegatingMembershipWorkflowService : IMembershipWorkflowService
+{
+    public Func<string, CancellationToken, Task<IReadOnlyCollection<MembershipPackageResponse>>> GetPackagesAsyncHandler { get; set; } =
+        static (_, _) => Task.FromResult<IReadOnlyCollection<MembershipPackageResponse>>([]);
+
+    public Func<string, MembershipPackageUpsertRequest, CancellationToken, Task<MembershipPackageResponse>> CreatePackageAsyncHandler { get; set; } =
+        static (_, _, _) => Task.FromException<MembershipPackageResponse>(new InvalidOperationException("CreatePackageAsyncHandler not configured."));
+
+    public Func<string, Guid, MembershipPackageUpsertRequest, CancellationToken, Task<MembershipPackageResponse>> UpdatePackageAsyncHandler { get; set; } =
+        static (_, _, _, _) => Task.FromException<MembershipPackageResponse>(new InvalidOperationException("UpdatePackageAsyncHandler not configured."));
+
+    public Func<string, Guid, CancellationToken, Task> DeletePackageAsyncHandler { get; set; } =
+        static (_, _, _) => Task.CompletedTask;
+
     public Func<string, CancellationToken, Task<IReadOnlyCollection<MembershipResponse>>> GetMembershipsAsyncHandler { get; set; } =
         static (_, _) => Task.FromResult<IReadOnlyCollection<MembershipResponse>>([]);
 
@@ -241,17 +383,23 @@ public sealed class DelegatingMembershipWorkflowService : IMembershipWorkflowSer
     public Func<string, Guid, CancellationToken, Task> DeleteMembershipAsyncHandler { get; set; } =
         static (_, _, _) => Task.CompletedTask;
 
+    public Func<string, CancellationToken, Task<IReadOnlyCollection<PaymentResponse>>> GetPaymentsAsyncHandler { get; set; } =
+        static (_, _) => Task.FromResult<IReadOnlyCollection<PaymentResponse>>([]);
+
+    public Func<string, PaymentCreateRequest, CancellationToken, Task<PaymentResponse>> CreatePaymentAsyncHandler { get; set; } =
+        static (_, _, _) => Task.FromException<PaymentResponse>(new InvalidOperationException("CreatePaymentAsyncHandler not configured."));
+
     public Task<IReadOnlyCollection<MembershipPackageResponse>> GetPackagesAsync(string gymCode, CancellationToken cancellationToken = default) =>
-        Task.FromResult<IReadOnlyCollection<MembershipPackageResponse>>([]);
+        GetPackagesAsyncHandler(gymCode, cancellationToken);
 
     public Task<MembershipPackageResponse> CreatePackageAsync(string gymCode, MembershipPackageUpsertRequest request, CancellationToken cancellationToken = default) =>
-        Task.FromException<MembershipPackageResponse>(new InvalidOperationException("CreatePackageAsync not configured."));
+        CreatePackageAsyncHandler(gymCode, request, cancellationToken);
 
     public Task<MembershipPackageResponse> UpdatePackageAsync(string gymCode, Guid id, MembershipPackageUpsertRequest request, CancellationToken cancellationToken = default) =>
-        Task.FromException<MembershipPackageResponse>(new InvalidOperationException("UpdatePackageAsync not configured."));
+        UpdatePackageAsyncHandler(gymCode, id, request, cancellationToken);
 
     public Task DeletePackageAsync(string gymCode, Guid id, CancellationToken cancellationToken = default) =>
-        Task.CompletedTask;
+        DeletePackageAsyncHandler(gymCode, id, cancellationToken);
 
     public Task<IReadOnlyCollection<MembershipResponse>> GetMembershipsAsync(string gymCode, CancellationToken cancellationToken = default) =>
         GetMembershipsAsyncHandler(gymCode, cancellationToken);
@@ -266,16 +414,16 @@ public sealed class DelegatingMembershipWorkflowService : IMembershipWorkflowSer
         DeleteMembershipAsyncHandler(gymCode, id, cancellationToken);
 
     public Task<IReadOnlyCollection<PaymentResponse>> GetPaymentsAsync(string gymCode, CancellationToken cancellationToken = default) =>
-        Task.FromResult<IReadOnlyCollection<PaymentResponse>>([]);
+        GetPaymentsAsyncHandler(gymCode, cancellationToken);
 
     public Task<PaymentResponse> CreatePaymentAsync(string gymCode, PaymentCreateRequest request, CancellationToken cancellationToken = default) =>
-        Task.FromException<PaymentResponse>(new InvalidOperationException("CreatePaymentAsync not configured."));
+        CreatePaymentAsyncHandler(gymCode, request, cancellationToken);
 
     public Task<decimal> CalculateBookingPriceAsync(Guid gymId, Guid memberId, TrainingSession trainingSession, CancellationToken cancellationToken = default) =>
         Task.FromResult(0m);
 }
 
-public sealed class DelegatingMaintenanceWorkflowService : IMaintenanceWorkflowService
+public class DelegatingMaintenanceWorkflowService : IMaintenanceWorkflowService
 {
     public Func<string, CancellationToken, Task<IReadOnlyCollection<OpeningHoursResponse>>> GetOpeningHoursAsyncHandler { get; set; } =
         static (_, _) => Task.FromResult<IReadOnlyCollection<OpeningHoursResponse>>([]);
@@ -722,7 +870,7 @@ public sealed class DelegatingCoachingPlanService : ICoachingPlanService
         DeletePlanAsyncHandler(gymCode, id, cancellationToken);
 }
 
-public sealed class DelegatingFinanceWorkspaceService : IFinanceWorkspaceService
+public class DelegatingFinanceWorkspaceService : IFinanceWorkspaceService
 {
     public Func<string, CancellationToken, Task<FinanceWorkspaceResponse>> GetCurrentWorkspaceAsyncHandler { get; set; } =
         static (_, _) => Task.FromException<FinanceWorkspaceResponse>(new InvalidOperationException("GetCurrentWorkspaceAsyncHandler not configured."));

@@ -1,0 +1,50 @@
+@model AdminTrainingCategoryFormViewModel
+@inject IStringLocalizer<SharedResources> L
+
+<section class="panel">
+    <p class="eyebrow">@L["AdminWorkspace"]</p>
+    <h1>@L["TrainingCategory"]</h1>
+    <p>@L["ActiveGym"]: <strong>@Model.GymCode</strong></p>
+    @if (Model.AlternateNames.Count > 0)
+    {
+        <p class="muted-text">@L["Translations"]:
+            @foreach (var alternate in Model.AlternateNames)
+            {
+                <span>@alternate</span>
+            }
+        </p>
+    }
+</section>
+
+<section class="panel">
+    <form asp-area="Admin" asp-controller="TrainingCategories" asp-action="Edit" asp-route-id="@Model.Id" method="post" class="form-grid">
+        <div asp-validation-summary="All" class="validation-summary-errors"></div>
+        <input type="hidden" asp-for="Id" />
+
+        <div class="form-row">
+            <label asp-for="Name">@L["Name"]</label>
+            <input asp-for="Name" maxlength="128" />
+            <span asp-validation-for="Name" class="field-validation-error"></span>
+        </div>
+
+        <div class="form-row">
+            <label asp-for="Description">@L["Description"]</label>
+            <textarea asp-for="Description" rows="3" maxlength="512"></textarea>
+            <span asp-validation-for="Description" class="field-validation-error"></span>
+            @if (Model.AlternateDescriptions.Count > 0)
+            {
+                <ul class="muted-text">
+                    @foreach (var alternate in Model.AlternateDescriptions)
+                    {
+                        <li>@alternate</li>
+                    }
+                </ul>
+            }
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="primary">@L["Save"]</button>
+            <a asp-area="Admin" asp-controller="TrainingCategories" asp-action="Index" class="secondary">@L["Cancel"]</a>
+        </div>
+    </form>
+</section>

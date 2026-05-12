@@ -93,7 +93,7 @@
                         <td>@task.AssetTag</td>
                         <td>@task.TaskType</td>
                         <td>@task.Status</td>
-                        <td>@(task.AssignedTo ?? L["Unassigned"])</td>
+                        <td>@(task.AssignedTo ?? L["Unassigned"].Value)</td>
                         <td>@(task.DueAtUtc?.ToLocalTime().ToString("g") ?? "-")</td>
                     </tr>
                 }

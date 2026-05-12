@@ -9,6 +9,7 @@ public static class PersistenceServiceExtensions
     public static IServiceCollection AddAppPersistence(this IServiceCollection services)
     {
         services.AddScoped(typeof(IRepository<,>), typeof(EfRepository<,>));
+        services.AddScoped<IAuthorizationQueryRepository, EfAuthorizationQueryRepository>();
         services.AddScoped<IRefreshTokenRepository, EfRefreshTokenRepository>();
         services.AddScoped<IMemberRepository, EfMemberRepository>();
         services.AddScoped<ITrainingCategoryRepository, EfTrainingCategoryRepository>();

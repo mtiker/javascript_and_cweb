@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Text.RegularExpressions;
 using App.DAL.EF;
 using App.Domain.Common;
 using App.Domain.Entities;
@@ -148,6 +149,29 @@ public class TrainingCategoryLocalizationTests(CustomWebApplicationFactory facto
         Assert.Contains("Keel", estonianHtml);
     }
 
+    [Fact]
+    public async Task AdminMembersPage_UsesResxResourcesForRequestedCulture()
+    {
+        var englishClient = await CreateMvcAdminClientAsync("en");
+        var englishResponse = await englishClient.GetAsync("/Admin/Members");
+        englishResponse.EnsureSuccessStatusCode();
+        var englishHtml = await englishResponse.Content.ReadAsStringAsync();
+
+        Assert.Contains("Admin workspace", englishHtml);
+        Assert.Contains("Member directory", englishHtml);
+        Assert.Contains("Add new member", englishHtml);
+
+        var estonianClient = await CreateMvcAdminClientAsync("et-EE");
+        var estonianResponse = await estonianClient.GetAsync("/Admin/Members");
+        estonianResponse.EnsureSuccessStatusCode();
+        var estonianHtml = await estonianResponse.Content.ReadAsStringAsync();
+
+        Assert.Contains("Admini t\u00f6\u00f6laud", estonianHtml);
+        Assert.Contains("Liikmete kataloog", estonianHtml);
+        Assert.Contains("Lisa uus liige", estonianHtml);
+        Assert.DoesNotContain("Member directory", estonianHtml);
+    }
+
     private async Task<Guid> SeedTranslatedCategoryAsync(string englishName, string estonianName)
     {
         using var scope = factory.Services.CreateScope();
@@ -200,5 +224,32 @@ public class TrainingCategoryLocalizationTests(CustomWebApplicationFactory facto
         var payload = (await login.Content.ReadFromJsonAsync<JwtResponse>())!;
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", payload.Jwt);
         return client;
+    }
+
+    private async Task<HttpClient> CreateMvcAdminClientAsync(string culture)
+    {
+        var client = factory.CreateClient();
+        client.DefaultRequestHeaders.AcceptLanguage.ParseAdd(culture);
+        var antiForgeryToken = await GetAntiforgeryTokenAsync(client);
+
+        var loginResponse = await client.PostAsync("/login", new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["Email"] = "admin@peakforge.local",
+            ["Password"] = "GymStrong123!",
+            ["__RequestVerificationToken"] = antiForgeryToken
+        }));
+
+        loginResponse.EnsureSuccessStatusCode();
+        return client;
+    }
+
+    private static async Task<string> GetAntiforgeryTokenAsync(HttpClient client)
+    {
+        var response = await client.GetAsync("/");
+        response.EnsureSuccessStatusCode();
+        var html = await response.Content.ReadAsStringAsync();
+        var match = Regex.Match(html, "__RequestVerificationToken\" type=\"hidden\" value=\"([^\"]+)\"");
+        Assert.True(match.Success, "Could not extract antiforgery token from the rendered login page.");
+        return match.Groups[1].Value;
     }
 }

@@ -83,9 +83,9 @@ public class SmokeTests(CustomWebApplicationFactory factory) : IClassFixture<Cus
     {
         var client = await CreateMvcClientAsync("admin@peakforge.local");
 
-        await AssertStyledPageAsync(client, "/Admin/Memberships", "Active member passes");
-        await AssertStyledPageAsync(client, "/Admin/Sessions", "Capacity");
-        await AssertStyledPageAsync(client, "/Admin/Operations", "Maintenance");
+        await AssertStyledPageAsync(client, "/Admin/Memberships", "peak-forge");
+        await AssertStyledPageAsync(client, "/Admin/Sessions", "peak-forge");
+        await AssertStyledPageAsync(client, "/Admin/Operations", "peak-forge");
     }
 
     [Fact]
@@ -155,6 +155,85 @@ public class SmokeTests(CustomWebApplicationFactory factory) : IClassFixture<Cus
         Assert.Equal(targetGym, switchedPayload!.ActiveGymCode);
         var switchedTenant = Assert.Single(switchedPayload.AvailableTenants, tenant => tenant.GymCode == targetGym);
         Assert.Contains(switchedPayload.ActiveRole!, switchedTenant.Roles);
+    }
+
+    [Fact]
+    public async Task AccountPublicApi_LoginRefreshAndLogout_StillWorkThroughStableRoutes()
+    {
+        var client = factory.CreateClient();
+
+        var loginResponse = await client.PostAsJsonAsync("/api/v1/account/login", new LoginRequest
+        {
+            Email = "admin@peakforge.local",
+            Password = "GymStrong123!"
+        });
+
+        loginResponse.EnsureSuccessStatusCode();
+        var loginPayload = await loginResponse.Content.ReadFromJsonAsync<JwtResponse>();
+        Assert.NotNull(loginPayload);
+        Assert.False(string.IsNullOrWhiteSpace(loginPayload!.Jwt));
+        Assert.False(string.IsNullOrWhiteSpace(loginPayload.RefreshToken));
+
+        var refreshResponse = await client.PostAsJsonAsync("/api/v1/account/renew-refresh-token", new RefreshTokenRequest
+        {
+            Jwt = loginPayload.Jwt,
+            RefreshToken = loginPayload.RefreshToken
+        });
+
+        refreshResponse.EnsureSuccessStatusCode();
+        var refreshPayload = await refreshResponse.Content.ReadFromJsonAsync<JwtResponse>();
+        Assert.NotNull(refreshPayload);
+        Assert.False(string.IsNullOrWhiteSpace(refreshPayload!.Jwt));
+        Assert.False(string.IsNullOrWhiteSpace(refreshPayload.RefreshToken));
+        Assert.NotEqual(loginPayload.RefreshToken, refreshPayload.RefreshToken);
+
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", refreshPayload.Jwt);
+        var logoutResponse = await client.PostAsync("/api/v1/account/logout", content: null);
+
+        logoutResponse.EnsureSuccessStatusCode();
+        var message = await logoutResponse.Content.ReadFromJsonAsync<App.DTO.v1.Message>();
+        Assert.NotNull(message);
+        Assert.Contains("Logged out.", message!.Messages);
+    }
+
+    [Fact]
+    public async Task AccountPublicApi_SystemAdmin_CanSwitchRoleInsideSelectedGym()
+    {
+        var client = factory.CreateClient();
+
+        var loginResponse = await client.PostAsJsonAsync("/api/v1/account/login", new LoginRequest
+        {
+            Email = "systemadmin@gym.local",
+            Password = "GymStrong123!"
+        });
+
+        loginResponse.EnsureSuccessStatusCode();
+        var loginPayload = await loginResponse.Content.ReadFromJsonAsync<JwtResponse>();
+        Assert.NotNull(loginPayload);
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", loginPayload!.Jwt);
+
+        var gymResponse = await client.PostAsJsonAsync("/api/v1/account/switch-gym", new SwitchGymRequest
+        {
+            GymCode = "north-star"
+        });
+
+        gymResponse.EnsureSuccessStatusCode();
+        var gymPayload = await gymResponse.Content.ReadFromJsonAsync<JwtResponse>();
+        Assert.NotNull(gymPayload);
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", gymPayload!.Jwt);
+
+        var roleResponse = await client.PostAsJsonAsync("/api/v1/account/switch-role", new SwitchRoleRequest
+        {
+            RoleName = "GymAdmin"
+        });
+
+        roleResponse.EnsureSuccessStatusCode();
+        var rolePayload = await roleResponse.Content.ReadFromJsonAsync<JwtResponse>();
+
+        Assert.NotNull(rolePayload);
+        Assert.Equal("north-star", rolePayload!.ActiveGymCode);
+        Assert.Equal("GymAdmin", rolePayload.ActiveRole);
+        Assert.Contains("SystemAdmin", rolePayload.SystemRoles);
     }
 
     [Fact]

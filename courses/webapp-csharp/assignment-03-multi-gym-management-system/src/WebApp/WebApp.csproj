@@ -27,5 +27,10 @@
     <ProjectReference Include="..\App.DTO\App.DTO.csproj" />
     <ProjectReference Include="..\App.Domain\App.Domain.csproj" />
     <ProjectReference Include="..\App.Resources\App.Resources.csproj" />
+    <ProjectReference Include="..\BuildingBlocks\BuildingBlocks.csproj" />
+    <ProjectReference Include="..\Modules.Users\Modules.Users.csproj" />
+    <ProjectReference Include="..\Modules.GymManagement\Modules.GymManagement.csproj" />
+    <ProjectReference Include="..\Modules.Training\Modules.Training.csproj" />
+    <ProjectReference Include="..\Modules.MembershipFinance\Modules.MembershipFinance.csproj" />
   </ItemGroup>
 </Project>

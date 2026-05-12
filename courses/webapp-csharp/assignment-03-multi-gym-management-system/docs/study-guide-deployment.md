@@ -22,8 +22,9 @@ The public proxy target is mapped to VPS port `83`.
 
 ## Required Production Inputs
 - `JWT__Key` (must be provided securely)
+- `POSTGRES_PASSWORD` (must be provided securely; no production default)
 - `CORS_ALLOWED_ORIGIN`
-- `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`
+- `POSTGRES_DB`, `POSTGRES_USER` when overriding Compose defaults
 
 ## Reverse Proxy Readiness
 - forwarded headers are processed before HTTPS/auth middleware

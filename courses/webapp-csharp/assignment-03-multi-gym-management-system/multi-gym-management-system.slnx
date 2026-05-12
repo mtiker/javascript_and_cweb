@@ -5,6 +5,11 @@
     <Project Path="src/App.Domain/App.Domain.csproj" />
     <Project Path="src/App.DTO/App.DTO.csproj" />
     <Project Path="src/App.Resources/App.Resources.csproj" />
+    <Project Path="src/BuildingBlocks/BuildingBlocks.csproj" />
+    <Project Path="src/Modules.Users/Modules.Users.csproj" />
+    <Project Path="src/Modules.GymManagement/Modules.GymManagement.csproj" />
+    <Project Path="src/Modules.Training/Modules.Training.csproj" />
+    <Project Path="src/Modules.MembershipFinance/Modules.MembershipFinance.csproj" />
     <Project Path="src/WebApp/WebApp.csproj" />
   </Folder>
   <Folder Name="/tests/">

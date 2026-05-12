@@ -1,6 +1,6 @@
 # Controller → DbContext Audit
 
-**Audited:** 2026-04-28
+**Audited:** 2026-05-09
 
 This audit lists every controller that reaches into `AppDbContext` (or
 `IAppDbContext`) directly, so we can size the future migration to BLL ports
@@ -28,15 +28,19 @@ in Phase 9 enforces this boundary going forward.
 | `Areas/Admin/Controllers/MembershipsController` | 2 | `Memberships`, `MembershipPackages` | Already partly served by `IMembershipService`. |
 | `Areas/Admin/Controllers/OperationsController` | 3 | bookings/invoices joins | Workflow page; would re-use `IBookingPricingService` + `IPaymentService`. |
 | `Areas/Admin/Controllers/SessionsController` | 1 | `TrainingSessions` | Tiny — could fold into `ITrainingWorkflowService`. |
-| `Areas/Client/Controllers/DashboardController` | 3 | per-member workspace reads | Overlaps `IMemberWorkspaceService`. |
 | `Areas/Client/Controllers/MaintenanceController` | 1 | `MaintenanceTasks` | Use `IMaintenanceWorkflowService`. |
 | `Areas/Client/Controllers/ProfileController` | 4 | identity profile reads/writes | Use `IIdentityService` + new profile read-model. |
 | `Areas/Client/Controllers/SessionsController` | 5 | sessions + bookings | Largest leak — booking flow. |
-| **Total** | **29** | | All MVC; no API controller leaks. |
+| **Total** | **26** | | All MVC; no API controller leaks. |
 
 `Areas/Admin/Controllers/MembersController` already routes through
 `IMemberWorkflowService` and is the reference shape MVC controllers should
 match.
+
+`Areas/Client/Controllers/DashboardController` now routes through
+`IClientDashboardPageService`. The page service builds the Razor view model
+from BLL/application contracts, and `IClientDashboardQueryService` composes the
+dashboard snapshot through `IAppUnitOfWork`.
 
 ---
 
@@ -61,9 +65,11 @@ for any `ControllerBase`-derived type whose namespace starts with
 `WebApp.ApiControllers`, and asserts that none of them declare a constructor
 parameter assignable to `DbContext` or `IAppDbContext`.
 
-This locks the **clean side** in CI today. Widening the scope to MVC
-controllers happens after the migration backlog above is worked through, in a
-later phase.
+This locks the **clean side** in CI today. A scoped Client Dashboard regression
+guard also asserts that the MVC controller depends only on
+`IClientDashboardPageService`, and that the page/query service path does not
+reference direct EF/DAL types. Widening the scope to all MVC controllers happens
+after the migration backlog above is worked through, in a later phase.
 
 ---
 
@@ -75,10 +81,9 @@ Suggested ordering when the MVC migration is taken on:
 2. `Areas/Admin/SessionsController` — 1 call, BLL service exists.
 3. `Areas/Client/MaintenanceController` — 1 call, BLL service exists.
 4. `Areas/Admin/MembershipsController` — 2 calls, BLL service exists.
-5. `Areas/Client/DashboardController` — 3 calls, overlaps existing workspace service.
-6. `Areas/Admin/DashboardController` — 4 calls.
-7. `Areas/Admin/OperationsController` — 3 calls (joins).
-8. `Areas/Client/ProfileController` — 4 calls.
-9. `Controllers/HomeController` — 5 calls, role switching is sensitive.
-10. `Areas/Client/SessionsController` — 5 calls, biggest surface.
-11. `WorkspaceSwitcherViewComponent` — same shape as `HomeController.SwitchGym`.
+5. `Areas/Admin/DashboardController` — 4 calls.
+6. `Areas/Admin/OperationsController` — 3 calls (joins).
+7. `Areas/Client/ProfileController` — 4 calls.
+8. `Controllers/HomeController` — 5 calls, role switching is sensitive.
+9. `Areas/Client/SessionsController` — 5 calls, biggest surface.
+10. `WorkspaceSwitcherViewComponent` — same shape as `HomeController.SwitchGym`.

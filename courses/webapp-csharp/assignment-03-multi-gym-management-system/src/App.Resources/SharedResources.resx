@@ -183,4 +183,214 @@
   <data name="ErrorMessage" xml:space="preserve">
     <value>The request could not be completed. Please return to the previous page and try again.</value>
   </data>
+  <data name="TrainingCategories" xml:space="preserve">
+    <value>Training categories</value>
+  </data>
+  <data name="TrainingCategory" xml:space="preserve">
+    <value>Training category</value>
+  </data>
+  <data name="NoTrainingCategoriesYet" xml:space="preserve">
+    <value>No training categories configured yet.</value>
+  </data>
+  <data name="AddTrainingCategory" xml:space="preserve">
+    <value>Add training category</value>
+  </data>
+  <data name="Translations" xml:space="preserve">
+    <value>Translations</value>
+  </data>
+  <data name="Description" xml:space="preserve">
+    <value>Description</value>
+  </data>
+  <data name="Actions" xml:space="preserve">
+    <value>Actions</value>
+  </data>
+  <data name="Edit" xml:space="preserve">
+    <value>Edit</value>
+  </data>
+  <data name="Delete" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="Save" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="Create" xml:space="preserve">
+    <value>Create</value>
+  </data>
+  <data name="ConfirmDelete" xml:space="preserve">
+    <value>Confirm delete</value>
+  </data>
+  <data name="Platform" xml:space="preserve">
+    <value>Platform</value>
+  </data>
+  <data name="FinanceWorkspace" xml:space="preserve">
+    <value>Finance workspace</value>
+  </data>
+  <data name="Active" xml:space="preserve">
+    <value>Active</value>
+  </data>
+  <data name="Inactive" xml:space="preserve">
+    <value>Inactive</value>
+  </data>
+  <data name="ActiveMembers" xml:space="preserve">
+    <value>Active</value>
+  </data>
+  <data name="SuspendedMembers" xml:space="preserve">
+    <value>Suspended</value>
+  </data>
+  <data name="LeftMembers" xml:space="preserve">
+    <value>Left</value>
+  </data>
+  <data name="TotalMembers" xml:space="preserve">
+    <value>Total members</value>
+  </data>
+  <data name="AddNewMember" xml:space="preserve">
+    <value>Add new member</value>
+  </data>
+  <data name="MemberDirectory" xml:space="preserve">
+    <value>Member directory</value>
+  </data>
+  <data name="NoMembersInGymYet" xml:space="preserve">
+    <value>No members exist in this gym yet.</value>
+  </data>
+  <data name="Code" xml:space="preserve">
+    <value>Code</value>
+  </data>
+  <data name="Name" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="City" xml:space="preserve">
+    <value>City</value>
+  </data>
+  <data name="CreateMember" xml:space="preserve">
+    <value>Create member</value>
+  </data>
+  <data name="EditMember" xml:space="preserve">
+    <value>Edit member</value>
+  </data>
+  <data name="DeleteMember" xml:space="preserve">
+    <value>Delete member</value>
+  </data>
+  <data name="FirstName" xml:space="preserve">
+    <value>First name</value>
+  </data>
+  <data name="LastName" xml:space="preserve">
+    <value>Last name</value>
+  </data>
+  <data name="PersonalCode" xml:space="preserve">
+    <value>Personal code</value>
+  </data>
+  <data name="DateOfBirth" xml:space="preserve">
+    <value>Date of birth</value>
+  </data>
+  <data name="SaveChanges" xml:space="preserve">
+    <value>Save changes</value>
+  </data>
+  <data name="ConfirmMemberDeletion" xml:space="preserve">
+    <value>Confirm deletion of the following member. This will remove the member from active listings.</value>
+  </data>
+  <data name="FullName" xml:space="preserve">
+    <value>Full name</value>
+  </data>
+  <data name="MembershipPackages" xml:space="preserve">
+    <value>Membership packages</value>
+  </data>
+  <data name="AddNewPackage" xml:space="preserve">
+    <value>Add new package</value>
+  </data>
+  <data name="Packages" xml:space="preserve">
+    <value>Packages</value>
+  </data>
+  <data name="NoMembershipPackagesYet" xml:space="preserve">
+    <value>No membership packages configured yet.</value>
+  </data>
+  <data name="Duration" xml:space="preserve">
+    <value>Duration</value>
+  </data>
+  <data name="Price" xml:space="preserve">
+    <value>Price</value>
+  </data>
+  <data name="TrainingBenefit" xml:space="preserve">
+    <value>Training benefit</value>
+  </data>
+  <data name="FreeSessions" xml:space="preserve">
+    <value>Free sessions</value>
+  </data>
+  <data name="TrainingDiscountPercent" xml:space="preserve">
+    <value>{0}% discount</value>
+  </data>
+  <data name="CreateMembershipPackage" xml:space="preserve">
+    <value>Create membership package</value>
+  </data>
+  <data name="EditMembershipPackage" xml:space="preserve">
+    <value>Edit membership package</value>
+  </data>
+  <data name="DeleteMembershipPackage" xml:space="preserve">
+    <value>Delete membership package</value>
+  </data>
+  <data name="PackageType" xml:space="preserve">
+    <value>Package type</value>
+  </data>
+  <data name="DurationValue" xml:space="preserve">
+    <value>Duration value</value>
+  </data>
+  <data name="DurationUnit" xml:space="preserve">
+    <value>Duration unit</value>
+  </data>
+  <data name="BasePrice" xml:space="preserve">
+    <value>Base price</value>
+  </data>
+  <data name="CurrencyCode" xml:space="preserve">
+    <value>Currency code</value>
+  </data>
+  <data name="TrainingDiscount" xml:space="preserve">
+    <value>Training discount %</value>
+  </data>
+  <data name="TrainingIsFree" xml:space="preserve">
+    <value>Training is free</value>
+  </data>
+  <data name="CreatePackage" xml:space="preserve">
+    <value>Create package</value>
+  </data>
+  <data name="ConfirmPackageRemoval" xml:space="preserve">
+    <value>Confirm removal of the following package. The package will no longer surface in active listings.</value>
+  </data>
+  <data name="DeletePackage" xml:space="preserve">
+    <value>Delete package</value>
+  </data>
+  <data name="ActiveMemberPasses" xml:space="preserve">
+    <value>Active member passes</value>
+  </data>
+  <data name="NoActiveMembershipsFound" xml:space="preserve">
+    <value>No active memberships found.</value>
+  </data>
+  <data name="Member" xml:space="preserve">
+    <value>Member</value>
+  </data>
+  <data name="Package" xml:space="preserve">
+    <value>Package</value>
+  </data>
+  <data name="Validity" xml:space="preserve">
+    <value>Validity</value>
+  </data>
+  <data name="NoSessionsScheduledForActiveGym" xml:space="preserve">
+    <value>No sessions scheduled for the active gym.</value>
+  </data>
+  <data name="Session" xml:space="preserve">
+    <value>Session</value>
+  </data>
+  <data name="Time" xml:space="preserve">
+    <value>Time</value>
+  </data>
+  <data name="Capacity" xml:space="preserve">
+    <value>Capacity</value>
+  </data>
+  <data name="Trainers" xml:space="preserve">
+    <value>Trainers</value>
+  </data>
+  <data name="NoTrainersAssigned" xml:space="preserve">
+    <value>No trainers assigned</value>
+  </data>
 </root>

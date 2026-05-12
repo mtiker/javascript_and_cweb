@@ -8,7 +8,7 @@ This audit covers the Assignment 03 training-category vertical slice:
 
 - domain entity: `TrainingCategory`
 - DTOs: `TrainingCategoryResponse`, `TrainingCategoryUpsertRequest`
-- BLL orchestration: `TrainingWorkflowService`
+- module orchestration: `Modules.Training.Application` category handlers
 - API controller: `/api/v1/{gymCode}/training-categories`
 - React CRUD page: `TrainingCategoriesPage`
 - localization behavior for category `Name` and `Description`
@@ -33,7 +33,8 @@ Access rules:
 
 Response behavior:
 
-- translated category values are projected in BLL using `CultureInfo.CurrentUICulture`
+- translated category values are projected through the existing training mapper
+  using `CultureInfo.CurrentUICulture`
 - create returns `201 Created`
 - update returns `200 OK`
 - delete returns `204 NoContent`
@@ -50,7 +51,8 @@ Current implementation:
 
 - `TrainingCategoryUpsertRequest.Name` is required and capped at 128 characters
 - `TrainingCategoryUpsertRequest.Description` is capped at 512 characters
-- `TrainingWorkflowService` rejects blank names with `ValidationAppException`
+- Training-module create/update handlers reject blank names with
+  `ValidationAppException`
 - update/delete use `entity.Id == id && entity.GymId == gymId`
 
 ## Test Evidence

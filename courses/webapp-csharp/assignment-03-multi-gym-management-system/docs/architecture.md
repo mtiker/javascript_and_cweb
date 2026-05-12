@@ -35,14 +35,37 @@ Separate client:
 Projects:
 - `App.Domain`: entities, enums, role names, claim types, shared abstractions
 - `App.DAL.EF`: `AppDbContext`, mappings, migrations, tenant filters, seeding, repository implementations, EF Unit of Work
-- `App.BLL`: business services, `IAppDbContext` boundary, repository/UOW contracts, authorization helpers, token and SaaS workflows
+- `App.BLL`: business services, `IAppDbContext` boundary, repository/UOW contracts, authorization query contracts, authorization helpers, token and SaaS workflows
 - `App.DTO`: public API contracts
 - `App.Resources`: `.resx` localization resources
+- `BuildingBlocks`: mediator and module registration abstractions
+- `Modules.Users`: account session mediator messages and handlers
+- `Modules.GymManagement`: gym/member/maintenance/facility module messages and handlers
+- `Modules.Training`: training category/session/booking/attendance module messages and handlers
+- `Modules.MembershipFinance`: package/membership/payment/invoice/refund/finance workspace module messages and handlers
 - `WebApp`: API controllers, MVC controllers, middleware, views, startup
 - `WebApp.Tests`: unit and integration tests
 - `client`: separate React client and frontend tests
 
 Code organization mirrors the Assignment 18 backend style: each domain entity has its own file, DTOs are split by API resource namespace, BLL service interfaces live beside their implementations, seed data is split through partial files, and `WebApp/Setup` separates database, identity, service registration, web API, middleware, and data initialization.
+
+## Module Boundary Posture
+
+Final2 module ownership is intentionally partial and explicit:
+
+- module projects do not reference each other directly
+- WebApp is the composition root and dispatches migrated API slices through
+  `IMediator`
+- Training category CRUD and MembershipFinance package CRUD own their
+  orchestration inside module application handlers
+- Users account-session messages, GymManagement member/maintenance/facility
+  messages, Training session/booking/attendance messages, and broader
+  MembershipFinance messages are mediated through module contracts
+- several mediated handlers still call shared BLL services
+- all modules still share one `AppDbContext`
+
+This is modular-monolith evidence, not a claim of full module isolation or
+microservice extraction.
 
 ## Request Flows
 
@@ -62,7 +85,7 @@ API flow:
 
 Separate client flow:
 1. React client logs in through `/api/v1/account/login`
-2. auth state is stored in `sessionStorage`
+2. auth state, including the refresh token, is stored in `sessionStorage`
 3. `ApiClient` adds the bearer token and selected `Accept-Language` to API requests
 4. a `401` triggers one refresh attempt through `/api/v1/account/renew-refresh-token`
 5. refresh failure clears auth state and sends the user back to login
@@ -78,6 +101,14 @@ Production client flow:
 2. `client/dist` is copied into `WebApp/wwwroot/client`
 3. ASP.NET Core serves `/client` and `/client/{route}` from `client/index.html`
 4. production API calls default to same-origin when `VITE_API_BASE_URL` is not set
+
+Standalone client flow:
+1. `client/Dockerfile` builds the same React client into an nginx image
+2. production Compose includes the service behind the opt-in `client` profile
+3. `VITE_API_BASE_URL` is baked into the standalone bundle at build time
+4. backend CORS must include the standalone client origin
+5. this flow is validated by client build and Compose config, but not by a
+   live public smoke test in the 2026-05-11 readiness pass
 
 ## Multi-Tenancy Model
 
@@ -179,7 +210,8 @@ Frontend structure:
 Boundary note:
 - tenant members, training, membership, payment, invoice, refund, and finance workspace workflows now run through BLL services backed by repository contracts, Unit of Work, and BLL mappers
 - account login, logout, and refresh-token renewal now run through `IAccountAuthService`, `IRefreshTokenRepository`, `IAppUnitOfWork`, and `AuthResponseMapper`
-- staff, contracts, vacations, maintenance, and broader platform workflows still use focused BLL services; remaining direct `AppDbContext` usage is intentionally limited to slices not yet migrated and framework infrastructure such as Identity/EF setup
+- `TenantAccessChecker` now uses `IAuthorizationQueryRepository` for route-gym lookup, keeping active-gym and role decisions in BLL while EF query details stay in DAL
+- staff, contracts, vacations, maintenance, resource authorization, and broader platform workflows still use focused BLL services; remaining direct `AppDbContext`/`IAppDbContext` usage is intentionally limited to slices not yet migrated and framework infrastructure such as Identity/EF setup
 
 ## CORS
 

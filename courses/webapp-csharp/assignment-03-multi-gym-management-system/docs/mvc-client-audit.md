@@ -35,6 +35,14 @@ MVC Client POST actions use `[ValidateAntiForgeryToken]`:
 - `SessionsController.UpdateAttendance`
 - `MaintenanceController.UpdateStatus`
 
+## Dashboard Boundary
+
+`Areas/Client/Controllers/DashboardController` delegates dashboard composition
+to `IClientDashboardPageService`. The page service uses user context,
+authorization, and `IClientDashboardQueryService`; the BLL query service reads
+through `IAppUnitOfWork`. The controller has no direct `AppDbContext`
+dependency.
+
 ## Tests
 
 Covered by `MvcComplianceTests.MvcClientRoute_Works_ForTenantRoles`:
@@ -42,6 +50,11 @@ Covered by `MvcComplianceTests.MvcClientRoute_Works_ForTenantRoles`:
 - member profile route works
 - trainer sessions route works
 - caretaker maintenance route works
+
+Additional dashboard-specific coverage:
+- `ClientDashboardPageServiceTests` maps active-gym dashboard snapshots and the no-active-gym redirect state.
+- `ClientDashboardTests.ClientDashboard_RendersSeededMvcDashboard` verifies seeded `/mvc-client` HTML rendering through the test host.
+- `ArchitectureTests.ClientMvcDashboard_UsesPageAndBllContractsWithoutDirectEf` locks the no-direct-EF dashboard boundary.
 
 Existing workflow integration tests cover related role boundaries:
 - member booking payment-reference validation

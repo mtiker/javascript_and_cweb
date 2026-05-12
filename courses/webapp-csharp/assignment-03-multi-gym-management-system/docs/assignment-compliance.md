@@ -130,12 +130,12 @@ Statuses:
 
 | Field | Value |
 |-------|-------|
-| **Files** | `src/WebApp/Areas/Admin/Controllers/DashboardController.cs`, `src/WebApp/Areas/Admin/Views/Dashboard/Index.cshtml` |
-| **Routes** | `GET /Admin` → `Areas/Admin/Controllers/DashboardController.Index` |
-| **Tests** | `Integration/SmokeTests.cs` — `AdminDashboard_UsesSharedLayoutAndSiteStyles` |
-| **Evidence** | Login as `admin@peakforge.local` via MVC, navigate to `/Admin` — renders dashboard with gym/member/session counts |
-| **Status** | **Partial** |
-| **Risk** | Only `DashboardController` renders a real Razor view. `GymsController`, `MembershipsController`, `SessionsController`, `OperationsController` all do `Redirect()` to React client URLs and render no Razor content. A grader expecting full Admin CRUD in MVC will find only a summary dashboard. |
+| **Files** | `src/WebApp/Areas/Admin/Controllers/*Controller.cs`, `src/WebApp/Areas/Admin/Views/**` |
+| **Routes** | `GET /Admin`, `/Admin/Gyms`, `/Admin/Members`, `/Admin/Members/Create`, `/Admin/Members/Edit/{id}`, `/Admin/Members/Delete/{id}`, `/Admin/TrainingCategories`, `/Admin/MembershipPackages`, `/Admin/Memberships`, `/Admin/Sessions`, `/Admin/Operations` |
+| **Tests** | `Integration/SmokeTests.cs`, `Integration/MvcComplianceTests.cs`, `Integration/AdminMembersCrudTests.cs`, `Integration/AdminTrainingCategoriesCrudTests.cs`, `Integration/AdminMembershipPackagesCrudTests.cs` |
+| **Evidence** | 2026-05-11 `dotnet test multi-gym-management-system.slnx` passed with MVC Admin dashboard/page rendering and CRUD integration coverage |
+| **Status** | **Pass for MVC Admin evidence and 3 CRUD entities** |
+| **Risk** | Admin CRUD is intentionally focused on members, training categories, and membership packages. Broader Admin pages such as memberships, sessions, operations, and gyms are read/action surfaces rather than full CRUD for every domain entity. |
 
 ---
 
@@ -190,12 +190,12 @@ Statuses:
 
 | Field | Value |
 |-------|-------|
-| **Files** | `Dockerfile` lines 37 (`COPY --from=client-build /client/dist ./wwwroot/client`), `src/WebApp/Setup/MiddlewareExtensions.cs` lines 46–47 |
-| **Routes** | `GET /client/*` — served from `wwwroot/client/` by the backend |
-| **Tests** | n/a |
-| **Evidence** | Production: `docker compose -f docker-compose.prod.yml up` — React is served at `http://localhost:83/client`, same host as API. Development: `cd client && npm run dev` — runs separately on `http://localhost:5173` (different port = different origin) |
+| **Files** | `Dockerfile`, `client/Dockerfile`, `client/nginx.conf`, `docker-compose.prod.yml`, `scripts/deploy-client.sh` |
+| **Routes** | Mode A: `GET /client/*` served by backend. Mode B: standalone client nginx serves `/client/*` and `/healthz`. |
+| **Tests** | `cd client && npm test`, `cd client && npm run build`, production Compose config with `--profile client` |
+| **Evidence** | 2026-05-11 client tests/build passed and `POSTGRES_PASSWORD=dummy JWT__Key=dummy-long-key VITE_API_BASE_URL=https://api.example.test docker compose --profile client -f docker-compose.prod.yml config` rendered the standalone client service |
 | **Status** | **Partial** |
-| **Risk** | **In production the React SPA is served by the same ASP.NET Core process from `wwwroot/client`** — not a separate server. It is not "truly separately hosted" in the deployed artifact. CORS is configured and enforced, but in prod both API and React share the same origin (`http://localhost:83`). In development the Vite dev server is a separate origin (`localhost:5173`) and CORS does activate. If the assignment requires separate hosting in the graded (production) deployment, this is a gap. |
+| **Risk** | The standalone client artifact and Compose profile exist, but no public separate-client URL was smoke-tested in this pass. Do not claim live separate hosting until `/healthz`, direct `/client/*` routes, login, and CORS preflight pass against the real deployment. |
 
 ---
 
@@ -265,12 +265,12 @@ Statuses:
 
 | Field | Value |
 |-------|-------|
-| **Files** | `docker-compose.yml`, `docker-compose.prod.yml`, `Dockerfile` |
+| **Files** | `docker-compose.yml`, `docker-compose.prod.yml`, `Dockerfile`, `client/Dockerfile` |
 | **Routes** | Prod app: `http://localhost:83` (default), `http://localhost:83/swagger` |
-| **Tests** | n/a |
-| **Evidence** | Dev: `docker compose up -d`. Prod: `JWT__Key=<key> docker compose -f docker-compose.prod.yml up` |
+| **Tests** | `docker compose config`; production config validation with and without `--profile client` |
+| **Evidence** | 2026-05-11 config validation passed for `docker compose config`, `POSTGRES_PASSWORD=dummy JWT__Key=dummy-long-key VITE_API_BASE_URL=https://api.example.test docker compose -f docker-compose.prod.yml config`, and `POSTGRES_PASSWORD=dummy JWT__Key=dummy-long-key VITE_API_BASE_URL=https://api.example.test docker compose --profile client -f docker-compose.prod.yml config` |
 | **Status** | **Pass** |
-| **Risk** | `JWT__Key` is mandatory in prod compose (fails without it). No default or dev fallback in the prod file. `appsettings.Development.json` must include `Jwt.Key` for `dotnet run` without Docker. |
+| **Risk** | Config validation is not the same as a running deployment. `POSTGRES_PASSWORD` and `JWT__Key` are mandatory in prod compose, and public smoke still needs to be run before claiming live availability. |
 
 ---
 
@@ -282,10 +282,10 @@ Statuses:
 |-------|-------|
 | **Files** | `.gitlab-ci.yml` |
 | **Routes** | n/a |
-| **Tests** | Stage `test` runs `dotnet test` |
-| **Evidence** | GitLab pipeline: stages `client → build → test → package → deploy` |
+| **Tests** | Stage `client` runs npm test/build; stage `test` runs `dotnet test`; architecture tests are in `WebApp.Tests` |
+| **Evidence** | GitLab pipeline: stages `client -> build -> test -> package -> deploy`, plus standalone client image/deploy jobs |
 | **Status** | **Pass** |
-| **Risk** | Deploy stage requires `./scripts/deploy.sh` and environment secrets (`JWT__Key`) to be configured in GitLab CI. |
+| **Risk** | Deploy stages require `./scripts/deploy.sh`, `./scripts/deploy-client.sh`, and environment secrets (`JWT__Key`, `POSTGRES_PASSWORD`, client/API URL variables) to be configured in GitLab CI. The standalone client deploy remains manual/optional. |
 
 ---
 
@@ -345,11 +345,11 @@ Statuses:
 | R5 | Role-based access control | **Pass** |
 | R6 | IDOR: gym context isolation | **Pass** |
 | R7 | IDOR: member self-access | **Pass** |
-| R8 | Admin MVC area — real Razor views | **Partial** — only Dashboard is real MVC; others redirect to React |
+| R8 | Admin MVC area - real Razor views | **Pass for MVC evidence and 3 CRUD entities** |
 | R9 | Admin views use ViewBag/ViewData | **Missing** — all views use strongly-typed ViewModels |
-| R10 | Client MVC area — Razor views | **Pass** |
+| R10 | Client MVC area - Razor views | **Pass** |
 | R11 | React SPA client | **Pass** |
-| R12 | React is separately hosted | **Partial** — separate in dev (port 5173), embedded in prod (wwwroot/client) |
+| R12 | React is separately hosted | **Partial** - standalone client artifacts/config validate, public separate host not smoke-tested |
 | R13 | React CRUD: Members | **Pass** |
 | R14 | React CRUD: Training Categories | **Pass** |
 | R15 | React CRUD: Membership Packages | **Pass** |
@@ -364,7 +364,7 @@ Statuses:
 
 ## Top risks before Final1 / Final2
 
-1. **R9 — No ViewBag/ViewData** — If the grader's rubric specifically scores for `ViewBag`/`ViewData`, this is a definite point loss. All controllers use strongly-typed models. Verify the rubric before submission.
-2. **R8 — Admin is mostly redirects** — Only the Dashboard page is a real Razor view. The other admin pages (Gyms, Memberships, Sessions, Operations) are shells that redirect to React. If Admin CRUD in MVC is required, this is a gap.
-3. **R12 — React not separately hosted in prod** — In the Docker production image, React is served by the backend from `wwwroot/client`. A grader expecting a separate server (e.g., a second Docker container or a CDN URL) will not see that. This may or may not be penalised depending on the rubric wording.
-4. **R6 — Cross-gym IDOR integration test coverage is narrow** — Only `/members` is integration-tested for gym mismatch. The middleware handles all routes, but having more covered endpoints tested would increase confidence.
+1. **R12 - separate public client host not smoke-tested:** standalone client Docker/Compose evidence exists, but no public URL, `/healthz`, CORS preflight, or direct-route smoke was run in the 2026-05-11 pass.
+2. **R9 - no ViewBag/ViewData:** if the grader's rubric specifically scores for `ViewBag`/`ViewData`, this remains a risk. The implementation intentionally uses strongly typed view models.
+3. **PostgreSQL provider tests are opt-in:** the 2026-05-11 `dotnet test` run skipped the 3 Testcontainers tests because `RUN_POSTGRES_TESTS=1` was not set.
+4. **Live deployment not verified:** local Compose config passed, but the public backend URL and smoke login/API read were not checked from this machine.

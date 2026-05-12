@@ -14,11 +14,31 @@ public sealed class EfBookingRepository(AppDbContext dbContext) : IBookingReposi
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyList<Booking>> ListForSessionAsync(Guid gymId, Guid trainingSessionId, CancellationToken cancellationToken = default)
+    {
+        return await BaseListQuery(gymId)
+            .AsNoTracking()
+            .Where(booking => booking.TrainingSessionId == trainingSessionId)
+            .OrderBy(booking => booking.Member!.Person!.LastName)
+            .ThenBy(booking => booking.Member!.Person!.FirstName)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<IReadOnlyList<Booking>> ListForMemberAsync(Guid gymId, Guid memberId, CancellationToken cancellationToken = default)
     {
         return await BaseListQuery(gymId)
             .Where(booking => booking.MemberId == memberId)
             .OrderByDescending(booking => booking.BookedAtUtc)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<Booking>> ListRecentForMemberAsync(Guid gymId, Guid memberId, int limit, CancellationToken cancellationToken = default)
+    {
+        return await BaseListQuery(gymId)
+            .AsNoTracking()
+            .Where(booking => booking.MemberId == memberId)
+            .OrderByDescending(booking => booking.BookedAtUtc)
+            .Take(limit)
             .ToListAsync(cancellationToken);
     }
 
@@ -45,6 +65,19 @@ public sealed class EfBookingRepository(AppDbContext dbContext) : IBookingReposi
     {
         return BaseListQuery(gymId)
             .FirstOrDefaultAsync(booking => booking.Id == bookingId, cancellationToken);
+    }
+
+    public Task<Booking?> FindActiveForMemberSessionAsync(Guid gymId, Guid memberId, Guid trainingSessionId, CancellationToken cancellationToken = default)
+    {
+        return dbContext.Bookings
+            .AsNoTracking()
+            .FirstOrDefaultAsync(
+                booking =>
+                    booking.GymId == gymId &&
+                    booking.MemberId == memberId &&
+                    booking.TrainingSessionId == trainingSessionId &&
+                    booking.Status != BookingStatus.Cancelled,
+                cancellationToken);
     }
 
     public Task<bool> ExistsForMemberSessionAsync(Guid gymId, Guid memberId, Guid trainingSessionId, CancellationToken cancellationToken = default)

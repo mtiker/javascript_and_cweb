@@ -72,6 +72,32 @@ public class TenantIsolationAndIdorTests(CustomWebApplicationFactory factory) : 
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
     }
 
+    [Fact]
+    public async Task Member_CanAccess_OwnWorkspace()
+    {
+        Guid ownMemberId;
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var memberPersonId = await db.Users
+                .Where(u => u.Email == "member@peakforge.local")
+                .Select(u => u.PersonId)
+                .FirstAsync();
+            ownMemberId = await db.Members
+                .Where(m => m.PersonId == memberPersonId)
+                .Select(m => m.Id)
+                .FirstAsync();
+        }
+
+        var client = factory.CreateClient();
+        var token = await LoginAsync(client, "member@peakforge.local", "GymStrong123!");
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.Jwt);
+
+        var response = await client.GetAsync($"/api/v1/peak-forge/member-workspace/members/{ownMemberId}");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
     // ── Scenario 3: Trainer cannot update attendance for an unassigned session ─
 
     [Fact]

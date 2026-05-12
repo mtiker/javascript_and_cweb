@@ -65,14 +65,55 @@ runs `npm ci` and `npm run build`, then copies `client/dist` into
 embedded copy is **not** required for Mode B and is intentionally left in
 place so single-host deployments still work.
 
+## Final Validation Evidence
+
+Last local validation: 2026-05-11, from the assignment root.
+
+The local shell is Windows PowerShell 5.1. The client commands were executed
+through `cmd /c` so the `cd client && ...` payload runs exactly, and the
+POSIX-style production Compose commands were executed through Git Bash with
+`--noprofile --norc`.
+
+| Command | Result |
+|---|---|
+| `dotnet format multi-gym-management-system.slnx --verify-no-changes` | Pass, exit code 0, no files changed |
+| `dotnet build multi-gym-management-system.slnx` | Pass, 0 warnings, 0 errors |
+| `dotnet test multi-gym-management-system.slnx` | Pass, 250 passed, 3 skipped, 253 total |
+| `cd client && npm test` | Pass, 7 Vitest files and 34 tests passed; only React Router v7 future warnings were emitted |
+| `cd client && npm run build` | Pass, TypeScript check and Vite build completed; 49 modules transformed |
+| `docker compose config` | Pass, development Compose config rendered the PostgreSQL service |
+| `POSTGRES_PASSWORD=dummy JWT__Key=dummy-long-key VITE_API_BASE_URL=https://api.example.test docker compose -f docker-compose.prod.yml config` | Pass, production config rendered `postgres` and `web` with required secrets supplied by environment |
+| `POSTGRES_PASSWORD=dummy JWT__Key=dummy-long-key VITE_API_BASE_URL=https://api.example.test docker compose --profile client -f docker-compose.prod.yml config` | Pass, production config rendered `postgres`, `web`, and profile-gated `client` service with `VITE_API_BASE_URL=https://api.example.test` |
+
+Admin CRUD evidence from the same `dotnet test` run:
+- `AdminMembersCrudTests` covers index, create form, invalid create validation,
+  valid create persistence, edit form, valid edit persistence, delete removal
+  from active listing, unauthorized access denial, and cross-tenant id denial.
+- `AdminTrainingCategoriesCrudTests` covers index, create/edit/delete,
+  validation errors, localized Estonian `LangStr` rendering, unauthorized
+  access denial, and cross-tenant id denial.
+- `AdminMembershipPackagesCrudTests` covers index, create/edit/delete,
+  validation errors, active-gym persistence, unauthorized access denial, and
+  cross-tenant id denial.
+
+Deployment smoke evidence:
+- Compose syntax and environment interpolation were verified locally for
+  development, production backend, and production backend plus standalone
+  client profile.
+- The standalone React client production build was verified locally.
+- `scripts/smoke-deploy.sh` was not run in this pass because real public
+  `BACKEND_URL`, `CLIENT_URL`, and smoke credentials were not provided.
+- No claim is made here that the public backend URL or separate client URL was
+  reachable on 2026-05-11.
+
 ## Required Environment Variables
 
 Minimum production variables (Mode A, embedded client):
 - `JWT__Key`
-- `CORS_ALLOWED_ORIGIN`
-- `POSTGRES_DB`
-- `POSTGRES_USER`
 - `POSTGRES_PASSWORD`
+- `CORS_ALLOWED_ORIGIN`
+- `POSTGRES_DB` when overriding the default database name
+- `POSTGRES_USER` when overriding the default database user
 - `WEBAPP_PORT` when overriding the default host port `83`
 
 Additional production variables (Mode B, separate client host):
@@ -98,6 +139,11 @@ Optional variables:
 refuses to start without it. `JWT__Issuer` and `JWT__Audience` default to
 `MultiGymManagementSystem` in production Compose, but can be set explicitly in
 GitLab CI/CD variables.
+
+`POSTGRES_PASSWORD` is required in production and has no Compose fallback.
+`docker-compose.prod.yml` and `scripts/deploy.sh` fail fast when it is missing.
+`POSTGRES_DB` and `POSTGRES_USER` keep safe operational defaults unless they are
+explicitly overridden.
 
 `CORS_ALLOWED_ORIGIN` must be a safe absolute public origin in production (no
 `localhost`, loopback IPs, or wildcard origins). The backend fails fast on
@@ -172,6 +218,8 @@ Pipeline stages:
 1. `client` — `assignment03_client`: `npm ci && npm test && npm run build`
 2. `build` — `assignment03_build`: `dotnet build --Release`
 3. `test` — `assignment03_test`: `dotnet test --Release --no-build`
+   - `assignment03_postgresql_tests` — manual, optional Docker-backed
+     persistence slice: `RUN_POSTGRES_TESTS=1 dotnet test --filter PostgreSql`
 4. `package`
    - `assignment03_docker_build` — backend image (with embedded client)
    - `assignment03_client_image` — standalone client image, build-arg
@@ -180,6 +228,18 @@ Pipeline stages:
    - `assignment03_deploy` — runs `scripts/deploy.sh` (default branch / tags)
    - `assignment03_deploy_client` — runs `scripts/deploy-client.sh`,
      `when: manual`, `allow_failure: true` (keeps Mode A working unconditionally)
+
+Final2 architecture tests are included in `assignment03_test` because
+`tests/WebApp.Tests/Architecture/ArchitectureTests.cs` and
+`tests/WebApp.Tests/Architecture/ModuleArchitectureTests.cs` are part of the
+same test project. Module boundary, Clean/Onion boundary, and public API route
+regressions fail the CI test stage before packaging or deployment.
+
+PostgreSQL/Testcontainers persistence tests are not part of the required
+`assignment03_test` path because they start a real PostgreSQL container and
+need Docker access from the runner. The manual `assignment03_postgresql_tests`
+job preserves normal CI behavior on non-Docker runners while giving a
+repeatable defense-time run path on Docker-capable runners.
 
 Backend deploy script:
 
@@ -193,7 +253,56 @@ Client deploy script:
 ./scripts/deploy-client.sh
 ```
 
-## Recommended VPS Smoke Check
+## Repeatable Deployment Smoke Check
+
+Use `scripts/smoke-deploy.sh` after deploying the backend and the standalone
+client host. The script is environment-variable driven and does not contain
+production URLs or credentials.
+
+Required variables:
+- `BACKEND_URL` - public backend origin, for example `https://<backend-host>`
+- `CLIENT_URL` - public standalone React client origin, for example
+  `https://<client-host>`
+- `SMOKE_EMAIL` - deployed smoke-test account email
+- `SMOKE_PASSWORD` - deployed smoke-test account password
+- `SMOKE_GYM_CODE` - tenant gym code that the smoke-test account can access
+
+Run from this assignment directory:
+
+```bash
+export BACKEND_URL="https://<backend-host>"
+export CLIENT_URL="https://<client-host>"
+export SMOKE_EMAIL="<smoke-user@example.com>"
+export SMOKE_PASSWORD="<smoke-password>"
+export SMOKE_GYM_CODE="<gym-code>"
+
+bash scripts/smoke-deploy.sh
+```
+
+The script verifies:
+- `GET $BACKEND_URL/health`
+- `GET $CLIENT_URL/healthz`
+- `POST $BACKEND_URL/api/v1/account/login`
+- `GET $BACKEND_URL/api/v1/$SMOKE_GYM_CODE/maintenance-tasks` with the returned
+  JWT bearer token
+
+It exits before making requests if any required variable is missing. Runtime
+dependencies are `bash`, `curl`, and either Python or Node.js for safe JSON
+payload handling.
+
+Validate the production Compose files before deployment:
+
+```bash
+POSTGRES_PASSWORD=dummy JWT__Key=dummy-long-key \
+  VITE_API_BASE_URL=https://api.example.test \
+  docker compose -f docker-compose.prod.yml config
+
+POSTGRES_PASSWORD=dummy JWT__Key=dummy-long-key \
+  VITE_API_BASE_URL=https://api.example.test \
+  docker compose --profile client -f docker-compose.prod.yml config
+```
+
+## Manual VPS Smoke Check
 
 Mode A (embedded client):
 

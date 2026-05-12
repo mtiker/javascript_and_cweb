@@ -1,6 +1,7 @@
 using App.BLL.Exceptions;
 using App.BLL.Services;
 using App.DAL.EF;
+using App.DAL.EF.Repositories;
 using App.DAL.EF.Tenant;
 using App.Domain;
 using App.Domain.Common;
@@ -69,6 +70,25 @@ public class AuthorizationServiceTests
 
         await Assert.ThrowsAsync<ForbiddenException>(() =>
             service.EnsureTenantAccessAsync(gym.Code, CancellationToken.None, RoleNames.GymOwner, RoleNames.GymAdmin));
+    }
+
+    [Fact]
+    public async Task EnsureTenantAccessAsync_ReturnsActiveGymIdWhenContextAndRoleMatch()
+    {
+        await using var dbContext = CreateDbContext();
+        var gym = CreateGym("alpha");
+        dbContext.Gyms.Add(gym);
+        await dbContext.SaveChangesAsync();
+
+        var service = CreateService(dbContext, CreateContext(
+            gym.Id,
+            gym.Code,
+            personId: Guid.NewGuid(),
+            RoleNames.GymAdmin));
+
+        var result = await service.EnsureTenantAccessAsync(gym.Code, CancellationToken.None, RoleNames.GymAdmin);
+
+        Assert.Equal(gym.Id, result);
     }
 
     [Fact]
@@ -196,7 +216,7 @@ public class AuthorizationServiceTests
 
         return new AuthorizationService(
             currentActorResolver,
-            new TenantAccessChecker(dbContext, currentActorResolver),
+            new TenantAccessChecker(new EfAuthorizationQueryRepository(dbContext), currentActorResolver),
             new ResourceAuthorizationChecker(dbContext, currentActorResolver));
     }
 

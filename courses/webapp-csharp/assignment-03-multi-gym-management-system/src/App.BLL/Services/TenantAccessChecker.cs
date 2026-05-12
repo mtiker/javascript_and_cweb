@@ -1,11 +1,10 @@
-using App.BLL.Contracts.Infrastructure;
+using App.BLL.Contracts.Persistence;
 using App.BLL.Exceptions;
-using Microsoft.EntityFrameworkCore;
 
 namespace App.BLL.Services;
 
 public class TenantAccessChecker(
-    IAppDbContext dbContext,
+    IAuthorizationQueryRepository authorizationQueries,
     ICurrentActorResolver currentActorResolver) : ITenantAccessChecker
 {
     public async Task<Guid> EnsureTenantAccessAsync(string gymCode, CancellationToken cancellationToken, params string[] allowedRoles)
@@ -16,7 +15,7 @@ public class TenantAccessChecker(
             throw new ForbiddenException("An active gym context is required.");
         }
 
-        var gym = await dbContext.Gyms.AsNoTracking().FirstOrDefaultAsync(entity => entity.Code == gymCode, cancellationToken);
+        var gym = await authorizationQueries.FindGymByCodeAsync(gymCode, cancellationToken);
         if (gym == null)
         {
             throw new NotFoundException($"Gym '{gymCode}' was not found.");

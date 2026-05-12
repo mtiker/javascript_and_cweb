@@ -1,9 +1,12 @@
 using System.Globalization;
 using System.Net;
+using System.Text.Encodings.Web;
+using System.Text.Unicode;
 using Asp.Versioning;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.WebEncoders;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace WebApp.Setup;
@@ -26,6 +29,11 @@ public static class WebApiExtensions
             options.DefaultRequestCulture = new RequestCulture("et-EE");
             options.SupportedCultures = supportedCultures;
             options.SupportedUICultures = supportedCultures;
+        });
+
+        services.Configure<WebEncoderOptions>(options =>
+        {
+            options.TextEncoderSettings = new TextEncoderSettings(UnicodeRanges.All);
         });
 
         return services;

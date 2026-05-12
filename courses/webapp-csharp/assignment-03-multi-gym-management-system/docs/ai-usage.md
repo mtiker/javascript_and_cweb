@@ -1,5 +1,298 @@
 # AI Usage Log
 
+## 2026-05-11 - Refresh Token Session Storage Security Tradeoff
+
+Task:
+- document the current refresh-token `sessionStorage` security tradeoff and compensating controls without changing auth implementation, API contracts, cookies, or CSRF behavior
+
+Files affected:
+- `README.md`
+- `docs/security-token-audit.md`
+- `docs/auth-flow-audit.md`
+- `docs/a3-saas-plan.md`
+- `docs/architecture.md`
+- `docs/ai-usage.md`
+- root `docs/ai-prompts.md`
+
+What AI helped with:
+- added a dedicated security-token audit section explaining that the React client stores the serialized auth session, including the refresh token, in JavaScript-readable `sessionStorage`
+- documented existing compensating controls: refresh-token rotation, reuse rejection, logout invalidation, server-side refresh-token lookup, and configurable access-token lifetime
+- added a future hardening note for migrating refresh tokens to `HttpOnly`, `Secure`, `SameSite` cookies with CSRF/CORS/test/documentation work handled in that future phase
+
+What needed manual review or correction:
+- no auth implementation, API contract, cookie, or CSRF behavior was changed
+- `dotnet test multi-gym-management-system.slnx --filter Auth` passed with 40 tests
+- `cd client && npm test` passed with 34 Vitest tests and existing React Router v7 future-flag warnings
+
+Alternatives considered:
+- moving refresh tokens to cookies in this phase was rejected because the requested scope was documentation-only and cookie auth would require contract, CORS, CSRF, and regression-test changes
+
+## 2026-05-11 - PostgreSQL Testcontainers Defense Run Path
+
+Task:
+- make skipped PostgreSQL/Testcontainers persistence tests explicitly runnable before defense without changing normal `dotnet test` behavior
+
+Files affected:
+- `.gitlab-ci.yml`
+- `README.md`
+- `docs/testing.md`
+- `docs/deployment.md`
+- `docs/a3-saas-plan.md`
+- root `docs/ci-cd.md`
+- root `docs/ai-prompts.md`
+
+What AI helped with:
+- documented the local Docker-enabled command for the PostgreSQL persistence slice
+- explained why the Testcontainers tests remain skipped in ordinary local and CI test runs
+- added a manual GitLab `assignment03_postgresql_tests` job that sets `RUN_POSTGRES_TESTS=1` and runs the `PostgreSql` filter
+
+What needed manual review or correction:
+- persistence tests and skip logic were intentionally left unchanged
+- the manual job still requires a runner with Docker access; it is optional and does not gate normal CI
+- normal `dotnet test multi-gym-management-system.slnx` was verified locally with the PostgreSQL tests still skipped; the opt-in PostgreSQL run was not executed because the local Docker engine was not reachable
+
+Alternatives considered:
+- enabling the PostgreSQL tests in every CI run was rejected because not every runner is guaranteed to expose Docker/Testcontainers support
+- removing the `RUN_POSTGRES_TESTS=1` opt-in gate was rejected because it would change the established normal `dotnet test` behavior
+
+## 2026-05-11 - MVC Admin Resource Localization Pass
+
+Task:
+- replace hardcoded visible English strings in high-visible Admin MVC pages with shared `.resx` resources, covering Members, Membership Packages, Training Categories, and audited Admin list pages
+
+Files affected:
+- `src/WebApp/Areas/Admin/Views/**`
+- `src/App.Resources/SharedResources.resx`
+- `src/App.Resources/SharedResources.et.resx`
+- `tests/WebApp.Tests/Integration/TrainingCategoryLocalizationTests.cs`
+- `tests/WebApp.Tests/Integration/SmokeTests.cs`
+- `docs/localization-audit.md`
+- `docs/current-test-inventory.md`
+- `docs/a3-saas-plan.md`
+
+What AI helped with:
+- replaced scoped Admin Razor visible copy with `IStringLocalizer<SharedResources>` lookups
+- added English and Estonian resource entries for Admin page headings, actions, table headers, empty states, and form labels
+- added an authenticated Admin Members localization smoke test for English and Estonian rendering
+- adjusted an Admin smoke assertion so it no longer depends on English UI copy under the default Estonian culture
+
+What needed manual review or correction:
+- the repository already had broad dirty/untracked changes, including existing resource and Admin MVC work, so edits were kept to the requested localization surface
+- the first Admin validation run exposed the culture-sensitive smoke assertion; it was corrected to assert active gym context instead of localized label text
+
+Alternatives considered:
+- localizing all MVC/React strings was rejected as out of scope
+- changing view models for display metadata was rejected because view-level `IStringLocalizer<SharedResources>` satisfied the requirement without altering contracts
+
+## 2026-05-11 - MembershipFinance Package Module Ownership
+
+Task:
+- make membership package list/create/update/delete API workflow owned by the MembershipFinance module while preserving existing routes, DTOs, tenant isolation, React CRUD behavior, and payment/invoice scope boundaries
+
+Files affected:
+- `src/Modules.MembershipFinance/Application/FinanceHandlers.cs`
+- `src/Modules.MembershipFinance/Application/MembershipPackageHandlers.cs`
+- `src/Modules.MembershipFinance/Application/README.md`
+- `tests/WebApp.Tests/Unit/MembershipFinanceModuleMediatorTests.cs`
+- `tests/WebApp.Tests/Architecture/ModuleArchitectureTests.cs`
+- `docs/final2-membershipfinance-module-plan.md`
+- `docs/finance-mediator-messages.md`
+- `docs/final2-module-boundary-report.md`
+- `docs/final2-test-traceability.md`
+- `docs/current-test-inventory.md`
+- `docs/module-boundary-audit.md`
+- `docs/a3-saas-plan.md`
+
+What AI helped with:
+- moved package CRUD orchestration into `Modules.MembershipFinance.Application` handlers using UOW, authorization, repository, mapper, validation, normalization, and used-package conflict checks directly
+- kept membership, payment, invoice, refund, and workspace handlers on the existing transitional workflow services
+- added mediator and module architecture regression tests proving package handlers do not wrap `IMembershipWorkflowService` or `IMembershipPackageService`
+- updated module ownership documentation and test traceability
+
+What needed manual review or correction:
+- the repository already had a dirty/untracked module worktree, so the change was kept narrowly scoped to package handlers, tests, and relevant docs
+- the first focused package baseline already passed before migration; post-migration package and module tests were rerun to confirm behavior stayed stable
+
+Alternatives considered:
+- moving payments and invoices was rejected because the requested phase explicitly excludes them
+- changing the database schema or adding module-specific persistence was rejected because the existing UOW/repository contracts already preserve tenant-scoped behavior
+
+## 2026-05-08 - Production PostgreSQL Secret Fail-Fast
+
+Task:
+- remove the unsafe production fallback default for the PostgreSQL password
+
+Files affected:
+- `docker-compose.prod.yml`
+- `scripts/deploy.sh`
+- `README.md`
+- `docs/deployment.md`
+- `docs/study-guide-deployment.md`
+- `docs/a3-saas-plan.md`
+- `docs/current-deployment-inventory.md`
+- `docs/dev-secrets-audit.md`
+- root `docs/ci-cd.md`
+- root `docs/full-project-audit.md`
+
+What AI helped with:
+- changed production Compose to require `POSTGRES_PASSWORD` instead of defaulting to `postgres`
+- added deploy-script validation for the same required secret
+- updated deployment documentation with the required production secrets and Compose validation commands
+
+What needed manual review or correction:
+- local development Docker behavior remains intentionally unchanged
+- no schema, migration, or secret-manager change was made
+
+Alternatives considered:
+- introducing a secret manager was rejected because the requested scope only needs fail-fast environment validation
+- requiring `POSTGRES_DB` and `POSTGRES_USER` was rejected because the security issue is the password fallback, and those operational defaults already exist in production Compose
+
+## 2026-05-08 - Deployment Smoke Verification Script
+
+Task:
+- add repeatable deployment smoke verification for backend health, standalone client health, API login, and an authenticated tenant API read
+
+Files affected:
+- `scripts/smoke-deploy.sh`
+- `docs/deployment.md`
+- `docs/a3-saas-plan.md`
+- `README.md`
+
+What AI helped with:
+- mapped the existing deployed API contracts to a non-mutating smoke flow
+- added an environment-variable driven Bash script with clear missing-variable failures
+- documented exact usage and Compose validation commands for backend plus standalone client deployments
+
+What needed manual review or correction:
+- the script requires real deployment URLs and smoke credentials for the full network smoke test
+- no application behavior or route contract was changed
+
+Alternatives considered:
+- adding browser E2E tooling was rejected because this phase only requires HTTP smoke checks
+- using a mutating workflow endpoint was rejected in favor of the read-only `maintenance-tasks` tenant API call
+
+## 2026-05-08 - Phase 21 Final2 Hardening and Submission Evidence
+
+Task:
+- prepare Final2 submission evidence and harden the modular monolith without adding features
+
+Files affected:
+- `docs/final2-defense.md`
+- `docs/final2-module-boundary-report.md`
+- `docs/final2-test-traceability.md`
+- `docs/final2-risk-report.md`
+- `docs/request-flow-diagram.md`
+- `tests/WebApp.Tests/Unit/ApiContractMetadataTests.cs`
+- `tests/WebApp.Tests/WebApp.Tests.csproj`
+- `README.md`
+- `docs/deployment.md`
+- `docs/final2-module-plan.md`
+
+What AI helped with:
+- mapped the official Final2 requirements to existing module, route, MVC, React, auth, IDOR, i18n, CI, and deployment evidence
+- added a route snapshot regression test for the public API surface
+- removed a test-project vulnerability warning by aligning the affected test dependencies to patched package versions
+- created the Final2 defense, module boundary, test traceability, risk, and request-flow evidence documents
+- ran Release backend build/tests, React tests/build, and NuGet vulnerability audit
+
+What needed manual review or correction:
+- the first route snapshot test compile pass needed the MVC routing namespace import
+- the initial DataProtection 10.0.6 package bump still reported the advisory; NuGet outdated output showed 10.0.7 as the patched line and `System.Security.Cryptography.Xml` needed the same patch level
+
+Alternatives considered:
+- changing production routes or module boundaries was rejected because the task was evidence/hardening only
+- running public VPS smoke tests was left as a deployment-environment follow-up because this pass was local
+
+## 2026-05-08 - Phase 20 Final2 MembershipFinance and Maintenance Module Slice
+
+Task:
+- move remaining MembershipFinance and maintenance/facility HTTP workflows behind module-owned mediator messages while preserving API contracts and avoiding external payment providers
+
+Files affected:
+- `src/Modules.MembershipFinance/Contracts/FinanceMessages.cs`
+- `src/Modules.MembershipFinance/Application/FinanceHandlers.cs`
+- `src/Modules.GymManagement/Contracts/MaintenanceMessages.cs`
+- `src/Modules.GymManagement/Application/Maintenance/MaintenanceHandlers.cs`
+- tenant finance, membership, payment, maintenance, equipment, opening-hours, settings, and gym-user API controllers
+- `src/BuildingBlocks/Mediator/Mediator.cs`
+- `tests/WebApp.Tests/Unit/{MembershipFinanceModuleMediatorTests.cs,MaintenanceModuleMediatorTests.cs,TenantControllerTests.cs,AdditionalControllerTests.cs}`
+- `tests/WebApp.Tests/Helpers/ControllerTestHelpers.cs`
+- `tests/WebApp.Tests/Architecture/ArchitectureTests.cs`
+- `docs/{final2-membershipfinance-module-plan.md,final2-maintenance-module-plan.md,finance-mediator-messages.md,maintenance-mediator-messages.md,final2-module-plan.md,a3-saas-plan.md}`
+
+What AI helped with:
+- added MembershipFinance commands/queries for package CRUD, membership status, payment posting, invoice creation, invoice payment/refund posting, and finance workspace balance reads
+- added GymManagement maintenance commands/queries for task list/status/assignment/history/due generation plus facility/settings/user endpoints
+- refactored affected Web API controllers into mediator adapters while preserving route and DTO contracts
+- added focused mediator tests and architecture checks for the new module boundaries
+- fixed the in-process mediator so synchronously thrown handler exceptions preserve their original exception type instead of surfacing as `TargetInvocationException`
+
+What needed manual review or correction:
+- maintenance remains under `Modules.GymManagement` because the current ownership map treats equipment, staff, settings, and maintenance as one operational bounded context
+- existing controller tests needed mediator adapters after constructor dependencies changed
+
+Alternatives considered:
+- adding a separate `Modules.Maintenance` project was rejected for this phase because it would contradict the existing data-ownership plan and split tightly related operational data
+- adding an external payment provider was explicitly out of scope
+
+## 2026-04-30 - Phase 19 Final2 Training Module Sessions/Bookings Slice
+
+Task:
+- move training categories, sessions, bookings, and trainer attendance HTTP adapters into `Modules.Training` behind mediator messages while preserving routes and leaving finance/maintenance out of scope
+
+Files affected:
+- `src/Modules.Training/Contracts/TrainingMessages.cs`
+- `src/Modules.Training/Application/TrainingHandlers.cs`
+- `src/WebApp/ApiControllers/Tenant/{TrainingCategoriesController.cs,TrainingSessionsController.cs,BookingsController.cs}`
+- `tests/WebApp.Tests/Unit/{TrainingModuleMediatorTests.cs,TrainingWorkflowServiceTests.cs,TenantControllerTests.cs,AdditionalControllerTests.cs}`
+- `tests/WebApp.Tests/Helpers/ControllerTestHelpers.cs`
+- `tests/WebApp.Tests/Architecture/ModuleArchitectureTests.cs`
+- `docs/{final2-training-module-plan.md,training-module-contracts.md,training-mediator-messages.md,training-cross-module-access.md,a3-saas-plan.md}`
+- `README.md`
+
+What AI helped with:
+- added tests for Training mediator dispatch, missing session list/detail workflow coverage, controller adapter compatibility, and Training boundary protection from Users/GymManagement internals
+- added Training module command/query contracts and internal handlers for category CRUD, session list/detail/upsert/delete, booking list/create/cancel, and attendance update
+- refactored the existing tenant training controllers to dispatch through `IMediator` while preserving public routes, DTOs, and response shapes
+- documented the Training module contract surface, message flow, cross-module access posture, and non-goals
+
+What needed manual review or correction:
+- older controller unit tests instantiated controllers with `ITrainingWorkflowService`; they were updated to use a mediator adapter matching the new constructor boundary
+- the new session workflow test needed seeded `JobRole.Code` because the in-memory EF provider enforces required properties
+
+Alternatives considered:
+- moving all Training business logic out of `App.BLL` immediately, but that would require concurrent Users, GymManagement, and MembershipFinance lookup contracts; this phase keeps behavior stable and moves the HTTP adapter first
+- migrating booking pricing or maintenance/work-shift CRUD, but finance and maintenance were explicit non-goals for Phase 19
+
+## 2026-04-30 - Phase 17 Final2 Users Module Mediated Auth Slice
+
+Task:
+- move account auth/session behavior into `Modules.Users` behind mediator messages while preserving public account API routes and leaving member CRUD untouched
+
+Files affected:
+- `src/Modules.Users/Contracts/AuthSessionMessages.cs`
+- `src/Modules.Users/Application/Auth/{AuthSessionHandlers.cs,UsersSessionService.cs}`
+- `src/Modules.Users/UsersModuleServiceCollectionExtensions.cs`
+- `src/WebApp/ApiControllers/Identity/AccountController.cs`
+- `src/WebApp/Setup/ServiceExtensions.cs`
+- `tests/WebApp.Tests/{Architecture/ArchitectureTests.cs,Architecture/ModuleArchitectureTests.cs,Integration/SmokeTests.cs,Unit/AdditionalControllerTests.cs}`
+- `docs/{final2-users-module-plan.md,users-module-contracts.md,users-mediator-messages.md,final2-module-plan.md,mediator-design.md}`
+
+What AI helped with:
+- added failing tests first for public login/refresh/logout compatibility, switch-role compatibility, controller mediator dispatch, and Users internals boundary protection
+- added Users-module public mediator messages for login, refresh, logout, switch gym, and switch role
+- moved session orchestration into `UsersSessionService` and registered module-local handlers
+- refactored `AccountController` into a route-preserving mediator adapter
+- documented the Phase 17 boundary, contracts, message flow, tests, and non-goal of member CRUD migration
+
+What needed manual review or correction:
+- the first focused test run intentionally failed because `Modules.Users.Contracts` did not exist yet; implementation then added the missing contracts and handlers
+- the legacy `AccountAuthService` remains in `App.BLL` for compatibility but is no longer registered or used by the account controller
+
+Alternatives considered:
+- deleting the old Final1 auth service immediately, but keeping it avoids unrelated cleanup risk in this phase
+- migrating registration and password reset together with sessions, but those flows are identity provisioning rather than session behavior and remain out of scope
+
 ## 2026-04-30 - Phase 14 Final1 Maintenance/Admin Clean Slice
 
 Task:
@@ -863,3 +1156,167 @@ What needed manual review or correction:
 
 Alternatives considered:
 - adding a new browser E2E dependency, but the existing backend integration and frontend Vitest infrastructure provided the missing evidence with less risk and no feature changes
+
+## 2026-04-30 - Phase 18 Final2 GymManagement Member Mediator Slice
+
+Task:
+- move tenant member CRUD endpoint delegation behind the GymManagement module mediator while preserving public API contracts and documenting package ownership.
+
+Files affected:
+- `src/Modules.GymManagement/Contracts/MemberMessages.cs`
+- `src/Modules.GymManagement/Application/Members/MemberHandlers.cs`
+- `src/Modules.GymManagement/Application/README.md`
+- `src/WebApp/ApiControllers/Tenant/MembersController.cs`
+- `tests/WebApp.Tests/Unit/TenantControllerTests.cs`
+- `docs/final2-module-plan.md`
+- `docs/final2-gymmanagement-module-plan.md`
+- `docs/gymmanagement-module-contracts.md`
+- `docs/gymmanagement-mediator-messages.md`
+
+What AI helped with:
+- added GymManagement member mediator messages and handlers
+- refactored `MembersController` to dispatch through `IMediator`
+- updated controller tests to assert exact mediator messages and cancellation-token forwarding
+- documented that membership packages remain MembershipFinance-owned until the finance migration because package lifecycle is coupled to membership sale, payment, and pricing rules
+
+What needed manual review or correction:
+- verified package CRUD stayed on the existing API and service path instead of forcing a premature GymManagement migration
+- ran focused backend tests covering member CRUD, package CRUD, controller delegation, and module architecture
+
+Alternatives considered:
+- moving package CRUD in this phase, but that would split finance behavior across modules before membership and payment handlers are migrated
+
+## 2026-05-09 - Client MVC Dashboard EF Boundary
+
+Task:
+- remove direct `AppDbContext` usage from the Client MVC Dashboard and preserve rendered dashboard behavior.
+
+Files affected:
+- `src/WebApp/Setup/ServiceExtensions.cs`
+- `tests/WebApp.Tests/Unit/ClientDashboardPageServiceTests.cs`
+- `tests/WebApp.Tests/Integration/ClientDashboardTests.cs`
+- `tests/WebApp.Tests/Architecture/ArchitectureTests.cs`
+- `docs/controller-dbcontext-audit.md`
+- `docs/mvc-client-audit.md`
+- `docs/a3-saas-plan.md`
+- `docs/current-test-inventory.md`
+
+What AI helped with:
+- wired the existing Client dashboard page/query services into DI
+- added page-service mapping coverage for active gym context, localized snapshot projection, bookings, and assigned tasks
+- added a seeded MVC dashboard rendering test for `/mvc-client`
+- added a scoped architecture test ensuring the Client Dashboard controller delegates to `IClientDashboardPageService` and avoids direct EF/DAL dependencies
+- updated the dashboard/controller-boundary documentation and test inventory
+
+What needed manual review or correction:
+- confirmed the controller was already thin and the runtime gap was service registration plus missing regression coverage
+- kept React client and public API contracts unchanged
+
+Alternatives considered:
+- adding a new WebApp-only query abstraction, but the existing BLL `IClientDashboardQueryService` and `IAppUnitOfWork` path was the smaller Clean/Onion-aligned fix
+
+## 2026-05-09 - Tenant Access Authorization Query Boundary
+
+Task:
+- move one authorization checker away from direct `IAppDbContext` access without changing security behavior.
+
+Files affected:
+- `src/App.BLL/Contracts/Persistence/IAuthorizationQueryRepository.cs`
+- `src/App.BLL/Services/TenantAccessChecker.cs`
+- `src/App.DAL.EF/Repositories/EfAuthorizationQueryRepository.cs`
+- `src/App.DAL.EF/PersistenceServiceExtensions.cs`
+- `tests/WebApp.Tests/Unit/AuthorizationServiceTests.cs`
+- `tests/WebApp.Tests/Unit/MaintenanceWorkflowServiceTests.cs`
+- `tests/WebApp.Tests/Integration/TenantIsolationAndIdorTests.cs`
+- `tests/WebApp.Tests/Architecture/ArchitectureTests.cs`
+- `docs/a3-saas-plan.md`
+- `docs/architecture.md`
+- `docs/final1-clean-onion-plan.md`
+- `docs/current-test-inventory.md`
+
+What AI helped with:
+- chose `TenantAccessChecker` as the lower-risk single-checker migration target
+- added a small BLL-owned authorization query contract and EF-backed DAL implementation for route-gym lookup
+- updated `TenantAccessChecker` to preserve active-gym, role, not-found, and forbidden behavior while removing direct `IAppDbContext` dependency
+- added authorization and tenant-isolation regression coverage plus an architecture guard for the new dependency boundary
+
+What needed manual review or correction:
+- kept `ResourceAuthorizationChecker` unchanged so trainer/caretaker assignment rules remain out of scope for this phase
+- verified the requested `TenantIsolation`, `Authorization`, and `Architecture` filtered test runs
+
+Alternatives considered:
+- migrating `ResourceAuthorizationChecker`, but that checker owns trainer and caretaker resource-assignment rules and would have a larger security blast radius than the route-gym lookup in `TenantAccessChecker`
+
+## 2026-05-09 - Training Category Module Ownership
+
+Task:
+- make the Training category API workflow genuinely owned by the Training module while preserving existing routes, DTOs, tenant isolation, localization, and React/API compatibility.
+
+Files affected:
+- `src/Modules.Training/Application/TrainingCategoryHandlers.cs`
+- `src/Modules.Training/Application/TrainingHandlers.cs`
+- `tests/WebApp.Tests/Unit/TrainingModuleMediatorTests.cs`
+- `tests/WebApp.Tests/Architecture/ModuleArchitectureTests.cs`
+- `docs/training-mediator-messages.md`
+- `docs/training-module-contracts.md`
+- `docs/final2-training-module-plan.md`
+- `docs/final2-module-boundary-report.md`
+- `docs/final2-test-traceability.md`
+- `docs/current-test-inventory.md`
+- `docs/training-category-audit.md`
+- `docs/a3-saas-plan.md`
+
+What AI helped with:
+- moved category list/create/update/delete handler logic into `Modules.Training.Application`
+- kept the existing mediator messages, API routes, DTOs, status shapes, tenant authorization calls, `LangStr` localization behavior, and Unit of Work/repository persistence contracts
+- updated mediator tests so category calls fail if they delegate back to `ITrainingWorkflowService`
+- added a module architecture guard proving category handlers are Training-owned and do not depend on the shared workflow service
+
+What needed manual review or correction:
+- cleaned an xUnit analyzer warning in the new mediator test assertion
+- kept session, booking, attendance, work-shift, and coaching workflows out of scope
+
+Alternatives considered:
+- moving all Training workflows now was rejected because member/staff/finance lookup contracts are not yet stable enough for a safe broad migration
+- creating a module-specific DbContext was rejected because the task explicitly required preserving the existing shared persistence boundary
+
+## 2026-05-11 - Final Readiness Documentation Evidence
+
+Task:
+- update final readiness, deployment, architecture/module ownership, Clean/Onion, and validation evidence docs after the implemented fixes without changing production code.
+
+Files affected:
+- `README.md`
+- `docs/a3-saas-plan.md`
+- `docs/architecture.md`
+- `docs/assignment-compliance.md`
+- `docs/current-deployment-inventory.md`
+- `docs/current-test-inventory.md`
+- `docs/deployment.md`
+- `docs/final1-clean-onion-plan.md`
+- `docs/final2-defense.md`
+- `docs/final2-module-boundary-report.md`
+- `docs/final2-risk-report.md`
+- `docs/final2-test-traceability.md`
+- `docs/module-data-ownership.md`
+- `docs/phase-0-8-corrections-to-do.md`
+- `docs/separate-client-hosting-audit.md`
+- `docs/testing.md`
+- root `docs/ai-prompts.md`
+
+What AI helped with:
+- ran the required format, build, backend test, frontend test, frontend build, and Compose config validation commands
+- recorded exact validation results, including 250 backend tests passed, 3 PostgreSQL/Testcontainers tests skipped, 34 frontend tests passed, and successful production Compose profile rendering
+- updated Admin CRUD evidence for MVC members, training categories, and membership packages
+- documented deployment smoke status conservatively: Compose/client build evidence is verified, but live backend/client smoke was not run
+- clarified that module ownership is partial and transitional, not full module isolation
+- documented current Clean/Onion improvements and remaining presentation/query-layer limitations
+
+What needed manual review or correction:
+- kept all changes documentation-only
+- made sure public deployment and separate client hosting are not claimed as live because no public smoke test was run
+- preserved the distinction between module-owned handler workflows and mediated handlers that still delegate to shared BLL services
+
+Alternatives considered:
+- claiming deployment readiness from Compose config alone was rejected because it would hide the missing public smoke test
+- claiming full module isolation was rejected because modules still share BLL contracts and one `AppDbContext`

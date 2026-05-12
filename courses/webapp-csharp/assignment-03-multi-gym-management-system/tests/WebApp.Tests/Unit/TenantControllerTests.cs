@@ -2,7 +2,9 @@ using App.Domain.Enums;
 using App.DTO.v1.Bookings;
 using App.DTO.v1.Members;
 using App.DTO.v1.Memberships;
+using BuildingBlocks.Mediator;
 using Microsoft.AspNetCore.Mvc;
+using Modules.GymManagement.Contracts;
 using WebApp.ApiControllers.Tenant;
 using WebApp.Tests.Helpers;
 
@@ -37,64 +39,35 @@ public class TenantControllerTests
             Status = MemberStatus.Active
         };
 
-        var service = new DelegatingMemberWorkflowService
-        {
-            GetMembersAsyncHandler = (gymCode, token) =>
-            {
-                Assert.Equal(GymCode, gymCode);
-                Assert.Equal(cancellationToken, token);
-                return Task.FromResult<IReadOnlyCollection<MemberResponse>>(listResponse);
-            },
-            GetCurrentMemberAsyncHandler = (gymCode, token) =>
-            {
-                Assert.Equal(GymCode, gymCode);
-                Assert.Equal(cancellationToken, token);
-                return Task.FromResult(detailResponse);
-            },
-            GetMemberAsyncHandler = (gymCode, id, token) =>
-            {
-                Assert.Equal(GymCode, gymCode);
-                Assert.Equal(memberId, id);
-                Assert.Equal(cancellationToken, token);
-                return Task.FromResult(detailResponse);
-            },
-            CreateMemberAsyncHandler = (gymCode, forwardedRequest, token) =>
-            {
-                Assert.Equal(GymCode, gymCode);
-                Assert.Same(request, forwardedRequest);
-                Assert.Equal(cancellationToken, token);
-                return Task.FromResult(detailResponse);
-            },
-            UpdateMemberAsyncHandler = (gymCode, id, forwardedRequest, token) =>
-            {
-                Assert.Equal(GymCode, gymCode);
-                Assert.Equal(memberId, id);
-                Assert.Same(request, forwardedRequest);
-                Assert.Equal(cancellationToken, token);
-                return Task.FromResult(detailResponse);
-            },
-            DeleteMemberAsyncHandler = (gymCode, id, token) =>
-            {
-                Assert.Equal(GymCode, gymCode);
-                Assert.Equal(memberId, id);
-                Assert.Equal(cancellationToken, token);
-                return Task.CompletedTask;
-            }
-        };
+        var mediator = new RecordingMemberMediator(listResponse, detailResponse);
 
-        var controller = ControllerTestContextFactory.WithUser(new MembersController(service));
+        var controller = ControllerTestContextFactory.WithUser(new MembersController(mediator));
 
         var list = await controller.GetMembers(GymCode, cancellationToken);
         Assert.Same(listResponse, ControllerAssert.AssertOk(list));
+        var listMessage = Assert.IsType<ListMembersQuery>(mediator.SentRequests[^1]);
+        Assert.Equal(GymCode, listMessage.GymCode);
+        Assert.Equal(cancellationToken, mediator.SentCancellationTokens[^1]);
 
         var current = await controller.GetCurrentMember(GymCode, cancellationToken);
         Assert.Same(detailResponse, ControllerAssert.AssertOk(current));
+        var currentMessage = Assert.IsType<GetCurrentMemberQuery>(mediator.SentRequests[^1]);
+        Assert.Equal(GymCode, currentMessage.GymCode);
+        Assert.Equal(cancellationToken, mediator.SentCancellationTokens[^1]);
 
         var get = await controller.GetMember(GymCode, memberId, cancellationToken);
         Assert.Same(detailResponse, ControllerAssert.AssertOk(get));
+        var getMessage = Assert.IsType<GetMemberQuery>(mediator.SentRequests[^1]);
+        Assert.Equal(GymCode, getMessage.GymCode);
+        Assert.Equal(memberId, getMessage.MemberId);
+        Assert.Equal(cancellationToken, mediator.SentCancellationTokens[^1]);
 
         var create = await controller.CreateMember(GymCode, request, cancellationToken);
         Assert.Same(detailResponse, ControllerAssert.AssertCreated(create));
+        var createMessage = Assert.IsType<CreateMemberCommand>(mediator.SentRequests[^1]);
+        Assert.Equal(GymCode, createMessage.GymCode);
+        Assert.Same(request, createMessage.Request);
+        Assert.Equal(cancellationToken, mediator.SentCancellationTokens[^1]);
         var createdAt = Assert.IsType<CreatedAtActionResult>(create.Result);
         Assert.Equal(nameof(MembersController.GetMember), createdAt.ActionName);
         Assert.Equal("1", createdAt.RouteValues?["version"]);
@@ -103,9 +76,18 @@ public class TenantControllerTests
 
         var update = await controller.UpdateMember(GymCode, memberId, request, cancellationToken);
         Assert.Same(detailResponse, ControllerAssert.AssertOk(update));
+        var updateMessage = Assert.IsType<UpdateMemberCommand>(mediator.SentRequests[^1]);
+        Assert.Equal(GymCode, updateMessage.GymCode);
+        Assert.Equal(memberId, updateMessage.MemberId);
+        Assert.Same(request, updateMessage.Request);
+        Assert.Equal(cancellationToken, mediator.SentCancellationTokens[^1]);
 
         var delete = await controller.DeleteMember(GymCode, memberId, cancellationToken);
         ControllerAssert.AssertNoContent(delete);
+        var deleteMessage = Assert.IsType<DeleteMemberCommand>(mediator.SentRequests[^1]);
+        Assert.Equal(GymCode, deleteMessage.GymCode);
+        Assert.Equal(memberId, deleteMessage.MemberId);
+        Assert.Equal(cancellationToken, mediator.SentCancellationTokens[^1]);
     }
 
     [Fact]
@@ -169,7 +151,7 @@ public class TenantControllerTests
             }
         };
 
-        var controller = ControllerTestContextFactory.WithUser(new BookingsController(service));
+        var controller = ControllerTestContextFactory.WithUser(new BookingsController(new TrainingWorkflowMediatorAdapter(service)));
 
         var list = await controller.GetBookings(GymCode, cancellationToken);
         Assert.Same(bookings, ControllerAssert.AssertOk(list));
@@ -266,7 +248,7 @@ public class TenantControllerTests
             }
         };
 
-        var controller = ControllerTestContextFactory.WithUser(new MembershipsController(service));
+        var controller = ControllerTestContextFactory.WithUser(new MembershipsController(new MembershipFinanceMediatorAdapter(service)));
 
         var list = await controller.GetMemberships(GymCode, cancellationToken);
         Assert.Same(memberships, ControllerAssert.AssertOk(list));
@@ -291,4 +273,40 @@ public class TenantControllerTests
             FullName = "Ada Lovelace",
             Status = MemberStatus.Active
         };
+
+    private sealed class RecordingMemberMediator(
+        IReadOnlyCollection<MemberResponse> listResponse,
+        MemberDetailResponse detailResponse) : IMediator
+    {
+        public List<object> SentRequests { get; } = [];
+        public List<CancellationToken> SentCancellationTokens { get; } = [];
+
+        public Task SendAsync(IRequest request, CancellationToken cancellationToken = default)
+        {
+            SentRequests.Add(request);
+            SentCancellationTokens.Add(cancellationToken);
+
+            if (request is not DeleteMemberCommand)
+            {
+                throw new InvalidOperationException($"Unexpected mediator request {request.GetType().FullName}.");
+            }
+
+            return Task.CompletedTask;
+        }
+
+        public Task<TResponse> SendAsync<TResponse>(IRequest<TResponse> request, CancellationToken cancellationToken = default)
+        {
+            SentRequests.Add(request);
+            SentCancellationTokens.Add(cancellationToken);
+
+            object response = request switch
+            {
+                ListMembersQuery => listResponse,
+                GetCurrentMemberQuery or GetMemberQuery or CreateMemberCommand or UpdateMemberCommand => detailResponse,
+                _ => throw new InvalidOperationException($"Unexpected mediator request {request.GetType().FullName}.")
+            };
+
+            return Task.FromResult((TResponse)response);
+        }
+    }
 }

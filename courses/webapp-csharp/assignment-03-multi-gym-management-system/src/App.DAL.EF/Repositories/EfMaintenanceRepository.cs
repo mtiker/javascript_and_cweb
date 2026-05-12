@@ -84,6 +84,17 @@ public sealed class EfMaintenanceRepository(AppDbContext dbContext) : IMaintenan
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyList<Equipment>> ListEquipmentWithModelByGymAsync(Guid gymId, int limit, CancellationToken cancellationToken = default)
+    {
+        return await dbContext.Equipment
+            .AsNoTracking()
+            .Include(entity => entity.EquipmentModel)
+            .Where(entity => entity.GymId == gymId)
+            .OrderBy(entity => entity.AssetTag)
+            .Take(limit)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<IReadOnlyList<Equipment>> ListEquipmentDueCandidatesAsync(Guid gymId, CancellationToken cancellationToken = default)
     {
         return await dbContext.Equipment
@@ -119,6 +130,33 @@ public sealed class EfMaintenanceRepository(AppDbContext dbContext) : IMaintenan
         return await MaintenanceTaskAggregateQuery()
             .Where(entity => entity.GymId == gymId)
             .OrderByDescending(entity => entity.CreatedAtUtc)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<MaintenanceTask>> ListIncompleteMaintenanceTasksWithStaffByGymAsync(Guid gymId, int limit, CancellationToken cancellationToken = default)
+    {
+        return await dbContext.MaintenanceTasks
+            .AsNoTracking()
+            .Include(entity => entity.Equipment)
+            .Include(entity => entity.AssignedStaff)
+                .ThenInclude(entity => entity!.Person)
+            .Where(entity => entity.GymId == gymId && entity.Status != MaintenanceTaskStatus.Done)
+            .OrderBy(entity => entity.DueAtUtc)
+            .Take(limit)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<MaintenanceTask>> ListAssignedTasksWithEquipmentByStaffAsync(Guid gymId, Guid staffId, int limit, CancellationToken cancellationToken = default)
+    {
+        return await dbContext.MaintenanceTasks
+            .AsNoTracking()
+            .Include(entity => entity.Equipment)
+                .ThenInclude(entity => entity!.EquipmentModel)
+            .Include(entity => entity.AssignedStaff)
+                .ThenInclude(entity => entity!.Person)
+            .Where(entity => entity.GymId == gymId && entity.AssignedStaffId == staffId)
+            .OrderBy(entity => entity.DueAtUtc)
+            .Take(limit)
             .ToListAsync(cancellationToken);
     }
 

@@ -11,7 +11,10 @@ The project keeps the ASP.NET Core monolith for backend responsibilities while a
 MVC Admin now renders focused Razor pages for dashboard, gyms, members, memberships, sessions, and operations using strongly typed view models.
 Admin dashboard/gyms/sessions/operations controllers delegate page composition
 to Admin view-model services and do not depend on `AppDbContext`.
-MVC Admin remains read-only defense evidence, while create/update/delete workflows stay in the tenant REST API and React client.
+MVC Admin now includes create/update/delete form flows for members, training
+categories, and membership packages. Other Admin pages remain focused
+read/action surfaces, while the REST API and React client still provide the
+broadest tenant operation coverage.
 
 ## Scope
 
@@ -221,7 +224,8 @@ The separate client now combines focused workflow pages with a broad SaaS functi
 Implemented v1 scope:
 - login/logout through the backend API
 - refresh-token based session continuation
-- `sessionStorage` auth persistence
+- `sessionStorage` auth persistence, including the refresh token, documented as a
+  current security tradeoff rather than the final hardening target
 - language selection with `Accept-Language` for localized API responses
 - translated React login/shell labels for English and Estonian
 - system-role platform console for analytics, gym onboarding/activation/snapshots, subscriptions, support tickets, and impersonation
@@ -251,8 +255,14 @@ Implemented v1 scope:
   - owner/admin -> `/finance-workspace` and `/console`
 - single active gym per session, with SystemAdmin able to select any active tenant
 
-Not implemented in this pass:
-- deployment of the client to a separate public server; it is instead deployed under the ASP.NET Core host at `/client`
+Separate hosting status:
+- the backend image still embeds the React client at `/client` for Mode A
+- standalone client artifacts exist through `client/Dockerfile`,
+  `client/nginx.conf`, `scripts/deploy-client.sh`, and the production Compose
+  `client` profile
+- local client test/build and Compose profile validation passed on 2026-05-11
+- no separate public client host was live-smoke-tested in this pass, so live
+  separate hosting must not be claimed until deployment smoke succeeds
 
 ## Security Rules
 
@@ -267,6 +277,11 @@ Not implemented in this pass:
 - public API controllers advertise `ProblemDetails` responses for `400`, `401`, `403`, `404`, and `409`.
 - APIs return `ProblemDetails` for unhandled JSON/API failures.
 - production HTML failures render `/Home/Error`.
+- refresh tokens are rotated on renewal, reused tokens are rejected, logout
+  invalidates stored refresh tokens, and access-token lifetime is configurable.
+- the separate React client still stores the refresh token in JavaScript-readable
+  `sessionStorage`; future hardening should move it to an `HttpOnly`, `Secure`,
+  `SameSite` cookie with CSRF/CORS changes handled in the same phase.
 - members can access only their own member data.
 - tenant-only users cannot use system routes.
 - platform-role access is separated from tenant-role access; SystemAdmin can intentionally enter an active tenant context as `GymOwner` for support/demo work.
@@ -279,14 +294,18 @@ Not implemented in this pass:
 - tenant members, training, memberships/payments/finance, facilities, and client workspace reads are handled through BLL service interfaces
 - membership, training, maintenance/facilities, and auth slices now use BLL persistence contracts, EF repository implementations, Unit of Work, and BLL mappers for Final1 Clean/Onion evidence
 - coaching-plan, finance-workspace, and member-workspace workflows are service-first and controller-thin
-- remaining unmigrated BLL services depend on `IAppDbContext` rather than the concrete EF `AppDbContext`
+- remaining unmigrated BLL services depend on `IAppDbContext` rather than the concrete EF `AppDbContext`; `TenantAccessChecker` now gets its route-gym lookup through the BLL-owned `IAuthorizationQueryRepository` contract
 - membership workflow internals are split into focused package, membership, payment, and booking-pricing services behind `IMembershipWorkflowService`
-- authorization internals are split into current-actor resolution, tenant-access checks, and resource-specific checks behind `IAuthorizationService`
+- authorization internals are split into current-actor resolution, tenant-access checks, and resource-specific checks behind `IAuthorizationService`; the tenant-access checker keeps role/active-gym decisions in BLL while DAL owns the EF gym-code query
 - account login/logout/refresh-token renewal is split out of broad identity management into `IAccountAuthService`
 - refresh-token lookup, rotation, reuse rejection, and logout invalidation use `IAppUnitOfWork.RefreshTokens`
 - auth response DTO projection uses `AuthResponseMapper`
 - API controllers are thin boundary adapters and do not expose direct `AppDbContext` access through `ApiControllerBase`
+- MVC Client Dashboard is a thin Razor controller: `DashboardController` delegates to `IClientDashboardPageService`, which builds the view model from BLL/application services; snapshot reads go through `IClientDashboardQueryService` and `IAppUnitOfWork`
+- MVC Client Sessions is a thin Razor controller: `SessionsController` delegates list/detail/booking/cancel/roster/attendance orchestration to `IClientSessionsPageService`; session detail and roster reads go through `IClientSessionsQueryService` and tenant-scoped repository contracts, while booking mutations reuse `ITrainingWorkflowService`
 - API controller actions accept request cancellation tokens and pass them through BLL services to EF async calls
+- Final-2 module adapters now route account sessions, member CRUD, training category/session/booking/attendance, MembershipFinance package/membership/payment/invoice workflows, and maintenance/facility workflows through `BuildingBlocks.Mediator` and module-owned contracts while preserving existing route and DTO contracts. Training category CRUD is owned by `Modules.Training.Application` handlers instead of wrapping `ITrainingWorkflowService`; membership package CRUD is owned by `Modules.MembershipFinance.Application` handlers instead of wrapping `IMembershipWorkflowService` or `IMembershipPackageService`.
+- Final-2 submission evidence is consolidated in `docs/final2-defense.md`, `docs/final2-module-boundary-report.md`, `docs/final2-test-traceability.md`, and `docs/final2-risk-report.md`.
 - remaining direct `AppDbContext` usage is documented as pragmatic read composition in application infrastructure and Admin page view-model services, not in Admin controllers
 
 ## Test Plan
@@ -296,17 +315,19 @@ Backend:
 - unit tests for membership lifecycle status transitions and invalid transitions
 - runtime-configuration tests for strict password policy, JWT HTTPS metadata behavior, and production CORS fail-fast rules
 - EF behavior tests for tenant soft-delete filtering and audit-log writes
-- authorization-service unit tests for active gym checks, role checks, member self access, trainer session assignment, and caretaker assignment
+- authorization-service unit tests for active gym checks, role checks, successful tenant access through the authorization query repository, member self access, trainer session assignment, and caretaker assignment
 - controller unit tests for members, bookings, memberships, training sessions, maintenance tasks, staff, identity, platform, subscriptions, support, and impersonation, including response-shape and cancellation-token forwarding
 - controller unit tests for member workspace, finance workspace, and coaching-plan routes
 - subscription-tier limit unit tests for starter-limit rejection and enterprise allowance
 - API-contract metadata unit tests for required `ProblemDetails` response documentation on public controllers
+- API route snapshot tests for the complete public controller method/template surface
 - auth-boundary tests for stable account routes/DTOs and the dedicated auth service/repository/UOW/mapper contracts
-- integration tests for login, register, multi-gym user switch, SystemAdmin tenant-context switch, refresh-token rotation, expired/reused refresh tokens, cross-gym denial, member self-only denial, system-route denial, platform-role access, unknown/inactive gym early rejection, API `ProblemDetails`, MVC HTML error handling, `/client` fallback serving, MVC Admin/Client layout rendering, member roster denial, nullable session descriptions, member duplicate validation, membership package CRUD/validation/unused soft-delete/used conflict/wrong-gym behavior, booking payment-reference and duplicate-booking enforcement, trainer attendance authorization, caretaker task authorization, and impersonation actor/target/reason/claim/audit/refresh-token behavior
+- integration tests for login, register, multi-gym user switch, SystemAdmin tenant-context switch, refresh-token rotation, expired/reused refresh tokens, cross-gym denial, member own-workspace access, member self-only denial, system-route denial, platform-role access, unknown/inactive gym early rejection, API `ProblemDetails`, MVC HTML error handling, `/client` fallback serving, MVC Admin/Client layout rendering, member roster denial, nullable session descriptions, member duplicate validation, membership package CRUD/validation/unused soft-delete/used conflict/wrong-gym behavior, booking payment-reference and duplicate-booking enforcement, trainer attendance authorization, caretaker task authorization, and impersonation actor/target/reason/claim/audit/refresh-token behavior
 - maintenance workflow unit tests for assigned/unassigned caretaker updates, due scheduled-task generation, assignment history, and breakdown downtime/status transitions
 - MVC compliance integration/source tests for anonymous and wrong-role Admin denial, `GymAdmin`/`GymOwner` tenant Admin access, MVC Client route availability for member/trainer/caretaker, Admin no-`ViewBag`/`ViewData`, Admin POST anti-forgery guardrails, Admin strongly typed view rendering, and Admin controller thinness/no-DbContext boundaries
-- training-category localization integration tests for CRUD, `Accept-Language` `en`/`et`/`et-EE`, safe `LangStr` fallback, MVC `.resx` label rendering, and validation `ProblemDetails`
-- a focused PostgreSQL Testcontainers slice validates provider-realistic behavior (tenant query filtering, unique constraints, `LangStr`/JSONB persistence); run when `RUN_POSTGRES_TESTS=1` and Docker is available
+- architecture tests for repository/UOW contract placement, `TenantAccessChecker` avoiding direct `IAppDbContext`, Client Dashboard and Client Sessions page-service boundaries, and migrated controller/page-service no direct EF/DAL dependencies
+- training-category localization integration tests for CRUD, `Accept-Language` `en`/`et`/`et-EE`, safe `LangStr` fallback, MVC login/Admin `.resx` label rendering, and validation `ProblemDetails`
+- a focused PostgreSQL Testcontainers slice validates provider-realistic behavior (tenant query filtering, unique constraints, `LangStr`/JSONB persistence); it is skipped in normal `dotnet test` runs, can be run locally with `RUN_POSTGRES_TESTS=1 dotnet test multi-gym-management-system.slnx --filter PostgreSql`, and is exposed in GitLab as the optional manual `assignment03_postgresql_tests` job for Docker-capable runners
 
 Frontend:
 - auth guard tests
@@ -331,13 +352,32 @@ Frontend:
 - coaching workspace item-decision mutation test
 
 Verification commands:
+- `dotnet format multi-gym-management-system.slnx --verify-no-changes`
 - `dotnet build multi-gym-management-system.slnx`
 - `dotnet test multi-gym-management-system.slnx`
 - `cd client && npm test`
 - `cd client && npm run build`
+- `docker compose config`
+- `POSTGRES_PASSWORD=dummy JWT__Key=dummy-long-key VITE_API_BASE_URL=https://api.example.test docker compose -f docker-compose.prod.yml config`
+- `POSTGRES_PASSWORD=dummy JWT__Key=dummy-long-key VITE_API_BASE_URL=https://api.example.test docker compose --profile client -f docker-compose.prod.yml config`
+- `bash scripts/smoke-deploy.sh` with `BACKEND_URL`, `CLIENT_URL`,
+  `SMOKE_EMAIL`, `SMOKE_PASSWORD`, and `SMOKE_GYM_CODE` set for the target
+  deployment
+
+Latest result, 2026-05-11:
+- format, build, backend tests, client tests, client build, and all three
+  Compose config commands passed
+- backend tests reported 250 passed and 3 skipped PostgreSQL/Testcontainers
+  tests
+- deployment smoke script was not run because public URLs and smoke
+  credentials were not provided
 
 ## Delivery Notes
 
 - Deployment artifacts stay in the repository and target the `cweb-a4` proxy route.
 - The public URL is `https://mtiker-cweb-4.proxy.itcollege.ee`, which maps to VPS port `83`.
+- Repeatable deployment smoke verification now covers backend `/health`,
+  standalone client `/healthz`, JWT login, and one authenticated tenant API read.
+- Public URL availability and separate public client hosting remain unverified
+  until the smoke script/checklist is run against the real deployment.
 - This plan must stay aligned with README, API docs, testing docs, CI configuration, and AI logs whenever the implementation changes.

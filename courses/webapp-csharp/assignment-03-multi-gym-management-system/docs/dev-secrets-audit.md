@@ -39,7 +39,7 @@ For production, the following must be injected via environment variables (never 
 | Environment variable | Maps to | Required |
 |---|---|---|
 | `JWT__Key` | `Jwt:Key` | **Required** — `deploy.sh` validates with `: "${JWT__Key:?..."` |
-| `POSTGRES_PASSWORD` | Docker postgres service | Optional (defaults to `postgres`; change for real deployments) |
+| `POSTGRES_PASSWORD` | Docker postgres service | **Required** for production; local development Compose still defaults to `postgres` |
 | `ConnectionStrings__DefaultConnection` | Full override if needed | Optional if Postgres defaults are kept |
 
 `docker-compose.prod.yml` also accepts `JWT__Issuer`, `JWT__Audience`, `CORS_ALLOWED_ORIGIN`, `WEBAPP_PORT`, and `DATA_INIT_*` via `.env` or shell exports.

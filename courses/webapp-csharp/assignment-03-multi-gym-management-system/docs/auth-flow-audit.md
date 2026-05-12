@@ -40,7 +40,10 @@ POST /api/v1/account/switch-role  (requires JWT, requires active gym in claims)
 - On a successful refresh, the original request is retried once with the new JWT.
 - If the refresh endpoint returns a non-2xx, the session is cleared and
   `"Session expired. Please sign in again."` is thrown.
-- Session is stored in `sessionStorage` (cleared on tab close).
+- Session is stored in `sessionStorage`; the stored payload includes the refresh
+  token, so it is JavaScript-readable and XSS-sensitive while the browser session
+  is live. See `docs/security-token-audit.md` for the accepted tradeoff and
+  compensating controls.
 
 ## Test coverage
 
@@ -70,6 +73,15 @@ Wrapped in a try/catch that throws `ValidationAppException` instead → HTTP 400
   JWT + matching refresh token can renew without any additional credential. This is
   standard for refresh-token schemes; the 30-day expiry and per-logout invalidation
   limit the attack window.
+- The React client currently stores the refresh token in `sessionStorage`. This
+  preserves the existing DTO/request contract and avoids cookie/CSRF changes in
+  this phase, but it is not equivalent to an `HttpOnly` cookie because same-origin
+  script execution could read it. Current compensating controls are refresh-token
+  rotation, reuse rejection, logout invalidation, server-side refresh-token lookup,
+  and configurable access-token lifetime.
+- Future hardening should migrate the refresh token to an `HttpOnly`, `Secure`,
+  `SameSite` cookie and add the required CSRF/CORS/test/documentation changes in
+  the same phase.
 - Token rotation keeps the `PreviousRefreshToken` value for 30 days inside the same
   `AppRefreshToken` row. The previous token is not usable for renewal (the row was
   deleted and replaced), so replay attacks with the old value return 403.

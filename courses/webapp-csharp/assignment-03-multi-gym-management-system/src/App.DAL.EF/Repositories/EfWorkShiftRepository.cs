@@ -34,6 +34,20 @@ public sealed class EfWorkShiftRepository(AppDbContext dbContext) : IWorkShiftRe
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyList<WorkShift>> ListTrainingShiftsWithStaffForSessionAsync(Guid gymId, Guid trainingSessionId, CancellationToken cancellationToken = default)
+    {
+        return await dbContext.WorkShifts
+            .AsNoTracking()
+            .Include(workShift => workShift.Contract)
+                .ThenInclude(contract => contract!.Staff)
+                    .ThenInclude(staff => staff!.Person)
+            .Where(workShift =>
+                workShift.GymId == gymId &&
+                workShift.TrainingSessionId == trainingSessionId &&
+                workShift.ShiftType == ShiftType.Training)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<IReadOnlyList<Guid>> ListTrainerContractIdsForSessionAsync(Guid gymId, Guid trainingSessionId, CancellationToken cancellationToken = default)
     {
         return await dbContext.WorkShifts
@@ -43,6 +57,18 @@ public sealed class EfWorkShiftRepository(AppDbContext dbContext) : IWorkShiftRe
                 workShift.ShiftType == ShiftType.Training)
             .Select(workShift => workShift.ContractId)
             .ToListAsync(cancellationToken);
+    }
+
+    public Task<bool> ExistsTrainingShiftForStaffAsync(Guid gymId, Guid trainingSessionId, Guid staffId, CancellationToken cancellationToken = default)
+    {
+        return dbContext.WorkShifts.AnyAsync(
+            workShift =>
+                workShift.GymId == gymId &&
+                workShift.TrainingSessionId == trainingSessionId &&
+                workShift.ShiftType == ShiftType.Training &&
+                workShift.Contract != null &&
+                workShift.Contract.StaffId == staffId,
+            cancellationToken);
     }
 
     public Task<WorkShift?> FindAsync(Guid gymId, Guid workShiftId, CancellationToken cancellationToken = default)

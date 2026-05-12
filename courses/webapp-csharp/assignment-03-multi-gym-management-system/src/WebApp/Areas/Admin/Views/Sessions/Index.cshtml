@@ -1,27 +1,28 @@
 @model AdminSessionsPageViewModel
+@inject IStringLocalizer<SharedResources> L
 
 <section class="panel">
-    <p class="eyebrow">Admin workspace</p>
-    <h1>Sessions</h1>
-    <p>Active gym: <strong>@Model.GymCode</strong></p>
+    <p class="eyebrow">@L["AdminWorkspace"]</p>
+    <h1>@L["Sessions"]</h1>
+    <p>@L["ActiveGym"]: <strong>@Model.GymCode</strong></p>
 </section>
 
 <section class="panel">
     @if (Model.Sessions.Count == 0)
     {
-        <p class="muted-text">No sessions scheduled for the active gym.</p>
+        <p class="muted-text">@L["NoSessionsScheduledForActiveGym"]</p>
     }
     else
     {
         <table class="data-table">
             <thead>
             <tr>
-                <th>Session</th>
-                <th>Time</th>
-                <th>Bookings</th>
-                <th>Capacity</th>
-                <th>Trainers</th>
-                <th>Status</th>
+                <th>@L["Session"]</th>
+                <th>@L["Time"]</th>
+                <th>@L["Bookings"]</th>
+                <th>@L["Capacity"]</th>
+                <th>@L["Trainers"]</th>
+                <th>@L["Status"]</th>
             </tr>
             </thead>
             <tbody>
@@ -32,7 +33,7 @@
                     <td>@session.StartAtUtc.ToLocalTime():g - @session.EndAtUtc.ToLocalTime():t</td>
                     <td>@session.BookingCount</td>
                     <td>@session.Capacity</td>
-                    <td>@(string.IsNullOrWhiteSpace(session.TrainerNames) ? "No trainers assigned" : session.TrainerNames)</td>
+                    <td>@(string.IsNullOrWhiteSpace(session.TrainerNames) ? L["NoTrainersAssigned"].Value : session.TrainerNames)</td>
                     <td>@session.Status</td>
                 </tr>
             }

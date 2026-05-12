@@ -1,0 +1,51 @@
+@model AdminMembershipPackagesPageViewModel
+@inject IStringLocalizer<SharedResources> L
+
+<section class="panel">
+    <p class="eyebrow">@L["AdminWorkspace"]</p>
+    <h1>@L["MembershipPackages"]</h1>
+    <p>@L["ActiveGym"]: <strong>@Model.GymCode</strong></p>
+    <p>
+        <a asp-area="Admin" asp-controller="MembershipPackages" asp-action="Create" class="primary">@L["AddNewPackage"]</a>
+    </p>
+</section>
+
+<section class="panel">
+    <h2>@L["Packages"]</h2>
+    @if (Model.Packages.Count == 0)
+    {
+        <p class="muted-text">@L["NoMembershipPackagesYet"]</p>
+    }
+    else
+    {
+        <table class="data-table">
+            <thead>
+            <tr>
+                <th>@L["Name"]</th>
+                <th>@L["Type"]</th>
+                <th>@L["Duration"]</th>
+                <th>@L["Price"]</th>
+                <th>@L["TrainingBenefit"]</th>
+                <th>@L["Actions"]</th>
+            </tr>
+            </thead>
+            <tbody>
+            @foreach (var package in Model.Packages)
+            {
+                <tr>
+                    <td>@package.Name</td>
+                    <td>@package.PackageType</td>
+                    <td>@package.DurationValue @package.DurationUnit</td>
+                    <td>@package.BasePrice @package.CurrencyCode</td>
+                    <td>@(package.IsTrainingFree ? L["FreeSessions"] : L["TrainingDiscountPercent", package.TrainingDiscountPercent ?? 0])</td>
+                    <td>
+                        <a asp-area="Admin" asp-controller="MembershipPackages" asp-action="Edit" asp-route-id="@package.Id">@L["Edit"]</a>
+                        <span> | </span>
+                        <a asp-area="Admin" asp-controller="MembershipPackages" asp-action="Delete" asp-route-id="@package.Id">@L["Delete"]</a>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    }
+</section>

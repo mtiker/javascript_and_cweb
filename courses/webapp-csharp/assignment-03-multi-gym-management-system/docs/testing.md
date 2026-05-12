@@ -2,6 +2,12 @@
 
 ## Automated Verification Commands
 
+Format check:
+
+```powershell
+dotnet format multi-gym-management-system.slnx --verify-no-changes
+```
+
 Backend build:
 
 ```powershell
@@ -13,6 +19,26 @@ Backend tests:
 ```powershell
 dotnet test multi-gym-management-system.slnx
 ```
+
+PostgreSQL/Testcontainers persistence tests:
+
+```powershell
+$env:RUN_POSTGRES_TESTS = "1"
+dotnet test multi-gym-management-system.slnx --filter PostgreSql
+Remove-Item Env:\RUN_POSTGRES_TESTS
+```
+
+Bash equivalent:
+
+```bash
+RUN_POSTGRES_TESTS=1 dotnet test multi-gym-management-system.slnx --filter PostgreSql
+```
+
+These tests are intentionally skipped during the normal `dotnet test` run.
+They start a real `postgres:16-alpine` container through Testcontainers and
+therefore require a Docker engine that the test process can reach. Keeping
+them opt-in preserves normal local and CI behavior on machines or runners that
+do not expose Docker.
 
 Separate client tests:
 
@@ -27,6 +53,24 @@ Separate client production build:
 cd client
 npm run build
 ```
+
+## Latest Validation Snapshot
+
+Validated locally on 2026-05-11:
+
+| Command | Result |
+|---|---|
+| `dotnet format multi-gym-management-system.slnx --verify-no-changes` | Pass, no files changed |
+| `dotnet build multi-gym-management-system.slnx` | Pass, 0 warnings, 0 errors |
+| `dotnet test multi-gym-management-system.slnx` | Pass, 250 passed, 3 skipped PostgreSQL/Testcontainers tests |
+| `cd client && npm test` | Pass, 7 files / 34 tests; React Router v7 future warnings only |
+| `cd client && npm run build` | Pass |
+| `docker compose config` | Pass |
+| `POSTGRES_PASSWORD=dummy JWT__Key=dummy-long-key VITE_API_BASE_URL=https://api.example.test docker compose -f docker-compose.prod.yml config` | Pass |
+| `POSTGRES_PASSWORD=dummy JWT__Key=dummy-long-key VITE_API_BASE_URL=https://api.example.test docker compose --profile client -f docker-compose.prod.yml config` | Pass |
+
+The PostgreSQL provider tests remained skipped because `RUN_POSTGRES_TESTS=1`
+was not set. No browser or public VPS smoke test was run in this pass.
 
 ## Current Test Scope
 
@@ -63,6 +107,15 @@ Backend integration tests:
 - `MvcComplianceTests.AdminViews_DoNotUse_ViewBagOrViewData`
 - `MvcComplianceTests.AdminPostActions_UseAntiForgery`
 - `MvcComplianceTests.AdminControllers_ReturnStronglyTypedViewModels`
+- `AdminMembersCrudTests.*`
+  - MVC Admin members index/create/edit/delete, validation, authorization, and
+    cross-tenant id denial
+- `AdminTrainingCategoriesCrudTests.*`
+  - MVC Admin training category index/create/edit/delete, validation,
+    localized `LangStr` rendering, authorization, and cross-tenant id denial
+- `AdminMembershipPackagesCrudTests.*`
+  - MVC Admin membership package index/create/edit/delete, validation,
+    active-gym persistence, authorization, and cross-tenant id denial
 - `AuthSecurityAndErrorTests.RenewRefreshToken_RotatesToken_AndRejectsReuse`
 - `AuthSecurityAndErrorTests.RenewRefreshToken_RejectsExpiredRefreshToken`
 - `AuthSecurityAndErrorTests.MembersEndpoint_RejectsActiveGymMismatch`
@@ -100,6 +153,9 @@ Backend integration tests:
 - `MembershipPackageCrudTests.DeleteUsedMembershipPackage_ReturnsConflictAndKeepsMembershipSnapshot`
 - `MembershipPackageCrudTests.UpdateMembershipPackage_ForeignGymPackageId_Returns404`
 - `ImpersonationTests.StartImpersonation_WritesAuditRefreshTokenAndClaims`
+- `PostgreSqlPersistenceTests.*`
+  - optional Docker-backed slice for tenant query filtering, PostgreSQL unique-index enforcement, and `LangStr` JSONB round-trip behavior
+  - skipped unless `RUN_POSTGRES_TESTS=1` is set
 
 Frontend Vitest coverage:
 - auth guard redirects anonymous users to login
@@ -153,5 +209,6 @@ Recommended manual verification before defense:
 - The HTML error-page test uses a production-style test host because MVC exception handling is only enabled outside development.
 - Frontend tests run in `jsdom` and mock network traffic directly.
 - The assignment CI pipeline now verifies the React client before the .NET build and test stages.
-- `WebApp.Tests` pins `System.Security.Cryptography.Xml` to the patched 10.0.6 line so the transitive test dependency chain stays free of the April 2026 high-severity advisories.
-
+- The normal CI `assignment03_test` job preserves the default skip behavior for PostgreSQL/Testcontainers tests.
+- The optional GitLab `assignment03_postgresql_tests` manual job sets `RUN_POSTGRES_TESTS=1` and runs `dotnet test multi-gym-management-system.slnx --configuration Release --no-build --filter PostgreSql`; start it only on a Docker-capable runner.
+- `WebApp.Tests` pins security-sensitive transitive test dependencies to the patched 10.0.7 line so the dependency chain stays free of the April 2026 high-severity advisories.

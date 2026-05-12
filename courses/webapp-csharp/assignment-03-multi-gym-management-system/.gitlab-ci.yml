@@ -53,6 +53,24 @@ assignment03_test:
   script:
     - dotnet test multi-gym-management-system.slnx --configuration Release --no-build
 
+assignment03_postgresql_tests:
+  stage: test
+  tags:
+    - shared
+  needs:
+    - assignment03_build
+  rules:
+    - changes: *assignment03_changes
+      when: manual
+      allow_failure: true
+    - when: never
+  variables:
+    RUN_POSTGRES_TESTS: "1"
+  before_script:
+    - cd courses/webapp-csharp/assignment-03-multi-gym-management-system
+  script:
+    - dotnet test multi-gym-management-system.slnx --configuration Release --no-build --filter PostgreSql
+
 assignment03_docker_build:
   stage: package
   tags:

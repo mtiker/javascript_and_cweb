@@ -1,0 +1,73 @@
+@model AdminMembershipPackageFormViewModel
+@inject IStringLocalizer<SharedResources> L
+
+<section class="panel">
+    <p class="eyebrow">@L["AdminWorkspace"]</p>
+    <h1>@L["CreateMembershipPackage"]</h1>
+    <p>@L["ActiveGym"]: <strong>@Model.GymCode</strong></p>
+</section>
+
+<section class="panel">
+    <form asp-area="Admin" asp-controller="MembershipPackages" asp-action="Create" method="post" class="form-grid">
+        <div asp-validation-summary="All" class="validation-summary-errors"></div>
+
+        <div class="form-row">
+            <label asp-for="Name">@L["Name"]</label>
+            <input asp-for="Name" />
+            <span asp-validation-for="Name" class="field-validation-error"></span>
+        </div>
+
+        <div class="form-row">
+            <label asp-for="PackageType">@L["PackageType"]</label>
+            <select asp-for="PackageType" asp-items="Html.GetEnumSelectList<App.Domain.Enums.MembershipPackageType>()"></select>
+            <span asp-validation-for="PackageType" class="field-validation-error"></span>
+        </div>
+
+        <div class="form-row">
+            <label asp-for="DurationValue">@L["DurationValue"]</label>
+            <input asp-for="DurationValue" type="number" min="1" />
+            <span asp-validation-for="DurationValue" class="field-validation-error"></span>
+        </div>
+
+        <div class="form-row">
+            <label asp-for="DurationUnit">@L["DurationUnit"]</label>
+            <select asp-for="DurationUnit" asp-items="Html.GetEnumSelectList<App.Domain.Enums.DurationUnit>()"></select>
+            <span asp-validation-for="DurationUnit" class="field-validation-error"></span>
+        </div>
+
+        <div class="form-row">
+            <label asp-for="BasePrice">@L["BasePrice"]</label>
+            <input asp-for="BasePrice" type="number" step="0.01" min="0" />
+            <span asp-validation-for="BasePrice" class="field-validation-error"></span>
+        </div>
+
+        <div class="form-row">
+            <label asp-for="CurrencyCode">@L["CurrencyCode"]</label>
+            <input asp-for="CurrencyCode" maxlength="3" />
+            <span asp-validation-for="CurrencyCode" class="field-validation-error"></span>
+        </div>
+
+        <div class="form-row">
+            <label asp-for="TrainingDiscountPercent">@L["TrainingDiscount"]</label>
+            <input asp-for="TrainingDiscountPercent" type="number" min="0" max="100" />
+            <span asp-validation-for="TrainingDiscountPercent" class="field-validation-error"></span>
+        </div>
+
+        <div class="form-row">
+            <label asp-for="IsTrainingFree">@L["TrainingIsFree"]</label>
+            <input asp-for="IsTrainingFree" />
+            <span asp-validation-for="IsTrainingFree" class="field-validation-error"></span>
+        </div>
+
+        <div class="form-row">
+            <label asp-for="Description">@L["Description"]</label>
+            <textarea asp-for="Description" rows="3"></textarea>
+            <span asp-validation-for="Description" class="field-validation-error"></span>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="primary">@L["CreatePackage"]</button>
+            <a asp-area="Admin" asp-controller="MembershipPackages" asp-action="Index" class="secondary">@L["Cancel"]</a>
+        </div>
+    </form>
+</section>

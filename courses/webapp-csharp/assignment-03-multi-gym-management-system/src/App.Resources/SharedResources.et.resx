@@ -183,4 +183,214 @@
   <data name="ErrorMessage" xml:space="preserve">
     <value>Päringut ei saanud lõpule viia. Mine eelmisele lehele tagasi ja proovi uuesti.</value>
   </data>
+  <data name="TrainingCategories" xml:space="preserve">
+    <value>Treeningukategooriad</value>
+  </data>
+  <data name="TrainingCategory" xml:space="preserve">
+    <value>Treeningukategooria</value>
+  </data>
+  <data name="NoTrainingCategoriesYet" xml:space="preserve">
+    <value>Treeningukategooriaid ei ole veel seadistatud.</value>
+  </data>
+  <data name="AddTrainingCategory" xml:space="preserve">
+    <value>Lisa treeningukategooria</value>
+  </data>
+  <data name="Translations" xml:space="preserve">
+    <value>Tõlked</value>
+  </data>
+  <data name="Description" xml:space="preserve">
+    <value>Kirjeldus</value>
+  </data>
+  <data name="Actions" xml:space="preserve">
+    <value>Tegevused</value>
+  </data>
+  <data name="Edit" xml:space="preserve">
+    <value>Muuda</value>
+  </data>
+  <data name="Delete" xml:space="preserve">
+    <value>Kustuta</value>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>Tühista</value>
+  </data>
+  <data name="Save" xml:space="preserve">
+    <value>Salvesta</value>
+  </data>
+  <data name="Create" xml:space="preserve">
+    <value>Loo</value>
+  </data>
+  <data name="ConfirmDelete" xml:space="preserve">
+    <value>Kinnita kustutamine</value>
+  </data>
+  <data name="Platform" xml:space="preserve">
+    <value>Platvorm</value>
+  </data>
+  <data name="FinanceWorkspace" xml:space="preserve">
+    <value>Finantside töölaud</value>
+  </data>
+  <data name="Active" xml:space="preserve">
+    <value>Aktiivne</value>
+  </data>
+  <data name="Inactive" xml:space="preserve">
+    <value>Mitteaktiivne</value>
+  </data>
+  <data name="ActiveMembers" xml:space="preserve">
+    <value>Aktiivsed</value>
+  </data>
+  <data name="SuspendedMembers" xml:space="preserve">
+    <value>Peatatud</value>
+  </data>
+  <data name="LeftMembers" xml:space="preserve">
+    <value>Lahkunud</value>
+  </data>
+  <data name="TotalMembers" xml:space="preserve">
+    <value>Liikmeid kokku</value>
+  </data>
+  <data name="AddNewMember" xml:space="preserve">
+    <value>Lisa uus liige</value>
+  </data>
+  <data name="MemberDirectory" xml:space="preserve">
+    <value>Liikmete kataloog</value>
+  </data>
+  <data name="NoMembersInGymYet" xml:space="preserve">
+    <value>Selles jõusaalis ei ole veel liikmeid.</value>
+  </data>
+  <data name="Code" xml:space="preserve">
+    <value>Kood</value>
+  </data>
+  <data name="Name" xml:space="preserve">
+    <value>Nimi</value>
+  </data>
+  <data name="City" xml:space="preserve">
+    <value>Linn</value>
+  </data>
+  <data name="CreateMember" xml:space="preserve">
+    <value>Loo liige</value>
+  </data>
+  <data name="EditMember" xml:space="preserve">
+    <value>Muuda liiget</value>
+  </data>
+  <data name="DeleteMember" xml:space="preserve">
+    <value>Kustuta liige</value>
+  </data>
+  <data name="FirstName" xml:space="preserve">
+    <value>Eesnimi</value>
+  </data>
+  <data name="LastName" xml:space="preserve">
+    <value>Perekonnanimi</value>
+  </data>
+  <data name="PersonalCode" xml:space="preserve">
+    <value>Isikukood</value>
+  </data>
+  <data name="DateOfBirth" xml:space="preserve">
+    <value>Sünnikuupäev</value>
+  </data>
+  <data name="SaveChanges" xml:space="preserve">
+    <value>Salvesta muudatused</value>
+  </data>
+  <data name="ConfirmMemberDeletion" xml:space="preserve">
+    <value>Kinnita järgmise liikme kustutamine. Liige eemaldatakse aktiivsetest nimekirjadest.</value>
+  </data>
+  <data name="FullName" xml:space="preserve">
+    <value>Täisnimi</value>
+  </data>
+  <data name="MembershipPackages" xml:space="preserve">
+    <value>Liikmepaketid</value>
+  </data>
+  <data name="AddNewPackage" xml:space="preserve">
+    <value>Lisa uus pakett</value>
+  </data>
+  <data name="Packages" xml:space="preserve">
+    <value>Paketid</value>
+  </data>
+  <data name="NoMembershipPackagesYet" xml:space="preserve">
+    <value>Liikmepakette ei ole veel seadistatud.</value>
+  </data>
+  <data name="Duration" xml:space="preserve">
+    <value>Kestus</value>
+  </data>
+  <data name="Price" xml:space="preserve">
+    <value>Hind</value>
+  </data>
+  <data name="TrainingBenefit" xml:space="preserve">
+    <value>Treeningu eelis</value>
+  </data>
+  <data name="FreeSessions" xml:space="preserve">
+    <value>Tasuta treeningud</value>
+  </data>
+  <data name="TrainingDiscountPercent" xml:space="preserve">
+    <value>{0}% soodustus</value>
+  </data>
+  <data name="CreateMembershipPackage" xml:space="preserve">
+    <value>Loo liikmepakett</value>
+  </data>
+  <data name="EditMembershipPackage" xml:space="preserve">
+    <value>Muuda liikmepaketti</value>
+  </data>
+  <data name="DeleteMembershipPackage" xml:space="preserve">
+    <value>Kustuta liikmepakett</value>
+  </data>
+  <data name="PackageType" xml:space="preserve">
+    <value>Paketi tüüp</value>
+  </data>
+  <data name="DurationValue" xml:space="preserve">
+    <value>Kestuse väärtus</value>
+  </data>
+  <data name="DurationUnit" xml:space="preserve">
+    <value>Kestuse ühik</value>
+  </data>
+  <data name="BasePrice" xml:space="preserve">
+    <value>Baashind</value>
+  </data>
+  <data name="CurrencyCode" xml:space="preserve">
+    <value>Valuutakood</value>
+  </data>
+  <data name="TrainingDiscount" xml:space="preserve">
+    <value>Treeningu soodustus %</value>
+  </data>
+  <data name="TrainingIsFree" xml:space="preserve">
+    <value>Treening on tasuta</value>
+  </data>
+  <data name="CreatePackage" xml:space="preserve">
+    <value>Loo pakett</value>
+  </data>
+  <data name="ConfirmPackageRemoval" xml:space="preserve">
+    <value>Kinnita järgmise paketi eemaldamine. Pakett ei ilmu enam aktiivsetes nimekirjades.</value>
+  </data>
+  <data name="DeletePackage" xml:space="preserve">
+    <value>Kustuta pakett</value>
+  </data>
+  <data name="ActiveMemberPasses" xml:space="preserve">
+    <value>Aktiivsed liikmepääsmed</value>
+  </data>
+  <data name="NoActiveMembershipsFound" xml:space="preserve">
+    <value>Aktiivseid liikmesusi ei leitud.</value>
+  </data>
+  <data name="Member" xml:space="preserve">
+    <value>Liige</value>
+  </data>
+  <data name="Package" xml:space="preserve">
+    <value>Pakett</value>
+  </data>
+  <data name="Validity" xml:space="preserve">
+    <value>Kehtivus</value>
+  </data>
+  <data name="NoSessionsScheduledForActiveGym" xml:space="preserve">
+    <value>Aktiivses jõusaalis ei ole treeninguid ajastatud.</value>
+  </data>
+  <data name="Session" xml:space="preserve">
+    <value>Treening</value>
+  </data>
+  <data name="Time" xml:space="preserve">
+    <value>Aeg</value>
+  </data>
+  <data name="Capacity" xml:space="preserve">
+    <value>Mahutavus</value>
+  </data>
+  <data name="Trainers" xml:space="preserve">
+    <value>Treenerid</value>
+  </data>
+  <data name="NoTrainersAssigned" xml:space="preserve">
+    <value>Treenereid ei ole määratud</value>
+  </data>
 </root>

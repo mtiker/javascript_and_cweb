@@ -1,6 +1,6 @@
 # Current Deployment Inventory
 
-**Audited:** 2026-04-27
+**Audited:** 2026-05-11
 
 ---
 
@@ -8,10 +8,18 @@
 
 | Environment | URL | How started |
 |-------------|-----|-------------|
-| Production (school server) | `https://mtiker-cweb-4.proxy.itcollege.ee` | GitLab CI deploy stage → `scripts/deploy.sh` |
+| Production backend / embedded client (school server) | `https://mtiker-cweb-4.proxy.itcollege.ee` | GitLab CI deploy stage to `scripts/deploy.sh`; not live-smoke-tested in the 2026-05-11 local pass |
+| Production separate client candidate | expected separate proxy host, for example `https://mtiker-cweb-4-client.proxy.itcollege.ee` | `docker compose --profile client -f docker-compose.prod.yml ...` or `scripts/deploy-client.sh`; Compose config validates, public host not smoke-tested |
 | Local production (Docker full-stack) | `http://localhost:83` | `docker compose -f docker-compose.prod.yml up` |
 | Local development | `http://localhost:5107` (HTTP) / `https://localhost:7245` (HTTPS) | `dotnet run --project src/WebApp` |
 | React dev server | `http://localhost:5173` | `cd client && npm run dev` |
+
+Latest local deployment-related validation:
+- `docker compose config` passed for development PostgreSQL.
+- `POSTGRES_PASSWORD=dummy JWT__Key=dummy-long-key VITE_API_BASE_URL=https://api.example.test docker compose -f docker-compose.prod.yml config` passed for backend/PostgreSQL production config.
+- `POSTGRES_PASSWORD=dummy JWT__Key=dummy-long-key VITE_API_BASE_URL=https://api.example.test docker compose --profile client -f docker-compose.prod.yml config` passed for backend/PostgreSQL plus standalone client config.
+- `cd client && npm run build` passed.
+- Public URL health, login, CORS preflight, and separate client health were not checked against a live deployment in this pass.
 
 ---
 
@@ -53,7 +61,7 @@ Backend connects to Postgres at `Host=127.0.0.1;Port=5432;Database=multi_gym_man
 
 ## 2. Docker — Production (`docker-compose.prod.yml`)
 
-Starts **PostgreSQL + ASP.NET Core backend**. React SPA is embedded in the backend image.
+Starts **PostgreSQL + ASP.NET Core backend**. React SPA is embedded in the backend image. The optional `client` profile also renders a standalone nginx-hosted React client service.
 
 ```yaml
 services:
@@ -81,17 +89,19 @@ services:
 | `JWT__Audience` | No | `MultiGymManagementSystem` | |
 | `JWT__AccessTokenMinutes` | No | `60` | |
 | `Cors__AllowedOrigins__0` | No | `https://mtiker-cweb-4.proxy.itcollege.ee` | Set to frontend origin if separately hosted |
+| `CORS_ALLOWED_ORIGIN_CLIENT` / `Cors__AllowedOrigins__1` | No | empty | Set to the standalone client origin for separate hosting |
+| `VITE_API_BASE_URL` | Required for separate client build | none | API base URL baked into the standalone client image |
 | `POSTGRES_DB` | No | `multi_gym_management_system` | |
 | `POSTGRES_USER` | No | `postgres` | |
-| `POSTGRES_PASSWORD` | No | `postgres` | Change in production |
+| `POSTGRES_PASSWORD` | **Yes** | none | Required by production Compose and `scripts/deploy.sh` |
 | `WEBAPP_PORT` | No | `83` | Host port |
 | `DATA_INIT_MIGRATE_DATABASE` | No | `true` | |
 | `DATA_INIT_SEED_DATA` | No | `true` | |
 
 **To start:**
 ```bash
-# Minimum required variable:
-JWT__Key=your-256-bit-secret docker compose -f docker-compose.prod.yml up -d
+# Minimum required variables:
+POSTGRES_PASSWORD=your-db-password JWT__Key=your-256-bit-secret docker compose -f docker-compose.prod.yml up -d
 ```
 
 ---
@@ -106,7 +116,7 @@ Stage 3: dotnet/aspnet:10.0         →  copies publish + dist    →  image
 
 **Key line:** `COPY --from=client-build /client/dist ./wwwroot/client`
 
-React SPA is embedded in the backend image under `wwwroot/client/`. It is served by ASP.NET Core at `/client/*` — not by a separate server.
+React SPA is embedded in the backend image under `wwwroot/client/`. It is served by ASP.NET Core at `/client/*` in Mode A. Mode B adds a separate nginx client image from `client/Dockerfile`, but the embedded fallback remains.
 
 **Exposed port:** `8080` (mapped to host port via `WEBAPP_PORT`)
 
@@ -116,18 +126,23 @@ React SPA is embedded in the backend image under `wwwroot/client/`. It is served
 
 | | Development | Production |
 |--|-------------|-----------|
-| Server | Vite dev server on `localhost:5173` | ASP.NET Core on same host as API |
-| Origin | `http://localhost:5173` — **different origin from API** | Same origin as API (e.g., `http://localhost:83/client`) |
-| CORS active? | Yes — API must allow `localhost:5173` | No — same-origin request, CORS not triggered |
-| API URL | `VITE_API_BASE_URL=https://localhost:7245` (from `.env.example`) | `window.location.origin` (auto-detected in `auth.tsx:resolveApiBaseUrl`) |
+| Server | Vite dev server on `localhost:5173` | Mode A: ASP.NET Core on same host as API. Mode B: nginx standalone client container |
+| Origin | `http://localhost:5173` - different origin from API | Mode A: same origin as API. Mode B: separate public client origin |
+| CORS active? | Yes - API must allow `localhost:5173` | Mode A: no. Mode B: yes, backend must include the client origin |
+| API URL | `VITE_API_BASE_URL=https://localhost:7245` (from `.env.example`) | Mode A: `window.location.origin`. Mode B: `VITE_API_BASE_URL` build arg |
 
 **How API URL is resolved** (`client/src/lib/auth.tsx` — `resolveApiBaseUrl`):
 ```ts
 return explicitBaseUrl ?? (isProduction ? window.location.origin : "https://localhost:7245");
 ```
-In production (`import.meta.env.PROD = true`) and no `VITE_API_BASE_URL` set, calls go to the same origin. No cross-origin, no CORS needed.
+In Mode A production (`import.meta.env.PROD = true`) and no `VITE_API_BASE_URL`
+set, calls go to the same origin. In Mode B, `VITE_API_BASE_URL` must be set
+when building the standalone client image.
 
-**Risk:** In production the React client is NOT separately hosted. It is a static file served by the backend. CORS configuration exists and is enforced, but in practice no cross-origin call is made in the Docker production stack. Only the dev environment crosses origins.
+**Risk:** The separate client hosting path now has Docker/Compose/build
+evidence, but no public-host smoke evidence was captured in this pass. Do not
+claim live separate-client deployment until `/healthz`, direct `/client/*`
+routes, login, and production CORS preflight pass against the real host.
 
 ---
 
@@ -141,13 +156,17 @@ Trigger: any change under `courses/webapp-csharp/assignment-03-multi-gym-managem
 | `build` | `assignment03_build` | `dotnet restore && dotnet build --Release` | After client |
 | `test` | `assignment03_test` | `dotnet test --Release --no-build` | After build |
 | `package` | `assignment03_docker_build` | `docker build ...` | After test |
+| `package` | `assignment03_client_image` | standalone client image build | After client |
 | `deploy` | `assignment03_deploy` | `./scripts/deploy.sh` | After package, main branch or tag only |
+| `deploy` | `assignment03_deploy_client` | `./scripts/deploy-client.sh` | Manual / optional |
 
 **Notes:**
 - Runner tag: `shared`
 - Deploy job requires environment secrets (JWT key, DB password, etc.) configured in GitLab CI/CD variables.
 - PostgreSQL integration tests (`PostgreSqlPersistenceTests`) are **not** run in CI (require `RUN_POSTGRES_TESTS=1`).
 - CI backend tests run against SQLite in-memory (via `CustomWebApplicationFactory`).
+- The separate client deploy job is manual/optional; a passing default pipeline
+  alone does not prove separate public client hosting is live.
 
 ---
 

@@ -10,8 +10,8 @@ The project now has three user-facing surfaces:
 - a separate React + TypeScript SaaS client under `client/`
 
 Admin route note:
-- `/Admin/Gyms`, `/Admin/Members`, `/Admin/Memberships`, `/Admin/Sessions`, and `/Admin/Operations` now render focused MVC pages backed by strongly typed view models.
-- MVC Admin pages are read-only defense evidence; create/update/delete workflows remain in the REST API and React client.
+- `/Admin/Gyms`, `/Admin/Members`, `/Admin/Memberships`, `/Admin/Sessions`, `/Admin/Operations`, `/Admin/TrainingCategories`, and `/Admin/MembershipPackages` render focused MVC pages backed by strongly typed view models.
+- MVC Admin now has full create/update/delete form flows for members, training categories, and membership packages. The broader admin dashboards and operational pages remain focused read/action surfaces.
 
 The backend remains one ASP.NET Core host that serves the MVC areas, Swagger, the versioned REST API, and the production React client at `/client`. The MVC client area uses `/mvc-client` so it does not collide with the React client mount.
 
@@ -23,9 +23,9 @@ This assignment currently covers:
 - public DTOs in `src/App.DTO/v1`
 - Swagger
 - JWT authentication with refresh-token rotation
-- MVC admin UX
+- MVC admin UX, including tenant-scoped CRUD for members, training categories, and membership packages
 - MVC client UX
-- MVC Admin compliance evidence for role access, strongly typed view models, no `ViewBag`/`ViewData`, and anti-forgery regression coverage
+- MVC Admin compliance evidence for role access, strongly typed view models, no `ViewBag`/`ViewData`, tenant CRUD authorization, and anti-forgery regression coverage
 - a separate React client that uses the REST API with JWT + refresh tokens
 - React platform/tenant SaaS console for system, billing, support, onboarding, account, and tenant operations
 - React language switching for the client shell/login/workflow labels and `Accept-Language` for localized API data
@@ -42,6 +42,7 @@ This assignment currently covers:
 - member/coaching/finance/maintenance workspace APIs and React workflow pages
 - member CRUD contract documentation and tests across REST API, MVC Admin, and React client (`docs/member-contract.md`, `docs/member-crud-audit.md`, `docs/member-tests-map.md`)
 - membership package CRUD contract, validation, unused-package soft delete, used-package conflict, and tenant-isolation documentation/tests (`docs/membership-package-contract.md`, `docs/package-validation-rules.md`, `docs/membership-package-audit.md`)
+- Final2 modular-monolith evidence with Users, GymManagement, Training, and MembershipFinance modules; mediator dispatch; no direct module references; partial module-owned workflows; data-ownership and route-stability reports
 - coaching-plan workflow states and item-decision lifecycle
 - finance workflow records for invoices, lines, payment history, refunds/credits, overdue state, and outstanding balances
 - expanded membership lifecycle statuses (`Pending`, `Active`, `Paused`, `Expired`, `Cancelled`, `Refunded`, `Renewed`)
@@ -119,6 +120,7 @@ Backend organization now follows the Assignment 18 reference style:
 - `WebApp/Setup` is split into focused database, identity, service, API, middleware, and data-initialization extension files.
 - `App.DAL.EF/AppDbContext` keeps cross-cutting behavior while entity mapping/index/precision rules are split into grouped `IEntityTypeConfiguration<T>` classes under `App.DAL.EF/Configurations`.
 - membership and finance workflows keep the existing public contracts, but now use repository contracts, Unit of Work, BLL mappers, and focused services for package/membership/payment/invoice/refund/workspace responsibilities.
+- Final-2 module skeletons live under `src/Modules.*`; Users, GymManagement member CRUD, Training category/session/booking/attendance, MembershipFinance package/membership/payment/invoice/refund/workspace, and GymManagement maintenance/facility HTTP adapters now dispatch through the shared mediator while preserving existing public routes. Full internal module isolation is not claimed because several handlers still use shared BLL contracts and the single `AppDbContext`.
 
 ## Local Run
 
@@ -203,7 +205,8 @@ The separate client is the main API-consuming SaaS console for the assignment.
 Current scope:
 - login and logout through the REST API
 - automatic access-token refresh with the refresh token endpoint
-- auth state persisted in `sessionStorage`
+- auth state persisted in `sessionStorage`, including the refresh token; this is
+  documented as an accepted phase tradeoff in `docs/security-token-audit.md`
 - language selection persisted in `localStorage` and sent as `Accept-Language`
 - system-role access for platform analytics, gym onboarding, activation, snapshots, support tickets, subscriptions, and impersonation
 - tenant owner/admin access to a function console for staff, contracts, vacations, sessions, work shifts, bookings, memberships, payments, facilities, maintenance, settings, and gym users
@@ -324,20 +327,52 @@ REST semantics note:
 
 MVC areas:
 - `Areas/Admin`: platform dashboards and tenant admin pages
-- `Areas/Client`: member profile/history, session detail/booking/cancellation, trainer roster attendance, caretaker task status, and opening-hours visibility
+- `Areas/Client`: member profile/history, session detail/booking/cancellation, trainer roster attendance, caretaker task status, and opening-hours visibility. Client session page composition now goes through `IClientSessionsPageService` and BLL query/workflow services instead of direct controller EF access.
 
 ## Verification
 
 Backend:
 
 ```powershell
+dotnet format multi-gym-management-system.slnx --verify-no-changes
 dotnet build multi-gym-management-system.slnx
 dotnet test multi-gym-management-system.slnx
 ```
 
+Latest local validation snapshot, 2026-05-11:
+
+| Command | Result |
+|---|---|
+| `dotnet format multi-gym-management-system.slnx --verify-no-changes` | Pass, no formatting changes required |
+| `dotnet build multi-gym-management-system.slnx` | Pass, 0 warnings, 0 errors |
+| `dotnet test multi-gym-management-system.slnx` | Pass, 250 passed, 3 skipped PostgreSQL/Testcontainers tests |
+| `cd client && npm test` | Pass, 7 files / 34 tests; React Router v7 future warnings only |
+| `cd client && npm run build` | Pass, Vite production build completed |
+| `docker compose config` | Pass, development PostgreSQL Compose config rendered |
+| `POSTGRES_PASSWORD=dummy JWT__Key=dummy-long-key VITE_API_BASE_URL=https://api.example.test docker compose -f docker-compose.prod.yml config` | Pass, production backend/PostgreSQL config rendered |
+| `POSTGRES_PASSWORD=dummy JWT__Key=dummy-long-key VITE_API_BASE_URL=https://api.example.test docker compose --profile client -f docker-compose.prod.yml config` | Pass, production backend/PostgreSQL plus standalone client profile config rendered |
+
+No live public deployment smoke test was run in this documentation pass.
+
 PostgreSQL provider-integration slice:
 - the default `dotnet test` run keeps fast coverage and skips Testcontainers-based PostgreSQL tests
-- to execute the PostgreSQL slice, run with Docker available and set `RUN_POSTGRES_TESTS=1`
+- the PostgreSQL tests start a real `postgres:16-alpine` container through Testcontainers, so they require a reachable Docker engine/socket
+- normal CI keeps these tests skipped so runners without Docker/Testcontainers support do not fail the required test stage
+- to execute the PostgreSQL slice before defense, run with Docker available and set `RUN_POSTGRES_TESTS=1`
+
+```powershell
+$env:RUN_POSTGRES_TESTS = "1"
+dotnet test multi-gym-management-system.slnx --filter PostgreSql
+Remove-Item Env:\RUN_POSTGRES_TESTS
+```
+
+Bash/GitLab equivalent:
+
+```bash
+RUN_POSTGRES_TESTS=1 dotnet test multi-gym-management-system.slnx --filter PostgreSql
+```
+
+GitLab also exposes `assignment03_postgresql_tests` as an optional manual job. It uses the same opt-in flag and filter, and should only be started on a runner where Docker is available.
 
 Separate client:
 
@@ -356,15 +391,43 @@ Production deployment assets:
 - `Dockerfile`
 - `docker-compose.prod.yml`
 - `scripts/deploy.sh`
+- `scripts/deploy-client.sh`
+- `scripts/smoke-deploy.sh`
 
 The production Dockerfile builds the Vite client with Node 20 and copies `client/dist` into `WebApp/wwwroot/client`, so the deployed backend serves the REST client at `/client`.
 
 Required production secrets/configuration:
 - `JWT__Key`
+- `POSTGRES_PASSWORD`
 - `JWT__Issuer`, defaulted by Compose to `MultiGymManagementSystem`
 - `JWT__Audience`, defaulted by Compose to `MultiGymManagementSystem`
 - `CORS_ALLOWED_ORIGIN`, defaulted by Compose to `https://mtiker-cweb-4.proxy.itcollege.ee`
-- `POSTGRES_DB`, `POSTGRES_USER`, and `POSTGRES_PASSWORD` when overriding database defaults
+- `POSTGRES_DB` and `POSTGRES_USER`, defaulted by Compose unless overridden
+
+`POSTGRES_PASSWORD` has no production default. `docker-compose.prod.yml` and
+`scripts/deploy.sh` fail fast when it is missing so production cannot silently
+start with the development `postgres` password.
+
+Deployment smoke verification:
+
+```bash
+export BACKEND_URL="https://<backend-host>"
+export CLIENT_URL="https://<client-host>"
+export SMOKE_EMAIL="<smoke-user@example.com>"
+export SMOKE_PASSWORD="<smoke-password>"
+export SMOKE_GYM_CODE="<gym-code>"
+
+bash scripts/smoke-deploy.sh
+```
+
+The smoke script checks backend `/health`, standalone client `/healthz`, API
+login, and one authenticated tenant API read. See `docs/deployment.md` for the
+full deployment and Compose validation commands.
+
+Smoke status on 2026-05-11:
+- local and production Compose configuration validation passed
+- standalone client build passed
+- public backend/client URLs were not live-smoke-tested from this machine
 
 ASP.NET Core Data Protection keys are persisted through the application database so MVC/cookie protection keys survive container restarts.
 
@@ -374,6 +437,7 @@ Repository CI integration:
   - separate React client install/test/build
   - .NET build
   - .NET test
+  - optional manual PostgreSQL/Testcontainers test slice
   - Docker package
   - deploy
 
@@ -383,10 +447,18 @@ Repository CI integration:
 - data model and ERD: [docs/data-model.md](docs/data-model.md)
 - API overview: [docs/api.md](docs/api.md)
 - testing: [docs/testing.md](docs/testing.md)
+- security token audit: [docs/security-token-audit.md](docs/security-token-audit.md)
 - Final1 defense pack: [docs/final1-defense.md](docs/final1-defense.md)
 - Final1 coverage audit: [docs/final1-coverage-audit.md](docs/final1-coverage-audit.md)
 - Final1 test traceability: [docs/final1-test-traceability.md](docs/final1-test-traceability.md)
 - Final1 architecture diagram: [docs/final1-architecture-diagram.md](docs/final1-architecture-diagram.md)
+- Final2 defense pack: [docs/final2-defense.md](docs/final2-defense.md)
+- Final2 module boundary report: [docs/final2-module-boundary-report.md](docs/final2-module-boundary-report.md)
+- Final2 test traceability: [docs/final2-test-traceability.md](docs/final2-test-traceability.md)
+- Final2 risk report: [docs/final2-risk-report.md](docs/final2-risk-report.md)
+- Final2 module plan: [docs/final2-module-plan.md](docs/final2-module-plan.md)
+- module data ownership: [docs/module-data-ownership.md](docs/module-data-ownership.md)
+- mediator design: [docs/mediator-design.md](docs/mediator-design.md)
 - deployment: [docs/deployment.md](docs/deployment.md)
 - A3 scope plan: [docs/a3-saas-plan.md](docs/a3-saas-plan.md)
 - MVC admin audit: [docs/mvc-admin-audit.md](docs/mvc-admin-audit.md)
@@ -394,6 +466,10 @@ Repository CI integration:
 - view model audit: [docs/viewmodel-audit.md](docs/viewmodel-audit.md)
 - no ViewBag/ViewData audit: [docs/no-viewbag-viewdata-audit.md](docs/no-viewbag-viewdata-audit.md)
 - training category audit: [docs/training-category-audit.md](docs/training-category-audit.md)
+- Final-2 Training module plan: [docs/final2-training-module-plan.md](docs/final2-training-module-plan.md)
+- Training module contracts: [docs/training-module-contracts.md](docs/training-module-contracts.md)
+- Training mediator messages: [docs/training-mediator-messages.md](docs/training-mediator-messages.md)
+- Training cross-module access: [docs/training-cross-module-access.md](docs/training-cross-module-access.md)
 - localization audit: [docs/localization-audit.md](docs/localization-audit.md)
 - LangStr contract: [docs/langstr-contract.md](docs/langstr-contract.md)
 - request-flow diagram: [docs/request-flow-diagram.md](docs/request-flow-diagram.md)
@@ -408,6 +484,13 @@ Repository CI integration:
 ## Known Limitations
 
 - The public deployment URL is documented, but live availability still depends on the VPS/proxy/container state at review time.
+- Separate client hosting artifacts and Compose profile validate locally, but the separate public client host still needs a real VPS/proxy smoke run before it should be claimed as live.
 - The React client works with one active gym context at a time; assigned multi-gym users and SystemAdmin can switch active context from the shell.
+- The React client currently stores the refresh token in JavaScript-readable
+  `sessionStorage`; rotation, reuse rejection, logout invalidation, server-side
+  token lookup, and configurable access-token lifetime are the current
+  compensating controls. A future security-hardening phase should migrate the
+  refresh token to an `HttpOnly`, `Secure`, `SameSite` cookie with the required
+  CSRF/CORS changes.
 - Payments are internal records only; no external payment provider is integrated.
 - Support tickets stay inside the same monolith and are intentionally lightweight.

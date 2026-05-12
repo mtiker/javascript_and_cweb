@@ -10,7 +10,9 @@ using App.DTO.v1.System.Billing;
 using App.DTO.v1.System.Platform;
 using App.DTO.v1.System.Support;
 using App.DTO.v1.TrainingSessions;
+using BuildingBlocks.Mediator;
 using Microsoft.AspNetCore.Mvc;
+using Modules.Users.Contracts;
 using WebApp.ApiControllers.Identity;
 using WebApp.ApiControllers.System;
 using WebApp.ApiControllers.Tenant;
@@ -85,7 +87,7 @@ public class AdditionalControllerTests
             }
         };
 
-        var controller = ControllerTestContextFactory.WithUser(new TrainingSessionsController(service));
+        var controller = ControllerTestContextFactory.WithUser(new TrainingSessionsController(new TrainingWorkflowMediatorAdapter(service)));
 
         var list = await controller.GetSessions(GymCode, cancellationToken);
         Assert.Same(listResponse, ControllerAssert.AssertOk(list));
@@ -202,7 +204,7 @@ public class AdditionalControllerTests
             }
         };
 
-        var controller = ControllerTestContextFactory.WithUser(new MaintenanceTasksController(service));
+        var controller = ControllerTestContextFactory.WithUser(new MaintenanceTasksController(new MaintenanceWorkflowMediatorAdapter(service)));
 
         var list = await controller.GetMaintenanceTasks(GymCode, cancellationToken);
         Assert.Same(listResponse, ControllerAssert.AssertOk(list));
@@ -349,52 +351,75 @@ public class AdditionalControllerTests
             }
         };
 
-        var authService = new DelegatingAccountAuthService
-        {
-            LoginAsyncHandler = (request, token) =>
-            {
-                Assert.Same(loginRequest, request);
-                Assert.Equal(cancellationToken, token);
-                return Task.FromResult(jwtResponse);
-            },
-            LogoutAsyncHandler = token =>
-            {
-                Assert.Equal(cancellationToken, token);
-                return Task.CompletedTask;
-            },
-            RenewRefreshTokenAsyncHandler = (request, token) =>
-            {
-                Assert.Same(refreshRequest, request);
-                Assert.Equal(cancellationToken, token);
-                return Task.FromResult(jwtResponse);
-            }
-        };
+        var mediator = new RecordingMediator(jwtResponse);
 
-        var controller = ControllerTestContextFactory.WithUser(new AccountController(identityService, authService));
+        var controller = ControllerTestContextFactory.WithUser(new AccountController(identityService, mediator));
 
         var register = await controller.Register(registerRequest, cancellationToken);
         Assert.Same(jwtResponse, ControllerAssert.AssertOk(register));
 
         var login = await controller.Login(loginRequest, cancellationToken);
         Assert.Same(jwtResponse, ControllerAssert.AssertOk(login));
+        var loginMessage = Assert.IsType<LoginCommand>(mediator.SentRequests[^1]);
+        Assert.Same(loginRequest, loginMessage.Request);
+        Assert.Equal(cancellationToken, mediator.SentCancellationTokens[^1]);
 
         var logout = await controller.Logout(cancellationToken);
         ControllerAssert.AssertMessage(logout, "Logged out.");
+        Assert.IsType<LogoutCommand>(mediator.SentRequests[^1]);
+        Assert.Equal(cancellationToken, mediator.SentCancellationTokens[^1]);
 
         var renew = await controller.RenewRefreshToken(refreshRequest, cancellationToken);
         Assert.Same(jwtResponse, ControllerAssert.AssertOk(renew));
+        var refreshMessage = Assert.IsType<RefreshSessionCommand>(mediator.SentRequests[^1]);
+        Assert.Same(refreshRequest, refreshMessage.Request);
+        Assert.Equal(cancellationToken, mediator.SentCancellationTokens[^1]);
 
         var switchGym = await controller.SwitchGym(switchGymRequest, cancellationToken);
         Assert.Same(jwtResponse, ControllerAssert.AssertOk(switchGym));
+        var switchGymMessage = Assert.IsType<SwitchGymCommand>(mediator.SentRequests[^1]);
+        Assert.Same(switchGymRequest, switchGymMessage.Request);
+        Assert.Equal(cancellationToken, mediator.SentCancellationTokens[^1]);
 
         var switchRole = await controller.SwitchRole(switchRoleRequest, cancellationToken);
         Assert.Same(jwtResponse, ControllerAssert.AssertOk(switchRole));
+        var switchRoleMessage = Assert.IsType<SwitchRoleCommand>(mediator.SentRequests[^1]);
+        Assert.Same(switchRoleRequest, switchRoleMessage.Request);
+        Assert.Equal(cancellationToken, mediator.SentCancellationTokens[^1]);
 
         var forgot = await controller.ForgotPassword(forgotRequest, cancellationToken);
         Assert.Same(forgotResponse, ControllerAssert.AssertOk(forgot));
 
         var reset = await controller.ResetPassword(resetRequest, cancellationToken);
         ControllerAssert.AssertMessage(reset, "Password updated.");
+    }
+
+    private sealed class RecordingMediator(JwtResponse jwtResponse) : IMediator
+    {
+        public List<object> SentRequests { get; } = [];
+        public List<CancellationToken> SentCancellationTokens { get; } = [];
+
+        public Task SendAsync(IRequest request, CancellationToken cancellationToken = default)
+        {
+            SentRequests.Add(request);
+            SentCancellationTokens.Add(cancellationToken);
+            return Task.CompletedTask;
+        }
+
+        public Task<TResponse> SendAsync<TResponse>(IRequest<TResponse> request, CancellationToken cancellationToken = default)
+        {
+            SentRequests.Add(request);
+            SentCancellationTokens.Add(cancellationToken);
+
+            object response = request switch
+            {
+                LogoutCommand => new App.DTO.v1.Message("Logged out."),
+                LoginCommand or RefreshSessionCommand or SwitchGymCommand or SwitchRoleCommand => jwtResponse,
+                _ => throw new InvalidOperationException($"Unexpected mediator request {request.GetType().FullName}.")
+            };
+
+            return Task.FromResult((TResponse)response);
+        }
     }
 
     [Fact]
@@ -523,7 +548,7 @@ public class AdditionalControllerTests
         };
 
         var memberWorkspaceController = ControllerTestContextFactory.WithUser(new MemberWorkspaceController(workspaceService));
-        var financeController = ControllerTestContextFactory.WithUser(new FinanceController(financeService));
+        var financeController = ControllerTestContextFactory.WithUser(new FinanceController(new MembershipFinanceMediatorAdapter(new DelegatingMembershipWorkflowService(), financeService)));
 
         var currentWorkspace = await memberWorkspaceController.GetCurrentWorkspace(GymCode, cancellationToken);
         Assert.Same(workspace, ControllerAssert.AssertOk(currentWorkspace));

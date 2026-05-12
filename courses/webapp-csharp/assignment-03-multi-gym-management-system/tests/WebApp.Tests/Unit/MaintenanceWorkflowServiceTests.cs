@@ -167,7 +167,7 @@ public class MaintenanceWorkflowServiceTests
 
         return new AuthorizationService(
             currentActorResolver,
-            new TenantAccessChecker(dbContext, currentActorResolver),
+            new TenantAccessChecker(new EfAuthorizationQueryRepository(dbContext), currentActorResolver),
             new ResourceAuthorizationChecker(dbContext, currentActorResolver));
     }
 

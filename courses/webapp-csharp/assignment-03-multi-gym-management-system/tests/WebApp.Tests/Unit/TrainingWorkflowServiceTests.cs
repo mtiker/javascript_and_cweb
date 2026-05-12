@@ -13,6 +13,7 @@ using App.DTO.v1.MembershipPackages;
 using App.DTO.v1.Memberships;
 using App.DTO.v1.Payments;
 using App.DTO.v1.TrainingCategories;
+using App.DTO.v1.TrainingSessions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 
@@ -158,6 +159,36 @@ public class TrainingWorkflowServiceTests
         {
             CultureInfo.CurrentUICulture = previousCulture;
         }
+    }
+
+    [Fact]
+    public async Task GetSessionsAsync_ReturnsSessionListWithTrainerContractIds()
+    {
+        var (dbContext, gymId) = await NewContextAsync();
+        var seed = await SeedSessionFixtureAsync(dbContext, gymId);
+        var service = CreateService(dbContext, gymId);
+
+        var sessions = (await service.GetSessionsAsync(GymCode)).ToArray();
+
+        var session = Assert.Single(sessions);
+        Assert.Equal(seed.SessionId, session.Id);
+        Assert.Equal("Upper Body", session.Name);
+        Assert.Contains(seed.ContractId, session.TrainerContractIds);
+    }
+
+    [Fact]
+    public async Task GetSessionAsync_ReturnsSessionDetailWithLocalizedCategory()
+    {
+        var (dbContext, gymId) = await NewContextAsync();
+        var seed = await SeedSessionFixtureAsync(dbContext, gymId);
+        var service = CreateService(dbContext, gymId);
+
+        var session = await service.GetSessionAsync(GymCode, seed.SessionId);
+
+        Assert.Equal(seed.SessionId, session.Id);
+        Assert.Equal("Upper Body", session.Name);
+        Assert.Equal(seed.CategoryId, session.CategoryId);
+        Assert.Contains(seed.ContractId, session.TrainerContractIds);
     }
 
     [Fact]
@@ -355,6 +386,69 @@ public class TrainingWorkflowServiceTests
         dbContext.Members.Add(member);
         await dbContext.SaveChangesAsync();
         return (session.Id, member.Id);
+    }
+
+    private static async Task<(Guid SessionId, Guid CategoryId, Guid ContractId)> SeedSessionFixtureAsync(AppDbContext dbContext, Guid gymId)
+    {
+        var category = new TrainingCategory
+        {
+            GymId = gymId,
+            Name = new LangStr("Strength", "en")
+        };
+        var session = new TrainingSession
+        {
+            GymId = gymId,
+            Category = category,
+            Name = new LangStr("Upper Body", "en"),
+            StartAtUtc = DateTime.UtcNow.AddDays(1),
+            EndAtUtc = DateTime.UtcNow.AddDays(1).AddHours(1),
+            Capacity = 10,
+            BasePrice = 0m,
+            CurrencyCode = "EUR",
+            Status = TrainingSessionStatus.Published
+        };
+        var person = new Person { FirstName = "Train", LastName = "Coach" };
+        var staff = new Staff
+        {
+            GymId = gymId,
+            Person = person,
+            StaffCode = "STAFF-T-001",
+            Status = StaffStatus.Active
+        };
+        var jobRole = new JobRole
+        {
+            GymId = gymId,
+            Code = "trainer",
+            Title = new LangStr("Trainer", "en"),
+            Description = new LangStr("Training coach", "en"),
+        };
+        var contract = new EmploymentContract
+        {
+            GymId = gymId,
+            Staff = staff,
+            PrimaryJobRole = jobRole,
+            StartDate = DateOnly.FromDateTime(DateTime.UtcNow.Date.AddDays(-1)),
+            WorkloadPercent = 50m,
+            ContractStatus = ContractStatus.Active
+        };
+        var shift = new WorkShift
+        {
+            GymId = gymId,
+            Contract = contract,
+            TrainingSession = session,
+            ShiftType = ShiftType.Training,
+            StartAtUtc = session.StartAtUtc.AddMinutes(-15),
+            EndAtUtc = session.EndAtUtc.AddMinutes(15),
+        };
+
+        dbContext.TrainingCategories.Add(category);
+        dbContext.TrainingSessions.Add(session);
+        dbContext.Staff.Add(staff);
+        dbContext.JobRoles.Add(jobRole);
+        dbContext.EmploymentContracts.Add(contract);
+        dbContext.WorkShifts.Add(shift);
+        await dbContext.SaveChangesAsync();
+        return (session.Id, category.Id, contract.Id);
     }
 
     private static ITrainingWorkflowService CreateService(

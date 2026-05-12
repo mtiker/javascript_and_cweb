@@ -169,6 +169,12 @@ The JavaScript Assignment 04 proxy mapping is:
 
 The deploy job is intentionally limited to the default branch or tags.
 
+The normal Assignment 03 test job runs `dotnet test` with the PostgreSQL
+Testcontainers slice skipped. The optional manual
+`assignment03_postgresql_tests` job sets `RUN_POSTGRES_TESTS=1` and runs
+`dotnet test multi-gym-management-system.slnx --configuration Release --no-build --filter PostgreSql`
+for defense-time verification on Docker-capable runners.
+
 The Assignment 03 proxy mapping is:
 
 - `https://mtiker-cweb-4.proxy.itcollege.ee` => `http://192.168.181.122:83`
@@ -179,9 +185,9 @@ For Assignment 03 production deployment, configure these values in GitLab CI/CD 
 
 - `JWT__Key`
 - `CORS_ALLOWED_ORIGIN` if you want to override the default `https://mtiker-cweb-4.proxy.itcollege.ee`
-- `POSTGRES_DB`
-- `POSTGRES_USER`
 - `POSTGRES_PASSWORD`
+- `POSTGRES_DB` if you want to override the default database name
+- `POSTGRES_USER` if you want to override the default database user
 - `WEBAPP_PORT` if you need to override the default host port `83`
 - `JWT__Issuer`
 - `JWT__Audience`

@@ -446,12 +446,12 @@ Partial
 - Auth or refresh-token regression: No functional regression found in current automated tests. Minor auth-flow documentation wording is stale.
 - Tenant isolation regression: Implementation appears improved for member workflow tenant filtering, but security docs still describe old gaps. PostgreSQL provider behavior remains skipped by default.
 - Role authorization regression: MVC and API role tests pass, but GymOwner MVC evidence may rely on a system-admin seeded user unless documented more clearly.
-- MVC Admin accidentally replaced by React-only UX: Current code includes MVC Admin pages. However, `docs/assignment-compliance.md` still says the Admin area mostly redirects to React.
+- MVC Admin accidentally replaced by React-only UX: Current code includes MVC Admin pages and focused Admin CRUD for members, training categories, and membership packages. `docs/assignment-compliance.md` was refreshed on 2026-05-11.
 - ViewBag/ViewData reintroduced: Current tests scan Admin views/controllers and pass. No ViewBag/ViewData reintroduction was found with current evidence.
 - React client coupled back into backend deployment: Legacy embedded `/client` support remains. Separate client artifacts exist, but deploy is optional/manual and separate-host behavior was not live-verified.
 - CORS too permissive or too restrictive: Code appears to reject wildcard/localhost production origins, but production environment variable documentation is inconsistent and deployed preflight was not verified.
 - Tests passing locally but not in CI: Risk remains because PostgreSQL tests are skipped by default, client deploy is manual/allowed to fail, Docker Compose deployment was not run here, and React Router warnings are not failing tests.
-- Docs claiming features not backed by code/tests: Stale docs claim missing MVC/IDOR work that appears fixed, while deployment docs imply separate-client readiness without live smoke evidence found in the repository.
+- Docs claiming features not backed by code/tests: 2026-05-11 readiness docs now distinguish verified local build/test/Compose evidence from unverified public deployment and separate-client smoke evidence.
 
 ## Required Follow-Up Codex Fix Phases
 

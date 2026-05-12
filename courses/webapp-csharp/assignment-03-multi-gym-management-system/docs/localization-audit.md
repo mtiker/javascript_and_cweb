@@ -1,6 +1,6 @@
 # Localization Audit
 
-Date: 2026-04-28
+Date: 2026-05-11
 
 ## Scope
 
@@ -34,6 +34,9 @@ UI localization:
 - shared labels live in `src/App.Resources/SharedResources.resx`
 - Estonian labels live in `src/App.Resources/SharedResources.et.resx`
 - tested MVC login labels prove `.resx` lookup for `en` and `et-EE`
+- high-visible MVC Admin labels for dashboard, gyms, members, memberships,
+  membership packages, sessions, operations, and training categories use shared
+  `.resx` resources
 
 Database localization:
 
@@ -56,6 +59,8 @@ Verified by automated tests:
 - `Accept-Language: et-EE` resolves through neutral `et` category values
 - missing requested translation falls back to a safe available value
 - MVC labels render from `.resx` resources
+- authenticated `/Admin/Members` renders English and Estonian labels from
+  `.resx` resources
 - React language selector affects the next training-category API request header
 - validation errors for training-category create return `ProblemDetails`
 
@@ -71,5 +76,8 @@ The React client has its own small UI translation dictionary for client-side lab
 ## Remaining Limitations
 
 - The training-category API does not expose multi-culture edit payloads. It writes the submitted value to the request UI culture.
-- Resource coverage is focused on existing MVC labels. Some older workflow copy remains English and should be localized when those screens become active demo surfaces.
+- Resource coverage is focused on the active MVC Admin and MVC Client labels,
+  not every string in the application.
+- Domain values such as enum display text and tenant-owned data can still appear
+  in their stored/source form unless a specific view maps them through resources.
 - No separate localization management UI exists for tenant admins.

@@ -10,7 +10,11 @@ public interface IWorkShiftRepository
 
     Task<IReadOnlyList<WorkShift>> ListTrainingShiftsForSessionAsync(Guid gymId, Guid trainingSessionId, CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyList<WorkShift>> ListTrainingShiftsWithStaffForSessionAsync(Guid gymId, Guid trainingSessionId, CancellationToken cancellationToken = default);
+
     Task<IReadOnlyList<Guid>> ListTrainerContractIdsForSessionAsync(Guid gymId, Guid trainingSessionId, CancellationToken cancellationToken = default);
+
+    Task<bool> ExistsTrainingShiftForStaffAsync(Guid gymId, Guid trainingSessionId, Guid staffId, CancellationToken cancellationToken = default);
 
     Task<WorkShift?> FindAsync(Guid gymId, Guid workShiftId, CancellationToken cancellationToken = default);
 

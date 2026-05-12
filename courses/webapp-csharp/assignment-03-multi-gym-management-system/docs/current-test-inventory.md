@@ -1,6 +1,6 @@
 # Current Test Inventory
 
-**Audited:** 2026-04-30
+**Audited:** 2026-05-11
 **Test project:** `tests/WebApp.Tests/` (xUnit 2, .NET 10)
 **React tests:** `client/src/` (Vitest 2)
 
@@ -19,6 +19,24 @@ RUN_POSTGRES_TESTS=1 dotnet test multi-gym-management-system.slnx
 cd client && npm ci && npm test
 ```
 
+## Latest validation result
+
+2026-05-11 local run:
+
+| Command | Result |
+|---|---|
+| `dotnet format multi-gym-management-system.slnx --verify-no-changes` | Pass |
+| `dotnet build multi-gym-management-system.slnx` | Pass, 0 warnings, 0 errors |
+| `dotnet test multi-gym-management-system.slnx` | Pass, 250 passed, 3 skipped |
+| `cd client && npm test` | Pass, 34 frontend tests |
+| `cd client && npm run build` | Pass |
+| `docker compose config` | Pass |
+| `POSTGRES_PASSWORD=dummy JWT__Key=dummy-long-key VITE_API_BASE_URL=https://api.example.test docker compose -f docker-compose.prod.yml config` | Pass |
+| `POSTGRES_PASSWORD=dummy JWT__Key=dummy-long-key VITE_API_BASE_URL=https://api.example.test docker compose --profile client -f docker-compose.prod.yml config` | Pass |
+
+The 3 skipped backend tests are the opt-in PostgreSQL/Testcontainers tests.
+Public deployment smoke was not run in this pass.
+
 ---
 
 ## 1. Backend — Unit Tests
@@ -32,6 +50,7 @@ cd client && npm ci && npm test
 | `EnsureTenantAccessAsync_RejectsWhenActiveGymContextIsMissing` | 403 when JWT has no active gym | Yes |
 | `EnsureTenantAccessAsync_RejectsWhenRouteGymDiffersFromActiveGym` | 403 when active gym ≠ route gymCode | Yes |
 | `EnsureTenantAccessAsync_RejectsWhenAllowedRoleIsMissing` | 403 when role not in allowed list | Yes |
+| `EnsureTenantAccessAsync_ReturnsActiveGymIdWhenContextAndRoleMatch` | Successful tenant access through the authorization query repository | Yes |
 | `EnsureMemberSelfAccessAsync_AllowsOwnMemberAndRejectsOthers` | Member can read self, 403 on another member | Yes |
 | `EnsureBookingAccessAsync_TrainerMustBeAssignedToSession` | Trainer can access booking only if assigned to session | Yes |
 | `EnsureMaintenanceTaskAccessAsync_CaretakerMustBeAssigned` | Caretaker can access task only if assigned | Yes |
@@ -47,6 +66,29 @@ cd client && npm ci && npm test
 | Members: GET list, GET one, POST, PUT, DELETE | Response shape, BLL delegation |
 | Bookings: GET, POST, PUT attendance, DELETE | Response shape |
 | Coaching plans: GET, POST, PUT, DELETE | Response shape |
+
+---
+
+### `tests/WebApp.Tests/Unit/TrainingModuleMediatorTests.cs`
+
+**Subject:** Training module mediator handlers
+
+| Test method | What it covers |
+|-------------|---------------|
+| `Mediator_DispatchesTrainingCategoryCrudMessagesThroughModuleOwnedWorkflow` | Category list/create/update/delete through `Modules.Training.Application` handlers, with no `ITrainingWorkflowService` category delegation |
+| `Mediator_TrainingCategoryUpdateAndDeleteRemainTenantScoped` | Foreign-gym category IDs return not-found through tenant-scoped repository lookup |
+| Session and booking mediator tests | Remaining Training handlers still dispatch through the transitional workflow-service adapters |
+
+---
+
+### `tests/WebApp.Tests/Unit/MembershipFinanceModuleMediatorTests.cs`
+
+**Subject:** MembershipFinance module mediator handlers
+
+| Test method | What it covers |
+|-------------|---------------|
+| `Mediator_DispatchesMembershipPackageCrudMessagesThroughModuleOwnedHandlers` | Package list/create/update/delete through `Modules.MembershipFinance.Application` handlers, with no shared membership workflow registered |
+| Finance mediator tests | Remaining membership, payment, invoice, refund, and workspace handlers still dispatch through the transitional workflow-service adapters |
 
 ---
 
@@ -147,6 +189,17 @@ Covers: `TrainingSessionsController`, `StaffController`, `EmploymentContractsCon
 
 ---
 
+### `tests/WebApp.Tests/Unit/ClientDashboardPageServiceTests.cs`
+
+**Subject:** MVC Client dashboard page-service mapping
+
+| Test method | What it covers |
+|-------------|---------------|
+| `BuildAsync_ReturnsNullWhenActiveGymContextIsMissing` | Controller redirect input state; no BLL snapshot query without active gym |
+| `BuildAsync_MapsDashboardSnapshotToCurrentCultureViewModel` | Upcoming sessions, bookings, assigned tasks, active gym/role, and culture-aware `LangStr` projection |
+
+---
+
 ## 2. Backend — Integration Tests
 
 Uses `CustomWebApplicationFactory` (in-memory SQLite, seeded).
@@ -185,6 +238,27 @@ Uses `CustomWebApplicationFactory` (in-memory SQLite, seeded).
 | `TenantApi_UsesAcceptLanguageForLangStrResponses` | `Accept-Language: et-EE` → Estonian text | No |
 | `SetCulture_StoresOnlySupportedCultureCookie` | Unsupported culture → default `et-EE` cookie | No |
 | `HtmlErrors_RenderHtmlErrorPage` | Non-API error in prod → HTML page, not JSON | No |
+
+---
+
+### `tests/WebApp.Tests/Integration/TenantIsolationAndIdorTests.cs`
+
+**Subject:** Tenant isolation and IDOR regression paths through the API host
+
+| Test method | What it covers | IDOR? |
+|-------------|---------------|-------|
+| `Trainer_CannotAccess_DifferentGym_TrainingSessions` | Active gym cannot read another route gym's sessions | **Yes** |
+| `Caretaker_CannotAccess_DifferentGym_MaintenanceTasks` | Active gym cannot read another route gym's maintenance tasks | **Yes** |
+| `Member_CanAccess_OwnWorkspace` | Member self-access still succeeds after authorization boundary changes | No |
+| `Member_CannotAccess_AnotherMembersWorkspace` | Member cannot read another member workspace | **Yes** |
+| `Trainer_CannotUpdateAttendance_ForUnassignedSession` | Trainer assignment rule blocks unassigned sessions | **Yes** |
+| `Caretaker_CannotUpdateStatus_ForUnassignedTask` | Caretaker assignment rule blocks unassigned tasks | **Yes** |
+| `SystemSupportUser_CannotAccess_TenantMembersEndpoint` | System support role cannot enter tenant API without tenant context | **Yes** |
+| `SystemBillingUser_CannotAccess_TenantTrainingSessionsEndpoint` | System billing role cannot enter tenant API without tenant context | **Yes** |
+| `SystemUser_WithNoActiveGymContext_CannotAccessTenantEndpoint` | System role cannot bypass active tenant requirement | **Yes** |
+| `Unauthenticated_Returns401_OnTenantEndpoint` | Anonymous tenant API calls require authentication | No |
+| `GymAdmin_AtNorthStar_CannotCancel_PeakForgeBooking_ViaIdManipulation` | Tenant-scoped booking lookup blocks cross-gym ID manipulation | **Yes** |
+| `GymAdmin_AtNorthStar_CannotUpdateStatus_PeakForgeMaintenanceTask_ViaIdManipulation` | Tenant-scoped maintenance lookup blocks cross-gym ID manipulation | **Yes** |
 
 ---
 
@@ -237,6 +311,26 @@ Uses `CustomWebApplicationFactory` (in-memory SQLite, seeded).
 | `SystemAdmin_GymsRoute_RendersMvcPage` | `/Admin/Gyms` renders styled MVC page |
 | `TenantAdmin_WorkspaceRoutes_RenderMvcPages` | `/Admin/Memberships`, `/Admin/Sessions`, `/Admin/Operations` render styled MVC pages |
 
+### `tests/WebApp.Tests/Integration/TrainingCategoryLocalizationTests.cs`
+
+**Subject:** Training category and MVC resource localization
+
+| Test pattern | Coverage |
+|-------------|---------|
+| Training category CRUD | API create/read/update/delete through localized `LangStr` fields |
+| `Accept-Language` variants | `en`, `et`, and `et-EE` category translation behavior |
+| Missing translations | Safe fallback to available text |
+| MVC `.resx` labels | Login and authenticated Admin Members labels render from `SharedResources` in English and Estonian |
+| Invalid category create | Validation returns `ProblemDetails` |
+
+### `tests/WebApp.Tests/Integration/ClientDashboardTests.cs`
+
+**Subject:** MVC Client dashboard rendering
+
+| Test method | What it covers |
+|-------------|---------------|
+| `ClientDashboard_RendersSeededMvcDashboard` | Authenticated member can render `/mvc-client` with shared layout/styles and active gym context |
+
 ### `tests/WebApp.Tests/Integration/Final1CriticalE2ETests.cs`
 
 **Subject:** Final1 critical API-level E2E paths through the ASP.NET Core test host
@@ -266,6 +360,45 @@ Uses `CustomWebApplicationFactory` (in-memory SQLite, seeded).
 
 ---
 
+### `tests/WebApp.Tests/Integration/AdminMembersCrudTests.cs`
+
+**Subject:** MVC Admin member CRUD
+
+| Test pattern | Coverage |
+|-------------|---------|
+| Index and forms | Admin can open index, create, edit, and delete views |
+| Create/edit/delete | Valid posts persist updates or remove the entity from active listing |
+| Validation | Invalid create shows MVC validation errors |
+| Authorization | Member role cannot access Admin member CRUD |
+| Tenant isolation | Cross-tenant member id edit is rejected with redirect, 403, or 404 |
+
+### `tests/WebApp.Tests/Integration/AdminTrainingCategoriesCrudTests.cs`
+
+**Subject:** MVC Admin training category CRUD
+
+| Test pattern | Coverage |
+|-------------|---------|
+| Index and forms | Admin can open index, create, edit, and delete views |
+| Create/edit/delete | Valid posts persist localized category changes or remove the entity from active listing |
+| Validation | Invalid create shows MVC validation errors |
+| Localization | Estonian request culture renders the seeded Estonian `LangStr` value |
+| Authorization | Member role cannot access Admin category CRUD |
+| Tenant isolation | Cross-tenant category id edit is rejected with redirect, 403, or 404 |
+
+### `tests/WebApp.Tests/Integration/AdminMembershipPackagesCrudTests.cs`
+
+**Subject:** MVC Admin membership package CRUD
+
+| Test pattern | Coverage |
+|-------------|---------|
+| Index and forms | Admin can open index, create, edit, and delete views |
+| Create/edit/delete | Valid posts persist active-gym package changes or remove the entity from active listing |
+| Validation | Invalid create shows MVC validation errors |
+| Authorization | Member role cannot access Admin package CRUD |
+| Tenant isolation | Cross-tenant package id edit is rejected with redirect, 403, or 404 |
+
+---
+
 ### `tests/WebApp.Tests/Architecture/ArchitectureTests.cs`
 
 **Subject:** Clean/Onion and controller boundary rules
@@ -273,7 +406,23 @@ Uses `CustomWebApplicationFactory` (in-memory SQLite, seeded).
 | Test method | What it covers |
 |-------------|---------------|
 | `MaintenanceSlice_UsesDedicatedRepositoryAndMapperBoundaries` | Maintenance service uses `IAppUnitOfWork`, `IMaintenanceRepository`, and `IMaintenanceMapper` instead of `IAppDbContext` |
+| `TenantAccessChecker_UsesAuthorizationQueryRepositoryInsteadOfDbContext` | Tenant access checker constructor depends on `IAuthorizationQueryRepository` and not `IAppDbContext`/`DbContext` |
 | `AdminMvcControllers_AreThinAndDoNotDependOnDbContext` | Admin MVC controllers do not inject `DbContext`/`IAppDbContext` |
+| `ClientMvcDashboard_UsesPageAndBllContractsWithoutDirectEf` | Client Dashboard controller delegates to a page service, and the page/query service path avoids direct EF/DAL dependencies |
+
+---
+
+### `tests/WebApp.Tests/Architecture/ModuleArchitectureTests.cs`
+
+**Subject:** Final2 module boundaries
+
+| Test method | What it covers |
+|-------------|---------------|
+| `EveryModule_DoesNotReferenceAnyOtherModule` | Prevents direct module-to-module project references |
+| `TrainingModule_DoesNotReferenceUsersOrGymManagementInternals` | Prevents Training from reaching into Users/GymManagement internals |
+| `TrainingCategoryWorkflow_IsOwnedByTrainingModuleHandlers` | Ensures category CRUD handlers live in `Modules.Training.Application`, use UOW/auth/mapper contracts, and do not depend on `ITrainingWorkflowService` |
+| `MembershipPackageWorkflow_IsOwnedByMembershipFinanceModuleHandlers` | Ensures package CRUD handlers live in `Modules.MembershipFinance.Application`, use UOW/auth/mapper contracts, and do not depend on `IMembershipWorkflowService` or `IMembershipPackageService` |
+| `Mediator_IsResolvableFromCompositionRoot` | Composition root can resolve `IMediator` with all modules registered |
 
 ---
 
@@ -367,6 +516,7 @@ Location: `client/src/`
 | No active gym in JWT | `EnsureTenantAccessAsync_RejectsWhenActiveGymContextIsMissing` | — |
 | Active gym ≠ route gymCode | `EnsureTenantAccessAsync_RejectsWhenRouteGymDiffersFromActiveGym` | `MembersEndpoint_RejectsActiveGymMismatch`; `TenantIsolationAndIdorTests.Trainer_CannotAccess_DifferentGym_TrainingSessions`; `TenantIsolationAndIdorTests.Caretaker_CannotAccess_DifferentGym_MaintenanceTasks` |
 | Role not in allowed list | `EnsureTenantAccessAsync_RejectsWhenAllowedRoleIsMissing` | `SystemPlatformAnalytics_RejectsTenantOnlyUser` |
+| Member reads own member | `EnsureMemberSelfAccessAsync_AllowsOwnMemberAndRejectsOthers` | `TenantIsolationAndIdorTests.Member_CanAccess_OwnWorkspace` |
 | Member reads other member | `EnsureMemberSelfAccessAsync_AllowsOwnMemberAndRejectsOthers` | `Member_CannotReadAnotherMember`; `TenantIsolationAndIdorTests.Member_CannotAccess_AnotherMembersWorkspace` |
 | Trainer accesses unassigned booking | `EnsureBookingAccessAsync_TrainerMustBeAssignedToSession` | `TenantIsolationAndIdorTests.Trainer_CannotUpdateAttendance_ForUnassignedSession` |
 | Caretaker accesses unassigned task | `EnsureMaintenanceTaskAccessAsync_CaretakerMustBeAssigned` | `TenantIsolationAndIdorTests.Caretaker_CannotUpdateStatus_ForUnassignedTask` |

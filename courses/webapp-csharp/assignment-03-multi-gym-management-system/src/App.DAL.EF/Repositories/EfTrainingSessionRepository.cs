@@ -14,6 +14,31 @@ public sealed class EfTrainingSessionRepository(AppDbContext dbContext) : ITrain
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyList<TrainingSession>> ListWithBookingsAndShiftsByGymAsync(Guid gymId, int limit, CancellationToken cancellationToken = default)
+    {
+        return await dbContext.TrainingSessions
+            .AsNoTracking()
+            .Include(session => session.Bookings)
+            .Include(session => session.WorkShifts)
+                .ThenInclude(shift => shift.Contract)
+                    .ThenInclude(contract => contract!.Staff)
+                        .ThenInclude(staff => staff!.Person)
+            .Where(session => session.GymId == gymId)
+            .OrderBy(session => session.StartAtUtc)
+            .Take(limit)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<TrainingSession>> ListUpcomingByGymAsync(Guid gymId, DateTime fromUtc, int limit, CancellationToken cancellationToken = default)
+    {
+        return await dbContext.TrainingSessions
+            .AsNoTracking()
+            .Where(session => session.GymId == gymId && session.StartAtUtc >= fromUtc)
+            .OrderBy(session => session.StartAtUtc)
+            .Take(limit)
+            .ToListAsync(cancellationToken);
+    }
+
     public Task<TrainingSession?> FindAsync(Guid gymId, Guid sessionId, CancellationToken cancellationToken = default)
     {
         return dbContext.TrainingSessions
