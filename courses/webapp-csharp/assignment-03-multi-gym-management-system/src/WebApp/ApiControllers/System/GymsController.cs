@@ -5,13 +5,12 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using App.DTO.v1.System.Platform;
-using App.DTO.v1.System.Support;
 using App.DTO.v1.System;
 
 namespace WebApp.ApiControllers.System;
 
 [ApiVersion("1.0")]
-[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "SystemAdmin,SystemSupport,SystemBilling")]
+[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "SystemAdmin")]
 [Route("api/v{version:apiVersion}/system/gyms")]
 [ProducesErrorResponseType(typeof(ProblemDetails))]
 [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -46,7 +45,7 @@ public class GymsController(IPlatformService platformService) : ControllerBase
         return Ok(new Message("Gym activation updated."));
     }
 
-    [Authorize(Roles = "SystemAdmin,SystemSupport", AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    [Authorize(Roles = "SystemAdmin", AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [HttpGet("{gymId:guid}/snapshot")]
     [ProducesResponseType(typeof(CompanySnapshotResponse), StatusCodes.Status200OK)]
     public async Task<ActionResult<CompanySnapshotResponse>> GetGymSnapshot(Guid gymId, CancellationToken cancellationToken)

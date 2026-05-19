@@ -5,7 +5,6 @@ using App.Domain.Identity;
 using App.DTO.v1.Bookings;
 using App.DTO.v1.TrainingCategories;
 using App.DTO.v1.TrainingSessions;
-using App.DTO.v1.WorkShifts;
 
 namespace App.BLL.Services;
 
@@ -19,10 +18,6 @@ public interface ITrainingWorkflowService
     Task<TrainingSessionResponse> GetSessionAsync(string gymCode, Guid id, CancellationToken cancellationToken = default);
     Task<TrainingSessionResponse> UpsertTrainingSessionAsync(string gymCode, Guid? sessionId, TrainingSessionUpsertRequest request, CancellationToken cancellationToken = default);
     Task DeleteSessionAsync(string gymCode, Guid id, CancellationToken cancellationToken = default);
-    Task<IReadOnlyCollection<WorkShiftResponse>> GetWorkShiftsAsync(string gymCode, CancellationToken cancellationToken = default);
-    Task<WorkShiftResponse> CreateWorkShiftAsync(string gymCode, WorkShiftUpsertRequest request, CancellationToken cancellationToken = default);
-    Task<WorkShiftResponse> UpdateWorkShiftAsync(string gymCode, Guid id, WorkShiftUpsertRequest request, CancellationToken cancellationToken = default);
-    Task DeleteWorkShiftAsync(string gymCode, Guid id, CancellationToken cancellationToken = default);
     Task<IReadOnlyCollection<BookingResponse>> GetBookingsAsync(string gymCode, CancellationToken cancellationToken = default);
     Task<BookingResponse> CreateBookingAsync(string gymCode, BookingCreateRequest request, CancellationToken cancellationToken = default);
     Task<BookingResponse> UpdateAttendanceAsync(string gymCode, Guid bookingId, AttendanceUpdateRequest request, CancellationToken cancellationToken = default);

@@ -9,8 +9,6 @@
     var userContext = User.Identity?.IsAuthenticated == true ? UserContextService.GetCurrent() : null;
     var canAccessAdminArea = userContext is not null &&
                              (userContext.HasRole(RoleNames.SystemAdmin) ||
-                              userContext.HasRole(RoleNames.SystemSupport) ||
-                              userContext.HasRole(RoleNames.SystemBilling) ||
                               userContext.HasRole(RoleNames.GymOwner) ||
                               userContext.HasRole(RoleNames.GymAdmin));
 }

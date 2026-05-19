@@ -34,8 +34,6 @@ public static partial class AppDataInit
             "trainer@peakforge.local",
             "caretaker@peakforge.local",
             "multigym.admin@gym.local",
-            "support@gym.local",
-            "billing@gym.local",
         };
 
         foreach (var email in emails)

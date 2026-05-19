@@ -7,52 +7,6 @@ namespace App.DAL.EF.Repositories;
 
 public sealed class EfMaintenanceRepository(AppDbContext dbContext) : IMaintenanceRepository
 {
-    public async Task<IReadOnlyList<OpeningHours>> ListOpeningHoursByGymAsync(Guid gymId, CancellationToken cancellationToken = default)
-    {
-        return await dbContext.OpeningHours
-            .Where(entity => entity.GymId == gymId)
-            .OrderBy(entity => entity.Weekday)
-            .ToListAsync(cancellationToken);
-    }
-
-    public Task<OpeningHours?> FindOpeningHoursAsync(Guid gymId, Guid id, CancellationToken cancellationToken = default)
-    {
-        return dbContext.OpeningHours.FirstOrDefaultAsync(entity => entity.GymId == gymId && entity.Id == id, cancellationToken);
-    }
-
-    public async Task AddOpeningHoursAsync(OpeningHours entity, CancellationToken cancellationToken = default)
-    {
-        await dbContext.OpeningHours.AddAsync(entity, cancellationToken);
-    }
-
-    public void RemoveOpeningHours(OpeningHours entity)
-    {
-        dbContext.OpeningHours.Remove(entity);
-    }
-
-    public async Task<IReadOnlyList<OpeningHoursException>> ListOpeningHourExceptionsByGymAsync(Guid gymId, CancellationToken cancellationToken = default)
-    {
-        return await dbContext.OpeningHoursExceptions
-            .Where(entity => entity.GymId == gymId)
-            .OrderBy(entity => entity.ExceptionDate)
-            .ToListAsync(cancellationToken);
-    }
-
-    public Task<OpeningHoursException?> FindOpeningHourExceptionAsync(Guid gymId, Guid id, CancellationToken cancellationToken = default)
-    {
-        return dbContext.OpeningHoursExceptions.FirstOrDefaultAsync(entity => entity.GymId == gymId && entity.Id == id, cancellationToken);
-    }
-
-    public async Task AddOpeningHourExceptionAsync(OpeningHoursException entity, CancellationToken cancellationToken = default)
-    {
-        await dbContext.OpeningHoursExceptions.AddAsync(entity, cancellationToken);
-    }
-
-    public void RemoveOpeningHourException(OpeningHoursException entity)
-    {
-        dbContext.OpeningHoursExceptions.Remove(entity);
-    }
-
     public async Task<IReadOnlyList<EquipmentModel>> ListEquipmentModelsByGymAsync(Guid gymId, CancellationToken cancellationToken = default)
     {
         return await dbContext.EquipmentModels
@@ -208,23 +162,6 @@ public sealed class EfMaintenanceRepository(AppDbContext dbContext) : IMaintenan
         dbContext.MaintenanceTasks.Remove(entity);
     }
 
-    public async Task<IReadOnlyList<MaintenanceTaskAssignmentHistory>> ListAssignmentHistoryAsync(Guid gymId, Guid maintenanceTaskId, CancellationToken cancellationToken = default)
-    {
-        return await dbContext.MaintenanceTaskAssignmentHistory
-            .Include(entity => entity.AssignedStaff)
-                .ThenInclude(entity => entity!.Person)
-            .Include(entity => entity.AssignedByStaff)
-                .ThenInclude(entity => entity!.Person)
-            .Where(entity => entity.GymId == gymId && entity.MaintenanceTaskId == maintenanceTaskId)
-            .OrderByDescending(entity => entity.AssignedAtUtc)
-            .ToListAsync(cancellationToken);
-    }
-
-    public async Task AddAssignmentHistoryAsync(MaintenanceTaskAssignmentHistory entity, CancellationToken cancellationToken = default)
-    {
-        await dbContext.MaintenanceTaskAssignmentHistory.AddAsync(entity, cancellationToken);
-    }
-
     public Task<GymSettings?> FindGymSettingsAsync(Guid gymId, CancellationToken cancellationToken = default)
     {
         return dbContext.GymSettings.FirstOrDefaultAsync(entity => entity.GymId == gymId, cancellationToken);
@@ -270,12 +207,6 @@ public sealed class EfMaintenanceRepository(AppDbContext dbContext) : IMaintenan
             .Include(entity => entity.AssignedStaff)
                 .ThenInclude(entity => entity!.Person)
             .Include(entity => entity.Equipment)
-                .ThenInclude(entity => entity!.EquipmentModel)
-            .Include(entity => entity.AssignmentHistory)
-                .ThenInclude(entity => entity.AssignedStaff)
-                    .ThenInclude(entity => entity!.Person)
-            .Include(entity => entity.AssignmentHistory)
-                .ThenInclude(entity => entity.AssignedByStaff)
-                    .ThenInclude(entity => entity!.Person);
+                .ThenInclude(entity => entity!.EquipmentModel);
     }
 }

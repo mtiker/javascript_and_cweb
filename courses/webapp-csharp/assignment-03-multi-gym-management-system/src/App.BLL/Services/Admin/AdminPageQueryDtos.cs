@@ -3,8 +3,6 @@ using App.Domain.Enums;
 
 namespace App.BLL.Services.Admin;
 
-public sealed record AdminOpeningHoursRow(int Weekday, TimeOnly OpensAt, TimeOnly ClosesAt);
-
 public sealed record AdminEquipmentRow(string AssetTag, LangStr? ModelName, EquipmentStatus Status);
 
 public sealed record AdminMaintenanceTaskRow(
@@ -15,7 +13,6 @@ public sealed record AdminMaintenanceTaskRow(
     DateTime? DueAtUtc);
 
 public sealed record AdminOperationsSnapshot(
-    IReadOnlyList<AdminOpeningHoursRow> OpeningHours,
     IReadOnlyList<AdminEquipmentRow> Equipment,
     IReadOnlyList<AdminMaintenanceTaskRow> MaintenanceTasks);
 

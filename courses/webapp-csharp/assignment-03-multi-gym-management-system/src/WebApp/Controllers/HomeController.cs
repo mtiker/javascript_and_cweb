@@ -1,12 +1,11 @@
 using System.Security.Claims;
-using App.DAL.EF;
 using App.Domain;
 using App.Domain.Security;
+using App.BLL.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using WebApp.Models;
 
 namespace WebApp.Controllers;
@@ -14,7 +13,7 @@ namespace WebApp.Controllers;
 public class HomeController(
     SignInManager<App.Domain.Identity.AppUser> signInManager,
     UserManager<App.Domain.Identity.AppUser> userManager,
-    AppDbContext dbContext) : Controller
+    IWorkspaceContextService workspaceContextService) : Controller
 {
     private static readonly HashSet<string> SupportedCultures = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -79,8 +78,9 @@ public class HomeController(
     [HttpGet("/workspace")]
     public IActionResult RedirectToWorkspace()
     {
-        if (User.IsInRole(RoleNames.SystemAdmin) || User.IsInRole(RoleNames.SystemSupport) || User.IsInRole(RoleNames.SystemBilling) ||
-            User.IsInRole(RoleNames.GymOwner) || User.IsInRole(RoleNames.GymAdmin))
+        if (User.IsInRole(RoleNames.SystemAdmin) ||
+            User.IsInRole(RoleNames.GymOwner) ||
+            User.IsInRole(RoleNames.GymAdmin))
         {
             return RedirectToAction("Index", "Dashboard", new { area = "Admin" });
         }
@@ -136,26 +136,11 @@ public class HomeController(
             return RedirectToAction(nameof(Index));
         }
 
-        var targetLink = await dbContext.AppUserGymRoles
-            .Include(link => link.Gym)
-            .Where(link => link.AppUserId == user.Id && link.IsActive && link.Gym!.Code == gymCode)
-            .OrderBy(link => link.RoleName)
-            .FirstOrDefaultAsync();
+        var targetLink = await workspaceContextService.FindUserGymLinkAsync(user.Id, gymCode);
 
         if (targetLink == null && User.IsInRole(RoleNames.SystemAdmin))
         {
-            var gym = await dbContext.Gyms.FirstOrDefaultAsync(entity => entity.Code == gymCode && entity.IsActive);
-            if (gym != null)
-            {
-                targetLink = new App.Domain.Entities.AppUserGymRole
-                {
-                    AppUserId = user.Id,
-                    GymId = gym.Id,
-                    Gym = gym,
-                    RoleName = RoleNames.GymOwner,
-                    IsActive = true
-                };
-            }
+            targetLink = await workspaceContextService.BuildSystemAdminGymRoleAsync(user.Id, gymCode, RoleNames.GymOwner);
         }
 
         if (targetLink == null)
@@ -184,28 +169,11 @@ public class HomeController(
             return RedirectToAction(nameof(AccessDenied));
         }
 
-        var targetLink = await dbContext.AppUserGymRoles
-            .Include(link => link.Gym)
-            .FirstOrDefaultAsync(link =>
-                link.AppUserId == user.Id &&
-                link.IsActive &&
-                link.RoleName == roleName &&
-                link.Gym!.Code == activeGymCode);
+        var targetLink = await workspaceContextService.FindUserGymRoleLinkAsync(user.Id, activeGymCode, roleName);
 
         if (targetLink == null && User.IsInRole(RoleNames.SystemAdmin) && IsSystemAdminTenantRole(roleName))
         {
-            var gym = await dbContext.Gyms.FirstOrDefaultAsync(entity => entity.Code == activeGymCode && entity.IsActive);
-            if (gym != null)
-            {
-                targetLink = new App.Domain.Entities.AppUserGymRole
-                {
-                    AppUserId = user.Id,
-                    GymId = gym.Id,
-                    Gym = gym,
-                    RoleName = roleName,
-                    IsActive = true
-                };
-            }
+            targetLink = await workspaceContextService.BuildSystemAdminGymRoleAsync(user.Id, activeGymCode, roleName);
         }
 
         if (targetLink == null)
@@ -229,12 +197,7 @@ public class HomeController(
         var systemRoles = (await userManager.GetRolesAsync(user)).Where(RoleNames.SystemRoles.Contains).ToList();
         claims.AddRange(systemRoles.Select(role => new Claim(ClaimTypes.Role, role)));
 
-        activeLink ??= await dbContext.AppUserGymRoles
-            .Include(link => link.Gym)
-            .Where(link => link.AppUserId == user.Id && link.IsActive)
-            .OrderBy(link => link.Gym!.Name)
-            .ThenBy(link => link.RoleName)
-            .FirstOrDefaultAsync();
+        activeLink ??= await workspaceContextService.FindDefaultActiveLinkAsync(user.Id);
 
         if (user.PersonId.HasValue)
         {

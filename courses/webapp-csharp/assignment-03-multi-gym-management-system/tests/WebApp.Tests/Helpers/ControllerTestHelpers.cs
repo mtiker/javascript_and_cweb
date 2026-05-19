@@ -3,32 +3,22 @@ using App.BLL.Services;
 using App.Domain.Entities;
 using App.DTO.v1;
 using App.DTO.v1.Bookings;
-using App.DTO.v1.CoachingPlans;
-using App.DTO.v1.EmploymentContracts;
 using App.DTO.v1.Equipment;
 using App.DTO.v1.EquipmentModels;
-using App.DTO.v1.Finance;
 using App.DTO.v1.GymSettings;
 using App.DTO.v1.GymUsers;
 using App.DTO.v1.Identity;
-using App.DTO.v1.JobRoles;
 using App.DTO.v1.MaintenanceTasks;
 using App.DTO.v1.MemberWorkspace;
 using App.DTO.v1.MembershipPackages;
 using App.DTO.v1.Members;
 using App.DTO.v1.Memberships;
-using App.DTO.v1.OpeningHours;
-using App.DTO.v1.OpeningHoursExceptions;
 using App.DTO.v1.Payments;
 using App.DTO.v1.Staff;
 using App.DTO.v1.System;
-using App.DTO.v1.System.Billing;
 using App.DTO.v1.System.Platform;
-using App.DTO.v1.System.Support;
 using App.DTO.v1.TrainingCategories;
 using App.DTO.v1.TrainingSessions;
-using App.DTO.v1.Vacations;
-using App.DTO.v1.WorkShifts;
 using BuildingBlocks.Mediator;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -158,18 +148,6 @@ public sealed class DelegatingTrainingWorkflowService : ITrainingWorkflowService
     public Func<string, Guid, CancellationToken, Task> DeleteSessionAsyncHandler { get; set; } =
         static (_, _, _) => Task.CompletedTask;
 
-    public Func<string, CancellationToken, Task<IReadOnlyCollection<WorkShiftResponse>>> GetWorkShiftsAsyncHandler { get; set; } =
-        static (_, _) => Task.FromResult<IReadOnlyCollection<WorkShiftResponse>>([]);
-
-    public Func<string, WorkShiftUpsertRequest, CancellationToken, Task<WorkShiftResponse>> CreateWorkShiftAsyncHandler { get; set; } =
-        static (_, _, _) => Task.FromException<WorkShiftResponse>(new InvalidOperationException("CreateWorkShiftAsyncHandler not configured."));
-
-    public Func<string, Guid, WorkShiftUpsertRequest, CancellationToken, Task<WorkShiftResponse>> UpdateWorkShiftAsyncHandler { get; set; } =
-        static (_, _, _, _) => Task.FromException<WorkShiftResponse>(new InvalidOperationException("UpdateWorkShiftAsyncHandler not configured."));
-
-    public Func<string, Guid, CancellationToken, Task> DeleteWorkShiftAsyncHandler { get; set; } =
-        static (_, _, _) => Task.CompletedTask;
-
     public Func<string, CancellationToken, Task<IReadOnlyCollection<BookingResponse>>> GetBookingsAsyncHandler { get; set; } =
         static (_, _) => Task.FromResult<IReadOnlyCollection<BookingResponse>>([]);
 
@@ -205,18 +183,6 @@ public sealed class DelegatingTrainingWorkflowService : ITrainingWorkflowService
 
     public Task DeleteSessionAsync(string gymCode, Guid id, CancellationToken cancellationToken = default) =>
         DeleteSessionAsyncHandler(gymCode, id, cancellationToken);
-
-    public Task<IReadOnlyCollection<WorkShiftResponse>> GetWorkShiftsAsync(string gymCode, CancellationToken cancellationToken = default) =>
-        GetWorkShiftsAsyncHandler(gymCode, cancellationToken);
-
-    public Task<WorkShiftResponse> CreateWorkShiftAsync(string gymCode, WorkShiftUpsertRequest request, CancellationToken cancellationToken = default) =>
-        CreateWorkShiftAsyncHandler(gymCode, request, cancellationToken);
-
-    public Task<WorkShiftResponse> UpdateWorkShiftAsync(string gymCode, Guid id, WorkShiftUpsertRequest request, CancellationToken cancellationToken = default) =>
-        UpdateWorkShiftAsyncHandler(gymCode, id, request, cancellationToken);
-
-    public Task DeleteWorkShiftAsync(string gymCode, Guid id, CancellationToken cancellationToken = default) =>
-        DeleteWorkShiftAsyncHandler(gymCode, id, cancellationToken);
 
     public Task<IReadOnlyCollection<BookingResponse>> GetBookingsAsync(string gymCode, CancellationToken cancellationToken = default) =>
         GetBookingsAsyncHandler(gymCode, cancellationToken);
@@ -265,9 +231,7 @@ public sealed class TrainingWorkflowMediatorAdapter(ITrainingWorkflowService tra
     }
 }
 
-public sealed class MembershipFinanceMediatorAdapter(
-    IMembershipWorkflowService membershipWorkflowService,
-    IFinanceWorkspaceService? financeWorkspaceService = null) : IMediator
+public sealed class MembershipFinanceMediatorAdapter(IMembershipWorkflowService membershipWorkflowService) : IMediator
 {
     public Task SendAsync(IRequest request, CancellationToken cancellationToken = default)
     {
@@ -291,21 +255,11 @@ public sealed class MembershipFinanceMediatorAdapter(
             UpdateMembershipStatusCommand message => await membershipWorkflowService.UpdateMembershipStatusAsync(message.GymCode, message.MembershipId, message.Request, cancellationToken),
             ListPaymentsQuery message => await membershipWorkflowService.GetPaymentsAsync(message.GymCode, cancellationToken),
             CreatePaymentCommand message => await membershipWorkflowService.CreatePaymentAsync(message.GymCode, message.Request, cancellationToken),
-            GetCurrentFinanceWorkspaceQuery message => await RequiredFinanceService().GetCurrentWorkspaceAsync(message.GymCode, cancellationToken),
-            GetMemberFinanceWorkspaceQuery message => await RequiredFinanceService().GetWorkspaceAsync(message.GymCode, message.MemberId, cancellationToken),
-            ListInvoicesQuery message => await RequiredFinanceService().GetInvoicesAsync(message.GymCode, message.MemberId, cancellationToken),
-            GetInvoiceQuery message => await RequiredFinanceService().GetInvoiceAsync(message.GymCode, message.InvoiceId, cancellationToken),
-            CreateInvoiceCommand message => await RequiredFinanceService().CreateInvoiceAsync(message.GymCode, message.Request, cancellationToken),
-            PostInvoicePaymentCommand message => await RequiredFinanceService().AddInvoicePaymentAsync(message.GymCode, message.InvoiceId, message.Request, cancellationToken),
-            PostInvoiceRefundCommand message => await RequiredFinanceService().AddInvoiceRefundAsync(message.GymCode, message.InvoiceId, message.Request, cancellationToken),
             _ => throw new InvalidOperationException($"Unexpected mediator request {request.GetType().FullName}.")
         };
 
         return (TResponse)response;
     }
-
-    private IFinanceWorkspaceService RequiredFinanceService() =>
-        financeWorkspaceService ?? throw new InvalidOperationException("Finance workspace service not configured.");
 }
 
 public sealed class MaintenanceWorkflowMediatorAdapter(IMaintenanceWorkflowService maintenanceWorkflowService) : IMediator
@@ -314,8 +268,6 @@ public sealed class MaintenanceWorkflowMediatorAdapter(IMaintenanceWorkflowServi
     {
         return request switch
         {
-            DeleteOpeningHoursCommand message => maintenanceWorkflowService.DeleteOpeningHoursAsync(message.GymCode, message.OpeningHoursId, cancellationToken),
-            DeleteOpeningHourExceptionCommand message => maintenanceWorkflowService.DeleteOpeningHourExceptionAsync(message.GymCode, message.ExceptionId, cancellationToken),
             DeleteEquipmentModelCommand message => maintenanceWorkflowService.DeleteEquipmentModelAsync(message.GymCode, message.EquipmentModelId, cancellationToken),
             DeleteEquipmentCommand message => maintenanceWorkflowService.DeleteEquipmentAsync(message.GymCode, message.EquipmentId, cancellationToken),
             DeleteMaintenanceTaskCommand message => maintenanceWorkflowService.DeleteMaintenanceTaskAsync(message.GymCode, message.TaskId, cancellationToken),
@@ -328,12 +280,6 @@ public sealed class MaintenanceWorkflowMediatorAdapter(IMaintenanceWorkflowServi
     {
         object response = request switch
         {
-            ListOpeningHoursQuery message => await maintenanceWorkflowService.GetOpeningHoursAsync(message.GymCode, cancellationToken),
-            CreateOpeningHoursCommand message => await maintenanceWorkflowService.CreateOpeningHoursAsync(message.GymCode, message.Request, cancellationToken),
-            UpdateOpeningHoursCommand message => await maintenanceWorkflowService.UpdateOpeningHoursAsync(message.GymCode, message.OpeningHoursId, message.Request, cancellationToken),
-            ListOpeningHourExceptionsQuery message => await maintenanceWorkflowService.GetOpeningHourExceptionsAsync(message.GymCode, cancellationToken),
-            CreateOpeningHourExceptionCommand message => await maintenanceWorkflowService.CreateOpeningHourExceptionAsync(message.GymCode, message.Request, cancellationToken),
-            UpdateOpeningHourExceptionCommand message => await maintenanceWorkflowService.UpdateOpeningHourExceptionAsync(message.GymCode, message.ExceptionId, message.Request, cancellationToken),
             ListEquipmentModelsQuery message => await maintenanceWorkflowService.GetEquipmentModelsAsync(message.GymCode, cancellationToken),
             CreateEquipmentModelCommand message => await maintenanceWorkflowService.CreateEquipmentModelAsync(message.GymCode, message.Request, cancellationToken),
             UpdateEquipmentModelCommand message => await maintenanceWorkflowService.UpdateEquipmentModelAsync(message.GymCode, message.EquipmentModelId, message.Request, cancellationToken),
@@ -344,7 +290,6 @@ public sealed class MaintenanceWorkflowMediatorAdapter(IMaintenanceWorkflowServi
             CreateMaintenanceTaskCommand message => await maintenanceWorkflowService.CreateTaskAsync(message.GymCode, message.Request, cancellationToken),
             UpdateMaintenanceTaskStatusCommand message => await maintenanceWorkflowService.UpdateTaskStatusAsync(message.GymCode, message.TaskId, message.Request, cancellationToken),
             UpdateMaintenanceTaskAssignmentCommand message => await maintenanceWorkflowService.UpdateTaskAssignmentAsync(message.GymCode, message.TaskId, message.Request, cancellationToken),
-            ListMaintenanceTaskAssignmentHistoryQuery message => await maintenanceWorkflowService.GetTaskAssignmentHistoryAsync(message.GymCode, message.TaskId, cancellationToken),
             GenerateDueMaintenanceTasksCommand message => new Message($"Created {await maintenanceWorkflowService.GenerateDueScheduledTasksAsync(message.GymCode, cancellationToken)} scheduled maintenance tasks."),
             GetGymSettingsQuery message => await maintenanceWorkflowService.GetGymSettingsAsync(message.GymCode, cancellationToken),
             UpdateGymSettingsCommand message => await maintenanceWorkflowService.UpdateGymSettingsAsync(message.GymCode, message.Request, cancellationToken),
@@ -425,30 +370,6 @@ public class DelegatingMembershipWorkflowService : IMembershipWorkflowService
 
 public class DelegatingMaintenanceWorkflowService : IMaintenanceWorkflowService
 {
-    public Func<string, CancellationToken, Task<IReadOnlyCollection<OpeningHoursResponse>>> GetOpeningHoursAsyncHandler { get; set; } =
-        static (_, _) => Task.FromResult<IReadOnlyCollection<OpeningHoursResponse>>([]);
-
-    public Func<string, OpeningHoursUpsertRequest, CancellationToken, Task<OpeningHoursResponse>> CreateOpeningHoursAsyncHandler { get; set; } =
-        static (_, _, _) => Task.FromException<OpeningHoursResponse>(new InvalidOperationException("CreateOpeningHoursAsyncHandler not configured."));
-
-    public Func<string, Guid, OpeningHoursUpsertRequest, CancellationToken, Task<OpeningHoursResponse>> UpdateOpeningHoursAsyncHandler { get; set; } =
-        static (_, _, _, _) => Task.FromException<OpeningHoursResponse>(new InvalidOperationException("UpdateOpeningHoursAsyncHandler not configured."));
-
-    public Func<string, Guid, CancellationToken, Task> DeleteOpeningHoursAsyncHandler { get; set; } =
-        static (_, _, _) => Task.CompletedTask;
-
-    public Func<string, CancellationToken, Task<IReadOnlyCollection<OpeningHoursExceptionResponse>>> GetOpeningHourExceptionsAsyncHandler { get; set; } =
-        static (_, _) => Task.FromResult<IReadOnlyCollection<OpeningHoursExceptionResponse>>([]);
-
-    public Func<string, OpeningHoursExceptionUpsertRequest, CancellationToken, Task<OpeningHoursExceptionResponse>> CreateOpeningHourExceptionAsyncHandler { get; set; } =
-        static (_, _, _) => Task.FromException<OpeningHoursExceptionResponse>(new InvalidOperationException("CreateOpeningHourExceptionAsyncHandler not configured."));
-
-    public Func<string, Guid, OpeningHoursExceptionUpsertRequest, CancellationToken, Task<OpeningHoursExceptionResponse>> UpdateOpeningHourExceptionAsyncHandler { get; set; } =
-        static (_, _, _, _) => Task.FromException<OpeningHoursExceptionResponse>(new InvalidOperationException("UpdateOpeningHourExceptionAsyncHandler not configured."));
-
-    public Func<string, Guid, CancellationToken, Task> DeleteOpeningHourExceptionAsyncHandler { get; set; } =
-        static (_, _, _) => Task.CompletedTask;
-
     public Func<string, CancellationToken, Task<IReadOnlyCollection<EquipmentModelResponse>>> GetEquipmentModelsAsyncHandler { get; set; } =
         static (_, _) => Task.FromResult<IReadOnlyCollection<EquipmentModelResponse>>([]);
 
@@ -485,9 +406,6 @@ public class DelegatingMaintenanceWorkflowService : IMaintenanceWorkflowService
     public Func<string, Guid, MaintenanceAssignmentUpdateRequest, CancellationToken, Task<MaintenanceTaskResponse>> UpdateTaskAssignmentAsyncHandler { get; set; } =
         static (_, _, _, _) => Task.FromException<MaintenanceTaskResponse>(new InvalidOperationException("UpdateTaskAssignmentAsyncHandler not configured."));
 
-    public Func<string, Guid, CancellationToken, Task<IReadOnlyCollection<MaintenanceTaskAssignmentHistoryResponse>>> GetTaskAssignmentHistoryAsyncHandler { get; set; } =
-        static (_, _, _) => Task.FromResult<IReadOnlyCollection<MaintenanceTaskAssignmentHistoryResponse>>([]);
-
     public Func<string, CancellationToken, Task<int>> GenerateDueScheduledTasksAsyncHandler { get; set; } =
         static (_, _) => Task.FromResult(0);
 
@@ -508,30 +426,6 @@ public class DelegatingMaintenanceWorkflowService : IMaintenanceWorkflowService
 
     public Func<string, Guid, string, CancellationToken, Task> DeleteGymUserAsyncHandler { get; set; } =
         static (_, _, _, _) => Task.CompletedTask;
-
-    public Task<IReadOnlyCollection<OpeningHoursResponse>> GetOpeningHoursAsync(string gymCode, CancellationToken cancellationToken = default) =>
-        GetOpeningHoursAsyncHandler(gymCode, cancellationToken);
-
-    public Task<OpeningHoursResponse> CreateOpeningHoursAsync(string gymCode, OpeningHoursUpsertRequest request, CancellationToken cancellationToken = default) =>
-        CreateOpeningHoursAsyncHandler(gymCode, request, cancellationToken);
-
-    public Task<OpeningHoursResponse> UpdateOpeningHoursAsync(string gymCode, Guid id, OpeningHoursUpsertRequest request, CancellationToken cancellationToken = default) =>
-        UpdateOpeningHoursAsyncHandler(gymCode, id, request, cancellationToken);
-
-    public Task DeleteOpeningHoursAsync(string gymCode, Guid id, CancellationToken cancellationToken = default) =>
-        DeleteOpeningHoursAsyncHandler(gymCode, id, cancellationToken);
-
-    public Task<IReadOnlyCollection<OpeningHoursExceptionResponse>> GetOpeningHourExceptionsAsync(string gymCode, CancellationToken cancellationToken = default) =>
-        GetOpeningHourExceptionsAsyncHandler(gymCode, cancellationToken);
-
-    public Task<OpeningHoursExceptionResponse> CreateOpeningHourExceptionAsync(string gymCode, OpeningHoursExceptionUpsertRequest request, CancellationToken cancellationToken = default) =>
-        CreateOpeningHourExceptionAsyncHandler(gymCode, request, cancellationToken);
-
-    public Task<OpeningHoursExceptionResponse> UpdateOpeningHourExceptionAsync(string gymCode, Guid id, OpeningHoursExceptionUpsertRequest request, CancellationToken cancellationToken = default) =>
-        UpdateOpeningHourExceptionAsyncHandler(gymCode, id, request, cancellationToken);
-
-    public Task DeleteOpeningHourExceptionAsync(string gymCode, Guid id, CancellationToken cancellationToken = default) =>
-        DeleteOpeningHourExceptionAsyncHandler(gymCode, id, cancellationToken);
 
     public Task<IReadOnlyCollection<EquipmentModelResponse>> GetEquipmentModelsAsync(string gymCode, CancellationToken cancellationToken = default) =>
         GetEquipmentModelsAsyncHandler(gymCode, cancellationToken);
@@ -569,9 +463,6 @@ public class DelegatingMaintenanceWorkflowService : IMaintenanceWorkflowService
     public Task<MaintenanceTaskResponse> UpdateTaskAssignmentAsync(string gymCode, Guid taskId, MaintenanceAssignmentUpdateRequest request, CancellationToken cancellationToken = default) =>
         UpdateTaskAssignmentAsyncHandler(gymCode, taskId, request, cancellationToken);
 
-    public Task<IReadOnlyCollection<MaintenanceTaskAssignmentHistoryResponse>> GetTaskAssignmentHistoryAsync(string gymCode, Guid taskId, CancellationToken cancellationToken = default) =>
-        GetTaskAssignmentHistoryAsyncHandler(gymCode, taskId, cancellationToken);
-
     public Task<int> GenerateDueScheduledTasksAsync(string gymCode, CancellationToken cancellationToken = default) =>
         GenerateDueScheduledTasksAsyncHandler(gymCode, cancellationToken);
 
@@ -608,42 +499,6 @@ public sealed class DelegatingStaffWorkflowService : IStaffWorkflowService
     public Func<string, Guid, CancellationToken, Task> DeleteStaffAsyncHandler { get; set; } =
         static (_, _, _) => Task.CompletedTask;
 
-    public Func<string, CancellationToken, Task<IReadOnlyCollection<JobRoleResponse>>> GetJobRolesAsyncHandler { get; set; } =
-        static (_, _) => Task.FromResult<IReadOnlyCollection<JobRoleResponse>>([]);
-
-    public Func<string, JobRoleUpsertRequest, CancellationToken, Task<JobRoleResponse>> CreateJobRoleAsyncHandler { get; set; } =
-        static (_, _, _) => Task.FromException<JobRoleResponse>(new InvalidOperationException("CreateJobRoleAsyncHandler not configured."));
-
-    public Func<string, Guid, JobRoleUpsertRequest, CancellationToken, Task<JobRoleResponse>> UpdateJobRoleAsyncHandler { get; set; } =
-        static (_, _, _, _) => Task.FromException<JobRoleResponse>(new InvalidOperationException("UpdateJobRoleAsyncHandler not configured."));
-
-    public Func<string, Guid, CancellationToken, Task> DeleteJobRoleAsyncHandler { get; set; } =
-        static (_, _, _) => Task.CompletedTask;
-
-    public Func<string, CancellationToken, Task<IReadOnlyCollection<ContractResponse>>> GetContractsAsyncHandler { get; set; } =
-        static (_, _) => Task.FromResult<IReadOnlyCollection<ContractResponse>>([]);
-
-    public Func<string, ContractUpsertRequest, CancellationToken, Task<ContractResponse>> CreateContractAsyncHandler { get; set; } =
-        static (_, _, _) => Task.FromException<ContractResponse>(new InvalidOperationException("CreateContractAsyncHandler not configured."));
-
-    public Func<string, Guid, ContractUpsertRequest, CancellationToken, Task<ContractResponse>> UpdateContractAsyncHandler { get; set; } =
-        static (_, _, _, _) => Task.FromException<ContractResponse>(new InvalidOperationException("UpdateContractAsyncHandler not configured."));
-
-    public Func<string, Guid, CancellationToken, Task> DeleteContractAsyncHandler { get; set; } =
-        static (_, _, _) => Task.CompletedTask;
-
-    public Func<string, CancellationToken, Task<IReadOnlyCollection<VacationResponse>>> GetVacationsAsyncHandler { get; set; } =
-        static (_, _) => Task.FromResult<IReadOnlyCollection<VacationResponse>>([]);
-
-    public Func<string, VacationUpsertRequest, CancellationToken, Task<VacationResponse>> CreateVacationAsyncHandler { get; set; } =
-        static (_, _, _) => Task.FromException<VacationResponse>(new InvalidOperationException("CreateVacationAsyncHandler not configured."));
-
-    public Func<string, Guid, VacationUpsertRequest, CancellationToken, Task<VacationResponse>> UpdateVacationAsyncHandler { get; set; } =
-        static (_, _, _, _) => Task.FromException<VacationResponse>(new InvalidOperationException("UpdateVacationAsyncHandler not configured."));
-
-    public Func<string, Guid, CancellationToken, Task> DeleteVacationAsyncHandler { get; set; } =
-        static (_, _, _) => Task.CompletedTask;
-
     public Task<IReadOnlyCollection<StaffResponse>> GetStaffAsync(string gymCode, CancellationToken cancellationToken = default) =>
         GetStaffAsyncHandler(gymCode, cancellationToken);
 
@@ -655,42 +510,6 @@ public sealed class DelegatingStaffWorkflowService : IStaffWorkflowService
 
     public Task DeleteStaffAsync(string gymCode, Guid id, CancellationToken cancellationToken = default) =>
         DeleteStaffAsyncHandler(gymCode, id, cancellationToken);
-
-    public Task<IReadOnlyCollection<JobRoleResponse>> GetJobRolesAsync(string gymCode, CancellationToken cancellationToken = default) =>
-        GetJobRolesAsyncHandler(gymCode, cancellationToken);
-
-    public Task<JobRoleResponse> CreateJobRoleAsync(string gymCode, JobRoleUpsertRequest request, CancellationToken cancellationToken = default) =>
-        CreateJobRoleAsyncHandler(gymCode, request, cancellationToken);
-
-    public Task<JobRoleResponse> UpdateJobRoleAsync(string gymCode, Guid id, JobRoleUpsertRequest request, CancellationToken cancellationToken = default) =>
-        UpdateJobRoleAsyncHandler(gymCode, id, request, cancellationToken);
-
-    public Task DeleteJobRoleAsync(string gymCode, Guid id, CancellationToken cancellationToken = default) =>
-        DeleteJobRoleAsyncHandler(gymCode, id, cancellationToken);
-
-    public Task<IReadOnlyCollection<ContractResponse>> GetContractsAsync(string gymCode, CancellationToken cancellationToken = default) =>
-        GetContractsAsyncHandler(gymCode, cancellationToken);
-
-    public Task<ContractResponse> CreateContractAsync(string gymCode, ContractUpsertRequest request, CancellationToken cancellationToken = default) =>
-        CreateContractAsyncHandler(gymCode, request, cancellationToken);
-
-    public Task<ContractResponse> UpdateContractAsync(string gymCode, Guid id, ContractUpsertRequest request, CancellationToken cancellationToken = default) =>
-        UpdateContractAsyncHandler(gymCode, id, request, cancellationToken);
-
-    public Task DeleteContractAsync(string gymCode, Guid id, CancellationToken cancellationToken = default) =>
-        DeleteContractAsyncHandler(gymCode, id, cancellationToken);
-
-    public Task<IReadOnlyCollection<VacationResponse>> GetVacationsAsync(string gymCode, CancellationToken cancellationToken = default) =>
-        GetVacationsAsyncHandler(gymCode, cancellationToken);
-
-    public Task<VacationResponse> CreateVacationAsync(string gymCode, VacationUpsertRequest request, CancellationToken cancellationToken = default) =>
-        CreateVacationAsyncHandler(gymCode, request, cancellationToken);
-
-    public Task<VacationResponse> UpdateVacationAsync(string gymCode, Guid id, VacationUpsertRequest request, CancellationToken cancellationToken = default) =>
-        UpdateVacationAsyncHandler(gymCode, id, request, cancellationToken);
-
-    public Task DeleteVacationAsync(string gymCode, Guid id, CancellationToken cancellationToken = default) =>
-        DeleteVacationAsyncHandler(gymCode, id, cancellationToken);
 }
 
 public sealed class DelegatingPlatformService : IPlatformService
@@ -704,26 +523,11 @@ public sealed class DelegatingPlatformService : IPlatformService
     public Func<Guid, UpdateGymActivationRequest, CancellationToken, Task> UpdateGymActivationAsyncHandler { get; set; } =
         static (_, _, _) => Task.CompletedTask;
 
-    public Func<CancellationToken, Task<IReadOnlyCollection<SubscriptionSummaryResponse>>> GetSubscriptionsAsyncHandler { get; set; } =
-        static _ => Task.FromResult<IReadOnlyCollection<SubscriptionSummaryResponse>>([]);
-
-    public Func<Guid, UpdateSubscriptionRequest, CancellationToken, Task<SubscriptionSummaryResponse>> UpdateSubscriptionAsyncHandler { get; set; } =
-        static (_, _, _) => Task.FromException<SubscriptionSummaryResponse>(new InvalidOperationException("UpdateSubscriptionAsyncHandler not configured."));
-
-    public Func<CancellationToken, Task<IReadOnlyCollection<SupportTicketResponse>>> GetSupportTicketsAsyncHandler { get; set; } =
-        static _ => Task.FromResult<IReadOnlyCollection<SupportTicketResponse>>([]);
-
-    public Func<Guid, SupportTicketRequest, CancellationToken, Task<SupportTicketResponse>> CreateSupportTicketAsyncHandler { get; set; } =
-        static (_, _, _) => Task.FromException<SupportTicketResponse>(new InvalidOperationException("CreateSupportTicketAsyncHandler not configured."));
-
     public Func<Guid, CancellationToken, Task<CompanySnapshotResponse>> GetGymSnapshotAsyncHandler { get; set; } =
         static (_, _) => Task.FromException<CompanySnapshotResponse>(new InvalidOperationException("GetGymSnapshotAsyncHandler not configured."));
 
     public Func<CancellationToken, Task<PlatformAnalyticsResponse>> GetAnalyticsAsyncHandler { get; set; } =
         static _ => Task.FromException<PlatformAnalyticsResponse>(new InvalidOperationException("GetAnalyticsAsyncHandler not configured."));
-
-    public Func<StartImpersonationRequest, CancellationToken, Task<StartImpersonationResponse>> StartImpersonationAsyncHandler { get; set; } =
-        static (_, _) => Task.FromException<StartImpersonationResponse>(new InvalidOperationException("StartImpersonationAsyncHandler not configured."));
 
     public Task<IReadOnlyCollection<GymSummaryResponse>> GetGymsAsync(CancellationToken cancellationToken = default) =>
         GetGymsAsyncHandler(cancellationToken);
@@ -734,26 +538,11 @@ public sealed class DelegatingPlatformService : IPlatformService
     public Task UpdateGymActivationAsync(Guid gymId, UpdateGymActivationRequest request, CancellationToken cancellationToken = default) =>
         UpdateGymActivationAsyncHandler(gymId, request, cancellationToken);
 
-    public Task<IReadOnlyCollection<SubscriptionSummaryResponse>> GetSubscriptionsAsync(CancellationToken cancellationToken = default) =>
-        GetSubscriptionsAsyncHandler(cancellationToken);
-
-    public Task<SubscriptionSummaryResponse> UpdateSubscriptionAsync(Guid gymId, UpdateSubscriptionRequest request, CancellationToken cancellationToken = default) =>
-        UpdateSubscriptionAsyncHandler(gymId, request, cancellationToken);
-
-    public Task<IReadOnlyCollection<SupportTicketResponse>> GetSupportTicketsAsync(CancellationToken cancellationToken = default) =>
-        GetSupportTicketsAsyncHandler(cancellationToken);
-
-    public Task<SupportTicketResponse> CreateSupportTicketAsync(Guid gymId, SupportTicketRequest request, CancellationToken cancellationToken = default) =>
-        CreateSupportTicketAsyncHandler(gymId, request, cancellationToken);
-
     public Task<CompanySnapshotResponse> GetGymSnapshotAsync(Guid gymId, CancellationToken cancellationToken = default) =>
         GetGymSnapshotAsyncHandler(gymId, cancellationToken);
 
     public Task<PlatformAnalyticsResponse> GetAnalyticsAsync(CancellationToken cancellationToken = default) =>
         GetAnalyticsAsyncHandler(cancellationToken);
-
-    public Task<StartImpersonationResponse> StartImpersonationAsync(StartImpersonationRequest request, CancellationToken cancellationToken = default) =>
-        StartImpersonationAsyncHandler(request, cancellationToken);
 }
 
 public sealed class DelegatingIdentityService : IIdentityService
@@ -823,94 +612,4 @@ public sealed class DelegatingMemberWorkspaceService : IMemberWorkspaceService
 
     public Task<MemberWorkspaceResponse> GetWorkspaceAsync(string gymCode, Guid memberId, CancellationToken cancellationToken = default) =>
         GetWorkspaceAsyncHandler(gymCode, memberId, cancellationToken);
-}
-
-public sealed class DelegatingCoachingPlanService : ICoachingPlanService
-{
-    public Func<string, Guid?, CancellationToken, Task<IReadOnlyCollection<CoachingPlanResponse>>> GetPlansAsyncHandler { get; set; } =
-        static (_, _, _) => Task.FromResult<IReadOnlyCollection<CoachingPlanResponse>>([]);
-
-    public Func<string, Guid, CancellationToken, Task<CoachingPlanResponse>> GetPlanAsyncHandler { get; set; } =
-        static (_, _, _) => Task.FromException<CoachingPlanResponse>(new InvalidOperationException("GetPlanAsyncHandler not configured."));
-
-    public Func<string, CoachingPlanCreateRequest, CancellationToken, Task<CoachingPlanResponse>> CreatePlanAsyncHandler { get; set; } =
-        static (_, _, _) => Task.FromException<CoachingPlanResponse>(new InvalidOperationException("CreatePlanAsyncHandler not configured."));
-
-    public Func<string, Guid, CoachingPlanUpdateRequest, CancellationToken, Task<CoachingPlanResponse>> UpdatePlanAsyncHandler { get; set; } =
-        static (_, _, _, _) => Task.FromException<CoachingPlanResponse>(new InvalidOperationException("UpdatePlanAsyncHandler not configured."));
-
-    public Func<string, Guid, CoachingPlanStatusUpdateRequest, CancellationToken, Task<CoachingPlanResponse>> UpdatePlanStatusAsyncHandler { get; set; } =
-        static (_, _, _, _) => Task.FromException<CoachingPlanResponse>(new InvalidOperationException("UpdatePlanStatusAsyncHandler not configured."));
-
-    public Func<string, Guid, Guid, CoachingPlanItemDecisionRequest, CancellationToken, Task<CoachingPlanResponse>> DecidePlanItemAsyncHandler { get; set; } =
-        static (_, _, _, _, _) => Task.FromException<CoachingPlanResponse>(new InvalidOperationException("DecidePlanItemAsyncHandler not configured."));
-
-    public Func<string, Guid, CancellationToken, Task> DeletePlanAsyncHandler { get; set; } =
-        static (_, _, _) => Task.CompletedTask;
-
-    public Task<IReadOnlyCollection<CoachingPlanResponse>> GetPlansAsync(string gymCode, Guid? memberId, CancellationToken cancellationToken = default) =>
-        GetPlansAsyncHandler(gymCode, memberId, cancellationToken);
-
-    public Task<CoachingPlanResponse> GetPlanAsync(string gymCode, Guid id, CancellationToken cancellationToken = default) =>
-        GetPlanAsyncHandler(gymCode, id, cancellationToken);
-
-    public Task<CoachingPlanResponse> CreatePlanAsync(string gymCode, CoachingPlanCreateRequest request, CancellationToken cancellationToken = default) =>
-        CreatePlanAsyncHandler(gymCode, request, cancellationToken);
-
-    public Task<CoachingPlanResponse> UpdatePlanAsync(string gymCode, Guid id, CoachingPlanUpdateRequest request, CancellationToken cancellationToken = default) =>
-        UpdatePlanAsyncHandler(gymCode, id, request, cancellationToken);
-
-    public Task<CoachingPlanResponse> UpdatePlanStatusAsync(string gymCode, Guid id, CoachingPlanStatusUpdateRequest request, CancellationToken cancellationToken = default) =>
-        UpdatePlanStatusAsyncHandler(gymCode, id, request, cancellationToken);
-
-    public Task<CoachingPlanResponse> DecidePlanItemAsync(string gymCode, Guid id, Guid itemId, CoachingPlanItemDecisionRequest request, CancellationToken cancellationToken = default) =>
-        DecidePlanItemAsyncHandler(gymCode, id, itemId, request, cancellationToken);
-
-    public Task DeletePlanAsync(string gymCode, Guid id, CancellationToken cancellationToken = default) =>
-        DeletePlanAsyncHandler(gymCode, id, cancellationToken);
-}
-
-public class DelegatingFinanceWorkspaceService : IFinanceWorkspaceService
-{
-    public Func<string, CancellationToken, Task<FinanceWorkspaceResponse>> GetCurrentWorkspaceAsyncHandler { get; set; } =
-        static (_, _) => Task.FromException<FinanceWorkspaceResponse>(new InvalidOperationException("GetCurrentWorkspaceAsyncHandler not configured."));
-
-    public Func<string, Guid, CancellationToken, Task<FinanceWorkspaceResponse>> GetWorkspaceAsyncHandler { get; set; } =
-        static (_, _, _) => Task.FromException<FinanceWorkspaceResponse>(new InvalidOperationException("GetWorkspaceAsyncHandler not configured."));
-
-    public Func<string, Guid?, CancellationToken, Task<IReadOnlyCollection<InvoiceResponse>>> GetInvoicesAsyncHandler { get; set; } =
-        static (_, _, _) => Task.FromResult<IReadOnlyCollection<InvoiceResponse>>([]);
-
-    public Func<string, Guid, CancellationToken, Task<InvoiceResponse>> GetInvoiceAsyncHandler { get; set; } =
-        static (_, _, _) => Task.FromException<InvoiceResponse>(new InvalidOperationException("GetInvoiceAsyncHandler not configured."));
-
-    public Func<string, InvoiceCreateRequest, CancellationToken, Task<InvoiceResponse>> CreateInvoiceAsyncHandler { get; set; } =
-        static (_, _, _) => Task.FromException<InvoiceResponse>(new InvalidOperationException("CreateInvoiceAsyncHandler not configured."));
-
-    public Func<string, Guid, InvoicePaymentRequest, CancellationToken, Task<InvoiceResponse>> AddInvoicePaymentAsyncHandler { get; set; } =
-        static (_, _, _, _) => Task.FromException<InvoiceResponse>(new InvalidOperationException("AddInvoicePaymentAsyncHandler not configured."));
-
-    public Func<string, Guid, InvoicePaymentRequest, CancellationToken, Task<InvoiceResponse>> AddInvoiceRefundAsyncHandler { get; set; } =
-        static (_, _, _, _) => Task.FromException<InvoiceResponse>(new InvalidOperationException("AddInvoiceRefundAsyncHandler not configured."));
-
-    public Task<FinanceWorkspaceResponse> GetCurrentWorkspaceAsync(string gymCode, CancellationToken cancellationToken = default) =>
-        GetCurrentWorkspaceAsyncHandler(gymCode, cancellationToken);
-
-    public Task<FinanceWorkspaceResponse> GetWorkspaceAsync(string gymCode, Guid memberId, CancellationToken cancellationToken = default) =>
-        GetWorkspaceAsyncHandler(gymCode, memberId, cancellationToken);
-
-    public Task<IReadOnlyCollection<InvoiceResponse>> GetInvoicesAsync(string gymCode, Guid? memberId, CancellationToken cancellationToken = default) =>
-        GetInvoicesAsyncHandler(gymCode, memberId, cancellationToken);
-
-    public Task<InvoiceResponse> GetInvoiceAsync(string gymCode, Guid id, CancellationToken cancellationToken = default) =>
-        GetInvoiceAsyncHandler(gymCode, id, cancellationToken);
-
-    public Task<InvoiceResponse> CreateInvoiceAsync(string gymCode, InvoiceCreateRequest request, CancellationToken cancellationToken = default) =>
-        CreateInvoiceAsyncHandler(gymCode, request, cancellationToken);
-
-    public Task<InvoiceResponse> AddInvoicePaymentAsync(string gymCode, Guid id, InvoicePaymentRequest request, CancellationToken cancellationToken = default) =>
-        AddInvoicePaymentAsyncHandler(gymCode, id, request, cancellationToken);
-
-    public Task<InvoiceResponse> AddInvoiceRefundAsync(string gymCode, Guid id, InvoicePaymentRequest request, CancellationToken cancellationToken = default) =>
-        AddInvoiceRefundAsyncHandler(gymCode, id, request, cancellationToken);
 }

@@ -118,10 +118,7 @@ public class TenantIsolationAndIdorTests(CustomWebApplicationFactory factory) : 
                 .FirstAsync();
 
             unassignedSessionBookingId = await db.Bookings
-                .Where(b => !db.WorkShifts.Any(ws =>
-                    ws.TrainingSessionId == b.TrainingSessionId &&
-                    ws.ShiftType == ShiftType.Training &&
-                    ws.Contract!.StaffId == trainerStaffId))
+                .Where(b => b.TrainingSession!.TrainerStaffId != trainerStaffId)
                 .Select(b => b.Id)
                 .FirstAsync();
         }
@@ -183,46 +180,7 @@ public class TenantIsolationAndIdorTests(CustomWebApplicationFactory factory) : 
 
     // ── Scenario 5: Tenant user cannot access /api/v1/system endpoints ─────────
 
-    [Fact]
-    public async Task SystemSupportUser_CannotAccess_TenantMembersEndpoint()
-    {
-        var client = factory.CreateClient();
-        var token = await LoginAsync(client, "support@gym.local", "GymStrong123!");
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.Jwt);
-
-        var response = await client.GetAsync("/api/v1/peak-forge/members");
-
-        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
-    }
-
-    [Fact]
-    public async Task SystemBillingUser_CannotAccess_TenantTrainingSessionsEndpoint()
-    {
-        var client = factory.CreateClient();
-        var token = await LoginAsync(client, "billing@gym.local", "GymStrong123!");
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.Jwt);
-
-        var response = await client.GetAsync("/api/v1/peak-forge/training-sessions");
-
-        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
-    }
-
     // ── Scenario 6: System role cannot bypass tenant context ──────────────────
-
-    [Fact]
-    public async Task SystemUser_WithNoActiveGymContext_CannotAccessTenantEndpoint()
-    {
-        // support@gym.local has SystemSupport but no AppUserGymRole, so ActiveGymCode is null
-        var client = factory.CreateClient();
-        var token = await LoginAsync(client, "support@gym.local", "GymStrong123!");
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.Jwt);
-
-        Assert.Null(token.ActiveGymCode);
-
-        var response = await client.GetAsync("/api/v1/peak-forge/maintenance-tasks");
-
-        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
-    }
 
     // ── Baseline: unauthenticated returns 401 ─────────────────────────────────
 

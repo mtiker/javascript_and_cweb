@@ -1,34 +1,5 @@
 namespace App.Domain.Enums;
 
-public enum SubscriptionPlan
-{
-    Starter = 0,
-    Growth = 1,
-    Enterprise = 2
-}
-
-public enum SubscriptionStatus
-{
-    Trial = 0,
-    Active = 1,
-    Suspended = 2,
-    Cancelled = 3
-}
-
-public enum SupportTicketStatus
-{
-    Open = 0,
-    InProgress = 1,
-    Resolved = 2
-}
-
-public enum SupportTicketPriority
-{
-    Low = 0,
-    Medium = 1,
-    High = 2
-}
-
 public enum ContactType
 {
     Email = 0,
@@ -50,48 +21,12 @@ public enum StaffStatus
     Inactive = 2
 }
 
-public enum ContractStatus
-{
-    Draft = 0,
-    Active = 1,
-    Suspended = 2,
-    Ended = 3
-}
-
-public enum EmployerType
-{
-    Internal = 0,
-    External = 1
-}
-
-public enum VacationType
-{
-    Annual = 0,
-    Sick = 1,
-    Unpaid = 2,
-    Other = 3
-}
-
-public enum VacationStatus
-{
-    Planned = 0,
-    Approved = 1,
-    Rejected = 2,
-    Cancelled = 3
-}
-
 public enum TrainingSessionStatus
 {
     Draft = 0,
     Published = 1,
     Cancelled = 2,
     Completed = 3
-}
-
-public enum ShiftType
-{
-    Training = 0,
-    Assisting = 1
 }
 
 public enum BookingStatus
@@ -172,32 +107,4 @@ public enum MaintenanceTaskStatus
     Open = 0,
     InProgress = 1,
     Done = 2
-}
-
-public enum CoachingPlanStatus
-{
-    Draft = 0,
-    Published = 1,
-    Active = 2,
-    Completed = 3,
-    Cancelled = 4
-}
-
-public enum CoachingPlanItemDecision
-{
-    Accepted = 0,
-    Deferred = 1,
-    Completed = 2,
-    Skipped = 3
-}
-
-public enum InvoiceStatus
-{
-    Draft = 0,
-    Issued = 1,
-    PartiallyPaid = 2,
-    Paid = 3,
-    Overdue = 4,
-    Cancelled = 5,
-    Refunded = 6
 }

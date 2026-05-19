@@ -94,7 +94,7 @@ public class MvcComplianceTests(CustomWebApplicationFactory factory) : IClassFix
         var razorFiles = Directory.GetFiles(adminViewsRoot, "*.cshtml", SearchOption.AllDirectories);
 
         Assert.NotEmpty(razorFiles);
-        foreach (var file in razorFiles)
+        foreach (var file in razorFiles.Where(IsAdminPageView))
         {
             var source = File.ReadAllText(file);
             Assert.Matches(@"@model\s+Admin[A-Za-z]+ViewModel", source);
@@ -198,5 +198,13 @@ public class MvcComplianceTests(CustomWebApplicationFactory factory) : IClassFix
         throw new InvalidOperationException(
             "Could not locate the assignment root (multi-gym-management-system.slnx) by walking up from " +
             AppContext.BaseDirectory);
+    }
+
+    private static bool IsAdminPageView(string path)
+    {
+        var fileName = Path.GetFileName(path);
+        return !fileName.StartsWith("_", StringComparison.Ordinal) &&
+               !path.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
+                   .Contains("Shared", StringComparer.OrdinalIgnoreCase);
     }
 }

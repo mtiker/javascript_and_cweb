@@ -9,10 +9,6 @@ public sealed class AdminOperationsQueryService(IAppUnitOfWork unitOfWork) : IAd
 
     public async Task<AdminOperationsSnapshot> GetSnapshotAsync(Guid gymId, CancellationToken cancellationToken = default)
     {
-        var openingHours = (await unitOfWork.Maintenance.ListOpeningHoursByGymAsync(gymId, cancellationToken))
-            .Select(entity => new AdminOpeningHoursRow(entity.Weekday, entity.OpensAt, entity.ClosesAt))
-            .ToArray();
-
         var equipment = (await unitOfWork.Maintenance.ListEquipmentWithModelByGymAsync(gymId, DisplayLimit, cancellationToken))
             .Select(entity => new AdminEquipmentRow(
                 ResolveAssetTag(entity),
@@ -29,7 +25,7 @@ public sealed class AdminOperationsQueryService(IAppUnitOfWork unitOfWork) : IAd
                 entity.DueAtUtc))
             .ToArray();
 
-        return new AdminOperationsSnapshot(openingHours, equipment, maintenanceTasks);
+        return new AdminOperationsSnapshot(equipment, maintenanceTasks);
     }
 
     private static string ResolveAssetTag(Equipment equipment) =>

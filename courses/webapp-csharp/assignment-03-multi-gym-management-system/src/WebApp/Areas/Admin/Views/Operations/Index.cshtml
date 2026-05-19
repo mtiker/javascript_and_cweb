@@ -9,36 +9,6 @@
 
 <section class="page-grid">
     <article class="panel">
-        <h2>@L["OpeningHours"]</h2>
-        @if (Model.OpeningHours.Count == 0)
-        {
-            <p class="muted-text">@L["NoOpeningHours"]</p>
-        }
-        else
-        {
-            <table class="data-table">
-                <thead>
-                <tr>
-                    <th>@L["Weekday"]</th>
-                    <th>@L["Opens"]</th>
-                    <th>@L["Closes"]</th>
-                </tr>
-                </thead>
-                <tbody>
-                @foreach (var row in Model.OpeningHours)
-                {
-                    <tr>
-                        <td>@row.Weekday</td>
-                        <td>@row.OpensAt</td>
-                        <td>@row.ClosesAt</td>
-                    </tr>
-                }
-                </tbody>
-            </table>
-        }
-    </article>
-
-    <article class="panel">
         <h2>@L["Equipment"]</h2>
         @if (Model.Equipment.Count == 0)
         {

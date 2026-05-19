@@ -16,8 +16,8 @@ namespace WebApp.Tests.Architecture;
 /// <summary>
 /// Final-2 modular monolith boundary tests.
 ///
-/// These rules lock the Phase 16 skeleton from
-/// <c>docs/final2-module-plan.md</c>:
+/// These rules lock the modular-monolith boundary documented in
+/// <c>docs/module-boundaries.md</c>:
 ///   - modules never reference each other directly
 ///   - modules reference BuildingBlocks
 ///   - BuildingBlocks does not reference modules

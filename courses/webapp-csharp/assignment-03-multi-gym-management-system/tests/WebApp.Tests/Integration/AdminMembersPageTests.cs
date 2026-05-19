@@ -23,7 +23,9 @@ public class AdminMembersPageTests(CustomWebApplicationFactory factory) : IClass
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var html = await response.Content.ReadAsStringAsync();
         Assert.Contains("/css/site.css", html);
-        Assert.Contains("class=\"topbar\"", html);
+        Assert.Contains("GymOps Admin", html);
+        Assert.Contains("class=\"area-toolbar", html);
+        Assert.Contains("bi bi-people", html);
     }
 
     [Fact]

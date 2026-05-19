@@ -11,8 +11,6 @@ using App.DTO.v1.EquipmentModels;
 using App.DTO.v1.GymSettings;
 using App.DTO.v1.GymUsers;
 using App.DTO.v1.MaintenanceTasks;
-using App.DTO.v1.OpeningHours;
-using App.DTO.v1.OpeningHoursExceptions;
 
 namespace App.BLL.Services;
 
@@ -22,96 +20,6 @@ public class MaintenanceWorkflowService(
     ISubscriptionTierLimitService subscriptionTierLimitService,
     IMaintenanceMapper mapper) : IMaintenanceWorkflowService
 {
-    public async Task<IReadOnlyCollection<OpeningHoursResponse>> GetOpeningHoursAsync(string gymCode, CancellationToken cancellationToken = default)
-    {
-        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin, RoleNames.Member, RoleNames.Trainer, RoleNames.Caretaker);
-        var rows = await unitOfWork.Maintenance.ListOpeningHoursByGymAsync(gymId, cancellationToken);
-        return mapper.ToOpeningHoursList(rows);
-    }
-
-    public async Task<OpeningHoursResponse> CreateOpeningHoursAsync(string gymCode, OpeningHoursUpsertRequest request, CancellationToken cancellationToken = default)
-    {
-        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin);
-        var entity = new OpeningHours
-        {
-            GymId = gymId,
-            Weekday = request.Weekday,
-            OpensAt = request.OpensAt,
-            ClosesAt = request.ClosesAt
-        };
-        await unitOfWork.Maintenance.AddOpeningHoursAsync(entity, cancellationToken);
-        await unitOfWork.SaveChangesAsync(cancellationToken);
-        return mapper.ToOpeningHours(entity);
-    }
-
-    public async Task<OpeningHoursResponse> UpdateOpeningHoursAsync(string gymCode, Guid id, OpeningHoursUpsertRequest request, CancellationToken cancellationToken = default)
-    {
-        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin);
-        var entity = await unitOfWork.Maintenance.FindOpeningHoursAsync(gymId, id, cancellationToken)
-                     ?? throw new NotFoundException("Opening hours row was not found.");
-        entity.Weekday = request.Weekday;
-        entity.OpensAt = request.OpensAt;
-        entity.ClosesAt = request.ClosesAt;
-        await unitOfWork.SaveChangesAsync(cancellationToken);
-        return mapper.ToOpeningHours(entity);
-    }
-
-    public async Task DeleteOpeningHoursAsync(string gymCode, Guid id, CancellationToken cancellationToken = default)
-    {
-        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin);
-        var entity = await unitOfWork.Maintenance.FindOpeningHoursAsync(gymId, id, cancellationToken)
-                     ?? throw new NotFoundException("Opening hours row was not found.");
-        unitOfWork.Maintenance.RemoveOpeningHours(entity);
-        await unitOfWork.SaveChangesAsync(cancellationToken);
-    }
-
-    public async Task<IReadOnlyCollection<OpeningHoursExceptionResponse>> GetOpeningHourExceptionsAsync(string gymCode, CancellationToken cancellationToken = default)
-    {
-        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin, RoleNames.Member, RoleNames.Trainer, RoleNames.Caretaker);
-        var rows = await unitOfWork.Maintenance.ListOpeningHourExceptionsByGymAsync(gymId, cancellationToken);
-        return mapper.ToOpeningHoursExceptionList(rows);
-    }
-
-    public async Task<OpeningHoursExceptionResponse> CreateOpeningHourExceptionAsync(string gymCode, OpeningHoursExceptionUpsertRequest request, CancellationToken cancellationToken = default)
-    {
-        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin);
-        var entity = new OpeningHoursException
-        {
-            GymId = gymId,
-            ExceptionDate = request.ExceptionDate,
-            IsClosed = request.IsClosed,
-            OpensAt = request.OpensAt,
-            ClosesAt = request.ClosesAt,
-            Reason = string.IsNullOrWhiteSpace(request.Reason) ? null : ToLangStr(request.Reason)
-        };
-        await unitOfWork.Maintenance.AddOpeningHourExceptionAsync(entity, cancellationToken);
-        await unitOfWork.SaveChangesAsync(cancellationToken);
-        return mapper.ToOpeningHoursException(entity);
-    }
-
-    public async Task<OpeningHoursExceptionResponse> UpdateOpeningHourExceptionAsync(string gymCode, Guid id, OpeningHoursExceptionUpsertRequest request, CancellationToken cancellationToken = default)
-    {
-        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin);
-        var entity = await unitOfWork.Maintenance.FindOpeningHourExceptionAsync(gymId, id, cancellationToken)
-                     ?? throw new NotFoundException("Opening hours exception was not found.");
-        entity.ExceptionDate = request.ExceptionDate;
-        entity.IsClosed = request.IsClosed;
-        entity.OpensAt = request.OpensAt;
-        entity.ClosesAt = request.ClosesAt;
-        entity.Reason = string.IsNullOrWhiteSpace(request.Reason) ? null : ToLangStr(request.Reason);
-        await unitOfWork.SaveChangesAsync(cancellationToken);
-        return mapper.ToOpeningHoursException(entity);
-    }
-
-    public async Task DeleteOpeningHourExceptionAsync(string gymCode, Guid id, CancellationToken cancellationToken = default)
-    {
-        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin);
-        var entity = await unitOfWork.Maintenance.FindOpeningHourExceptionAsync(gymId, id, cancellationToken)
-                     ?? throw new NotFoundException("Opening hours exception was not found.");
-        unitOfWork.Maintenance.RemoveOpeningHourException(entity);
-        await unitOfWork.SaveChangesAsync(cancellationToken);
-    }
-
     public async Task<IReadOnlyCollection<EquipmentModelResponse>> GetEquipmentModelsAsync(string gymCode, CancellationToken cancellationToken = default)
     {
         var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin, RoleNames.Caretaker);
@@ -258,14 +166,6 @@ public class MaintenanceWorkflowService(
         }
 
         await unitOfWork.Maintenance.AddMaintenanceTaskAsync(task, cancellationToken);
-        await unitOfWork.Maintenance.AddAssignmentHistoryAsync(new MaintenanceTaskAssignmentHistory
-        {
-            GymId = gymId,
-            MaintenanceTask = task,
-            AssignedStaffId = task.AssignedStaffId,
-            AssignedByStaffId = request.CreatedByStaffId,
-            Notes = "Initial assignment"
-        }, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         var saved = await unitOfWork.Maintenance.FindMaintenanceTaskAggregateAsync(gymId, task.Id, cancellationToken)
@@ -305,15 +205,7 @@ public class MaintenanceWorkflowService(
 
         task.AssignedStaffId = request.AssignedStaffId;
         task.AssignedStaff = assignedStaff;
-
-        await unitOfWork.Maintenance.AddAssignmentHistoryAsync(new MaintenanceTaskAssignmentHistory
-        {
-            GymId = gymId,
-            MaintenanceTaskId = task.Id,
-            AssignedStaffId = request.AssignedStaffId,
-            AssignedByStaffId = request.AssignedByStaffId,
-            Notes = string.IsNullOrWhiteSpace(request.Notes) ? "Assignment updated" : request.Notes.Trim()
-        }, cancellationToken);
+        task.Notes = string.IsNullOrWhiteSpace(request.Notes) ? task.Notes : request.Notes.Trim();
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
@@ -321,18 +213,6 @@ public class MaintenanceWorkflowService(
                     ?? throw new NotFoundException("Maintenance task was not found after assignment update.");
 
         return mapper.ToMaintenanceTask(saved);
-    }
-
-    public async Task<IReadOnlyCollection<MaintenanceTaskAssignmentHistoryResponse>> GetTaskAssignmentHistoryAsync(string gymCode, Guid taskId, CancellationToken cancellationToken = default)
-    {
-        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin, RoleNames.Caretaker);
-        if (!await unitOfWork.Maintenance.MaintenanceTaskExistsAsync(gymId, taskId, cancellationToken))
-        {
-            throw new NotFoundException("Maintenance task was not found.");
-        }
-
-        var history = await unitOfWork.Maintenance.ListAssignmentHistoryAsync(gymId, taskId, cancellationToken);
-        return mapper.ToAssignmentHistoryList(history);
     }
 
     public async Task<int> GenerateDueScheduledTasksAsync(string gymCode, CancellationToken cancellationToken = default)

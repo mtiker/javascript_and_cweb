@@ -22,5 +22,4 @@ public class MaintenanceTaskResponse
     public bool IsOverdue { get; set; }
     public string? Notes { get; set; }
     public string? CompletionNotes { get; set; }
-    public IReadOnlyCollection<MaintenanceTaskAssignmentHistoryResponse> AssignmentHistory { get; set; } = [];
 }

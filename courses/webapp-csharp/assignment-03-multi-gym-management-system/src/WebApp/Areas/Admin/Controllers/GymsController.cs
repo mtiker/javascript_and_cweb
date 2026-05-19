@@ -11,7 +11,7 @@ public class GymsController(IAdminGymsPageService gymsPageService) : Controller
 {
     public async Task<IActionResult> Index(CancellationToken cancellationToken)
     {
-        if (!(User.IsInRole(RoleNames.SystemAdmin) || User.IsInRole(RoleNames.SystemSupport) || User.IsInRole(RoleNames.SystemBilling)))
+        if (!User.IsInRole(RoleNames.SystemAdmin))
         {
             return Forbid();
         }

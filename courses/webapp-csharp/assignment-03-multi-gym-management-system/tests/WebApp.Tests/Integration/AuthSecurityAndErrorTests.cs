@@ -234,8 +234,6 @@ public class AuthSecurityAndErrorTests(CustomWebApplicationFactory factory) : IC
 
     [Theory]
     [InlineData("systemadmin@gym.local")]
-    [InlineData("support@gym.local")]
-    [InlineData("billing@gym.local")]
     public async Task SystemPlatformAnalytics_AllowsPlatformRoles(string email)
     {
         var client = factory.CreateClient();

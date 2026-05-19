@@ -41,13 +41,6 @@ public class MaintenanceTasksController(IMediator mediator) : ApiControllerBase
         return Ok(await mediator.SendAsync(new UpdateMaintenanceTaskAssignmentCommand(gymCode, id, request), cancellationToken));
     }
 
-    [HttpGet("maintenance-tasks/{id:guid}/assignment-history")]
-    [ProducesResponseType(typeof(IReadOnlyCollection<MaintenanceTaskAssignmentHistoryResponse>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<IReadOnlyCollection<MaintenanceTaskAssignmentHistoryResponse>>> GetMaintenanceTaskAssignmentHistory(string gymCode, Guid id, CancellationToken cancellationToken)
-    {
-        return Ok(await mediator.SendAsync(new ListMaintenanceTaskAssignmentHistoryQuery(gymCode, id), cancellationToken));
-    }
-
     [HttpPost("maintenance-tasks/generate-due")]
     [ProducesResponseType(typeof(Message), StatusCodes.Status200OK)]
     public async Task<ActionResult<Message>> GenerateDueTasks(string gymCode, CancellationToken cancellationToken)

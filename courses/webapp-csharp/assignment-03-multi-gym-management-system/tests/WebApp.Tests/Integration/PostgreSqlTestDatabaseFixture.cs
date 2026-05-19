@@ -60,8 +60,7 @@ public sealed class PostgreSqlTestDatabaseFixture : IAsyncLifetime
                 GymId = gymId,
                 GymCode = gymCode,
                 IgnoreGymFilter = ignoreGymFilter
-            },
-            new HttpContextAccessor());
+            });
     }
 
     private async Task EnsureContainerStartedAsync()

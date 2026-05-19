@@ -15,8 +15,9 @@ public class DashboardController(
     public async Task<IActionResult> Index(CancellationToken cancellationToken)
     {
         var context = userContextService.GetCurrent();
-        if (!(context.HasRole(RoleNames.SystemAdmin) || context.HasRole(RoleNames.SystemSupport) || context.HasRole(RoleNames.SystemBilling)
-              || context.HasRole(RoleNames.GymOwner) || context.HasRole(RoleNames.GymAdmin)))
+        if (!(context.HasRole(RoleNames.SystemAdmin) ||
+              context.HasRole(RoleNames.GymOwner) ||
+              context.HasRole(RoleNames.GymAdmin)))
         {
             return RedirectToAction("Index", "Dashboard", new { area = "Client" });
         }

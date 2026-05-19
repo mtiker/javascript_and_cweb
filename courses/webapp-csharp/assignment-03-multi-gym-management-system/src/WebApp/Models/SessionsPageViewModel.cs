@@ -1,6 +1,4 @@
 using App.Domain.Enums;
-using App.DTO.v1.OpeningHours;
-using App.DTO.v1.OpeningHoursExceptions;
 using App.DTO.v1.TrainingSessions;
 
 namespace WebApp.Models;
@@ -9,8 +7,6 @@ public class SessionsPageViewModel
 {
     public string GymCode { get; set; } = default!;
     public IReadOnlyCollection<TrainingSessionResponse> Sessions { get; set; } = [];
-    public IReadOnlyCollection<OpeningHoursResponse> OpeningHours { get; set; } = [];
-    public IReadOnlyCollection<OpeningHoursExceptionResponse> OpeningHourExceptions { get; set; } = [];
 }
 
 public class SessionDetailPageViewModel
@@ -19,8 +15,6 @@ public class SessionDetailPageViewModel
     public TrainingSessionResponse Session { get; set; } = default!;
     public string CategoryName { get; set; } = default!;
     public IReadOnlyCollection<string> TrainerNames { get; set; } = [];
-    public IReadOnlyCollection<OpeningHoursResponse> OpeningHours { get; set; } = [];
-    public IReadOnlyCollection<OpeningHoursExceptionResponse> OpeningHourExceptions { get; set; } = [];
     public Guid? CurrentMemberId { get; set; }
     public Guid? CurrentBookingId { get; set; }
     public BookingStatus? CurrentBookingStatus { get; set; }

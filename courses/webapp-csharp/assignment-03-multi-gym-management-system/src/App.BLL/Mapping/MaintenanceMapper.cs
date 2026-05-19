@@ -7,51 +7,11 @@ using App.DTO.v1.EquipmentModels;
 using App.DTO.v1.GymSettings;
 using App.DTO.v1.GymUsers;
 using App.DTO.v1.MaintenanceTasks;
-using App.DTO.v1.OpeningHours;
-using App.DTO.v1.OpeningHoursExceptions;
 
 namespace App.BLL.Mapping;
 
 public sealed class MaintenanceMapper : IMaintenanceMapper
 {
-    public OpeningHoursResponse ToOpeningHours(OpeningHours entity)
-    {
-        ArgumentNullException.ThrowIfNull(entity);
-        return new OpeningHoursResponse
-        {
-            Id = entity.Id,
-            Weekday = entity.Weekday,
-            OpensAt = entity.OpensAt,
-            ClosesAt = entity.ClosesAt
-        };
-    }
-
-    public IReadOnlyCollection<OpeningHoursResponse> ToOpeningHoursList(IEnumerable<OpeningHours> entities)
-    {
-        ArgumentNullException.ThrowIfNull(entities);
-        return entities.Select(ToOpeningHours).ToArray();
-    }
-
-    public OpeningHoursExceptionResponse ToOpeningHoursException(OpeningHoursException entity)
-    {
-        ArgumentNullException.ThrowIfNull(entity);
-        return new OpeningHoursExceptionResponse
-        {
-            Id = entity.Id,
-            ExceptionDate = entity.ExceptionDate,
-            IsClosed = entity.IsClosed,
-            OpensAt = entity.OpensAt,
-            ClosesAt = entity.ClosesAt,
-            Reason = Translate(entity.Reason)
-        };
-    }
-
-    public IReadOnlyCollection<OpeningHoursExceptionResponse> ToOpeningHoursExceptionList(IEnumerable<OpeningHoursException> entities)
-    {
-        ArgumentNullException.ThrowIfNull(entities);
-        return entities.Select(ToOpeningHoursException).ToArray();
-    }
-
     public EquipmentModelResponse ToEquipmentModel(EquipmentModel entity)
     {
         ArgumentNullException.ThrowIfNull(entity);
@@ -148,8 +108,7 @@ public sealed class MaintenanceMapper : IMaintenanceMapper
             DowntimeEndedAtUtc = entity.DowntimeEndedAtUtc,
             IsOverdue = entity.Status != MaintenanceTaskStatus.Done && entity.DueAtUtc.HasValue && entity.DueAtUtc.Value < DateTime.UtcNow,
             Notes = entity.Notes,
-            CompletionNotes = entity.CompletionNotes,
-            AssignmentHistory = ToAssignmentHistoryList(entity.AssignmentHistory)
+            CompletionNotes = entity.CompletionNotes
         };
     }
 
@@ -157,31 +116,6 @@ public sealed class MaintenanceMapper : IMaintenanceMapper
     {
         ArgumentNullException.ThrowIfNull(entities);
         return entities.Select(ToMaintenanceTask).ToArray();
-    }
-
-    public MaintenanceTaskAssignmentHistoryResponse ToAssignmentHistory(MaintenanceTaskAssignmentHistory entity)
-    {
-        ArgumentNullException.ThrowIfNull(entity);
-        return new MaintenanceTaskAssignmentHistoryResponse
-        {
-            Id = entity.Id,
-            MaintenanceTaskId = entity.MaintenanceTaskId,
-            AssignedStaffId = entity.AssignedStaffId,
-            AssignedStaffName = FormatStaffName(entity.AssignedStaff),
-            AssignedByStaffId = entity.AssignedByStaffId,
-            AssignedByStaffName = FormatStaffName(entity.AssignedByStaff),
-            AssignedAtUtc = entity.AssignedAtUtc,
-            Notes = entity.Notes
-        };
-    }
-
-    public IReadOnlyCollection<MaintenanceTaskAssignmentHistoryResponse> ToAssignmentHistoryList(IEnumerable<MaintenanceTaskAssignmentHistory> entities)
-    {
-        ArgumentNullException.ThrowIfNull(entities);
-        return entities
-            .OrderByDescending(entity => entity.AssignedAtUtc)
-            .Select(ToAssignmentHistory)
-            .ToArray();
     }
 
     private static string? FormatStaffName(Staff? staff)

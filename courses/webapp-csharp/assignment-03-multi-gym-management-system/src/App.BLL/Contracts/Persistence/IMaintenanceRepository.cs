@@ -4,16 +4,6 @@ namespace App.BLL.Contracts.Persistence;
 
 public interface IMaintenanceRepository
 {
-    Task<IReadOnlyList<OpeningHours>> ListOpeningHoursByGymAsync(Guid gymId, CancellationToken cancellationToken = default);
-    Task<OpeningHours?> FindOpeningHoursAsync(Guid gymId, Guid id, CancellationToken cancellationToken = default);
-    Task AddOpeningHoursAsync(OpeningHours entity, CancellationToken cancellationToken = default);
-    void RemoveOpeningHours(OpeningHours entity);
-
-    Task<IReadOnlyList<OpeningHoursException>> ListOpeningHourExceptionsByGymAsync(Guid gymId, CancellationToken cancellationToken = default);
-    Task<OpeningHoursException?> FindOpeningHourExceptionAsync(Guid gymId, Guid id, CancellationToken cancellationToken = default);
-    Task AddOpeningHourExceptionAsync(OpeningHoursException entity, CancellationToken cancellationToken = default);
-    void RemoveOpeningHourException(OpeningHoursException entity);
-
     Task<IReadOnlyList<EquipmentModel>> ListEquipmentModelsByGymAsync(Guid gymId, CancellationToken cancellationToken = default);
     Task<EquipmentModel?> FindEquipmentModelAsync(Guid gymId, Guid id, CancellationToken cancellationToken = default);
     Task AddEquipmentModelAsync(EquipmentModel entity, CancellationToken cancellationToken = default);
@@ -37,9 +27,6 @@ public interface IMaintenanceRepository
     Task<bool> MaintenanceTaskExistsAsync(Guid gymId, Guid id, CancellationToken cancellationToken = default);
     Task AddMaintenanceTaskAsync(MaintenanceTask entity, CancellationToken cancellationToken = default);
     void RemoveMaintenanceTask(MaintenanceTask entity);
-
-    Task<IReadOnlyList<MaintenanceTaskAssignmentHistory>> ListAssignmentHistoryAsync(Guid gymId, Guid maintenanceTaskId, CancellationToken cancellationToken = default);
-    Task AddAssignmentHistoryAsync(MaintenanceTaskAssignmentHistory entity, CancellationToken cancellationToken = default);
 
     Task<GymSettings?> FindGymSettingsAsync(Guid gymId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<AppUserGymRole>> ListGymUsersAsync(Guid gymId, CancellationToken cancellationToken = default);

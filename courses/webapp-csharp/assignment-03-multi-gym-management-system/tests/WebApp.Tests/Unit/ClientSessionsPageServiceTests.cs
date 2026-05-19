@@ -6,7 +6,6 @@ using App.Domain.Common;
 using App.Domain.Entities;
 using App.Domain.Enums;
 using App.DTO.v1.Bookings;
-using App.DTO.v1.OpeningHours;
 using App.DTO.v1.TrainingSessions;
 using WebApp.Areas.Client.Services;
 using WebApp.Tests.Helpers;
@@ -47,13 +46,6 @@ public class ClientSessionsPageServiceTests
                 });
             }
         };
-        var maintenanceWorkflow = new DelegatingMaintenanceWorkflowService
-        {
-            GetOpeningHoursAsyncHandler = (_, _) => Task.FromResult<IReadOnlyCollection<OpeningHoursResponse>>(
-            [
-                new OpeningHoursResponse { Weekday = 1, OpensAt = new TimeOnly(8, 0), ClosesAt = new TimeOnly(20, 0) }
-            ])
-        };
         var queryService = new StubClientSessionsQueryService(new ClientSessionDetailSnapshot(
             new LangStr { ["en"] = "Strength", ["et"] = "Joud" },
             ["Anna Smith"],
@@ -71,7 +63,6 @@ public class ClientSessionsPageServiceTests
                 SystemRoles: []),
             new StubAuthorizationService(memberId, staffId),
             trainingWorkflow,
-            maintenanceWorkflow,
             queryService);
 
         var previousCulture = CultureInfo.CurrentUICulture;
@@ -95,7 +86,6 @@ public class ClientSessionsPageServiceTests
             Assert.Equal(bookingId, viewModel.CurrentBookingId);
             Assert.Equal(BookingStatus.Booked, viewModel.CurrentBookingStatus);
             Assert.True(viewModel.CanManageRoster);
-            Assert.Single(viewModel.OpeningHours);
         }
         finally
         {
@@ -133,7 +123,6 @@ public class ClientSessionsPageServiceTests
                 SystemRoles: []),
             new StubAuthorizationService(staffId: staffId),
             trainingWorkflow,
-            new DelegatingMaintenanceWorkflowService(),
             queryService);
 
         var result = await service.BuildRosterAsync(sessionId);
@@ -173,7 +162,6 @@ public class ClientSessionsPageServiceTests
                 SystemRoles: []),
             new StubAuthorizationService(memberId),
             trainingWorkflow,
-            new DelegatingMaintenanceWorkflowService(),
             new StubClientSessionsQueryService(new ClientSessionDetailSnapshot(null, [], null, false)));
 
         var result = await service.BookAsync(sessionId, "PAY-123");
@@ -191,14 +179,12 @@ public class ClientSessionsPageServiceTests
         UserExecutionContext context,
         IAuthorizationService authorizationService,
         ITrainingWorkflowService trainingWorkflowService,
-        IMaintenanceWorkflowService maintenanceWorkflowService,
         IClientSessionsQueryService queryService)
     {
         return new ClientSessionsPageService(
             new StubUserContextService(context),
             authorizationService,
             trainingWorkflowService,
-            maintenanceWorkflowService,
             queryService);
     }
 

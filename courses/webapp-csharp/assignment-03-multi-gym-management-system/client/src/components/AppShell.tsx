@@ -7,12 +7,9 @@ import type { AuthSession, GymSummary, TenantAccess } from "../lib/types";
 const tenantAdminNavigationItems = [
   { to: "/members", label: "Members" },
   { to: "/sessions", label: "Sessions" },
-  { to: "/coaching-workspace", label: "Coaching Workspace" },
-  { to: "/finance-workspace", label: "Finance Workspace" },
   { to: "/maintenance", label: "Maintenance Workspace" },
   { to: "/training-categories", label: "Training Categories" },
   { to: "/membership-packages", label: "Membership Packages" },
-  { to: "/console", label: "Function Console" },
 ];
 
 export function AppShell({ children }: PropsWithChildren) {
@@ -163,7 +160,7 @@ export function AppShell({ children }: PropsWithChildren) {
 }
 
 function hasSystemRole(session: AuthSession | null) {
-  return Boolean(session?.systemRoles.some((role) => role === "SystemAdmin" || role === "SystemSupport" || role === "SystemBilling"));
+  return Boolean(session?.systemRoles.includes("SystemAdmin"));
 }
 
 function canUseAdminTools(role?: string | null) {
@@ -180,14 +177,8 @@ function translateNavigationLabel(label: string, t: ReturnType<typeof useLanguag
       return t("trainingCategories");
     case "Membership Packages":
       return t("membershipPackages");
-    case "Function Console":
-      return t("console");
     case "Member Workspace":
       return "Member Workspace";
-    case "Coaching Workspace":
-      return "Coaching Workspace";
-    case "Finance Workspace":
-      return "Finance Workspace";
     case "Maintenance Workspace":
       return "Maintenance Workspace";
     default:
@@ -222,7 +213,7 @@ function resolveNavigationItems(
   hasActiveGym: boolean,
   t: ReturnType<typeof useLanguage>["t"],
 ) {
-  const systemItems = hasSystemRole ? [{ to: "/platform", label: t("platform") }, { to: "/console", label: t("console") }] : [];
+  const systemItems = hasSystemRole ? [{ to: "/members", label: t("members") }] : [];
 
   if (!hasActiveGym) {
     return systemItems;
@@ -236,7 +227,6 @@ function resolveNavigationItems(
     return [
       ...systemItems,
       { to: "/member-workspace", label: "Member Workspace" },
-      { to: "/finance-workspace", label: "Finance Workspace" },
       { to: "/sessions", label: t("sessions") },
     ];
   }
@@ -244,7 +234,6 @@ function resolveNavigationItems(
   if (activeRole === "Trainer") {
     return [
       ...systemItems,
-      { to: "/coaching-workspace", label: "Coaching Workspace" },
       { to: "/attendance", label: t("attendance") },
       { to: "/sessions", label: t("sessions") },
     ];

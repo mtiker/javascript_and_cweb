@@ -53,11 +53,10 @@ public class ResourceAuthorizationChecker(
                 throw new ForbiddenException("Trainer staff profile not found for the active gym.");
             }
 
-            var assigned = await dbContext.WorkShifts.AnyAsync(shift =>
-                    shift.GymId == booking.GymId &&
-                    shift.TrainingSessionId == booking.TrainingSessionId &&
-                    shift.Contract!.StaffId == currentStaff.Id &&
-                    shift.ShiftType == ShiftType.Training,
+            var assigned = await dbContext.TrainingSessions.AnyAsync(session =>
+                    session.GymId == booking.GymId &&
+                    session.Id == booking.TrainingSessionId &&
+                    session.TrainerStaffId == currentStaff.Id,
                 cancellationToken);
 
             if (!assigned)
@@ -90,12 +89,12 @@ public class ResourceAuthorizationChecker(
             throw new ForbiddenException("Trainer staff profile not found for the active gym.");
         }
 
-        var assigned = await dbContext.WorkShifts.AnyAsync(shift =>
-                shift.GymId == trainingSession.GymId &&
-                shift.TrainingSessionId == trainingSession.Id &&
-                shift.Contract!.StaffId == currentStaff.Id &&
-                shift.ShiftType == ShiftType.Training,
-            cancellationToken);
+        var assigned = trainingSession.TrainerStaffId == currentStaff.Id ||
+                       await dbContext.TrainingSessions.AnyAsync(session =>
+                               session.GymId == trainingSession.GymId &&
+                               session.Id == trainingSession.Id &&
+                               session.TrainerStaffId == currentStaff.Id,
+                           cancellationToken);
 
         if (!assigned)
         {

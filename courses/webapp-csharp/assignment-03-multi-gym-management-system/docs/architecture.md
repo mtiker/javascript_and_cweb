@@ -23,8 +23,7 @@ Separate client:
 - `client/`
 - Vite + React + TypeScript
 - JWT + refresh-token flow
-- system-role platform console for analytics, onboarding, billing, support, snapshots, and impersonation
-- tenant function console for staff, contracts, vacations, scheduling, bookings, memberships, payments, facilities, maintenance, settings, and gym users
+- focused workflows for members, scheduling, bookings, memberships, payments, maintenance, settings, and gym users
 - focused admin CRUD for members, training categories, and membership packages
 - session list/detail and booking through the REST API
 - trainer attendance and caretaker maintenance task updates through the REST API
@@ -40,25 +39,32 @@ Projects:
 - `App.Resources`: `.resx` localization resources
 - `BuildingBlocks`: mediator and module registration abstractions
 - `Modules.Users`: account session mediator messages and handlers
-- `Modules.GymManagement`: gym/member/maintenance/facility module messages and handlers
+- `Modules.GymManagement`: gym/member/staff/equipment/maintenance/settings module messages and handlers
 - `Modules.Training`: training category/session/booking/attendance module messages and handlers
-- `Modules.MembershipFinance`: package/membership/payment/invoice/refund/finance workspace module messages and handlers
+- `Modules.MembershipFinance`: package/membership/payment module messages and handlers
 - `WebApp`: API controllers, MVC controllers, middleware, views, startup
 - `WebApp.Tests`: unit and integration tests
 - `client`: separate React client and frontend tests
 
 Code organization mirrors the Assignment 18 backend style: each domain entity has its own file, DTOs are split by API resource namespace, BLL service interfaces live beside their implementations, seed data is split through partial files, and `WebApp/Setup` separates database, identity, service registration, web API, middleware, and data initialization.
 
+The MVC shell also mirrors the local LabRent/LabTrack reference project:
+Admin and Client areas have their own Bootstrap-based layouts, sidebar
+navigation, breadcrumbs, language/workspace controls, logout actions, and
+TempData alerts. The gym-specific mapping and deliberate deviations from that
+reference are tracked in
+[reference-architecture-parity.md](reference-architecture-parity.md).
+
 ## Module Boundary Posture
 
-Final2 module ownership is intentionally partial and explicit:
+Final2 module ownership is preserved but intentionally partial and explicit:
 
 - module projects do not reference each other directly
 - WebApp is the composition root and dispatches migrated API slices through
   `IMediator`
 - Training category CRUD and MembershipFinance package CRUD own their
   orchestration inside module application handlers
-- Users account-session messages, GymManagement member/maintenance/facility
+- Users account-session messages, GymManagement member/maintenance/equipment
   messages, Training session/booking/attendance messages, and broader
   MembershipFinance messages are mediated through module contracts
 - several mediated handlers still call shared BLL services
@@ -143,8 +149,6 @@ Runtime configuration:
 
 Platform roles:
 - `SystemAdmin`
-- `SystemSupport`
-- `SystemBilling`
 
 Tenant roles:
 - `GymOwner`
@@ -158,7 +162,7 @@ Important rules:
 - trainers can update attendance only for assigned sessions
 - caretakers can update only assigned maintenance tasks
 - gym admins and owners can manage tenant-wide business data
-- the React client admits `SystemAdmin`, `SystemSupport`, `SystemBilling`, `GymAdmin`, `GymOwner`, `Member`, `Trainer`, and `Caretaker` sessions
+- the React client admits `SystemAdmin`, `GymAdmin`, `GymOwner`, `Member`, `Trainer`, and `Caretaker` sessions
 
 ## Localization
 
@@ -189,8 +193,7 @@ This keeps API failures machine-readable while still giving browser users a norm
 Current frontend scope:
 - single active gym per login session
 - shell-level gym and role picker for assigned multi-gym users, plus SystemAdmin tenant picking
-- switch-gym and switch-role actions remain available in the React console for explicit API testing
-- system-role platform and tenant-owner/admin function console coverage
+- switch-gym and switch-role actions remain available in the React shell
 - CRUD coverage for:
   - members
   - training categories
@@ -208,10 +211,11 @@ Frontend structure:
 - `src/components/*`: shell and notice components
 
 Boundary note:
-- tenant members, training, membership, payment, invoice, refund, and finance workspace workflows now run through BLL services backed by repository contracts, Unit of Work, and BLL mappers
+- tenant members, training, membership, payment, and maintenance workflows now run through BLL services backed by repository contracts, Unit of Work, and BLL mappers
 - account login, logout, and refresh-token renewal now run through `IAccountAuthService`, `IRefreshTokenRepository`, `IAppUnitOfWork`, and `AuthResponseMapper`
 - `TenantAccessChecker` now uses `IAuthorizationQueryRepository` for route-gym lookup, keeping active-gym and role decisions in BLL while EF query details stay in DAL
-- staff, contracts, vacations, maintenance, resource authorization, and broader platform workflows still use focused BLL services; remaining direct `AppDbContext`/`IAppDbContext` usage is intentionally limited to slices not yet migrated and framework infrastructure such as Identity/EF setup
+- MVC controllers and view components delegate to page/query services and do not inject concrete `AppDbContext`; `Final1PresentationBoundaryTests` guards this boundary
+- staff, resource authorization, and platform workflows still use focused BLL services; remaining `IAppDbContext` usage is intentionally limited to BLL/module internals not yet migrated and framework infrastructure such as Identity/EF setup
 
 ## CORS
 

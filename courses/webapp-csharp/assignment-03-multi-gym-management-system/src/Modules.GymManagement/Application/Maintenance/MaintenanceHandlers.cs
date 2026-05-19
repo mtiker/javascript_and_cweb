@@ -5,68 +5,10 @@ using App.DTO.v1.EquipmentModels;
 using App.DTO.v1.GymSettings;
 using App.DTO.v1.GymUsers;
 using App.DTO.v1.MaintenanceTasks;
-using App.DTO.v1.OpeningHours;
-using App.DTO.v1.OpeningHoursExceptions;
 using BuildingBlocks.Mediator;
 using Modules.GymManagement.Contracts;
 
 namespace Modules.GymManagement.Application.Maintenance;
-
-internal sealed class ListOpeningHoursQueryHandler(IMaintenanceWorkflowService maintenanceWorkflowService)
-    : IRequestHandler<ListOpeningHoursQuery, IReadOnlyCollection<OpeningHoursResponse>>
-{
-    public Task<IReadOnlyCollection<OpeningHoursResponse>> HandleAsync(ListOpeningHoursQuery request, CancellationToken cancellationToken) =>
-        maintenanceWorkflowService.GetOpeningHoursAsync(request.GymCode, cancellationToken);
-}
-
-internal sealed class CreateOpeningHoursCommandHandler(IMaintenanceWorkflowService maintenanceWorkflowService)
-    : IRequestHandler<CreateOpeningHoursCommand, OpeningHoursResponse>
-{
-    public Task<OpeningHoursResponse> HandleAsync(CreateOpeningHoursCommand request, CancellationToken cancellationToken) =>
-        maintenanceWorkflowService.CreateOpeningHoursAsync(request.GymCode, request.Request, cancellationToken);
-}
-
-internal sealed class UpdateOpeningHoursCommandHandler(IMaintenanceWorkflowService maintenanceWorkflowService)
-    : IRequestHandler<UpdateOpeningHoursCommand, OpeningHoursResponse>
-{
-    public Task<OpeningHoursResponse> HandleAsync(UpdateOpeningHoursCommand request, CancellationToken cancellationToken) =>
-        maintenanceWorkflowService.UpdateOpeningHoursAsync(request.GymCode, request.OpeningHoursId, request.Request, cancellationToken);
-}
-
-internal sealed class DeleteOpeningHoursCommandHandler(IMaintenanceWorkflowService maintenanceWorkflowService)
-    : IRequestHandler<DeleteOpeningHoursCommand>
-{
-    public Task HandleAsync(DeleteOpeningHoursCommand request, CancellationToken cancellationToken) =>
-        maintenanceWorkflowService.DeleteOpeningHoursAsync(request.GymCode, request.OpeningHoursId, cancellationToken);
-}
-
-internal sealed class ListOpeningHourExceptionsQueryHandler(IMaintenanceWorkflowService maintenanceWorkflowService)
-    : IRequestHandler<ListOpeningHourExceptionsQuery, IReadOnlyCollection<OpeningHoursExceptionResponse>>
-{
-    public Task<IReadOnlyCollection<OpeningHoursExceptionResponse>> HandleAsync(ListOpeningHourExceptionsQuery request, CancellationToken cancellationToken) =>
-        maintenanceWorkflowService.GetOpeningHourExceptionsAsync(request.GymCode, cancellationToken);
-}
-
-internal sealed class CreateOpeningHourExceptionCommandHandler(IMaintenanceWorkflowService maintenanceWorkflowService)
-    : IRequestHandler<CreateOpeningHourExceptionCommand, OpeningHoursExceptionResponse>
-{
-    public Task<OpeningHoursExceptionResponse> HandleAsync(CreateOpeningHourExceptionCommand request, CancellationToken cancellationToken) =>
-        maintenanceWorkflowService.CreateOpeningHourExceptionAsync(request.GymCode, request.Request, cancellationToken);
-}
-
-internal sealed class UpdateOpeningHourExceptionCommandHandler(IMaintenanceWorkflowService maintenanceWorkflowService)
-    : IRequestHandler<UpdateOpeningHourExceptionCommand, OpeningHoursExceptionResponse>
-{
-    public Task<OpeningHoursExceptionResponse> HandleAsync(UpdateOpeningHourExceptionCommand request, CancellationToken cancellationToken) =>
-        maintenanceWorkflowService.UpdateOpeningHourExceptionAsync(request.GymCode, request.ExceptionId, request.Request, cancellationToken);
-}
-
-internal sealed class DeleteOpeningHourExceptionCommandHandler(IMaintenanceWorkflowService maintenanceWorkflowService)
-    : IRequestHandler<DeleteOpeningHourExceptionCommand>
-{
-    public Task HandleAsync(DeleteOpeningHourExceptionCommand request, CancellationToken cancellationToken) =>
-        maintenanceWorkflowService.DeleteOpeningHourExceptionAsync(request.GymCode, request.ExceptionId, cancellationToken);
-}
 
 internal sealed class ListEquipmentModelsQueryHandler(IMaintenanceWorkflowService maintenanceWorkflowService)
     : IRequestHandler<ListEquipmentModelsQuery, IReadOnlyCollection<EquipmentModelResponse>>
@@ -150,13 +92,6 @@ internal sealed class UpdateMaintenanceTaskAssignmentCommandHandler(IMaintenance
 {
     public Task<MaintenanceTaskResponse> HandleAsync(UpdateMaintenanceTaskAssignmentCommand request, CancellationToken cancellationToken) =>
         maintenanceWorkflowService.UpdateTaskAssignmentAsync(request.GymCode, request.TaskId, request.Request, cancellationToken);
-}
-
-internal sealed class ListMaintenanceTaskAssignmentHistoryQueryHandler(IMaintenanceWorkflowService maintenanceWorkflowService)
-    : IRequestHandler<ListMaintenanceTaskAssignmentHistoryQuery, IReadOnlyCollection<MaintenanceTaskAssignmentHistoryResponse>>
-{
-    public Task<IReadOnlyCollection<MaintenanceTaskAssignmentHistoryResponse>> HandleAsync(ListMaintenanceTaskAssignmentHistoryQuery request, CancellationToken cancellationToken) =>
-        maintenanceWorkflowService.GetTaskAssignmentHistoryAsync(request.GymCode, request.TaskId, cancellationToken);
 }
 
 internal sealed class GenerateDueMaintenanceTasksCommandHandler(IMaintenanceWorkflowService maintenanceWorkflowService)

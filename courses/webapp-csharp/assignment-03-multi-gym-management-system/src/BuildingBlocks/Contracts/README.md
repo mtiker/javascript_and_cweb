@@ -1,11 +1,12 @@
 # BuildingBlocks.Contracts
 
 Cross-module mediator request/response types and shared contract DTOs live
-here. The folder is intentionally empty in Phase 16 — types are added when
-the corresponding slice migrates in Phases 17–20.
+here. Keep this folder intentionally small; add types only when a migrated
+module boundary needs a shared contract.
 
 Layout convention:
 - `BuildingBlocks.Contracts.<Module>.<Slice>.<TypeName>`
-- e.g. `BuildingBlocks.Contracts.Users.Context.GetUserContextQuery`.
+- example: `BuildingBlocks.Contracts.Users.Context.GetUserContextQuery`
 
-See `docs/mediator-design.md` for naming and registration rules.
+See `courses/webapp-csharp/assignment-03-multi-gym-management-system/docs/module-boundaries.md`
+for module boundary, mediator, and registration rules.

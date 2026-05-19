@@ -11,6 +11,9 @@ public static partial class AppDataInit
 {
     private static async Task SeedRichDemoDataAsync(AppDbContext context, UserManager<AppUser> userManager)
     {
+        var today = DateTime.UtcNow.Date;
+        var todayDate = DateOnly.FromDateTime(today);
+
         var gym = new Gym
         {
             Name = "Peak Forge Gym",
@@ -42,8 +45,8 @@ public static partial class AppDataInit
             BookingCancellationHours = 6,
             PublicDescription = new LangStr
             {
-                ["en"] = "Boutique multi-zone gym for strength, conditioning, and coached sessions.",
-                ["et"] = "Jõu- ja vastupidavustreeningutele keskenduv mitmetsooniline jõusaal."
+                ["en"] = "Boutique multi-zone gym for strength, conditioning, memberships, and maintenance workflows.",
+                ["et"] = "Mitmetsooniline jousaal treeningute, liikmesuste ja hooldustoo voogude demonstreerimiseks."
             }
         };
 
@@ -56,29 +59,9 @@ public static partial class AppDataInit
             BookingCancellationHours = 12,
             PublicDescription = new LangStr
             {
-                ["en"] = "Second demo tenant for proving SaaS gym switching and tenant isolation.",
-                ["et"] = "Teine demotenant SaaS-i jõusaalivahetuse ja tenant'i isolatsiooni demonstreerimiseks."
+                ["en"] = "Second demo tenant for proving gym switching and tenant isolation.",
+                ["et"] = "Teine demotenant jousaalivahetuse ja tenant'i isolatsiooni demonstreerimiseks."
             }
-        };
-
-        var subscription = new Subscription
-        {
-            GymId = gym.Id,
-            Plan = SubscriptionPlan.Growth,
-            Status = SubscriptionStatus.Active,
-            StartDate = DateOnly.FromDateTime(DateTime.UtcNow.Date),
-            MonthlyPrice = 129m,
-            CurrencyCode = "EUR"
-        };
-
-        var secondSubscription = new Subscription
-        {
-            GymId = secondGym.Id,
-            Plan = SubscriptionPlan.Starter,
-            Status = SubscriptionStatus.Trial,
-            StartDate = DateOnly.FromDateTime(DateTime.UtcNow.Date),
-            MonthlyPrice = 49m,
-            CurrencyCode = "EUR"
         };
 
         var ownerPerson = CreatePerson("Karin", "Kask", "49001010001");
@@ -99,12 +82,8 @@ public static partial class AppDataInit
         var trainerUser = await EnsureUserAsync(userManager, "trainer@peakforge.local", "Trainer", trainerPerson);
         var caretakerUser = await EnsureUserAsync(userManager, "caretaker@peakforge.local", "Caretaker", caretakerPerson);
         var multiGymAdminUser = await EnsureUserAsync(userManager, "multigym.admin@gym.local", "Multi Gym Admin", multiGymAdminPerson);
-        var supportUser = await EnsureUserAsync(userManager, "support@gym.local", "System Support", null);
-        var billingUser = await EnsureUserAsync(userManager, "billing@gym.local", "System Billing", null);
 
         await EnsureRoleMembershipAsync(userManager, ownerUser, RoleNames.SystemAdmin);
-        await EnsureRoleMembershipAsync(userManager, supportUser, RoleNames.SystemSupport);
-        await EnsureRoleMembershipAsync(userManager, billingUser, RoleNames.SystemBilling);
 
         var phoneContact = new Contact { Type = ContactType.Phone, Value = "+37255550001" };
         var emailContact = new Contact { Type = ContactType.Email, Value = "info@peakforge.local" };
@@ -145,84 +124,20 @@ public static partial class AppDataInit
             Status = StaffStatus.Active
         };
 
-        var yogaTrainerStaff = new Staff { GymId = gym.Id, PersonId = yogaTrainerPerson.Id, StaffCode = "STF-TR-002", Status = StaffStatus.Active };
-        var frontDeskStaff = new Staff { GymId = gym.Id, PersonId = frontDeskPerson.Id, StaffCode = "STF-FD-001", Status = StaffStatus.Active };
-
-        var trainerRole = new JobRole
+        var yogaTrainerStaff = new Staff
         {
             GymId = gym.Id,
-            Code = "trainer",
-            Title = new LangStr { ["en"] = "Trainer", ["et"] = "Treener" },
-            Description = new LangStr { ["en"] = "Leads coached sessions and member programmes." }
+            PersonId = yogaTrainerPerson.Id,
+            StaffCode = "STF-TR-002",
+            Status = StaffStatus.Active
         };
 
-        var caretakerRole = new JobRole
+        var frontDeskStaff = new Staff
         {
             GymId = gym.Id,
-            Code = "caretaker",
-            Title = new LangStr { ["en"] = "Caretaker", ["et"] = "Hooldustehnik" },
-            Description = new LangStr { ["en"] = "Owns equipment checks, repairs, and upkeep." }
-        };
-
-        var adminRole = new JobRole
-        {
-            GymId = gym.Id,
-            Code = "gym-admin",
-            Title = new LangStr { ["en"] = "Gym Administrator", ["et"] = "Jõusaali administraator" },
-            Description = new LangStr { ["en"] = "Manages members, sessions, and day-to-day operations." }
-        };
-
-        var frontDeskRole = new JobRole
-        {
-            GymId = gym.Id,
-            Code = "front-desk",
-            Title = new LangStr { ["en"] = "Front Desk Specialist", ["et"] = "Vastuvõtu spetsialist" },
-            Description = new LangStr { ["en"] = "Handles check-in, sales, and member support." }
-        };
-
-        var trainerContract = new EmploymentContract
-        {
-            GymId = gym.Id,
-            StaffId = trainerStaff.Id,
-            PrimaryJobRoleId = trainerRole.Id,
-            WorkloadPercent = 75,
-            JobDescription = new LangStr { ["en"] = "Evening strength and conditioning coach." }
-        };
-
-        var caretakerContract = new EmploymentContract
-        {
-            GymId = gym.Id,
-            StaffId = caretakerStaff.Id,
-            PrimaryJobRoleId = caretakerRole.Id,
-            WorkloadPercent = 50,
-            JobDescription = new LangStr { ["en"] = "Maintains training floor equipment and recovery zone." }
-        };
-
-        var adminContract = new EmploymentContract
-        {
-            GymId = gym.Id,
-            StaffId = adminStaff.Id,
-            PrimaryJobRoleId = adminRole.Id,
-            WorkloadPercent = 100,
-            JobDescription = new LangStr { ["en"] = "Owns schedules, memberships, and front desk operations." }
-        };
-
-        var yogaTrainerContract = new EmploymentContract
-        {
-            GymId = gym.Id,
-            StaffId = yogaTrainerStaff.Id,
-            PrimaryJobRoleId = trainerRole.Id,
-            WorkloadPercent = 60,
-            JobDescription = new LangStr { ["en"] = "Morning mobility, yoga, and recovery coach." }
-        };
-
-        var frontDeskContract = new EmploymentContract
-        {
-            GymId = gym.Id,
-            StaffId = frontDeskStaff.Id,
-            PrimaryJobRoleId = frontDeskRole.Id,
-            WorkloadPercent = 80,
-            JobDescription = new LangStr { ["en"] = "Member service, check-in, and retail sales." }
+            PersonId = frontDeskPerson.Id,
+            StaffCode = "STF-FD-001",
+            Status = StaffStatus.Active
         };
 
         var category = new TrainingCategory
@@ -250,10 +165,11 @@ public static partial class AppDataInit
         {
             GymId = gym.Id,
             CategoryId = category.Id,
-            Name = new LangStr { ["en"] = "Upper Body Fundamentals", ["et"] = "Ülakeha algkursus" },
+            TrainerStaffId = trainerStaff.Id,
+            Name = new LangStr { ["en"] = "Upper Body Fundamentals", ["et"] = "Ulakeha algkursus" },
             Description = new LangStr { ["en"] = "Introductory coached session with capped participant count." },
-            StartAtUtc = DateTime.UtcNow.Date.AddDays(1).AddHours(17),
-            EndAtUtc = DateTime.UtcNow.Date.AddDays(1).AddHours(18),
+            StartAtUtc = today.AddDays(1).AddHours(17),
+            EndAtUtc = today.AddDays(1).AddHours(18),
             Capacity = 12,
             BasePrice = 18m,
             CurrencyCode = "EUR",
@@ -264,10 +180,11 @@ public static partial class AppDataInit
         {
             GymId = gym.Id,
             CategoryId = conditioningCategory.Id,
-            Name = new LangStr { ["en"] = "Lunch HIIT Circuit", ["et"] = "Lõunane HIIT ringtreening" },
+            TrainerStaffId = trainerStaff.Id,
+            Name = new LangStr { ["en"] = "Lunch HIIT Circuit", ["et"] = "Lounane HIIT ringtreening" },
             Description = new LangStr { ["en"] = "Forty-five minute coached interval class for office-day training." },
-            StartAtUtc = DateTime.UtcNow.Date.AddDays(2).AddHours(10),
-            EndAtUtc = DateTime.UtcNow.Date.AddDays(2).AddHours(10).AddMinutes(45),
+            StartAtUtc = today.AddDays(2).AddHours(10),
+            EndAtUtc = today.AddDays(2).AddHours(10).AddMinutes(45),
             Capacity = 16,
             BasePrice = 14m,
             CurrencyCode = "EUR",
@@ -278,57 +195,15 @@ public static partial class AppDataInit
         {
             GymId = gym.Id,
             CategoryId = mobilityCategory.Id,
+            TrainerStaffId = yogaTrainerStaff.Id,
             Name = new LangStr { ["en"] = "Recovery Flow", ["et"] = "Taastav liikuvustund" },
             Description = new LangStr { ["en"] = "Low-intensity mobility session for recovery days." },
-            StartAtUtc = DateTime.UtcNow.Date.AddDays(3).AddHours(7),
-            EndAtUtc = DateTime.UtcNow.Date.AddDays(3).AddHours(7).AddMinutes(50),
+            StartAtUtc = today.AddDays(3).AddHours(7),
+            EndAtUtc = today.AddDays(3).AddHours(7).AddMinutes(50),
             Capacity = 14,
             BasePrice = 12m,
             CurrencyCode = "EUR",
             Status = TrainingSessionStatus.Published
-        };
-
-        var trainerShift = new WorkShift
-        {
-            GymId = gym.Id,
-            ContractId = trainerContract.Id,
-            StartAtUtc = trainingSession.StartAtUtc.AddMinutes(-15),
-            EndAtUtc = trainingSession.EndAtUtc.AddMinutes(15),
-            ShiftType = ShiftType.Training,
-            TrainingSessionId = trainingSession.Id,
-            Comment = "Lead coach"
-        };
-
-        var assistingShift = new WorkShift
-        {
-            GymId = gym.Id,
-            ContractId = caretakerContract.Id,
-            StartAtUtc = DateTime.UtcNow.Date.AddDays(1).AddHours(9),
-            EndAtUtc = DateTime.UtcNow.Date.AddDays(1).AddHours(15),
-            ShiftType = ShiftType.Assisting,
-            Comment = "Floor support and equipment checks"
-        };
-
-        var conditioningShift = new WorkShift
-        {
-            GymId = gym.Id,
-            ContractId = trainerContract.Id,
-            StartAtUtc = conditioningSession.StartAtUtc.AddMinutes(-15),
-            EndAtUtc = conditioningSession.EndAtUtc.AddMinutes(15),
-            ShiftType = ShiftType.Training,
-            TrainingSessionId = conditioningSession.Id,
-            Comment = "Conditioning coach"
-        };
-
-        var mobilityShift = new WorkShift
-        {
-            GymId = gym.Id,
-            ContractId = yogaTrainerContract.Id,
-            StartAtUtc = mobilitySession.StartAtUtc.AddMinutes(-15),
-            EndAtUtc = mobilitySession.EndAtUtc.AddMinutes(15),
-            ShiftType = ShiftType.Training,
-            TrainingSessionId = mobilitySession.Id,
-            Comment = "Mobility coach"
         };
 
         var membershipPackage = new MembershipPackage
@@ -348,7 +223,7 @@ public static partial class AppDataInit
         var dayPassPackage = new MembershipPackage
         {
             GymId = gym.Id,
-            Name = new LangStr { ["en"] = "Day Pass", ["et"] = "Päevapilet" },
+            Name = new LangStr { ["en"] = "Day Pass", ["et"] = "Paevapilet" },
             Description = new LangStr { ["en"] = "Single-day access for drop-in clients." },
             PackageType = MembershipPackageType.Single,
             DurationValue = 1,
@@ -378,8 +253,8 @@ public static partial class AppDataInit
             GymId = gym.Id,
             MemberId = member.Id,
             MembershipPackageId = membershipPackage.Id,
-            StartDate = DateOnly.FromDateTime(DateTime.UtcNow.Date),
-            EndDate = DateOnly.FromDateTime(DateTime.UtcNow.Date.AddMonths(1).AddDays(-1)),
+            StartDate = todayDate,
+            EndDate = DateOnly.FromDateTime(today.AddMonths(1).AddDays(-1)),
             PriceAtPurchase = 79m,
             CurrencyCode = "EUR",
             Status = MembershipStatus.Active
@@ -390,8 +265,8 @@ public static partial class AppDataInit
             GymId = gym.Id,
             MemberId = member2.Id,
             MembershipPackageId = annualPackage.Id,
-            StartDate = DateOnly.FromDateTime(DateTime.UtcNow.Date.AddMonths(-2)),
-            EndDate = DateOnly.FromDateTime(DateTime.UtcNow.Date.AddMonths(10).AddDays(-1)),
+            StartDate = DateOnly.FromDateTime(today.AddMonths(-2)),
+            EndDate = DateOnly.FromDateTime(today.AddMonths(10).AddDays(-1)),
             PriceAtPurchase = 699m,
             CurrencyCode = "EUR",
             Status = MembershipStatus.Active
@@ -402,8 +277,8 @@ public static partial class AppDataInit
             GymId = gym.Id,
             MemberId = member3.Id,
             MembershipPackageId = membershipPackage.Id,
-            StartDate = DateOnly.FromDateTime(DateTime.UtcNow.Date.AddMonths(-1)),
-            EndDate = DateOnly.FromDateTime(DateTime.UtcNow.Date.AddDays(-1)),
+            StartDate = DateOnly.FromDateTime(today.AddMonths(-1)),
+            EndDate = DateOnly.FromDateTime(today.AddDays(-1)),
             PriceAtPurchase = 79m,
             CurrencyCode = "EUR",
             Status = MembershipStatus.Expired
@@ -472,44 +347,10 @@ public static partial class AppDataInit
             Reference = "BOOK-2026-0001"
         };
 
-        var mondayHours = new OpeningHours
-        {
-            GymId = gym.Id,
-            Weekday = 1,
-            OpensAt = new TimeOnly(6, 0),
-            ClosesAt = new TimeOnly(22, 0)
-        };
-
-        var saturdayHours = new OpeningHours
-        {
-            GymId = gym.Id,
-            Weekday = 6,
-            OpensAt = new TimeOnly(8, 0),
-            ClosesAt = new TimeOnly(20, 0)
-        };
-
-        var tuesdayHours = new OpeningHours { GymId = gym.Id, Weekday = 2, OpensAt = new TimeOnly(6, 0), ClosesAt = new TimeOnly(22, 0) };
-        var wednesdayHours = new OpeningHours { GymId = gym.Id, Weekday = 3, OpensAt = new TimeOnly(6, 0), ClosesAt = new TimeOnly(22, 0) };
-        var thursdayHours = new OpeningHours { GymId = gym.Id, Weekday = 4, OpensAt = new TimeOnly(6, 0), ClosesAt = new TimeOnly(22, 0) };
-        var fridayHours = new OpeningHours { GymId = gym.Id, Weekday = 5, OpensAt = new TimeOnly(6, 0), ClosesAt = new TimeOnly(21, 0) };
-        var sundayHours = new OpeningHours { GymId = gym.Id, Weekday = 7, OpensAt = new TimeOnly(9, 0), ClosesAt = new TimeOnly(18, 0) };
-
-        var holidayException = new OpeningHoursException
-        {
-            GymId = gym.Id,
-            ExceptionDate = DateOnly.FromDateTime(DateTime.UtcNow.Date.AddDays(14)),
-            IsClosed = true,
-            Reason = new LangStr
-            {
-                ["en"] = "Public holiday maintenance window",
-                ["et"] = "Riigipüha ja hooldustööd"
-            }
-        };
-
         var equipmentModel = new EquipmentModel
         {
             GymId = gym.Id,
-            Name = new LangStr { ["en"] = "Concept2 Rower", ["et"] = "Concept2 sõudemasin" },
+            Name = new LangStr { ["en"] = "Concept2 Rower", ["et"] = "Concept2 soudemasin" },
             Description = new LangStr { ["en"] = "Commercial cardio rower." },
             Type = EquipmentType.Cardio,
             Manufacturer = "Concept2",
@@ -543,7 +384,7 @@ public static partial class AppDataInit
             AssetTag = "EQ-ROW-001",
             SerialNumber = "C2-ROW-0001",
             CurrentStatus = EquipmentStatus.Active,
-            CommissionedAt = DateOnly.FromDateTime(DateTime.UtcNow.Date.AddMonths(-6)),
+            CommissionedAt = DateOnly.FromDateTime(today.AddMonths(-6)),
             Notes = "Front cardio zone"
         };
 
@@ -554,7 +395,7 @@ public static partial class AppDataInit
             AssetTag = "EQ-TREAD-001",
             SerialNumber = "LF-TR-2201",
             CurrentStatus = EquipmentStatus.Active,
-            CommissionedAt = DateOnly.FromDateTime(DateTime.UtcNow.Date.AddMonths(-10)),
+            CommissionedAt = DateOnly.FromDateTime(today.AddMonths(-10)),
             Notes = "Cardio row 1"
         };
 
@@ -565,7 +406,7 @@ public static partial class AppDataInit
             AssetTag = "EQ-RACK-001",
             SerialNumber = "RG-HR-1001",
             CurrentStatus = EquipmentStatus.Maintenance,
-            CommissionedAt = DateOnly.FromDateTime(DateTime.UtcNow.Date.AddYears(-1)),
+            CommissionedAt = DateOnly.FromDateTime(today.AddYears(-1)),
             Notes = "Left safety arm needs tightening"
         };
 
@@ -578,7 +419,7 @@ public static partial class AppDataInit
             TaskType = MaintenanceTaskType.Scheduled,
             Priority = MaintenancePriority.Medium,
             Status = MaintenanceTaskStatus.Open,
-            DueAtUtc = DateTime.UtcNow.Date.AddDays(10).AddHours(12),
+            DueAtUtc = today.AddDays(10).AddHours(12),
             Notes = "Quarterly chain and sensor inspection"
         };
 
@@ -591,8 +432,8 @@ public static partial class AppDataInit
             TaskType = MaintenanceTaskType.Breakdown,
             Priority = MaintenancePriority.High,
             Status = MaintenanceTaskStatus.InProgress,
-            DueAtUtc = DateTime.UtcNow.Date.AddDays(1).AddHours(15),
-            StartedAtUtc = DateTime.UtcNow.Date.AddHours(9),
+            DueAtUtc = today.AddDays(1).AddHours(15),
+            StartedAtUtc = today.AddHours(9),
             Notes = "Tighten left safety arm and verify J-cup lock."
         };
 
@@ -605,137 +446,8 @@ public static partial class AppDataInit
             TaskType = MaintenanceTaskType.Scheduled,
             Priority = MaintenancePriority.Low,
             Status = MaintenanceTaskStatus.Open,
-            DueAtUtc = DateTime.UtcNow.Date.AddDays(7).AddHours(10),
+            DueAtUtc = today.AddDays(7).AddHours(10),
             Notes = "Belt alignment, incline calibration, and cleaning."
-        };
-
-        var coachingPlan = new CoachingPlan
-        {
-            GymId = gym.Id,
-            MemberId = member.Id,
-            TrainerStaffId = trainerStaff.Id,
-            CreatedByStaffId = adminStaff.Id,
-            Title = "12-week strength baseline plan",
-            Notes = "Weekly progressive overload with recovery deload every fourth week.",
-            Status = CoachingPlanStatus.Active,
-            PublishedAtUtc = DateTime.UtcNow.AddDays(-7),
-            ActivatedAtUtc = DateTime.UtcNow.AddDays(-6)
-        };
-
-        var coachingPlanItem1 = new CoachingPlanItem
-        {
-            GymId = gym.Id,
-            CoachingPlanId = coachingPlan.Id,
-            Sequence = 1,
-            Title = "Squat progression",
-            Notes = "Add 2.5kg weekly while maintaining depth and tempo.",
-            TargetDate = DateOnly.FromDateTime(DateTime.UtcNow.Date.AddDays(14)),
-            Decision = CoachingPlanItemDecision.Accepted,
-            DecisionAtUtc = DateTime.UtcNow.AddDays(-5),
-            DecisionByStaffId = trainerStaff.Id
-        };
-
-        var coachingPlanItem2 = new CoachingPlanItem
-        {
-            GymId = gym.Id,
-            CoachingPlanId = coachingPlan.Id,
-            Sequence = 2,
-            Title = "Conditioning interval block",
-            Notes = "Two interval sessions per week with heart-rate cap.",
-            TargetDate = DateOnly.FromDateTime(DateTime.UtcNow.Date.AddDays(21)),
-            Decision = CoachingPlanItemDecision.Deferred,
-            DecisionAtUtc = DateTime.UtcNow.AddDays(-4),
-            DecisionByStaffId = trainerStaff.Id,
-            DecisionNotes = "Start after current travel period."
-        };
-
-        var invoice = new Invoice
-        {
-            GymId = gym.Id,
-            MemberId = member.Id,
-            InvoiceNumber = $"INV-{DateTime.UtcNow:yyyyMMdd}-0001",
-            IssuedAtUtc = DateTime.UtcNow.AddDays(-10),
-            DueAtUtc = DateTime.UtcNow.AddDays(-2),
-            CurrencyCode = "EUR",
-            SubtotalAmount = 92m,
-            CreditAmount = 10m,
-            TotalAmount = 82m,
-            PaidAmount = 40m,
-            OutstandingAmount = 42m,
-            Status = InvoiceStatus.Overdue,
-            Notes = "Membership renewal and coaching add-on."
-        };
-
-        var invoiceLine1 = new InvoiceLine
-        {
-            GymId = gym.Id,
-            InvoiceId = invoice.Id,
-            Description = "Monthly membership renewal",
-            Quantity = 1m,
-            UnitPrice = 79m,
-            LineTotal = 79m
-        };
-
-        var invoiceLine2 = new InvoiceLine
-        {
-            GymId = gym.Id,
-            InvoiceId = invoice.Id,
-            Description = "Coaching add-on",
-            Quantity = 1m,
-            UnitPrice = 13m,
-            LineTotal = 13m
-        };
-
-        var invoiceCreditLine = new InvoiceLine
-        {
-            GymId = gym.Id,
-            InvoiceId = invoice.Id,
-            Description = "Loyalty credit",
-            Quantity = 1m,
-            UnitPrice = 10m,
-            LineTotal = 10m,
-            IsCredit = true
-        };
-
-        var invoicePayment = new InvoicePayment
-        {
-            GymId = gym.Id,
-            InvoiceId = invoice.Id,
-            Amount = 40m,
-            IsRefund = false,
-            AppliedAtUtc = DateTime.UtcNow.AddDays(-6),
-            Reference = "INV-PAY-2026-0001",
-            Notes = "Partial transfer"
-        };
-
-        var maintenanceAssignmentHistory1 = new MaintenanceTaskAssignmentHistory
-        {
-            GymId = gym.Id,
-            MaintenanceTaskId = maintenanceTask.Id,
-            AssignedStaffId = caretakerStaff.Id,
-            AssignedByStaffId = adminStaff.Id,
-            AssignedAtUtc = DateTime.UtcNow.AddDays(-3),
-            Notes = "Initial assignment"
-        };
-
-        var maintenanceAssignmentHistory2 = new MaintenanceTaskAssignmentHistory
-        {
-            GymId = gym.Id,
-            MaintenanceTaskId = rackMaintenanceTask.Id,
-            AssignedStaffId = caretakerStaff.Id,
-            AssignedByStaffId = adminStaff.Id,
-            AssignedAtUtc = DateTime.UtcNow.AddDays(-1),
-            Notes = "Breakdown reassigned as priority repair"
-        };
-
-        var supportTicket = new SupportTicket
-        {
-            GymId = gym.Id,
-            CreatedByUserId = adminUser.Id,
-            Title = "Need billing invoice copy",
-            Description = "Please provide the March SaaS invoice for accounting records.",
-            Priority = SupportTicketPriority.Low,
-            Status = SupportTicketStatus.Open
         };
 
         var ownerLink = new AppUserGymRole { AppUserId = ownerUser.Id, GymId = gym.Id, RoleName = RoleNames.GymOwner };
@@ -751,8 +463,6 @@ public static partial class AppDataInit
             secondGym,
             settings,
             secondSettings,
-            subscription,
-            secondSubscription,
             phoneContact,
             emailContact,
             new PersonContact { PersonId = ownerPerson.Id, ContactId = phoneContact.Id, Label = "Main phone" },
@@ -771,25 +481,12 @@ public static partial class AppDataInit
             adminStaff,
             yogaTrainerStaff,
             frontDeskStaff,
-            trainerRole,
-            caretakerRole,
-            adminRole,
-            frontDeskRole,
-            trainerContract,
-            caretakerContract,
-            adminContract,
-            yogaTrainerContract,
-            frontDeskContract,
             category,
             conditioningCategory,
             mobilityCategory,
             trainingSession,
             conditioningSession,
             mobilitySession,
-            trainerShift,
-            assistingShift,
-            conditioningShift,
-            mobilityShift,
             membershipPackage,
             dayPassPackage,
             annualPackage,
@@ -802,14 +499,6 @@ public static partial class AppDataInit
             membershipPayment,
             annualPayment,
             bookingPayment,
-            mondayHours,
-            tuesdayHours,
-            wednesdayHours,
-            thursdayHours,
-            fridayHours,
-            saturdayHours,
-            sundayHours,
-            holidayException,
             equipmentModel,
             treadmillModel,
             rackModel,
@@ -819,17 +508,6 @@ public static partial class AppDataInit
             maintenanceTask,
             rackMaintenanceTask,
             treadmillMaintenanceTask,
-            coachingPlan,
-            coachingPlanItem1,
-            coachingPlanItem2,
-            invoice,
-            invoiceLine1,
-            invoiceLine2,
-            invoiceCreditLine,
-            invoicePayment,
-            maintenanceAssignmentHistory1,
-            maintenanceAssignmentHistory2,
-            supportTicket,
             ownerLink,
             adminLink,
             memberLink,

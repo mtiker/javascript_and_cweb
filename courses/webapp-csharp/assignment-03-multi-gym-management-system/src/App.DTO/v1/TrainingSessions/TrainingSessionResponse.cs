@@ -14,5 +14,6 @@ public class TrainingSessionResponse
     public decimal BasePrice { get; set; }
     public string CurrencyCode { get; set; } = default!;
     public TrainingSessionStatus Status { get; set; }
-    public List<Guid> TrainerContractIds { get; set; } = [];
+    public Guid? TrainerStaffId { get; set; }
+    public string? TrainerName { get; set; }
 }

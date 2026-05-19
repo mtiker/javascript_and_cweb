@@ -12,26 +12,14 @@ public sealed class TrainingSessionConfiguration : IEntityTypeConfiguration<Trai
             .WithMany(category => category.Sessions)
             .HasForeignKey(session => session.CategoryId);
 
+        builder.HasOne(session => session.TrainerStaff)
+            .WithMany()
+            .HasForeignKey(session => session.TrainerStaffId);
+
         builder.HasIndex(session => new { session.GymId, session.StartAtUtc, session.EndAtUtc });
 
         builder.Property(session => session.BasePrice)
             .HasPrecision(12, 2);
-    }
-}
-
-public sealed class WorkShiftConfiguration : IEntityTypeConfiguration<WorkShift>
-{
-    public void Configure(EntityTypeBuilder<WorkShift> builder)
-    {
-        builder.HasOne(shift => shift.Contract)
-            .WithMany(contract => contract.WorkShifts)
-            .HasForeignKey(shift => shift.ContractId);
-
-        builder.HasOne(shift => shift.TrainingSession)
-            .WithMany(session => session.WorkShifts)
-            .HasForeignKey(shift => shift.TrainingSessionId);
-
-        builder.HasIndex(shift => new { shift.GymId, shift.ContractId, shift.StartAtUtc, shift.EndAtUtc });
     }
 }
 

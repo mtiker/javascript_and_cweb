@@ -1,0 +1,44 @@
+@inject IStringLocalizer<SharedResources> L
+@{
+    var controller = ViewContext.RouteData.Values["controller"]?.ToString() ?? string.Empty;
+}
+
+<nav class="col-md-2 d-none d-md-block shell-sidebar client-sidebar min-vh-100 py-3">
+    <div class="text-white px-3 mb-3 fw-bold fs-5">
+        <i class="bi bi-heart-pulse me-2 text-info"></i>GymOps
+    </div>
+    <ul class="nav flex-column">
+        <li class="nav-item">
+            <a class="nav-link text-white @(controller == "Dashboard" ? "active" : "")"
+               asp-area="Client" asp-controller="Dashboard" asp-action="Index">
+                <i class="bi bi-speedometer2 me-2"></i>@L["Dashboard"]
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-white @(controller == "Profile" ? "active" : "")"
+               asp-area="Client" asp-controller="Profile" asp-action="Index">
+                <i class="bi bi-person-circle me-2"></i>@L["Profile"]
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-white @(controller == "Sessions" ? "active" : "")"
+               asp-area="Client" asp-controller="Sessions" asp-action="Index">
+                <i class="bi bi-calendar2-week me-2"></i>@L["Sessions"]
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-white @(controller == "Maintenance" ? "active" : "")"
+               asp-area="Client" asp-controller="Maintenance" asp-action="Index">
+                <i class="bi bi-wrench-adjustable me-2"></i>@L["MaintenanceTasks"]
+            </a>
+        </li>
+        <li class="nav-item mt-3">
+            <hr class="border-secondary" />
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-white-50" asp-area="" asp-controller="Home" asp-action="Index">
+                <i class="bi bi-house me-2"></i>@L["Home"]
+            </a>
+        </li>
+    </ul>
+</nav>

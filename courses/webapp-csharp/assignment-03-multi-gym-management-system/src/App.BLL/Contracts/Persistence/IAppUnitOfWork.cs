@@ -12,15 +12,11 @@ public interface IAppUnitOfWork
 
     IBookingRepository Bookings { get; }
 
-    IWorkShiftRepository WorkShifts { get; }
-
     IMembershipPackageRepository MembershipPackages { get; }
 
     IMembershipRepository Memberships { get; }
 
     IPaymentRepository Payments { get; }
-
-    IFinanceRepository Finance { get; }
 
     IMaintenanceRepository Maintenance { get; }
 

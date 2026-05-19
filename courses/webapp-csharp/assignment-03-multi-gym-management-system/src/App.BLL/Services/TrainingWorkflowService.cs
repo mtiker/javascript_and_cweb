@@ -9,7 +9,6 @@ using App.Domain.Enums;
 using App.DTO.v1.Bookings;
 using App.DTO.v1.TrainingCategories;
 using App.DTO.v1.TrainingSessions;
-using App.DTO.v1.WorkShifts;
 
 namespace App.BLL.Services;
 
@@ -73,15 +72,7 @@ public class TrainingWorkflowService(
     {
         var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin, RoleNames.Member, RoleNames.Trainer, RoleNames.Caretaker);
         var sessions = await unitOfWork.TrainingSessions.ListByGymAsync(gymId, cancellationToken);
-
-        var responses = new List<TrainingSessionResponse>(sessions.Count);
-        foreach (var session in sessions)
-        {
-            var trainerContractIds = await unitOfWork.WorkShifts.ListTrainerContractIdsForSessionAsync(gymId, session.Id, cancellationToken);
-            responses.Add(trainingMapper.ToSession(session, trainerContractIds));
-        }
-
-        return responses;
+        return sessions.Select(trainingMapper.ToSession).ToArray();
     }
 
     public async Task<TrainingSessionResponse> GetSessionAsync(string gymCode, Guid id, CancellationToken cancellationToken = default)
@@ -102,14 +93,16 @@ public class TrainingWorkflowService(
         var category = await unitOfWork.TrainingCategories.FindAsync(gymId, request.CategoryId, cancellationToken)
                        ?? throw new NotFoundException("Training category was not found.");
 
-        var trainerContractIds = request.TrainerContractIds.ToArray();
-        var trainerContracts = await unitOfWork.Repository<EmploymentContract>().ListAsync(
-            contract => contract.GymId == gymId && trainerContractIds.Contains(contract.Id),
-            cancellationToken);
-
-        if (trainerContracts.Count != trainerContractIds.Length)
+        if (request.TrainerStaffId.HasValue)
         {
-            throw new ValidationAppException("One or more trainer contracts were not found.");
+            var trainerStaff = await unitOfWork.Repository<Staff>().ListAsync(
+                staff => staff.GymId == gymId && staff.Id == request.TrainerStaffId.Value,
+                cancellationToken);
+
+            if (trainerStaff.Count == 0)
+            {
+                throw new ValidationAppException("Trainer staff member was not found.");
+            }
         }
 
         var session = sessionId.HasValue
@@ -137,25 +130,7 @@ public class TrainingWorkflowService(
         session.BasePrice = request.BasePrice;
         session.CurrencyCode = request.CurrencyCode;
         session.Status = request.Status;
-
-        await unitOfWork.SaveChangesAsync(cancellationToken);
-
-        var existingTrainerShifts = await unitOfWork.WorkShifts.ListTrainingShiftsForSessionAsync(gymId, session.Id, cancellationToken);
-        unitOfWork.WorkShifts.RemoveRange(existingTrainerShifts);
-
-        foreach (var contract in trainerContracts)
-        {
-            await unitOfWork.WorkShifts.AddAsync(new WorkShift
-            {
-                GymId = gymId,
-                ContractId = contract.Id,
-                TrainingSessionId = session.Id,
-                ShiftType = ShiftType.Training,
-                StartAtUtc = request.StartAtUtc.AddMinutes(-15),
-                EndAtUtc = request.EndAtUtc.AddMinutes(15),
-                Comment = "Assigned trainer"
-            }, cancellationToken);
-        }
+        session.TrainerStaffId = request.TrainerStaffId;
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
@@ -168,72 +143,6 @@ public class TrainingWorkflowService(
         var session = await unitOfWork.TrainingSessions.FindAsync(gymId, id, cancellationToken)
                       ?? throw new NotFoundException("Training session was not found.");
         unitOfWork.TrainingSessions.Remove(session);
-        await unitOfWork.SaveChangesAsync(cancellationToken);
-    }
-
-    public async Task<IReadOnlyCollection<WorkShiftResponse>> GetWorkShiftsAsync(string gymCode, CancellationToken cancellationToken = default)
-    {
-        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin, RoleNames.Trainer, RoleNames.Caretaker);
-        var current = userContextService.GetCurrent();
-
-        IReadOnlyList<WorkShift> workShifts;
-        if (current.HasRole(RoleNames.Trainer) || current.HasRole(RoleNames.Caretaker))
-        {
-            var staff = await authorizationService.GetCurrentStaffAsync(gymId, cancellationToken);
-            workShifts = staff is null
-                ? Array.Empty<WorkShift>()
-                : await unitOfWork.WorkShifts.ListForStaffAsync(gymId, staff.Id, cancellationToken);
-        }
-        else
-        {
-            workShifts = await unitOfWork.WorkShifts.ListByGymAsync(gymId, cancellationToken);
-        }
-
-        return trainingMapper.ToWorkShiftList(workShifts);
-    }
-
-    public async Task<WorkShiftResponse> CreateWorkShiftAsync(string gymCode, WorkShiftUpsertRequest request, CancellationToken cancellationToken = default)
-    {
-        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin);
-        var shift = new WorkShift
-        {
-            GymId = gymId,
-            ContractId = request.ContractId,
-            StartAtUtc = request.StartAtUtc,
-            EndAtUtc = request.EndAtUtc,
-            ShiftType = request.ShiftType,
-            TrainingSessionId = request.TrainingSessionId,
-            Comment = request.Comment?.Trim()
-        };
-
-        await unitOfWork.WorkShifts.AddAsync(shift, cancellationToken);
-        await unitOfWork.SaveChangesAsync(cancellationToken);
-        return trainingMapper.ToWorkShift(shift);
-    }
-
-    public async Task<WorkShiftResponse> UpdateWorkShiftAsync(string gymCode, Guid id, WorkShiftUpsertRequest request, CancellationToken cancellationToken = default)
-    {
-        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin);
-        var shift = await unitOfWork.WorkShifts.FindAsync(gymId, id, cancellationToken)
-                    ?? throw new NotFoundException("Work shift was not found.");
-
-        shift.ContractId = request.ContractId;
-        shift.StartAtUtc = request.StartAtUtc;
-        shift.EndAtUtc = request.EndAtUtc;
-        shift.ShiftType = request.ShiftType;
-        shift.TrainingSessionId = request.TrainingSessionId;
-        shift.Comment = request.Comment?.Trim();
-        await unitOfWork.SaveChangesAsync(cancellationToken);
-
-        return trainingMapper.ToWorkShift(shift);
-    }
-
-    public async Task DeleteWorkShiftAsync(string gymCode, Guid id, CancellationToken cancellationToken = default)
-    {
-        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin);
-        var shift = await unitOfWork.WorkShifts.FindAsync(gymId, id, cancellationToken)
-                    ?? throw new NotFoundException("Work shift was not found.");
-        unitOfWork.WorkShifts.Remove(shift);
         await unitOfWork.SaveChangesAsync(cancellationToken);
     }
 
@@ -377,8 +286,7 @@ public class TrainingWorkflowService(
     {
         var session = await unitOfWork.TrainingSessions.FindAsync(gymId, sessionId, cancellationToken)
                       ?? throw new NotFoundException("Training session was not found.");
-        var trainerContractIds = await unitOfWork.WorkShifts.ListTrainerContractIdsForSessionAsync(gymId, sessionId, cancellationToken);
-        return trainingMapper.ToSession(session, trainerContractIds);
+        return trainingMapper.ToSession(session);
     }
 
     private static void ValidateCategoryRequest(TrainingCategoryUpsertRequest request)

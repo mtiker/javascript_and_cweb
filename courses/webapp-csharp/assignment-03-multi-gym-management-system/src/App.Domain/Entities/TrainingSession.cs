@@ -25,9 +25,10 @@ public class TrainingSession : TenantBaseEntity
     public string CurrencyCode { get; set; } = "EUR";
 
     public TrainingSessionStatus Status { get; set; } = TrainingSessionStatus.Draft;
+    public Guid? TrainerStaffId { get; set; }
+    public Staff? TrainerStaff { get; set; }
     public DateOnly ValidFrom { get; set; } = DateOnly.FromDateTime(DateTime.UtcNow);
     public DateOnly? ValidTo { get; set; }
 
-    public ICollection<WorkShift> WorkShifts { get; set; } = new List<WorkShift>();
     public ICollection<Booking> Bookings { get; set; } = new List<Booking>();
 }

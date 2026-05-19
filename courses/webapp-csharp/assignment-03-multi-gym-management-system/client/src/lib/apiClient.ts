@@ -3,25 +3,15 @@ import type {
   AttendanceUpdateRequest,
   Booking,
   BookingCreateRequest,
-  CoachingPlan,
-  CoachingPlanCreateRequest,
-  CoachingPlanItemDecisionRequest,
-  CoachingPlanStatusUpdateRequest,
-  CoachingPlanUpdateRequest,
   Equipment,
   EquipmentModel,
-  FinanceWorkspace,
   GymSettings,
   GymSnapshot,
   GymSummary,
   GymUser,
   HttpMethod,
-  Invoice,
-  InvoiceCreateRequest,
-  InvoicePaymentRequest,
   LoginRequest,
   MaintenanceAssignmentUpdateRequest,
-  MaintenanceTaskAssignmentHistory,
   MaintenanceStatusUpdateRequest,
   MaintenanceTask,
   MaintenanceTaskUpsertRequest,
@@ -33,14 +23,10 @@ import type {
   MembershipPackage,
   MembershipPackageUpsertRequest,
   MessageResponse,
-  OpeningHours,
-  OpeningHoursException,
   Payment,
   PlatformAnalytics,
   RawApiResponse,
   Staff,
-  SubscriptionSummary,
-  SupportTicket,
   TrainingCategory,
   TrainingCategoryUpsertRequest,
   TrainingSession,
@@ -111,14 +97,6 @@ export class ApiClient {
 
   async getGymSnapshot(gymId: string): Promise<GymSnapshot> {
     return this.request<GymSnapshot>(`/api/v1/system/gyms/${encodeURIComponent(gymId)}/snapshot`);
-  }
-
-  async getSubscriptions(): Promise<SubscriptionSummary[]> {
-    return this.request<SubscriptionSummary[]>("/api/v1/system/subscriptions");
-  }
-
-  async getSupportTickets(): Promise<SupportTicket[]> {
-    return this.request<SupportTicket[]>("/api/v1/system/support");
   }
 
   async getMembers(gymCode: string): Promise<MemberSummary[]> {
@@ -229,52 +207,6 @@ export class ApiClient {
     });
   }
 
-  async getCoachingPlans(gymCode: string, memberId?: string): Promise<CoachingPlan[]> {
-    const path = memberId
-      ? `${this.tenantBase(gymCode)}/coaching-plans?memberId=${encodeURIComponent(memberId)}`
-      : `${this.tenantBase(gymCode)}/coaching-plans`;
-    return this.request<CoachingPlan[]>(path);
-  }
-
-  async createCoachingPlan(gymCode: string, request: CoachingPlanCreateRequest): Promise<CoachingPlan> {
-    return this.request<CoachingPlan>(`${this.tenantBase(gymCode)}/coaching-plans`, {
-      method: "POST",
-      body: JSON.stringify(request),
-    });
-  }
-
-  async updateCoachingPlan(gymCode: string, planId: string, request: CoachingPlanUpdateRequest): Promise<CoachingPlan> {
-    return this.request<CoachingPlan>(`${this.tenantBase(gymCode)}/coaching-plans/${planId}`, {
-      method: "PUT",
-      body: JSON.stringify(request),
-    });
-  }
-
-  async updateCoachingPlanStatus(gymCode: string, planId: string, request: CoachingPlanStatusUpdateRequest): Promise<CoachingPlan> {
-    return this.request<CoachingPlan>(`${this.tenantBase(gymCode)}/coaching-plans/${planId}/status`, {
-      method: "PUT",
-      body: JSON.stringify(request),
-    });
-  }
-
-  async decideCoachingPlanItem(
-    gymCode: string,
-    planId: string,
-    itemId: string,
-    request: CoachingPlanItemDecisionRequest,
-  ): Promise<CoachingPlan> {
-    return this.request<CoachingPlan>(`${this.tenantBase(gymCode)}/coaching-plans/${planId}/items/${itemId}/decision`, {
-      method: "PUT",
-      body: JSON.stringify(request),
-    });
-  }
-
-  async deleteCoachingPlan(gymCode: string, planId: string): Promise<void> {
-    return this.request<void>(`${this.tenantBase(gymCode)}/coaching-plans/${planId}`, {
-      method: "DELETE",
-    });
-  }
-
   async getMaintenanceTasks(gymCode: string): Promise<MaintenanceTask[]> {
     return this.request<MaintenanceTask[]>(`${this.tenantBase(gymCode)}/maintenance-tasks`);
   }
@@ -306,10 +238,6 @@ export class ApiClient {
       method: "PUT",
       body: JSON.stringify(request),
     });
-  }
-
-  async getMaintenanceTaskAssignmentHistory(gymCode: string, taskId: string): Promise<MaintenanceTaskAssignmentHistory[]> {
-    return this.request<MaintenanceTaskAssignmentHistory[]>(`${this.tenantBase(gymCode)}/maintenance-tasks/${taskId}/assignment-history`);
   }
 
   async generateDueMaintenanceTasks(gymCode: string): Promise<MessageResponse> {
@@ -354,52 +282,6 @@ export class ApiClient {
 
   async getPayments(gymCode: string): Promise<Payment[]> {
     return this.request<Payment[]>(`${this.tenantBase(gymCode)}/payments`);
-  }
-
-  async getFinanceWorkspace(gymCode: string): Promise<FinanceWorkspace> {
-    return this.request<FinanceWorkspace>(`${this.tenantBase(gymCode)}/finance-workspace/me`);
-  }
-
-  async getFinanceWorkspaceForMember(gymCode: string, memberId: string): Promise<FinanceWorkspace> {
-    return this.request<FinanceWorkspace>(`${this.tenantBase(gymCode)}/finance-workspace/members/${memberId}`);
-  }
-
-  async getInvoices(gymCode: string, memberId?: string): Promise<Invoice[]> {
-    const path = memberId ? `${this.tenantBase(gymCode)}/invoices?memberId=${encodeURIComponent(memberId)}` : `${this.tenantBase(gymCode)}/invoices`;
-    return this.request<Invoice[]>(path);
-  }
-
-  async getInvoice(gymCode: string, invoiceId: string): Promise<Invoice> {
-    return this.request<Invoice>(`${this.tenantBase(gymCode)}/invoices/${invoiceId}`);
-  }
-
-  async createInvoice(gymCode: string, request: InvoiceCreateRequest): Promise<Invoice> {
-    return this.request<Invoice>(`${this.tenantBase(gymCode)}/invoices`, {
-      method: "POST",
-      body: JSON.stringify(request),
-    });
-  }
-
-  async addInvoicePayment(gymCode: string, invoiceId: string, request: InvoicePaymentRequest): Promise<Invoice> {
-    return this.request<Invoice>(`${this.tenantBase(gymCode)}/invoices/${invoiceId}/payments`, {
-      method: "POST",
-      body: JSON.stringify(request),
-    });
-  }
-
-  async addInvoiceRefund(gymCode: string, invoiceId: string, request: InvoicePaymentRequest): Promise<Invoice> {
-    return this.request<Invoice>(`${this.tenantBase(gymCode)}/invoices/${invoiceId}/refunds`, {
-      method: "POST",
-      body: JSON.stringify(request),
-    });
-  }
-
-  async getOpeningHours(gymCode: string): Promise<OpeningHours[]> {
-    return this.request<OpeningHours[]>(`${this.tenantBase(gymCode)}/opening-hours`);
-  }
-
-  async getOpeningHoursExceptions(gymCode: string): Promise<OpeningHoursException[]> {
-    return this.request<OpeningHoursException[]>(`${this.tenantBase(gymCode)}/opening-hours-exceptions`);
   }
 
   async getEquipmentModels(gymCode: string): Promise<EquipmentModel[]> {

@@ -9,20 +9,20 @@ public sealed class EfTrainingSessionRepository(AppDbContext dbContext) : ITrain
     public async Task<IReadOnlyList<TrainingSession>> ListByGymAsync(Guid gymId, CancellationToken cancellationToken = default)
     {
         return await dbContext.TrainingSessions
+            .Include(session => session.TrainerStaff)
+                .ThenInclude(staff => staff!.Person)
             .Where(session => session.GymId == gymId)
             .OrderBy(session => session.StartAtUtc)
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<IReadOnlyList<TrainingSession>> ListWithBookingsAndShiftsByGymAsync(Guid gymId, int limit, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<TrainingSession>> ListWithBookingsAndTrainerByGymAsync(Guid gymId, int limit, CancellationToken cancellationToken = default)
     {
         return await dbContext.TrainingSessions
             .AsNoTracking()
             .Include(session => session.Bookings)
-            .Include(session => session.WorkShifts)
-                .ThenInclude(shift => shift.Contract)
-                    .ThenInclude(contract => contract!.Staff)
-                        .ThenInclude(staff => staff!.Person)
+            .Include(session => session.TrainerStaff)
+                .ThenInclude(staff => staff!.Person)
             .Where(session => session.GymId == gymId)
             .OrderBy(session => session.StartAtUtc)
             .Take(limit)
@@ -33,6 +33,8 @@ public sealed class EfTrainingSessionRepository(AppDbContext dbContext) : ITrain
     {
         return await dbContext.TrainingSessions
             .AsNoTracking()
+            .Include(session => session.TrainerStaff)
+                .ThenInclude(staff => staff!.Person)
             .Where(session => session.GymId == gymId && session.StartAtUtc >= fromUtc)
             .OrderBy(session => session.StartAtUtc)
             .Take(limit)
@@ -42,6 +44,8 @@ public sealed class EfTrainingSessionRepository(AppDbContext dbContext) : ITrain
     public Task<TrainingSession?> FindAsync(Guid gymId, Guid sessionId, CancellationToken cancellationToken = default)
     {
         return dbContext.TrainingSessions
+            .Include(session => session.TrainerStaff)
+                .ThenInclude(staff => staff!.Person)
             .FirstOrDefaultAsync(session => session.GymId == gymId && session.Id == sessionId, cancellationToken);
     }
 

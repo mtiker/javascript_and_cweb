@@ -153,7 +153,7 @@ public class MemberWorkflowServiceTests
             .Options;
 
         var gymId = Guid.NewGuid();
-        var dbContext = new AppDbContext(options, new TestGymContext(gymId), new HttpContextAccessor());
+        var dbContext = new AppDbContext(options, new TestGymContext(gymId));
 
         dbContext.Gyms.Add(new Gym
         {
@@ -239,8 +239,6 @@ public class MemberWorkflowServiceTests
 
     private sealed class TestSubscriptionTierLimitService : ISubscriptionTierLimitService
     {
-        public Task<SubscriptionPlan> GetCurrentPlanAsync(Guid gymId, CancellationToken cancellationToken = default)
-            => Task.FromResult(SubscriptionPlan.Starter);
         public Task EnsureCanCreateMemberAsync(Guid gymId, CancellationToken cancellationToken = default) => Task.CompletedTask;
         public Task EnsureCanCreateStaffAsync(Guid gymId, CancellationToken cancellationToken = default) => Task.CompletedTask;
         public Task EnsureCanCreateTrainingSessionAsync(Guid gymId, CancellationToken cancellationToken = default) => Task.CompletedTask;

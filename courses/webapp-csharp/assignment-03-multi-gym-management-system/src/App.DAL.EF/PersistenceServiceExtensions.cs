@@ -15,11 +15,9 @@ public static class PersistenceServiceExtensions
         services.AddScoped<ITrainingCategoryRepository, EfTrainingCategoryRepository>();
         services.AddScoped<ITrainingSessionRepository, EfTrainingSessionRepository>();
         services.AddScoped<IBookingRepository, EfBookingRepository>();
-        services.AddScoped<IWorkShiftRepository, EfWorkShiftRepository>();
         services.AddScoped<IMembershipPackageRepository, EfMembershipPackageRepository>();
         services.AddScoped<IMembershipRepository, EfMembershipRepository>();
         services.AddScoped<IPaymentRepository, EfPaymentRepository>();
-        services.AddScoped<IFinanceRepository, EfFinanceRepository>();
         services.AddScoped<IMaintenanceRepository, EfMaintenanceRepository>();
         services.AddScoped<IAppUnitOfWork, EfAppUnitOfWork>();
         return services;

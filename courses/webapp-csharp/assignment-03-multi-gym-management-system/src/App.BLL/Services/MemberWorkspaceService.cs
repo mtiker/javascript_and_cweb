@@ -3,7 +3,6 @@ using App.BLL.Exceptions;
 using App.Domain;
 using App.Domain.Entities;
 using App.Domain.Enums;
-using App.DTO.v1.Finance;
 using App.DTO.v1.MemberWorkspace;
 using App.DTO.v1.Members;
 using App.DTO.v1.Memberships;
@@ -76,14 +75,7 @@ public class MemberWorkspaceService(
             .OrderByDescending(entity => entity.PaidAtUtc)
             .ToListAsync(cancellationToken);
 
-        var invoices = await dbContext.Invoices
-            .Where(entity => entity.GymId == gymId && entity.MemberId == memberId)
-            .Include(entity => entity.Lines)
-            .Include(entity => entity.Payments)
-            .OrderByDescending(entity => entity.DueAtUtc)
-            .ToListAsync(cancellationToken);
-
-        var outstandingActions = BuildOutstandingActions(memberships, payments, invoices, bookings);
+        var outstandingActions = BuildOutstandingActions(memberships, payments, bookings);
 
         return new MemberWorkspaceResponse
         {
@@ -132,10 +124,9 @@ public class MemberWorkspaceService(
                 CurrencyCode = entity.CurrencyCode,
                 PaymentRequired = entity.PaymentRequired
             }).ToArray(),
-            Invoices = invoices.Select(ToInvoiceResponse).ToArray(),
             AttendedSessionCount = bookings.Count(entity => entity.Status == BookingStatus.Attended),
             UpcomingBookingCount = bookings.Count(entity => entity.Status == BookingStatus.Booked && entity.TrainingSession?.StartAtUtc >= DateTime.UtcNow),
-            OutstandingBalance = invoices.Sum(entity => entity.OutstandingAmount),
+            OutstandingBalance = payments.Where(entity => entity.Status == PaymentStatus.Pending).Sum(entity => entity.Amount),
             OutstandingActions = outstandingActions
         };
     }
@@ -143,21 +134,9 @@ public class MemberWorkspaceService(
     private static IReadOnlyCollection<MemberOutstandingActionResponse> BuildOutstandingActions(
         IReadOnlyCollection<Membership> memberships,
         IReadOnlyCollection<Payment> payments,
-        IReadOnlyCollection<Invoice> invoices,
         IReadOnlyCollection<Booking> bookings)
     {
         var actions = new List<MemberOutstandingActionResponse>();
-
-        var overdueInvoices = invoices.Count(entity => entity.OutstandingAmount > 0 && entity.DueAtUtc < DateTime.UtcNow);
-        if (overdueInvoices > 0)
-        {
-            actions.Add(new MemberOutstandingActionResponse
-            {
-                Code = "overdue-invoices",
-                Title = "Overdue invoices",
-                Detail = $"{overdueInvoices} invoice(s) are overdue and require payment."
-            });
-        }
 
         var pendingPayments = payments.Count(entity => entity.Status == PaymentStatus.Pending);
         if (pendingPayments > 0)
@@ -197,52 +176,5 @@ public class MemberWorkspaceService(
         }
 
         return actions;
-    }
-
-    private static InvoiceResponse ToInvoiceResponse(Invoice invoice)
-    {
-        return new InvoiceResponse
-        {
-            Id = invoice.Id,
-            MemberId = invoice.MemberId,
-            MemberName = $"{invoice.Member?.Person?.FirstName} {invoice.Member?.Person?.LastName}".Trim(),
-            InvoiceNumber = invoice.InvoiceNumber,
-            IssuedAtUtc = invoice.IssuedAtUtc,
-            DueAtUtc = invoice.DueAtUtc,
-            CurrencyCode = invoice.CurrencyCode,
-            SubtotalAmount = invoice.SubtotalAmount,
-            CreditAmount = invoice.CreditAmount,
-            TotalAmount = invoice.TotalAmount,
-            PaidAmount = invoice.PaidAmount,
-            OutstandingAmount = invoice.OutstandingAmount,
-            IsOverdue = invoice.OutstandingAmount > 0 && invoice.DueAtUtc < DateTime.UtcNow,
-            Status = invoice.Status,
-            Notes = invoice.Notes,
-            Lines = invoice.Lines
-                .OrderBy(entity => entity.CreatedAtUtc)
-                .Select(entity => new InvoiceLineResponse
-                {
-                    Id = entity.Id,
-                    Description = entity.Description,
-                    Quantity = entity.Quantity,
-                    UnitPrice = entity.UnitPrice,
-                    LineTotal = entity.LineTotal,
-                    IsCredit = entity.IsCredit,
-                    Notes = entity.Notes
-                })
-                .ToArray(),
-            Payments = invoice.Payments
-                .OrderByDescending(entity => entity.AppliedAtUtc)
-                .Select(entity => new InvoicePaymentResponse
-                {
-                    Id = entity.Id,
-                    Amount = entity.Amount,
-                    IsRefund = entity.IsRefund,
-                    AppliedAtUtc = entity.AppliedAtUtc,
-                    Reference = entity.Reference,
-                    Notes = entity.Notes
-                })
-                .ToArray()
-        };
     }
 }

@@ -1,5 +1,121 @@
 # AI Usage Log
 
+## 2026-05-19 - Reference Architecture Parity Doc Correction
+
+Task:
+- update the LabRent/LabTrack reference parity documentation after the Final1
+  presentation-boundary refactor
+
+Files affected:
+- `docs/reference-architecture-parity.md`
+- `docs/ai-usage.md`
+- root `docs/ai-prompts.md`
+
+What AI helped with:
+- corrected stale wording that still listed MVC presentation `AppDbContext`
+  migration as remaining work
+- updated validation counts to the current Final1 run
+- clarified that Final2 module projects are preserved partial evidence, not a
+  completed Final2 claim
+
+What needed manual review or correction:
+- no production code changed in this pass
+- tests were not rerun because this was documentation-only
+
+Alternatives considered:
+- making the gym project folder-for-folder identical to the reference was
+  rejected because the React client, Final2 module projects, and gym SaaS domain
+  are intentional course-specific differences
+
+## 2026-05-19 - Final1 Presentation Boundary Completion
+
+Task:
+- finish Assignment 03 for Final1 only by removing concrete `AppDbContext`
+  usage from MVC presentation paths while preserving existing Final2/module
+  code as partial, not completed, evidence
+
+Files affected:
+- `src/App.BLL/Services/IWorkspaceContextService.cs`
+- `src/App.BLL/Services/WorkspaceContextService.cs`
+- `src/App.BLL/Mapping/MembershipFinanceMapper.cs`
+- `src/App.BLL/Mapping/TrainingMapper.cs`
+- `src/WebApp/Controllers/HomeController.cs`
+- `src/WebApp/ViewComponents/WorkspaceSwitcherViewComponent.cs`
+- `src/WebApp/Areas/Client/Controllers/ProfileController.cs`
+- `src/WebApp/Areas/Client/Controllers/MaintenanceController.cs`
+- `src/WebApp/Areas/Client/Services/ClientProfilePageService.cs`
+- `src/WebApp/Areas/Client/Services/ClientMaintenancePageService.cs`
+- `src/WebApp/Areas/Admin/Services/AdminViewModelServices.cs`
+- `src/WebApp/Setup/ServiceExtensions.cs`
+- `tests/WebApp.Tests/Architecture/Final1PresentationBoundaryTests.cs`
+- `tests/WebApp.Tests/Unit/Final1PresentationServiceTests.cs`
+- Final1 documentation and AI logs
+
+What AI helped with:
+- moved profile, maintenance, home/workspace switching, and admin package/category
+  page composition behind focused services or repository-backed BLL contracts
+- added service tests for member profile, missing member profile, caretaker
+  maintenance pages, equipment labels, tenant workspace options, and SystemAdmin
+  workspace options
+- added architecture tests preventing MVC controllers, view components, and
+  Admin/Client page services from referencing concrete `AppDbContext`
+- preserved public MVC/API routes, DTOs, seeded users, React behavior, and
+  existing partial Final2 module code
+
+What needed manual review or correction:
+- admin MVC package/category pages initially rendered localized DTO names under
+  Estonian culture; reads were corrected to use repository-backed domain data
+  for the server-rendered form/list behavior
+- Docker was unavailable, so PostgreSQL/Testcontainers tests and public smoke
+  verification remain unverified
+
+Validation:
+- `dotnet build multi-gym-management-system.slnx --no-restore` passed
+- `dotnet test multi-gym-management-system.slnx --no-restore` passed with 202
+  passed and 3 skipped PostgreSQL/Testcontainers tests
+- `cd client && npm test` passed with 32 tests
+- `cd client && npm run build` passed
+
+Alternatives considered:
+- adding a new optional admin workflow was rejected because Final1 already has
+  tested CRUD for members, training categories, and membership packages
+- hardening Final2 modules was rejected because the requested scope was Final1
+  only
+
+## 2026-05-19 - Final2 Scope Pruning Implementation
+
+Task:
+- implement the Final2 readiness and scope-reduction plan, keeping the project a
+  modular monolith rather than moving toward Final3 microservices
+
+Files affected:
+- domain entities, EF configurations, `AppDbContext`, repositories, BLL
+  services/mappers, module messages/handlers, API controllers, MVC views,
+  React client routes/pages/types/tests, EF migrations, and current docs
+
+What AI helped with:
+- pruned optional platform/support/billing, coaching, invoice/refund, roster,
+  opening-hours, and assignment-history contexts
+- added the `PruneFinal2Scope` migration
+- simplified training assignment to optional `TrainerStaffId`
+- reduced React routes to defended Final2 workflows
+- updated API route snapshot, tenant smoke, auth, mediator, workflow, and React
+  tests to the smaller contract
+- synchronized current defense, API, data-model, module-boundary, roadmap, and
+  testing docs
+
+What needed manual review or correction:
+- this is an intentional breaking schema/API reduction for defense clarity
+- `dotnet build`, `dotnet test`, `npm test`, and `npm run build` were verified
+- fresh database migration apply, Swagger route review, Compose config, and
+  browser smoke still need to be run before a final defense tag
+
+Alternatives considered:
+- keeping broad enterprise features was rejected because it made the Final2
+  defense look like partial Final3 scope
+- extracting services, RabbitMQ, separate module schemas, or per-module
+  DbContexts was rejected as Final3/out-of-scope work
+
 ## 2026-05-11 - Refresh Token Session Storage Security Tradeoff
 
 Task:
@@ -1320,3 +1436,109 @@ What needed manual review or correction:
 Alternatives considered:
 - claiming deployment readiness from Compose config alone was rejected because it would hide the missing public smoke test
 - claiming full module isolation was rejected because modules still share BLL contracts and one `AppDbContext`
+
+## 2026-05-18 - Assignment 03 Documentation Consolidation
+
+Task:
+- clean up Assignment 03 documentation so it is useful for Final1 and Final2
+  development, remove stale phase/audit documents, and consolidate the current
+  guidance into fewer durable docs.
+
+Files affected:
+- `README.md`
+- `docs/README.md`
+- `docs/a3-saas-plan.md`
+- `docs/final1-final2-roadmap.md`
+- `docs/module-boundaries.md`
+- `docs/security-and-access.md`
+- `docs/domain-workflows.md`
+- `docs/testing.md`
+- `docs/deployment.md`
+- `docs/final1-defense.md`
+- `docs/final2-defense.md`
+- removed old phase/audit/slice docs from `docs/`
+- `src/BuildingBlocks/Contracts/README.md`
+- `tests/WebApp.Tests/Architecture/ModuleArchitectureTests.cs`
+- root `docs/full-project-audit.md`
+- root `docs/ai-prompts.md`
+
+What AI helped with:
+- inventoried the existing docs and official Final1/Final2 course pages
+- identified old one-off audit and phase-plan documents that duplicated or
+  contradicted the current implementation
+- consolidated useful current content into roadmap, module-boundary, security,
+  workflow, testing, deployment, and defense docs
+- updated the assignment README documentation map to point to the retained docs
+
+What needed manual review or correction:
+- preserved historical AI log entries even when they mention files removed by
+  this cleanup, because they are historical records rather than live docs
+- kept validation claims conservative; implementation tests were not rerun in
+  this documentation-only cleanup
+
+Alternatives considered:
+- keeping all historical audit files and adding another index, but that would
+  leave the same navigation problem
+- moving old files to an archive folder, but the assignment docs are more useful
+  when stale phase snapshots are removed and current guidance stays small
+
+## 2026-05-19 - Reference Architecture and MVC Shell Alignment
+
+Task:
+- use `C:\Users\marti\VS_Code_Projects\satiks-cweb-personal1-main.zip` as a
+  source of truth for architecture/UI patterns, while keeping the assignment
+  domain as multi-gym management instead of LabRent.
+
+Files affected:
+- `src/WebApp/Areas/Admin/Views/_ViewStart.cshtml`
+- `src/WebApp/Areas/Admin/Views/Shared/_Layout.cshtml`
+- `src/WebApp/Areas/Admin/Views/Shared/_AdminSidebar.cshtml`
+- `src/WebApp/Areas/Client/Views/_ViewStart.cshtml`
+- `src/WebApp/Areas/Client/Views/Shared/_Layout.cshtml`
+- `src/WebApp/Areas/Client/Views/Shared/_ClientSidebar.cshtml`
+- `src/WebApp/wwwroot/css/site.css`
+- `client/vitest.config.ts`
+- `tests/WebApp.Tests/Integration/MvcComplianceTests.cs`
+- `tests/WebApp.Tests/Integration/AdminMembersPageTests.cs`
+- `tests/WebApp.Tests/Integration/ClientDashboardTests.cs`
+- `tests/WebApp.Tests/Integration/SmokeTests.cs`
+- `docs/reference-architecture-parity.md`
+- `README.md`
+- `docs/README.md`
+- `docs/a3-saas-plan.md`
+- `docs/architecture.md`
+- root `docs/ai-prompts.md`
+
+What AI helped with:
+- inspected the reference zip and current gym assignment structure
+- confirmed the current backend and React client build before edits
+- ported the reference-style Bootstrap MVC area shell to gym Admin and Client
+  areas with gym-specific navigation, breadcrumbs, language/workspace controls,
+  logout, and TempData alerts
+- kept the existing gym domain, API contracts, React client, and modular
+  projects intact
+- documented the reference-to-gym architecture mapping and deliberate
+  differences
+
+What needed manual review or correction:
+- treated the dirty working tree as user-owned and avoided reverting existing
+  deletions or unrelated changes
+- kept LabRent-specific entities and controller names out of the gym domain
+- updated MVC tests that previously asserted the older custom topbar shell
+- increased the frontend test timeout because the current interaction-heavy
+  React suite can exceed the default 5 second per-test limit on this machine
+
+Alternatives considered:
+- wholesale replacement with the reference project was rejected because it
+  would delete working gym-specific domain, Final2 module, React client,
+  deployment, and test coverage
+- introducing separate `App.DAL.Contracts` and `App.BLL.Contracts` projects was
+  deferred because the current BLL-owned persistence contracts already preserve
+  inward dependency direction and build cleanly
+
+Validation:
+- `dotnet build multi-gym-management-system.slnx --no-restore` passed
+- `dotnet test multi-gym-management-system.slnx --no-restore` passed with
+  195 tests passed and 3 PostgreSQL/Testcontainers tests skipped
+- `npm test` passed with 32 tests
+- `npm run build` passed

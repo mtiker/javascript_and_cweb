@@ -12,11 +12,9 @@ public class EfAppUnitOfWork(AppDbContext dbContext) : IAppUnitOfWork
     private ITrainingCategoryRepository? _trainingCategories;
     private ITrainingSessionRepository? _trainingSessions;
     private IBookingRepository? _bookings;
-    private IWorkShiftRepository? _workShifts;
     private IMembershipPackageRepository? _membershipPackages;
     private IMembershipRepository? _memberships;
     private IPaymentRepository? _payments;
-    private IFinanceRepository? _finance;
     private IMaintenanceRepository? _maintenance;
 
     public IRefreshTokenRepository RefreshTokens => _refreshTokens ??= new EfRefreshTokenRepository(_dbContext);
@@ -29,15 +27,11 @@ public class EfAppUnitOfWork(AppDbContext dbContext) : IAppUnitOfWork
 
     public IBookingRepository Bookings => _bookings ??= new EfBookingRepository(_dbContext);
 
-    public IWorkShiftRepository WorkShifts => _workShifts ??= new EfWorkShiftRepository(_dbContext);
-
     public IMembershipPackageRepository MembershipPackages => _membershipPackages ??= new EfMembershipPackageRepository(_dbContext);
 
     public IMembershipRepository Memberships => _memberships ??= new EfMembershipRepository(_dbContext);
 
     public IPaymentRepository Payments => _payments ??= new EfPaymentRepository(_dbContext);
-
-    public IFinanceRepository Finance => _finance ??= new EfFinanceRepository(_dbContext);
 
     public IMaintenanceRepository Maintenance => _maintenance ??= new EfMaintenanceRepository(_dbContext);
 

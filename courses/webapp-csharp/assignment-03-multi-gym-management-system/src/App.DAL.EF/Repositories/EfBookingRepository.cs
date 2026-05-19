@@ -45,12 +45,8 @@ public sealed class EfBookingRepository(AppDbContext dbContext) : IBookingReposi
     public async Task<IReadOnlyList<Booking>> ListForTrainerAsync(Guid gymId, Guid staffId, CancellationToken cancellationToken = default)
     {
         return await BaseListQuery(gymId)
-            .Where(booking => dbContext.WorkShifts.Any(shift =>
-                shift.GymId == gymId &&
-                shift.TrainingSessionId == booking.TrainingSessionId &&
-                shift.ShiftType == ShiftType.Training &&
-                shift.Contract != null &&
-                shift.Contract.StaffId == staffId))
+            .Where(booking => booking.TrainingSession != null &&
+                              booking.TrainingSession.TrainerStaffId == staffId)
             .OrderByDescending(booking => booking.BookedAtUtc)
             .ToListAsync(cancellationToken);
     }

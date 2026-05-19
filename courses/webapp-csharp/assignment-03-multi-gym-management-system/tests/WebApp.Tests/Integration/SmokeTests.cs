@@ -273,18 +273,12 @@ public class SmokeTests(CustomWebApplicationFactory factory) : IClassFixture<Cus
         var paths = new[]
         {
             "/api/v1/peak-forge/staff",
-            "/api/v1/peak-forge/job-roles",
-            "/api/v1/peak-forge/contracts",
-            "/api/v1/peak-forge/vacations",
             "/api/v1/peak-forge/training-categories",
             "/api/v1/peak-forge/training-sessions",
-            "/api/v1/peak-forge/work-shifts",
             "/api/v1/peak-forge/bookings",
             "/api/v1/peak-forge/membership-packages",
             "/api/v1/peak-forge/memberships",
             "/api/v1/peak-forge/payments",
-            "/api/v1/peak-forge/opening-hours",
-            "/api/v1/peak-forge/opening-hours-exceptions",
             "/api/v1/peak-forge/equipment-models",
             "/api/v1/peak-forge/equipment",
             "/api/v1/peak-forge/maintenance-tasks",
@@ -361,7 +355,7 @@ public class SmokeTests(CustomWebApplicationFactory factory) : IClassFixture<Cus
 
         response.EnsureSuccessStatusCode();
         Assert.Contains("/css/site.css", html);
-        Assert.Contains("class=\"topbar\"", html);
+        Assert.Contains("class=\"area-toolbar", html);
         Assert.Contains(expectedContent, html);
     }
 

@@ -1,5 +1,3 @@
-using System.Security.Claims;
-using System.Text.Json;
 using App.BLL.Contracts.Infrastructure;
 using App.BLL.Exceptions;
 using App.Domain;
@@ -7,21 +5,16 @@ using App.Domain.Common;
 using App.Domain.Entities;
 using App.Domain.Enums;
 using App.Domain.Identity;
-using App.Domain.Security;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using App.DTO.v1.System.Billing;
 using App.DTO.v1.System.Platform;
-using App.DTO.v1.System.Support;
 using App.DTO.v1.System;
 
 namespace App.BLL.Services;
 
 public class PlatformService(
     IAppDbContext dbContext,
-    UserManager<AppUser> userManager,
-    ITokenService tokenService,
-    IUserContextService userContextService) : IPlatformService
+    UserManager<AppUser> userManager) : IPlatformService
 {
     public async Task<IReadOnlyCollection<GymSummaryResponse>> GetGymsAsync(CancellationToken cancellationToken = default)
     {
@@ -69,16 +62,6 @@ public class PlatformService(
             PublicDescription = new LangStr($"{request.Name.Trim()} SaaS workspace", "en")
         };
 
-        var subscription = new Subscription
-        {
-            GymId = gym.Id,
-            Plan = SubscriptionPlan.Starter,
-            Status = SubscriptionStatus.Trial,
-            StartDate = DateOnly.FromDateTime(DateTime.UtcNow.Date),
-            MonthlyPrice = 49m,
-            CurrencyCode = "EUR"
-        };
-
         var ownerPerson = new Person
         {
             FirstName = request.OwnerFirstName.Trim(),
@@ -110,7 +93,6 @@ public class PlatformService(
 
         dbContext.Gyms.Add(gym);
         dbContext.GymSettings.Add(settings);
-        dbContext.Subscriptions.Add(subscription);
         dbContext.AppUserGymRoles.Add(ownerLink);
         await dbContext.SaveChangesAsync(cancellationToken);
 
@@ -129,109 +111,6 @@ public class PlatformService(
 
         gym.IsActive = request.IsActive;
         await dbContext.SaveChangesAsync(cancellationToken);
-    }
-
-    public async Task<IReadOnlyCollection<SubscriptionSummaryResponse>> GetSubscriptionsAsync(CancellationToken cancellationToken = default)
-    {
-        return await dbContext.Subscriptions
-            .AsNoTracking()
-            .Include(subscription => subscription.Gym)
-            .OrderBy(subscription => subscription.Gym!.Name)
-            .Select(subscription => new SubscriptionSummaryResponse
-            {
-                GymId = subscription.GymId,
-                GymName = subscription.Gym!.Name,
-                Plan = subscription.Plan,
-                Status = subscription.Status,
-                MonthlyPrice = subscription.MonthlyPrice,
-                StartDate = subscription.StartDate,
-                EndDate = subscription.EndDate
-            })
-            .ToArrayAsync(cancellationToken);
-    }
-
-    public async Task<SubscriptionSummaryResponse> UpdateSubscriptionAsync(Guid gymId, UpdateSubscriptionRequest request, CancellationToken cancellationToken = default)
-    {
-        var gym = await dbContext.Gyms.FirstOrDefaultAsync(entity => entity.Id == gymId)
-                  ?? throw new NotFoundException("Gym was not found.");
-
-        var subscription = await dbContext.Subscriptions.FirstOrDefaultAsync(entity => entity.GymId == gymId);
-        if (subscription == null)
-        {
-            subscription = new Subscription
-            {
-                GymId = gymId,
-                StartDate = DateOnly.FromDateTime(DateTime.UtcNow.Date)
-            };
-            dbContext.Subscriptions.Add(subscription);
-        }
-
-        subscription.Plan = request.Plan;
-        subscription.Status = request.Status;
-        subscription.EndDate = request.EndDate;
-        subscription.MonthlyPrice = request.MonthlyPrice;
-
-        await dbContext.SaveChangesAsync(cancellationToken);
-
-        return new SubscriptionSummaryResponse
-        {
-            GymId = gymId,
-            GymName = gym.Name,
-            Plan = subscription.Plan,
-            Status = subscription.Status,
-            MonthlyPrice = subscription.MonthlyPrice,
-            StartDate = subscription.StartDate,
-            EndDate = subscription.EndDate
-        };
-    }
-
-    public async Task<IReadOnlyCollection<SupportTicketResponse>> GetSupportTicketsAsync(CancellationToken cancellationToken = default)
-    {
-        return await dbContext.SupportTickets
-            .AsNoTracking()
-            .Include(ticket => ticket.Gym)
-            .OrderByDescending(ticket => ticket.CreatedAtUtc)
-            .Select(ticket => new SupportTicketResponse
-            {
-                TicketId = ticket.Id,
-                GymId = ticket.GymId,
-                GymName = ticket.Gym!.Name,
-                Title = ticket.Title,
-                Status = ticket.Status,
-                Priority = ticket.Priority,
-                CreatedAtUtc = ticket.CreatedAtUtc
-            })
-            .ToArrayAsync(cancellationToken);
-    }
-
-    public async Task<SupportTicketResponse> CreateSupportTicketAsync(Guid gymId, SupportTicketRequest request, CancellationToken cancellationToken = default)
-    {
-        var gym = await dbContext.Gyms.FirstOrDefaultAsync(entity => entity.Id == gymId)
-                  ?? throw new NotFoundException("Gym was not found.");
-
-        var ticket = new SupportTicket
-        {
-            GymId = gymId,
-            CreatedByUserId = userContextService.GetCurrent().UserId,
-            Title = request.Title.Trim(),
-            Description = request.Description.Trim(),
-            Priority = request.Priority,
-            Status = SupportTicketStatus.Open
-        };
-
-        dbContext.SupportTickets.Add(ticket);
-        await dbContext.SaveChangesAsync(cancellationToken);
-
-        return new SupportTicketResponse
-        {
-            TicketId = ticket.Id,
-            GymId = gymId,
-            GymName = gym.Name,
-            Title = ticket.Title,
-            Status = ticket.Status,
-            Priority = ticket.Priority,
-            CreatedAtUtc = ticket.CreatedAtUtc
-        };
     }
 
     public async Task<CompanySnapshotResponse> GetGymSnapshotAsync(Guid gymId, CancellationToken cancellationToken = default)
@@ -257,101 +136,10 @@ public class PlatformService(
             GymCount = await dbContext.Gyms.CountAsync(cancellationToken),
             UserCount = await dbContext.Users.CountAsync(cancellationToken),
             MemberCount = await dbContext.Members.IgnoreQueryFilters().CountAsync(entity => !entity.IsDeleted, cancellationToken),
-            OpenSupportTicketCount = await dbContext.SupportTickets.CountAsync(entity => entity.Status != SupportTicketStatus.Resolved, cancellationToken)
+            ActiveMaintenanceTaskCount = await dbContext.MaintenanceTasks.IgnoreQueryFilters().CountAsync(
+                entity => !entity.IsDeleted && entity.Status != MaintenanceTaskStatus.Done,
+                cancellationToken)
         };
     }
 
-    public async Task<StartImpersonationResponse> StartImpersonationAsync(StartImpersonationRequest request, CancellationToken cancellationToken = default)
-    {
-        var actorContext = userContextService.GetCurrent();
-        if (!actorContext.UserId.HasValue || !actorContext.HasRole(RoleNames.SystemAdmin))
-        {
-            throw new ForbiddenException("Only SystemAdmin can start impersonation.");
-        }
-
-        var reason = request.Reason?.Trim();
-        if (string.IsNullOrWhiteSpace(reason) || reason.Length < 8)
-        {
-            throw new ValidationAppException("Impersonation reason must be at least 8 characters.");
-        }
-
-        var user = await userManager.FindByIdAsync(request.UserId.ToString())
-                   ?? throw new NotFoundException("User was not found.");
-
-        var systemRoles = (await userManager.GetRolesAsync(user))
-            .Where(RoleNames.SystemRoles.Contains)
-            .ToArray();
-
-        AppUserGymRole? activeLink;
-
-        if (!string.IsNullOrWhiteSpace(request.GymCode))
-        {
-            activeLink = await dbContext.AppUserGymRoles
-                .Include(link => link.Gym)
-                .FirstOrDefaultAsync(link =>
-                    link.AppUserId == user.Id &&
-                    link.Gym!.Code == request.GymCode &&
-                    link.IsActive,
-                    cancellationToken);
-        }
-        else
-        {
-            activeLink = await dbContext.AppUserGymRoles
-                .Include(link => link.Gym)
-                .Where(link => link.AppUserId == user.Id && link.IsActive)
-                .OrderBy(link => link.Gym!.Name)
-                .ThenBy(link => link.RoleName)
-                .FirstOrDefaultAsync(cancellationToken);
-        }
-
-        if (activeLink == null)
-        {
-            throw new ValidationAppException("The target user does not have an active gym role for impersonation.");
-        }
-
-        var refreshToken = tokenService.CreateRefreshToken(user.Id);
-        dbContext.RefreshTokens.Add(refreshToken);
-
-        dbContext.AuditLogs.Add(new AuditLog
-        {
-            ActorUserId = actorContext.UserId.Value,
-            GymId = activeLink.GymId,
-            EntityName = "ImpersonationSession",
-            EntityId = user.Id,
-            Action = "ImpersonationStart",
-            ChangedAtUtc = DateTime.UtcNow,
-            ChangesJson = JsonSerializer.Serialize(new
-            {
-                ActorUserId = actorContext.UserId.Value,
-                TargetUserId = user.Id,
-                ActiveGymCode = activeLink.Gym?.Code,
-                ActiveRole = activeLink.RoleName,
-                Reason = reason
-            })
-        });
-
-        await dbContext.SaveChangesAsync(cancellationToken);
-
-        var additionalClaims = new Claim[]
-        {
-            new(AppClaimTypes.ImpersonatedUserId, user.Id.ToString()),
-            new(AppClaimTypes.ImpersonatedByUserId, actorContext.UserId.Value.ToString()),
-            new(AppClaimTypes.ImpersonationReason, reason),
-            new(AppClaimTypes.IsImpersonated, "true")
-        };
-
-        return new StartImpersonationResponse
-        {
-            Jwt = tokenService.CreateJwt(user, systemRoles, activeLink, additionalClaims),
-            RefreshToken = refreshToken.RefreshToken,
-            ExpiresInSeconds = tokenService.AccessTokenLifetimeSeconds,
-            UserId = user.Id,
-            TargetUserId = user.Id,
-            ImpersonatedByUserId = actorContext.UserId.Value,
-            ImpersonationReason = reason,
-            ActiveGymId = activeLink.GymId,
-            GymCode = activeLink.Gym?.Code,
-            ActiveRole = activeLink.RoleName
-        };
-    }
 }

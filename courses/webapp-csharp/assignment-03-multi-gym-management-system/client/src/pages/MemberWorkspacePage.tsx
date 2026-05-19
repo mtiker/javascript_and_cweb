@@ -41,7 +41,7 @@ export function MemberWorkspacePage() {
         <div>
           <p className="workspace__eyebrow">Member workspace</p>
           <h2 className="workspace__title">My profile and actions</h2>
-          <p className="workspace__copy">Track memberships, bookings, payments, invoices, and outstanding follow-up tasks from one view.</p>
+          <p className="workspace__copy">Track memberships, bookings, payments, and outstanding follow-up tasks from one view.</p>
         </div>
       </header>
 
@@ -97,31 +97,6 @@ export function MemberWorkspacePage() {
                   <div className="record-card__body">
                     <strong>{action.title}</strong>
                     <span>{action.detail}</span>
-                  </div>
-                </article>
-              ))}
-            </div>
-          </section>
-
-          <section className="panel panel--list">
-            <div className="editor-header">
-              <div>
-                <p className="workspace__eyebrow">Invoices</p>
-                <h3>Finance snapshot</h3>
-              </div>
-            </div>
-
-            {workspace.invoices.length === 0 ? <p className="state">No invoices found.</p> : null}
-
-            <div className="record-list" role="list">
-              {workspace.invoices.map((invoice) => (
-                <article className="record-card" key={invoice.id} role="listitem">
-                  <div className="record-card__body">
-                    <strong>{invoice.invoiceNumber}</strong>
-                    <span>
-                      Due {formatDate(invoice.dueAtUtc)} / Outstanding {invoice.outstandingAmount.toFixed(2)} {invoice.currencyCode}
-                    </span>
-                    <span>{invoice.isOverdue ? "Overdue" : invoice.status.toString()}</span>
                   </div>
                 </article>
               ))}

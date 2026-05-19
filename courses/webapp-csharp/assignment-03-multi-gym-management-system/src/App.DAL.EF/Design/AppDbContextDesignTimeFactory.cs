@@ -1,5 +1,4 @@
 using App.DAL.EF.Tenant;
-using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
@@ -24,7 +23,7 @@ public class AppDbContextDesignTimeFactory : IDesignTimeDbContextFactory<AppDbCo
         var builder = new DbContextOptionsBuilder<AppDbContext>();
         builder.UseNpgsql(connectionString);
 
-        return new AppDbContext(builder.Options, new DesignTimeGymContext(), new HttpContextAccessor());
+        return new AppDbContext(builder.Options, new DesignTimeGymContext());
     }
 
     private sealed class DesignTimeGymContext : IGymContext

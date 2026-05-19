@@ -7,13 +7,11 @@ using App.DAL.EF.Tenant;
 using App.Domain;
 using App.Domain.Entities;
 using App.Domain.Enums;
-using App.DTO.v1.Finance;
 using App.DTO.v1.MembershipPackages;
 using App.DTO.v1.Memberships;
 using App.DTO.v1.Payments;
 using BuildingBlocks;
 using BuildingBlocks.Mediator;
-using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Modules.MembershipFinance;
@@ -59,64 +57,26 @@ public class MembershipFinanceModuleMediatorTests
     }
 
     [Fact]
-    public async Task Mediator_DispatchesMembershipStatusPaymentAndFinanceLedgerMessages()
+    public async Task Mediator_DispatchesMembershipStatusAndPaymentMessages()
     {
-        var (mediator, membership, finance) = CreateMediator();
+        var (mediator, membership) = CreateWorkflowMediator();
         var membershipId = Guid.NewGuid();
-        var memberId = Guid.NewGuid();
-        var invoiceId = Guid.NewGuid();
-        var paymentRequest = new PaymentCreateRequest
+
+        await mediator.SendAsync(new ListMembershipsQuery(GymCode));
+        await mediator.SendAsync(new UpdateMembershipStatusCommand(GymCode, membershipId, new MembershipStatusUpdateRequest { Status = MembershipStatus.Paused }));
+        await mediator.SendAsync(new ListPaymentsQuery(GymCode));
+        await mediator.SendAsync(new CreatePaymentCommand(GymCode, new PaymentCreateRequest
         {
             MembershipId = membershipId,
             Amount = 49m,
             CurrencyCode = "EUR",
             Reference = "PAY-MEM-1"
-        };
-        var invoiceCreate = new InvoiceCreateRequest
-        {
-            MemberId = memberId,
-            CurrencyCode = "EUR",
-            DueAtUtc = DateTime.UtcNow.AddDays(7),
-            Lines = [new InvoiceLineRequest { Description = "Membership", Quantity = 1m, UnitPrice = 49m }]
-        };
-        var invoicePayment = new InvoicePaymentRequest { Amount = 20m, Reference = "PAY-INV-1" };
-        var refund = new InvoicePaymentRequest { Amount = 5m, Reference = "REF-INV-1" };
-
-        await mediator.SendAsync(new ListMembershipsQuery(GymCode));
-        await mediator.SendAsync(new UpdateMembershipStatusCommand(GymCode, membershipId, new MembershipStatusUpdateRequest { Status = MembershipStatus.Paused }));
-        await mediator.SendAsync(new ListPaymentsQuery(GymCode));
-        await mediator.SendAsync(new CreatePaymentCommand(GymCode, paymentRequest));
-        await mediator.SendAsync(new CreateInvoiceCommand(GymCode, invoiceCreate));
-        await mediator.SendAsync(new PostInvoicePaymentCommand(GymCode, invoiceId, invoicePayment));
-        await mediator.SendAsync(new PostInvoiceRefundCommand(GymCode, invoiceId, refund));
-        var workspace = await mediator.SendAsync(new GetMemberFinanceWorkspaceQuery(GymCode, memberId));
+        }));
 
         Assert.Contains("memberships:list", membership.Calls);
         Assert.Contains($"memberships:status:{membershipId}:Paused", membership.Calls);
         Assert.Contains("payments:list", membership.Calls);
         Assert.Contains("payments:create:PAY-MEM-1", membership.Calls);
-        Assert.Contains("invoices:create:49", finance.Calls);
-        Assert.Contains($"invoices:payment:{invoiceId}:PAY-INV-1", finance.Calls);
-        Assert.Contains($"invoices:refund:{invoiceId}:REF-INV-1", finance.Calls);
-        Assert.Equal(24m, workspace.OutstandingBalance);
-    }
-
-    private static (IMediator Mediator, RecordingMembershipWorkflowService Membership, RecordingFinanceWorkspaceService Finance) CreateMediator()
-    {
-        var services = new ServiceCollection();
-        services.AddBuildingBlocks();
-        services.AddMembershipFinanceModule();
-        services.AddScoped<RecordingMembershipWorkflowService>();
-        services.AddScoped<RecordingFinanceWorkspaceService>();
-        services.AddScoped<App.BLL.Services.IMembershipWorkflowService>(provider => provider.GetRequiredService<RecordingMembershipWorkflowService>());
-        services.AddScoped<App.BLL.Services.IFinanceWorkspaceService>(provider => provider.GetRequiredService<RecordingFinanceWorkspaceService>());
-
-        var provider = services.BuildServiceProvider();
-        var scope = provider.CreateScope();
-        return (
-            scope.ServiceProvider.GetRequiredService<IMediator>(),
-            scope.ServiceProvider.GetRequiredService<RecordingMembershipWorkflowService>(),
-            scope.ServiceProvider.GetRequiredService<RecordingFinanceWorkspaceService>());
     }
 
     private static (IMediator Mediator, RecordingAuthorizationService Authorization) CreatePackageMediator(AppDbContext dbContext, Guid gymId)
@@ -144,7 +104,7 @@ public class MembershipFinanceModuleMediatorTests
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString("N"))
             .Options;
-        var dbContext = new AppDbContext(options, new TestGymContext(gymId), new HttpContextAccessor());
+        var dbContext = new AppDbContext(options, new TestGymContext(gymId));
         dbContext.Gyms.Add(new Gym
         {
             Id = gymId,
@@ -224,31 +184,10 @@ public class MembershipFinanceModuleMediatorTests
         }
     }
 
-    private sealed class RecordingFinanceWorkspaceService : DelegatingFinanceWorkspaceService
+    private static (IMediator Mediator, RecordingMembershipWorkflowService Membership) CreateWorkflowMediator()
     {
-        public List<string> Calls { get; } = [];
-
-        public RecordingFinanceWorkspaceService()
-        {
-            CreateInvoiceAsyncHandler = (_, request, _) =>
-            {
-                var amount = request.Lines.Sum(line => line.Quantity * line.UnitPrice);
-                Calls.Add($"invoices:create:{amount}");
-                return Task.FromResult(new InvoiceResponse { Id = Guid.NewGuid(), MemberId = request.MemberId, TotalAmount = amount, OutstandingAmount = amount });
-            };
-            AddInvoicePaymentAsyncHandler = (_, id, request, _) =>
-            {
-                Calls.Add($"invoices:payment:{id}:{request.Reference}");
-                return Task.FromResult(new InvoiceResponse { Id = id, PaidAmount = request.Amount, OutstandingAmount = 29m });
-            };
-            AddInvoiceRefundAsyncHandler = (_, id, request, _) =>
-            {
-                Calls.Add($"invoices:refund:{id}:{request.Reference}");
-                return Task.FromResult(new InvoiceResponse { Id = id, PaidAmount = 15m, OutstandingAmount = 34m });
-            };
-            GetWorkspaceAsyncHandler = (_, memberId, _) =>
-                Task.FromResult(new FinanceWorkspaceResponse { MemberId = memberId, OutstandingBalance = 24m });
-        }
+        var membership = new RecordingMembershipWorkflowService();
+        return (new MembershipFinanceMediatorAdapter(membership), membership);
     }
 
     private sealed class TestGymContext(Guid gymId) : IGymContext

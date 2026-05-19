@@ -161,7 +161,7 @@ export function SessionsPage() {
         basePrice: Number(scheduleForm.basePrice),
         currencyCode: scheduleForm.currencyCode.trim() || "EUR",
         status: Number(scheduleForm.status) as TrainingSessionStatus,
-        trainerContractIds: [],
+        trainerStaffId: null,
       });
 
       setSessions((current) => [...current, created].sort((left, right) => left.startAtUtc.localeCompare(right.startAtUtc)));
@@ -374,8 +374,8 @@ export function SessionsPage() {
                   </dd>
                 </div>
                 <div>
-                  <dt>{t("Trainers")}</dt>
-                  <dd>{activeSession.trainerContractIds.length || "No assigned trainers"}</dd>
+                  <dt>{t("Trainer")}</dt>
+                  <dd>{activeSession.trainerName || "No assigned trainer"}</dd>
                 </div>
               </dl>
 

@@ -4,23 +4,6 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace App.DAL.EF.Configurations;
 
-public sealed class OpeningHoursConfiguration : IEntityTypeConfiguration<OpeningHours>
-{
-    public void Configure(EntityTypeBuilder<OpeningHours> builder)
-    {
-        builder.HasIndex(hours => new { hours.GymId, hours.Weekday, hours.ValidFrom, hours.ValidTo });
-    }
-}
-
-public sealed class OpeningHoursExceptionConfiguration : IEntityTypeConfiguration<OpeningHoursException>
-{
-    public void Configure(EntityTypeBuilder<OpeningHoursException> builder)
-    {
-        builder.HasIndex(exceptionEntity => new { exceptionEntity.GymId, exceptionEntity.ExceptionDate })
-            .IsUnique();
-    }
-}
-
 public sealed class EquipmentConfiguration : IEntityTypeConfiguration<Equipment>
 {
     public void Configure(EntityTypeBuilder<Equipment> builder)
@@ -54,25 +37,5 @@ public sealed class MaintenanceTaskConfiguration : IEntityTypeConfiguration<Main
             .HasForeignKey(task => task.CreatedByStaffId);
 
         builder.HasIndex(task => new { task.GymId, task.EquipmentId, task.Status, task.DueAtUtc });
-    }
-}
-
-public sealed class MaintenanceTaskAssignmentHistoryConfiguration : IEntityTypeConfiguration<MaintenanceTaskAssignmentHistory>
-{
-    public void Configure(EntityTypeBuilder<MaintenanceTaskAssignmentHistory> builder)
-    {
-        builder.HasOne(history => history.MaintenanceTask)
-            .WithMany(task => task.AssignmentHistory)
-            .HasForeignKey(history => history.MaintenanceTaskId);
-
-        builder.HasOne(history => history.AssignedStaff)
-            .WithMany(staff => staff.MaintenanceAssignmentEvents)
-            .HasForeignKey(history => history.AssignedStaffId);
-
-        builder.HasOne(history => history.AssignedByStaff)
-            .WithMany(staff => staff.MaintenanceAssignmentChanges)
-            .HasForeignKey(history => history.AssignedByStaffId);
-
-        builder.HasIndex(history => new { history.GymId, history.MaintenanceTaskId, history.AssignedAtUtc });
     }
 }

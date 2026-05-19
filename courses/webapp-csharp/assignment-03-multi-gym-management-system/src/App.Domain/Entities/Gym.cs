@@ -34,8 +34,6 @@ public class Gym : BaseEntity
     public bool IsActive { get; set; } = true;
 
     public GymSettings? Settings { get; set; }
-    public ICollection<Subscription> Subscriptions { get; set; } = new List<Subscription>();
-    public ICollection<SupportTicket> SupportTickets { get; set; } = new List<SupportTicket>();
     public ICollection<GymContact> Contacts { get; set; } = new List<GymContact>();
     public ICollection<AppUserGymRole> UserRoles { get; set; } = new List<AppUserGymRole>();
 }

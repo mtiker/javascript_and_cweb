@@ -9,7 +9,6 @@ using App.Domain.Common;
 using App.Domain.Entities;
 using App.Domain.Enums;
 using App.DTO.v1.MaintenanceTasks;
-using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 
 namespace WebApp.Tests.Unit;
@@ -78,7 +77,7 @@ public class MaintenanceWorkflowServiceTests
     }
 
     [Fact]
-    public async Task UpdateTaskAssignmentAsync_AppendsAssignmentHistory()
+    public async Task UpdateTaskAssignmentAsync_UpdatesAssignedStaff()
     {
         await using var dbContext = CreateDbContext();
         var seed = await SeedMaintenanceFixtureAsync(dbContext);
@@ -90,13 +89,9 @@ public class MaintenanceWorkflowServiceTests
             AssignedByStaffId = seed.AdminStaffId,
             Notes = "  Escalated to caretaker  "
         });
-        var history = await service.GetTaskAssignmentHistoryAsync(GymCode, seed.UnassignedTaskId);
 
         Assert.Equal(seed.CaretakerStaffId, response.AssignedStaffId);
-        var entry = Assert.Single(history);
-        Assert.Equal(seed.CaretakerStaffId, entry.AssignedStaffId);
-        Assert.Equal(seed.AdminStaffId, entry.AssignedByStaffId);
-        Assert.Equal("Escalated to caretaker", entry.Notes);
+        Assert.Equal("Escalated to caretaker", response.Notes);
     }
 
     [Fact]
@@ -177,10 +172,7 @@ public class MaintenanceWorkflowServiceTests
             .UseInMemoryDatabase($"MaintenanceWorkflowService-{Guid.NewGuid():N}")
             .Options;
 
-        return new AppDbContext(
-            options,
-            new TestGymContext(),
-            new HttpContextAccessor());
+        return new AppDbContext(options, new TestGymContext());
     }
 
     private static async Task<MaintenanceFixture> SeedMaintenanceFixtureAsync(
@@ -302,9 +294,6 @@ public class MaintenanceWorkflowServiceTests
 
     private sealed class NoopSubscriptionTierLimitService : ISubscriptionTierLimitService
     {
-        public Task<SubscriptionPlan> GetCurrentPlanAsync(Guid gymId, CancellationToken cancellationToken = default) =>
-            Task.FromResult(SubscriptionPlan.Enterprise);
-
         public Task EnsureCanCreateMemberAsync(Guid gymId, CancellationToken cancellationToken = default) =>
             Task.CompletedTask;
 

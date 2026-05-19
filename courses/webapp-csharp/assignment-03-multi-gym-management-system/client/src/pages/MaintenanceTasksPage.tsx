@@ -22,7 +22,6 @@ export function MaintenanceTasksPage() {
   const [isGeneratingDue, setIsGeneratingDue] = useState(false);
   const [statusUpdatingTaskId, setStatusUpdatingTaskId] = useState<string | null>(null);
   const [assignmentUpdatingTaskId, setAssignmentUpdatingTaskId] = useState<string | null>(null);
-  const [historyLoadingTaskId, setHistoryLoadingTaskId] = useState<string | null>(null);
   const [deletingTaskId, setDeletingTaskId] = useState<string | null>(null);
   const [pageError, setPageError] = useState<string | null>(null);
   const [notice, setNotice] = useState<Notice | null>(null);
@@ -185,27 +184,6 @@ export function MaintenanceTasksPage() {
       });
     } finally {
       setAssignmentUpdatingTaskId(null);
-    }
-  }
-
-  async function refreshAssignmentHistory(taskId: string) {
-    if (!session?.activeGymCode) {
-      return;
-    }
-
-    setHistoryLoadingTaskId(taskId);
-
-    try {
-      const history = await api.getMaintenanceTaskAssignmentHistory(session.activeGymCode, taskId);
-      setTasks((current) => current.map((task) => (task.id === taskId ? { ...task, assignmentHistory: history } : task)));
-    } catch (error) {
-      setNotice({
-        tone: "error",
-        title: "Could not refresh assignment history",
-        messages: getErrorMessages(error),
-      });
-    } finally {
-      setHistoryLoadingTaskId(null);
     }
   }
 
@@ -482,14 +460,6 @@ export function MaintenanceTasksPage() {
                   <button className="button" disabled={assignmentUpdatingTaskId === task.id} onClick={() => void updateTaskAssignment(task.id)} type="button">
                     {assignmentUpdatingTaskId === task.id ? "Saving..." : "Update assignment"}
                   </button>
-                  <button
-                    className="button button--ghost"
-                    disabled={historyLoadingTaskId === task.id}
-                    onClick={() => void refreshAssignmentHistory(task.id)}
-                    type="button"
-                  >
-                    {historyLoadingTaskId === task.id ? "Refreshing..." : "Refresh history"}
-                  </button>
                   {canManageTasks ? (
                     <button className="button button--danger" disabled={deletingTaskId === task.id} onClick={() => void deleteTask(task.id)} type="button">
                       {deletingTaskId === task.id ? "Deleting..." : "Delete"}
@@ -498,30 +468,6 @@ export function MaintenanceTasksPage() {
                 </div>
               ) : null}
 
-              {task.assignmentHistory.length > 0 ? (
-                <div className="table-scroll">
-                  <table className="mini-table">
-                    <thead>
-                      <tr>
-                        <th>Assigned at</th>
-                        <th>Assigned to</th>
-                        <th>Assigned by</th>
-                        <th>Notes</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {task.assignmentHistory.slice(0, 5).map((entry) => (
-                        <tr key={entry.id}>
-                          <td>{formatDateTime(entry.assignedAtUtc)}</td>
-                          <td>{entry.assignedStaffName || "Unassigned"}</td>
-                          <td>{entry.assignedByStaffName || "-"}</td>
-                          <td>{entry.notes || "-"}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ) : null}
             </article>
           ))}
         </div>

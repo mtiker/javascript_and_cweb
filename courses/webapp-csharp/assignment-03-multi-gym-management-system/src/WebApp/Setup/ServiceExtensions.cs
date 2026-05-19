@@ -12,6 +12,7 @@ public static class ServiceExtensions
     public static IServiceCollection AddAppServices(this IServiceCollection services)
     {
         services.AddScoped<IUserContextService, UserContextService>();
+        services.AddScoped<IWorkspaceContextService, WorkspaceContextService>();
         services.AddScoped<ICurrentActorResolver, CurrentActorResolver>();
         services.AddScoped<ITenantAccessChecker, TenantAccessChecker>();
         services.AddScoped<IResourceAuthorizationChecker, ResourceAuthorizationChecker>();
@@ -32,8 +33,6 @@ public static class ServiceExtensions
         services.AddScoped<IPaymentService, PaymentService>();
         services.AddScoped<IBookingPricingService, BookingPricingService>();
         services.AddScoped<IMembershipWorkflowService, MembershipWorkflowService>();
-        services.AddScoped<ICoachingPlanService, CoachingPlanService>();
-        services.AddScoped<IFinanceWorkspaceService, FinanceWorkspaceService>();
         services.AddScoped<ITrainingWorkflowService, TrainingWorkflowService>();
         services.AddScoped<IMaintenanceWorkflowService, MaintenanceWorkflowService>();
         services.AddScoped<IStaffWorkflowService, StaffWorkflowService>();
@@ -50,6 +49,8 @@ public static class ServiceExtensions
         services.AddScoped<IAdminTrainingCategoriesPageService, AdminTrainingCategoriesPageService>();
         services.AddScoped<IClientDashboardPageService, ClientDashboardPageService>();
         services.AddScoped<IClientSessionsPageService, ClientSessionsPageService>();
+        services.AddScoped<IClientProfilePageService, ClientProfilePageService>();
+        services.AddScoped<IClientMaintenancePageService, ClientMaintenancePageService>();
 
         return services;
     }

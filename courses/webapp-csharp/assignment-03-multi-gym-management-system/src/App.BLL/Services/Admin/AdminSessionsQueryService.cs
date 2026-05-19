@@ -10,7 +10,7 @@ public sealed class AdminSessionsQueryService(IAppUnitOfWork unitOfWork) : IAdmi
 
     public async Task<IReadOnlyList<AdminSessionRow>> GetSessionsAsync(Guid gymId, CancellationToken cancellationToken = default)
     {
-        var sessions = await unitOfWork.TrainingSessions.ListWithBookingsAndShiftsByGymAsync(gymId, DisplayLimit, cancellationToken);
+        var sessions = await unitOfWork.TrainingSessions.ListWithBookingsAndTrainerByGymAsync(gymId, DisplayLimit, cancellationToken);
         return sessions
             .Select(session => new AdminSessionRow(
                 session.Name,
@@ -24,10 +24,7 @@ public sealed class AdminSessionsQueryService(IAppUnitOfWork unitOfWork) : IAdmi
     }
 
     private static IReadOnlyList<string> ResolveTrainerNames(TrainingSession session) =>
-        session.WorkShifts
-            .Where(shift => shift.ShiftType == ShiftType.Training)
-            .Select(shift => $"{shift.Contract?.Staff?.Person?.FirstName} {shift.Contract?.Staff?.Person?.LastName}".Trim())
-            .Where(name => !string.IsNullOrWhiteSpace(name))
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToArray();
+        session.TrainerStaff is null
+            ? []
+            : [$"{session.TrainerStaff.Person?.FirstName} {session.TrainerStaff.Person?.LastName}".Trim()];
 }

@@ -7,5 +7,5 @@ public class PlatformAnalyticsResponse
     public int GymCount { get; set; }
     public int UserCount { get; set; }
     public int MemberCount { get; set; }
-    public int OpenSupportTicketCount { get; set; }
+    public int ActiveMaintenanceTaskCount { get; set; }
 }

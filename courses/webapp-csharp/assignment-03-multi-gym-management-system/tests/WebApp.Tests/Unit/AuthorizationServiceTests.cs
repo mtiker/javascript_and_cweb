@@ -7,7 +7,6 @@ using App.Domain;
 using App.Domain.Common;
 using App.Domain.Entities;
 using App.Domain.Enums;
-using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 
 namespace WebApp.Tests.Unit;
@@ -124,33 +123,20 @@ public class AuthorizationServiceTests
         var trainerPersonId = Guid.NewGuid();
         var trainer = CreateStaff(gym.Id, trainerPersonId, "STF-TRAINER");
         var otherTrainer = CreateStaff(gym.Id, Guid.NewGuid(), "STF-OTHER");
-        var jobRole = CreateJobRole(gym.Id, "trainer");
-        var trainerContract = CreateContract(gym.Id, trainer, jobRole);
         var category = CreateCategory(gym.Id);
         var assignedSession = CreateTrainingSession(gym.Id, category, "Assigned");
+        assignedSession.TrainerStaffId = trainer.Id;
         var unassignedSession = CreateTrainingSession(gym.Id, category, "Unassigned");
         var member = CreateMember(gym.Id, Guid.NewGuid(), "MEM-BOOK");
         var assignedBooking = CreateBooking(gym.Id, member, assignedSession);
         var unassignedBooking = CreateBooking(gym.Id, member, unassignedSession);
-        var assignedShift = new WorkShift
-        {
-            GymId = gym.Id,
-            Contract = trainerContract,
-            TrainingSession = assignedSession,
-            ShiftType = ShiftType.Training,
-            StartAtUtc = assignedSession.StartAtUtc,
-            EndAtUtc = assignedSession.EndAtUtc
-        };
 
         dbContext.Gyms.Add(gym);
         dbContext.Staff.AddRange(trainer, otherTrainer);
-        dbContext.JobRoles.Add(jobRole);
-        dbContext.EmploymentContracts.Add(trainerContract);
         dbContext.TrainingCategories.Add(category);
         dbContext.TrainingSessions.AddRange(assignedSession, unassignedSession);
         dbContext.Members.Add(member);
         dbContext.Bookings.AddRange(assignedBooking, unassignedBooking);
-        dbContext.WorkShifts.Add(assignedShift);
         await dbContext.SaveChangesAsync();
 
         var service = CreateService(dbContext, CreateContext(
@@ -236,10 +222,7 @@ public class AuthorizationServiceTests
             .UseInMemoryDatabase($"AuthorizationService-{Guid.NewGuid():N}")
             .Options;
 
-        return new AppDbContext(
-            options,
-            new TestGymContext(),
-            new HttpContextAccessor());
+        return new AppDbContext(options, new TestGymContext());
     }
 
     private static Gym CreateGym(string code) =>
@@ -281,24 +264,6 @@ public class AuthorizationServiceTests
                 LastName = staffCode,
                 PersonalCode = $"{Guid.NewGuid():N}"[..11]
             }
-        };
-
-    private static JobRole CreateJobRole(Guid gymId, string code) =>
-        new()
-        {
-            GymId = gymId,
-            Code = code,
-            Title = new LangStr("Role", "en")
-        };
-
-    private static EmploymentContract CreateContract(Guid gymId, Staff staff, JobRole jobRole) =>
-        new()
-        {
-            GymId = gymId,
-            Staff = staff,
-            PrimaryJobRole = jobRole,
-            WorkloadPercent = 100m,
-            ContractStatus = ContractStatus.Active
         };
 
     private static TrainingCategory CreateCategory(Guid gymId) =>

@@ -1,13 +1,12 @@
 using System.Globalization;
 using App.BLL.Exceptions;
+using App.BLL.Contracts.Persistence;
 using App.BLL.Services;
 using App.BLL.Services.Admin;
-using App.DAL.EF;
 using App.Domain.Enums;
 using App.DTO.v1.Members;
 using App.DTO.v1.MembershipPackages;
 using App.DTO.v1.TrainingCategories;
-using Microsoft.EntityFrameworkCore;
 using WebApp.Models;
 
 namespace WebApp.Areas.Admin.Services;
@@ -127,14 +126,6 @@ public sealed class AdminOperationsPageService(IAdminOperationsQueryService oper
         return new AdminOperationsPageViewModel
         {
             GymCode = gymCode,
-            OpeningHours = snapshot.OpeningHours
-                .Select(row => new OpeningHoursSummaryViewModel
-                {
-                    Weekday = row.Weekday,
-                    OpensAt = row.OpensAt,
-                    ClosesAt = row.ClosesAt
-                })
-                .ToArray(),
             Equipment = snapshot.Equipment
                 .Select(row => new EquipmentSummaryViewModel
                 {
@@ -356,23 +347,15 @@ public interface IAdminMembershipPackagesPageService
 public sealed class AdminMembershipPackagesPageService(
     IMembershipPackageService membershipPackageService,
     IAuthorizationService authorizationService,
-    AppDbContext dbContext) : IAdminMembershipPackagesPageService
+    IAppUnitOfWork unitOfWork) : IAdminMembershipPackagesPageService
 {
     public async Task<AdminMembershipPackagesPageViewModel> BuildIndexAsync(string gymCode, CancellationToken cancellationToken = default)
     {
-        var gymId = await authorizationService.EnsureTenantAccessAsync(
-            gymCode,
-            cancellationToken,
-            App.Domain.RoleNames.GymOwner,
-            App.Domain.RoleNames.GymAdmin);
-
-        var packages = await dbContext.MembershipPackages
-            .AsNoTracking()
-            .Where(package => package.GymId == gymId)
-            .OrderBy(package => package.BasePrice)
-            .ToListAsync(cancellationToken);
+        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, App.Domain.RoleNames.GymOwner, App.Domain.RoleNames.GymAdmin);
+        var packages = await unitOfWork.MembershipPackages.ListByGymAsync(gymId, cancellationToken);
 
         var summaries = packages
+            .OrderBy(package => package.BasePrice)
             .Select(package => new AdminMembershipPackageSummaryViewModel
             {
                 Id = package.Id,
@@ -489,15 +472,8 @@ public sealed class AdminMembershipPackagesPageService(
 
     private async Task<App.Domain.Entities.MembershipPackage?> FindPackageAsync(string gymCode, Guid packageId, CancellationToken cancellationToken)
     {
-        var gymId = await authorizationService.EnsureTenantAccessAsync(
-            gymCode,
-            cancellationToken,
-            App.Domain.RoleNames.GymOwner,
-            App.Domain.RoleNames.GymAdmin);
-
-        return await dbContext.MembershipPackages
-            .AsNoTracking()
-            .FirstOrDefaultAsync(package => package.GymId == gymId && package.Id == packageId, cancellationToken);
+        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, App.Domain.RoleNames.GymOwner, App.Domain.RoleNames.GymAdmin);
+        return await unitOfWork.MembershipPackages.FindAsync(gymId, packageId, cancellationToken);
     }
 
     private static MembershipPackageUpsertRequest ToUpsertRequest(AdminMembershipPackageFormViewModel form)
@@ -560,38 +536,24 @@ public interface IAdminTrainingCategoriesPageService
 public sealed class AdminTrainingCategoriesPageService(
     ITrainingWorkflowService trainingWorkflowService,
     IAuthorizationService authorizationService,
-    AppDbContext dbContext) : IAdminTrainingCategoriesPageService
+    IAppUnitOfWork unitOfWork) : IAdminTrainingCategoriesPageService
 {
     public async Task<AdminTrainingCategoriesPageViewModel> BuildIndexAsync(string gymCode, CancellationToken cancellationToken = default)
     {
-        var gymId = await authorizationService.EnsureTenantAccessAsync(
-            gymCode,
-            cancellationToken,
-            App.Domain.RoleNames.GymOwner,
-            App.Domain.RoleNames.GymAdmin);
-
-        var culture = CultureInfo.CurrentUICulture.Name;
-        var today = DateOnly.FromDateTime(DateTime.UtcNow.Date);
-        var categories = await dbContext.TrainingCategories
-            .AsNoTracking()
-            .Where(category => category.GymId == gymId)
-            .Where(category => !category.ValidTo.HasValue || category.ValidTo > today)
-            .OrderBy(category => category.ValidFrom)
-            .ToListAsync(cancellationToken);
+        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, App.Domain.RoleNames.GymOwner, App.Domain.RoleNames.GymAdmin);
+        var categories = await unitOfWork.TrainingCategories.ListByGymAsync(gymId, cancellationToken);
 
         var summaries = categories
+            .OrderBy(category => category.Name.ToString(), StringComparer.CurrentCulture)
             .Select(category =>
             {
-                var primaryName = category.Name.Translate(culture) ?? category.Name.ToString();
-                var primaryDescription = category.Description?.Translate(culture) ?? category.Description?.ToString();
-
                 return new AdminTrainingCategorySummaryViewModel
                 {
                     Id = category.Id,
-                    Name = primaryName,
-                    AlternateNames = CollectAlternates(category.Name, primaryName),
-                    Description = primaryDescription,
-                    AlternateDescriptions = CollectAlternates(category.Description, primaryDescription)
+                    Name = category.Name.ToString(),
+                    AlternateNames = GetAlternateTranslations(category.Name),
+                    Description = category.Description?.ToString(),
+                    AlternateDescriptions = GetAlternateTranslations(category.Description)
                 };
             })
             .ToArray();
@@ -611,17 +573,13 @@ public sealed class AdminTrainingCategoriesPageService(
             return null;
         }
 
-        var culture = CultureInfo.CurrentUICulture.Name;
-        var primaryName = category.Name.Translate(culture) ?? category.Name.ToString();
-        var primaryDescription = category.Description?.Translate(culture) ?? category.Description?.ToString();
-
         return new AdminTrainingCategoryFormViewModel
         {
             Id = category.Id,
-            Name = primaryName,
-            Description = primaryDescription,
-            AlternateNames = CollectAlternates(category.Name, primaryName),
-            AlternateDescriptions = CollectAlternates(category.Description, primaryDescription),
+            Name = category.Name.ToString(),
+            Description = category.Description?.ToString(),
+            AlternateNames = GetAlternateTranslations(category.Name),
+            AlternateDescriptions = GetAlternateTranslations(category.Description),
             GymCode = gymCode
         };
     }
@@ -634,31 +592,14 @@ public sealed class AdminTrainingCategoriesPageService(
             return null;
         }
 
-        var culture = CultureInfo.CurrentUICulture.Name;
-        var primaryName = category.Name.Translate(culture) ?? category.Name.ToString();
-
         return new AdminTrainingCategoryDeleteViewModel
         {
             Id = category.Id,
-            Name = primaryName,
-            AlternateNames = CollectAlternates(category.Name, primaryName),
-            Description = category.Description?.Translate(culture) ?? category.Description?.ToString(),
+            Name = category.Name.Translate(CultureInfo.CurrentUICulture.Name) ?? category.Name.ToString(),
+            AlternateNames = Array.Empty<string>(),
+            Description = category.Description?.Translate(CultureInfo.CurrentUICulture.Name) ?? category.Description?.ToString(),
             GymCode = gymCode
         };
-    }
-
-    private static IReadOnlyCollection<string> CollectAlternates(App.Domain.Common.LangStr? langStr, string? primary)
-    {
-        if (langStr is null)
-        {
-            return Array.Empty<string>();
-        }
-
-        return langStr.Values
-            .Where(value => !string.IsNullOrWhiteSpace(value))
-            .Where(value => !string.Equals(value, primary, StringComparison.Ordinal))
-            .Distinct(StringComparer.Ordinal)
-            .ToArray();
     }
 
     public async Task<AdminTrainingCategoryOperationResult> CreateAsync(string gymCode, AdminTrainingCategoryFormViewModel form, CancellationToken cancellationToken = default)
@@ -714,15 +655,22 @@ public sealed class AdminTrainingCategoriesPageService(
 
     private async Task<App.Domain.Entities.TrainingCategory?> FindCategoryAsync(string gymCode, Guid categoryId, CancellationToken cancellationToken)
     {
-        var gymId = await authorizationService.EnsureTenantAccessAsync(
-            gymCode,
-            cancellationToken,
-            App.Domain.RoleNames.GymOwner,
-            App.Domain.RoleNames.GymAdmin);
+        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, App.Domain.RoleNames.GymOwner, App.Domain.RoleNames.GymAdmin);
+        return await unitOfWork.TrainingCategories.FindAsync(gymId, categoryId, cancellationToken);
+    }
 
-        return await dbContext.TrainingCategories
-            .AsNoTracking()
-            .FirstOrDefaultAsync(category => category.GymId == gymId && category.Id == categoryId, cancellationToken);
+    private static IReadOnlyCollection<string> GetAlternateTranslations(App.Domain.Common.LangStr? value)
+    {
+        if (value is null)
+        {
+            return Array.Empty<string>();
+        }
+
+        var primary = value.ToString();
+        return value.Values
+            .Where(translation => !string.Equals(translation, primary, StringComparison.Ordinal))
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
     }
 
     private static TrainingCategoryUpsertRequest ToUpsertRequest(AdminTrainingCategoryFormViewModel form)

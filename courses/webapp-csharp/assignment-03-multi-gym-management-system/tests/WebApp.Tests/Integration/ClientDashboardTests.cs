@@ -15,7 +15,9 @@ public class ClientDashboardTests(CustomWebApplicationFactory factory) : IClassF
 
         response.EnsureSuccessStatusCode();
         Assert.Contains("/css/site.css", html);
-        Assert.Contains("class=\"topbar\"", html);
+        Assert.Contains("GymOps", html);
+        Assert.Contains("class=\"area-toolbar", html);
+        Assert.Contains("bi bi-heart-pulse", html);
         Assert.Contains("peak-forge", html);
     }
 

@@ -58,29 +58,6 @@ public sealed class GymSettingsConfiguration : IEntityTypeConfiguration<GymSetti
     }
 }
 
-public sealed class SubscriptionConfiguration : IEntityTypeConfiguration<Subscription>
-{
-    public void Configure(EntityTypeBuilder<Subscription> builder)
-    {
-        builder.HasOne(subscription => subscription.Gym)
-            .WithMany(gym => gym.Subscriptions)
-            .HasForeignKey(subscription => subscription.GymId);
-
-        builder.Property(subscription => subscription.MonthlyPrice)
-            .HasPrecision(12, 2);
-    }
-}
-
-public sealed class SupportTicketConfiguration : IEntityTypeConfiguration<SupportTicket>
-{
-    public void Configure(EntityTypeBuilder<SupportTicket> builder)
-    {
-        builder.HasOne(ticket => ticket.Gym)
-            .WithMany(gym => gym.SupportTickets)
-            .HasForeignKey(ticket => ticket.GymId);
-    }
-}
-
 public sealed class AppUserGymRoleConfiguration : IEntityTypeConfiguration<AppUserGymRole>
 {
     public void Configure(EntityTypeBuilder<AppUserGymRole> builder)
@@ -95,13 +72,5 @@ public sealed class AppUserGymRoleConfiguration : IEntityTypeConfiguration<AppUs
         builder.HasOne(link => link.Gym)
             .WithMany(gym => gym.UserRoles)
             .HasForeignKey(link => link.GymId);
-    }
-}
-
-public sealed class AuditLogConfiguration : IEntityTypeConfiguration<AuditLog>
-{
-    public void Configure(EntityTypeBuilder<AuditLog> builder)
-    {
-        builder.HasIndex(log => new { log.GymId, log.ChangedAtUtc });
     }
 }

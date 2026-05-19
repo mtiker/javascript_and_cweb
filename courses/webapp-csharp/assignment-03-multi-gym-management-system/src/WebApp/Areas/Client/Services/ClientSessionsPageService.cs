@@ -73,7 +73,6 @@ public sealed class ClientSessionsPageService(
     IUserContextService userContextService,
     IAuthorizationService authorizationService,
     ITrainingWorkflowService trainingWorkflowService,
-    IMaintenanceWorkflowService maintenanceWorkflowService,
     IClientSessionsQueryService sessionsQueryService) : IClientSessionsPageService
 {
     public async Task<ClientSessionsPageResult<SessionsPageViewModel>> BuildIndexAsync(CancellationToken cancellationToken = default)
@@ -87,9 +86,7 @@ public sealed class ClientSessionsPageService(
         return ClientSessionsPageResult<SessionsPageViewModel>.Success(new SessionsPageViewModel
         {
             GymCode = context.ActiveGymCode!,
-            Sessions = await trainingWorkflowService.GetSessionsAsync(context.ActiveGymCode!, cancellationToken),
-            OpeningHours = await maintenanceWorkflowService.GetOpeningHoursAsync(context.ActiveGymCode!, cancellationToken),
-            OpeningHourExceptions = await maintenanceWorkflowService.GetOpeningHourExceptionsAsync(context.ActiveGymCode!, cancellationToken)
+            Sessions = await trainingWorkflowService.GetSessionsAsync(context.ActiveGymCode!, cancellationToken)
         });
     }
 
@@ -123,8 +120,6 @@ public sealed class ClientSessionsPageService(
             Session = session,
             CategoryName = snapshot.CategoryName?.Translate(culture) ?? string.Empty,
             TrainerNames = snapshot.TrainerNames,
-            OpeningHours = await maintenanceWorkflowService.GetOpeningHoursAsync(gymCode, cancellationToken),
-            OpeningHourExceptions = await maintenanceWorkflowService.GetOpeningHourExceptionsAsync(gymCode, cancellationToken),
             CurrentMemberId = currentMember?.Id,
             CurrentBookingId = snapshot.CurrentBooking?.BookingId,
             CurrentBookingStatus = snapshot.CurrentBooking?.Status,

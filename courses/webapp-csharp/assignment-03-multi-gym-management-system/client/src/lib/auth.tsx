@@ -30,7 +30,7 @@ export function resolveApiBaseUrl(
 
 const DEFAULT_API_BASE_URL = resolveApiBaseUrl();
 const CLIENT_ROLES = new Set(["GymAdmin", "GymOwner", "Member", "Trainer", "Caretaker"]);
-const SYSTEM_ROLES = new Set(["SystemAdmin", "SystemSupport", "SystemBilling"]);
+const SYSTEM_ROLES = new Set(["SystemAdmin"]);
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ apiBaseUrl = DEFAULT_API_BASE_URL, children, initialSession }: AuthProviderProps) {
@@ -64,7 +64,7 @@ export function AuthProvider({ apiBaseUrl = DEFAULT_API_BASE_URL, children, init
 
     if (!canUseClient(nextSession)) {
       persistSession(null);
-      throw new Error("This account does not have a supported SaaS role.");
+      throw new Error("This account does not have a supported Final2 demo role.");
     }
 
     persistSession(nextSession);

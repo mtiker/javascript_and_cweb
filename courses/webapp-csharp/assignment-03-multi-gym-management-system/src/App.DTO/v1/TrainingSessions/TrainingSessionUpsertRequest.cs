@@ -13,5 +13,5 @@ public class TrainingSessionUpsertRequest
     public decimal BasePrice { get; set; }
     public string CurrencyCode { get; set; } = "EUR";
     public TrainingSessionStatus Status { get; set; } = TrainingSessionStatus.Draft;
-    public List<Guid> TrainerContractIds { get; set; } = [];
+    public Guid? TrainerStaffId { get; set; }
 }

@@ -6,7 +6,6 @@ using App.DAL.EF.Repositories;
 using App.DAL.EF.Tenant;
 using App.Domain.Entities;
 using App.Domain.Enums;
-using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using App.DTO.v1.Memberships;
 
@@ -22,7 +21,7 @@ public class MembershipWorkflowServiceTests
             .Options;
 
         var gymId = Guid.NewGuid();
-        await using var dbContext = new AppDbContext(options, new TestGymContext(gymId), new HttpContextAccessor());
+        await using var dbContext = new AppDbContext(options, new TestGymContext(gymId));
 
         var person = new Person { FirstName = "Test", LastName = "Member" };
         var member = new Member { GymId = gymId, Person = person, MemberCode = "MEM-1" };
@@ -82,7 +81,7 @@ public class MembershipWorkflowServiceTests
             .Options;
 
         var gymId = Guid.NewGuid();
-        await using var dbContext = new AppDbContext(options, new TestGymContext(gymId), new HttpContextAccessor());
+        await using var dbContext = new AppDbContext(options, new TestGymContext(gymId));
 
         var membership = new Membership
         {
@@ -127,7 +126,7 @@ public class MembershipWorkflowServiceTests
             .Options;
 
         var gymId = Guid.NewGuid();
-        await using var dbContext = new AppDbContext(options, new TestGymContext(gymId), new HttpContextAccessor());
+        await using var dbContext = new AppDbContext(options, new TestGymContext(gymId));
 
         var membership = new Membership
         {

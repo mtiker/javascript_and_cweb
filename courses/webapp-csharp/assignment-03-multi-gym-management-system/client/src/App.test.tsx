@@ -55,7 +55,7 @@ describe("App routing and auth", () => {
     expect(await screen.findByRole("heading", { name: "React SaaS client" })).toBeInTheDocument();
   });
 
-  it("routes system accounts to the platform console", async () => {
+  it("routes system admin accounts to the member management workspace", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(jsonResponse([])));
 
     render(
@@ -66,7 +66,7 @@ describe("App routing and auth", () => {
             activeGymCode: null,
             activeGymId: null,
             activeRole: null,
-            systemRoles: ["SystemBilling"],
+            systemRoles: ["SystemAdmin"],
           }}
         >
           <MemoryRouter initialEntries={["/"]}>
@@ -76,7 +76,7 @@ describe("App routing and auth", () => {
       </LanguageProvider>,
     );
 
-    expect(await screen.findByRole("heading", { name: "Platform and Tenant Console" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Members" })).toBeInTheDocument();
   });
 
   it("lets assigned multi-gym users switch tenant and role from the shell", async () => {
@@ -164,7 +164,6 @@ describe("App routing and auth", () => {
             memberships: [],
             payments: [],
             bookings: [],
-            invoices: [],
             attendedSessionCount: 0,
             upcomingBookingCount: 0,
             outstandingBalance: 0,
@@ -191,7 +190,7 @@ describe("App routing and auth", () => {
     expect(await screen.findByRole("heading", { name: "My profile and actions" })).toBeInTheDocument();
   });
 
-  it("routes trainer role to the coaching workspace landing page", async () => {
+  it("routes trainer role to the sessions landing page", async () => {
     vi.stubGlobal(
       "fetch",
       vi
@@ -216,6 +215,6 @@ describe("App routing and auth", () => {
       </LanguageProvider>,
     );
 
-    expect(await screen.findByRole("heading", { name: "Coaching workspace" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Sessions" })).toBeInTheDocument();
   });
 });

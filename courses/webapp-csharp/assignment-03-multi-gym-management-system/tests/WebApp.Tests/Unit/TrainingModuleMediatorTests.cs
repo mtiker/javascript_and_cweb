@@ -8,7 +8,6 @@ using App.Domain.Enums;
 using App.DTO.v1.Bookings;
 using App.DTO.v1.TrainingCategories;
 using App.DTO.v1.TrainingSessions;
-using App.DTO.v1.WorkShifts;
 using BuildingBlocks;
 using BuildingBlocks.Mediator;
 using Microsoft.Extensions.DependencyInjection;
@@ -248,11 +247,9 @@ public class TrainingModuleMediatorTests
         public ITrainingCategoryRepository TrainingCategories { get; } = trainingCategories;
         public ITrainingSessionRepository TrainingSessions => throw new NotSupportedException();
         public IBookingRepository Bookings => throw new NotSupportedException();
-        public IWorkShiftRepository WorkShifts => throw new NotSupportedException();
         public IMembershipPackageRepository MembershipPackages => throw new NotSupportedException();
         public IMembershipRepository Memberships => throw new NotSupportedException();
         public IPaymentRepository Payments => throw new NotSupportedException();
-        public IFinanceRepository Finance => throw new NotSupportedException();
         public IMaintenanceRepository Maintenance => throw new NotSupportedException();
 
         public IRepository<TEntity, Guid> Repository<TEntity>()
@@ -315,14 +312,6 @@ public class TrainingModuleMediatorTests
             Calls.Add($"sessions:delete:{id}");
             return Task.CompletedTask;
         }
-
-        public Task<IReadOnlyCollection<WorkShiftResponse>> GetWorkShiftsAsync(string gymCode, CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyCollection<WorkShiftResponse>>(Array.Empty<WorkShiftResponse>());
-
-        public Task<WorkShiftResponse> CreateWorkShiftAsync(string gymCode, WorkShiftUpsertRequest request, CancellationToken cancellationToken = default) => throw new NotSupportedException();
-
-        public Task<WorkShiftResponse> UpdateWorkShiftAsync(string gymCode, Guid id, WorkShiftUpsertRequest request, CancellationToken cancellationToken = default) => throw new NotSupportedException();
-
-        public Task DeleteWorkShiftAsync(string gymCode, Guid id, CancellationToken cancellationToken = default) => Task.CompletedTask;
 
         public Task<IReadOnlyCollection<BookingResponse>> GetBookingsAsync(string gymCode, CancellationToken cancellationToken = default)
         {

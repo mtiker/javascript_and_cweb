@@ -42,24 +42,16 @@ Gyms:
 - `PUT /api/v1/system/gyms/{gymId}/activation`
 - `GET /api/v1/system/gyms/{gymId}/snapshot`
 
-Subscriptions:
-- `GET /api/v1/system/subscriptions`
-- `PUT /api/v1/system/subscriptions/{gymId}`
-
-Support:
-- `GET /api/v1/system/support`
-- `POST /api/v1/system/support/{gymId}/tickets`
-
 Platform analytics:
 - `GET /api/v1/system/platform/analytics`
 
-Impersonation:
-- `POST /api/v1/system/impersonation`
-
 Platform-role expectations:
-- `SystemAdmin`: full gym onboarding, activation, analytics, impersonation
-- `SystemSupport`: gym list, snapshots, tickets, analytics
-- `SystemBilling`: gym list, subscriptions, analytics
+- `SystemAdmin`: gym onboarding, activation, snapshots, and analytics
+
+Removed for Final2 scope control:
+- subscriptions and support tickets
+- impersonation
+- `SystemSupport` and `SystemBilling` role flows
 
 ## Tenant API
 
@@ -81,46 +73,30 @@ Training:
 - `POST /api/v1/{gymCode}/training-sessions`
 - `PUT /api/v1/{gymCode}/training-sessions/{id}`
 - `DELETE /api/v1/{gymCode}/training-sessions/{id}`
-- `GET|POST /api/v1/{gymCode}/work-shifts`
-- `PUT|DELETE /api/v1/{gymCode}/work-shifts/{id}`
 - `GET|POST /api/v1/{gymCode}/bookings`
 - `PUT /api/v1/{gymCode}/bookings/{id}/attendance`
 - `DELETE /api/v1/{gymCode}/bookings/{id}`
-- `GET|POST /api/v1/{gymCode}/coaching-plans`
-- `GET|PUT|DELETE /api/v1/{gymCode}/coaching-plans/{id}`
-- `PUT /api/v1/{gymCode}/coaching-plans/{id}/status`
-- `PUT /api/v1/{gymCode}/coaching-plans/{id}/items/{itemId}/decision`
 
 Memberships and payments:
 - `GET|POST /api/v1/{gymCode}/membership-packages`
 - `PUT|DELETE /api/v1/{gymCode}/membership-packages/{id}`
-  - Package create/update validation, unused soft-delete, and used-package conflict semantics are locked in `membership-package-contract.md` and `package-validation-rules.md`.
+  - Package create/update validation, unused soft-delete, and used-package conflict semantics are summarized in `domain-workflows.md`.
 - `GET|POST /api/v1/{gymCode}/memberships`
 - `PUT /api/v1/{gymCode}/memberships/{id}/status`
 - `DELETE /api/v1/{gymCode}/memberships/{id}`
 - `GET|POST /api/v1/{gymCode}/payments`
-- `GET /api/v1/{gymCode}/finance-workspace/me`
-- `GET /api/v1/{gymCode}/finance-workspace/members/{memberId}`
-- `GET|POST /api/v1/{gymCode}/invoices`
-- `GET /api/v1/{gymCode}/invoices/{id}`
-- `POST /api/v1/{gymCode}/invoices/{id}/payments`
-- `POST /api/v1/{gymCode}/invoices/{id}/refunds`
+
+Invoices, refunds, and the finance workspace were removed from the Final2
+defense surface. `Payment` remains the only finance transaction API.
 
 Staff:
 - `GET|POST /api/v1/{gymCode}/staff`
 - `PUT|DELETE /api/v1/{gymCode}/staff/{id}`
-- `GET|POST /api/v1/{gymCode}/job-roles`
-- `PUT|DELETE /api/v1/{gymCode}/job-roles/{id}`
-- `GET|POST /api/v1/{gymCode}/contracts`
-- `PUT|DELETE /api/v1/{gymCode}/contracts/{id}`
-- `GET|POST /api/v1/{gymCode}/vacations`
-- `PUT|DELETE /api/v1/{gymCode}/vacations/{id}`
+
+Employment contracts, job roles, vacations, and work shifts were removed from
+the defended API surface.
 
 Facilities:
-- `GET|POST /api/v1/{gymCode}/opening-hours`
-- `PUT|DELETE /api/v1/{gymCode}/opening-hours/{id}`
-- `GET|POST /api/v1/{gymCode}/opening-hours-exceptions`
-- `PUT|DELETE /api/v1/{gymCode}/opening-hours-exceptions/{id}`
 - `GET|POST /api/v1/{gymCode}/equipment-models`
 - `PUT|DELETE /api/v1/{gymCode}/equipment-models/{id}`
 - `GET|POST /api/v1/{gymCode}/equipment`
@@ -128,7 +104,6 @@ Facilities:
 - `GET|POST /api/v1/{gymCode}/maintenance-tasks`
 - `PUT /api/v1/{gymCode}/maintenance-tasks/{id}/status`
 - `PUT /api/v1/{gymCode}/maintenance-tasks/{id}/assignment`
-- `GET /api/v1/{gymCode}/maintenance-tasks/{id}/assignment-history`
 - `POST /api/v1/{gymCode}/maintenance-tasks/generate-due`
 - `DELETE /api/v1/{gymCode}/maintenance-tasks/{id}`
 - `GET /api/v1/{gymCode}/gym-settings`
@@ -136,9 +111,12 @@ Facilities:
 - `GET|POST /api/v1/{gymCode}/gym-users`
 - `DELETE /api/v1/{gymCode}/gym-users/{appUserId}/{roleName}`
 
+Opening hours and maintenance assignment history were removed from the Final2
+defense surface.
+
 ## Separate Client Contract
 
-The React client now consumes focused role workspaces plus a broader SaaS function console:
+The React client now consumes focused Final2 workspaces:
 - `POST /api/v1/account/login`
 - `POST /api/v1/account/logout`
 - `POST /api/v1/account/renew-refresh-token`
@@ -146,7 +124,6 @@ The React client now consumes focused role workspaces plus a broader SaaS functi
 - `POST /api/v1/account/switch-role`
 - `POST /api/v1/account/forgot-password`
 - `POST /api/v1/account/reset-password`
-- all platform endpoints listed above through `/platform` or `/console`
 - member CRUD including `GET /api/v1/{gymCode}/members/{id}` for edit forms
 - `GET /api/v1/{gymCode}/members/me` for member self-booking
 - training-category CRUD
@@ -155,10 +132,8 @@ The React client now consumes focused role workspaces plus a broader SaaS functi
 - member/admin booking through `POST /api/v1/{gymCode}/bookings`
 - trainer/admin attendance through `GET /api/v1/{gymCode}/bookings` and `PUT /api/v1/{gymCode}/bookings/{id}/attendance`
 - member workspace through `GET /api/v1/{gymCode}/member-workspace/me`
-- coaching workspace through `GET|POST /api/v1/{gymCode}/coaching-plans`, plan status updates, and item decisions
-- finance workspace through `GET /api/v1/{gymCode}/finance-workspace/me`, invoice creation, payments, and refunds
-- caretaker/admin maintenance workspace through maintenance status + assignment + history + due-generation endpoints
-- the remaining tenant endpoints listed above through the function console with editable path parameters and JSON request bodies
+- caretaker/admin maintenance workspace through maintenance status,
+  assignment, and due-generation endpoints
 
 The member detail route returns a fuller payload than the member list route so the client can edit person fields without inventing a second contract.
 

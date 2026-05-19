@@ -14,7 +14,6 @@ using App.DTO.v1.Memberships;
 using App.DTO.v1.Payments;
 using App.DTO.v1.TrainingCategories;
 using App.DTO.v1.TrainingSessions;
-using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 
 namespace WebApp.Tests.Unit;
@@ -162,7 +161,7 @@ public class TrainingWorkflowServiceTests
     }
 
     [Fact]
-    public async Task GetSessionsAsync_ReturnsSessionListWithTrainerContractIds()
+    public async Task GetSessionsAsync_ReturnsSessionListWithTrainerStaff()
     {
         var (dbContext, gymId) = await NewContextAsync();
         var seed = await SeedSessionFixtureAsync(dbContext, gymId);
@@ -173,7 +172,8 @@ public class TrainingWorkflowServiceTests
         var session = Assert.Single(sessions);
         Assert.Equal(seed.SessionId, session.Id);
         Assert.Equal("Upper Body", session.Name);
-        Assert.Contains(seed.ContractId, session.TrainerContractIds);
+        Assert.Equal(seed.TrainerStaffId, session.TrainerStaffId);
+        Assert.Equal("Train Coach", session.TrainerName);
     }
 
     [Fact]
@@ -188,7 +188,8 @@ public class TrainingWorkflowServiceTests
         Assert.Equal(seed.SessionId, session.Id);
         Assert.Equal("Upper Body", session.Name);
         Assert.Equal(seed.CategoryId, session.CategoryId);
-        Assert.Contains(seed.ContractId, session.TrainerContractIds);
+        Assert.Equal(seed.TrainerStaffId, session.TrainerStaffId);
+        Assert.Equal("Train Coach", session.TrainerName);
     }
 
     [Fact]
@@ -331,7 +332,7 @@ public class TrainingWorkflowServiceTests
             .Options;
 
         var gymId = Guid.NewGuid();
-        var dbContext = new AppDbContext(options, new TestGymContext(gymId), new HttpContextAccessor());
+        var dbContext = new AppDbContext(options, new TestGymContext(gymId));
 
         dbContext.Gyms.Add(new Gym
         {
@@ -388,24 +389,12 @@ public class TrainingWorkflowServiceTests
         return (session.Id, member.Id);
     }
 
-    private static async Task<(Guid SessionId, Guid CategoryId, Guid ContractId)> SeedSessionFixtureAsync(AppDbContext dbContext, Guid gymId)
+    private static async Task<(Guid SessionId, Guid CategoryId, Guid TrainerStaffId)> SeedSessionFixtureAsync(AppDbContext dbContext, Guid gymId)
     {
         var category = new TrainingCategory
         {
             GymId = gymId,
             Name = new LangStr("Strength", "en")
-        };
-        var session = new TrainingSession
-        {
-            GymId = gymId,
-            Category = category,
-            Name = new LangStr("Upper Body", "en"),
-            StartAtUtc = DateTime.UtcNow.AddDays(1),
-            EndAtUtc = DateTime.UtcNow.AddDays(1).AddHours(1),
-            Capacity = 10,
-            BasePrice = 0m,
-            CurrencyCode = "EUR",
-            Status = TrainingSessionStatus.Published
         };
         var person = new Person { FirstName = "Train", LastName = "Coach" };
         var staff = new Staff
@@ -415,40 +404,26 @@ public class TrainingWorkflowServiceTests
             StaffCode = "STAFF-T-001",
             Status = StaffStatus.Active
         };
-        var jobRole = new JobRole
+        var session = new TrainingSession
         {
             GymId = gymId,
-            Code = "trainer",
-            Title = new LangStr("Trainer", "en"),
-            Description = new LangStr("Training coach", "en"),
-        };
-        var contract = new EmploymentContract
-        {
-            GymId = gymId,
-            Staff = staff,
-            PrimaryJobRole = jobRole,
-            StartDate = DateOnly.FromDateTime(DateTime.UtcNow.Date.AddDays(-1)),
-            WorkloadPercent = 50m,
-            ContractStatus = ContractStatus.Active
-        };
-        var shift = new WorkShift
-        {
-            GymId = gymId,
-            Contract = contract,
-            TrainingSession = session,
-            ShiftType = ShiftType.Training,
-            StartAtUtc = session.StartAtUtc.AddMinutes(-15),
-            EndAtUtc = session.EndAtUtc.AddMinutes(15),
+            Category = category,
+            TrainerStaff = staff,
+            TrainerStaffId = staff.Id,
+            Name = new LangStr("Upper Body", "en"),
+            StartAtUtc = DateTime.UtcNow.AddDays(1),
+            EndAtUtc = DateTime.UtcNow.AddDays(1).AddHours(1),
+            Capacity = 10,
+            BasePrice = 0m,
+            CurrencyCode = "EUR",
+            Status = TrainingSessionStatus.Published
         };
 
         dbContext.TrainingCategories.Add(category);
         dbContext.TrainingSessions.Add(session);
         dbContext.Staff.Add(staff);
-        dbContext.JobRoles.Add(jobRole);
-        dbContext.EmploymentContracts.Add(contract);
-        dbContext.WorkShifts.Add(shift);
         await dbContext.SaveChangesAsync();
-        return (session.Id, category.Id, contract.Id);
+        return (session.Id, category.Id, staff.Id);
     }
 
     private static ITrainingWorkflowService CreateService(
@@ -545,7 +520,6 @@ public class TrainingWorkflowServiceTests
 
     private sealed class TestSubscriptionTierLimitService : ISubscriptionTierLimitService
     {
-        public Task<SubscriptionPlan> GetCurrentPlanAsync(Guid gymId, CancellationToken cancellationToken = default) => Task.FromResult(SubscriptionPlan.Starter);
         public Task EnsureCanCreateMemberAsync(Guid gymId, CancellationToken cancellationToken = default) => Task.CompletedTask;
         public Task EnsureCanCreateStaffAsync(Guid gymId, CancellationToken cancellationToken = default) => Task.CompletedTask;
         public Task EnsureCanCreateTrainingSessionAsync(Guid gymId, CancellationToken cancellationToken = default) => Task.CompletedTask;

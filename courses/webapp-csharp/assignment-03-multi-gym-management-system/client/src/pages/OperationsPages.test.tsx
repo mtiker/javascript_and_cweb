@@ -41,7 +41,8 @@ describe("role operation pages", () => {
             basePrice: 18,
             currencyCode: "EUR",
             status: 1,
-            trainerContractIds: ["contract-1"],
+            trainerStaffId: "staff-1",
+            trainerName: "Tanel Trainer",
           },
         ]),
       )
@@ -104,7 +105,6 @@ describe("role operation pages", () => {
             isOverdue: false,
             notes: "Quarterly inspection",
             completionNotes: null,
-            assignmentHistory: [],
           },
         ]),
       )
@@ -142,7 +142,6 @@ describe("role operation pages", () => {
           isOverdue: false,
           notes: "Started chain inspection",
           completionNotes: null,
-          assignmentHistory: [],
         }),
       );
 
@@ -217,7 +216,6 @@ describe("role operation pages", () => {
           isOverdue: false,
           notes: "Inspect belt",
           completionNotes: null,
-          assignmentHistory: [],
         }),
       );
 

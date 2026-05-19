@@ -8,7 +8,7 @@ using App.DTO.v1.System.Platform;
 namespace WebApp.ApiControllers.System;
 
 [ApiVersion("1.0")]
-[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "SystemAdmin,SystemBilling,SystemSupport")]
+[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "SystemAdmin")]
 [Route("api/v{version:apiVersion}/system/platform")]
 [ProducesErrorResponseType(typeof(ProblemDetails))]
 [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]

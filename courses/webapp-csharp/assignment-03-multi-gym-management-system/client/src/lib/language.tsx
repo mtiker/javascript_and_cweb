@@ -20,7 +20,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     loading: "Loading...",
     logOut: "Log out",
     loginCopy:
-      "Sign in with a seeded demo account to manage platform, billing, support, tenant, trainer, or member workflows.",
+      "Sign in with a seeded demo account to manage gym operations, training, memberships, and maintenance workflows.",
     loginEyebrow: "Assignment 03 SaaS client",
     loginFailed: "Sign-in failed",
     loginTitle: "React SaaS client",

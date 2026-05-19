@@ -21,16 +21,9 @@ public sealed class ClientSessionsQueryService(IAppUnitOfWork unitOfWork) : ICli
                 cancellationToken))
             .FirstOrDefault();
 
-        var trainerShifts = await unitOfWork.WorkShifts.ListTrainingShiftsWithStaffForSessionAsync(
-            gymId,
-            sessionId,
-            cancellationToken);
-
-        var trainerNames = trainerShifts
-            .Select(ResolveStaffName)
-            .Where(name => !string.IsNullOrWhiteSpace(name))
-            .Distinct(StringComparer.Ordinal)
-            .ToArray();
+        var trainerNames = session.TrainerStaff is null
+            ? Array.Empty<string>()
+            : [$"{session.TrainerStaff.Person?.FirstName} {session.TrainerStaff.Person?.LastName}".Trim()];
 
         ClientSessionBookingState? currentBooking = null;
         if (currentMemberId.HasValue)
@@ -78,20 +71,13 @@ public sealed class ClientSessionsQueryService(IAppUnitOfWork unitOfWork) : ICli
             .ToArray();
     }
 
-    public Task<bool> HasTrainerAssignmentAsync(
+    public async Task<bool> HasTrainerAssignmentAsync(
         Guid gymId,
         Guid sessionId,
         Guid staffId,
         CancellationToken cancellationToken = default)
     {
-        return unitOfWork.WorkShifts.ExistsTrainingShiftForStaffAsync(gymId, sessionId, staffId, cancellationToken);
-    }
-
-    private static string ResolveStaffName(WorkShift shift)
-    {
-        var person = shift.Contract?.Staff?.Person;
-        return person is null
-            ? string.Empty
-            : $"{person.FirstName} {person.LastName}".Trim();
+        var session = await unitOfWork.TrainingSessions.FindAsync(gymId, sessionId, cancellationToken);
+        return session?.TrainerStaffId == staffId;
     }
 }

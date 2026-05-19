@@ -2,35 +2,28 @@
 
 ## Overview
 
-The schema is split into:
-- SaaS/platform entities
-- shared person/contact entities
-- gym tenant business entities
+The Final2 defense model is intentionally smaller than the earlier enterprise
+SaaS model. The defended product is multi-gym operations plus memberships, not
+platform support, billing, coaching, employment roster, or invoice/refund
+ledger management.
 
-Key invariant:
-- tenant-owned business rows use `GymId`
+Tenant-owned business rows use `GymId`.
 
 ## Mermaid ERD
 
 ```mermaid
 erDiagram
     GYM ||--|| GYM_SETTINGS : has
-    GYM ||--o{ SUBSCRIPTION : owns
-    GYM ||--o{ SUPPORT_TICKET : owns
     GYM ||--o{ GYM_CONTACT : owns
     GYM ||--o{ APP_USER_GYM_ROLE : assigns
     GYM ||--o{ MEMBER : owns
     GYM ||--o{ STAFF : owns
-    GYM ||--o{ JOB_ROLE : owns
     GYM ||--o{ TRAINING_CATEGORY : owns
     GYM ||--o{ TRAINING_SESSION : owns
-    GYM ||--o{ WORK_SHIFT : owns
     GYM ||--o{ BOOKING : owns
     GYM ||--o{ MEMBERSHIP_PACKAGE : owns
     GYM ||--o{ MEMBERSHIP : owns
     GYM ||--o{ PAYMENT : owns
-    GYM ||--o{ OPENING_HOURS : owns
-    GYM ||--o{ OPENING_HOURS_EXCEPTION : owns
     GYM ||--o{ EQUIPMENT_MODEL : owns
     GYM ||--o{ EQUIPMENT : owns
     GYM ||--o{ MAINTENANCE_TASK : owns
@@ -44,13 +37,8 @@ erDiagram
     PERSON ||--o{ MEMBER : profiles
     PERSON ||--o{ STAFF : profiles
 
-    STAFF ||--o{ EMPLOYMENT_CONTRACT : has
-    JOB_ROLE ||--o{ EMPLOYMENT_CONTRACT : primary_role
-    EMPLOYMENT_CONTRACT ||--o{ VACATION : has
-    EMPLOYMENT_CONTRACT ||--o{ WORK_SHIFT : has
-
+    STAFF ||--o{ TRAINING_SESSION : trains
     TRAINING_CATEGORY ||--o{ TRAINING_SESSION : groups
-    TRAINING_SESSION ||--o{ WORK_SHIFT : staffed_by
     TRAINING_SESSION ||--o{ BOOKING : booked_as
     MEMBER ||--o{ BOOKING : makes
 
@@ -64,14 +52,11 @@ erDiagram
     STAFF ||--o{ MAINTENANCE_TASK : assigned_to
 ```
 
-## Notes
+## Defended Entities
 
-Platform entities:
+Platform and tenant context:
 - `Gym`
 - `GymSettings`
-- `Subscription`
-- `SupportTicket`
-- `AuditLog`
 - `AppUserGymRole`
 
 Shared identity/person entities:
@@ -86,27 +71,35 @@ Shared identity/person entities:
 Tenant business entities:
 - `Member`
 - `Staff`
-- `JobRole`
-- `EmploymentContract`
-- `Vacation`
 - `TrainingCategory`
 - `TrainingSession`
-- `WorkShift`
 - `Booking`
 - `MembershipPackage`
 - `Membership`
 - `Payment`
-- `OpeningHours`
-- `OpeningHoursException`
 - `EquipmentModel`
 - `Equipment`
 - `MaintenanceTask`
 
+## Removed From Final2 Scope
+
+The pruning migration `PruneFinal2Scope` removes these optional contexts:
+- platform subscriptions, support tickets, audit log
+- coaching plans and coaching plan items
+- invoices, invoice lines, and invoice payments
+- job roles, employment contracts, vacations, and work shifts
+- opening hours and opening-hour exceptions
+- maintenance assignment history
+
 ## Special Modeling Decisions
 
-- `AppUser` stays separate from business profiles and links to `Person`
-- `AppUserGymRole` is the tenant membership table for SaaS context switching
-- `WorkShift` models both training delivery and assisting floor work
-- multiple trainers per session are represented by multiple training shifts linked to the same session
-- `LangStr` is used where DB-backed translation is required
-- business entities inherit audit/soft-delete behavior through `TenantBaseEntity`
+- `AppUser` stays separate from business profiles and links to `Person`.
+- `AppUserGymRole` is the tenant membership table for gym and role switching.
+- A training session has optional `TrainerStaffId`; the old contract/work-shift
+  trainer assignment model was removed for Final2 scope control.
+- `Payment` is the only finance transaction entity kept for the defense.
+- Maintenance assignment notes are stored on `MaintenanceTask.Notes`; assignment
+  history is no longer a separate entity.
+- `LangStr` is used where DB-backed translation is required.
+- tenant business entities inherit audit/soft-delete behavior through
+  `TenantBaseEntity`.

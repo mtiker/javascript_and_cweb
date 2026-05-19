@@ -30,6 +30,4 @@ public class MaintenanceTask : TenantBaseEntity
 
     [MaxLength(2000)]
     public string? CompletionNotes { get; set; }
-
-    public ICollection<MaintenanceTaskAssignmentHistory> AssignmentHistory { get; set; } = new List<MaintenanceTaskAssignmentHistory>();
 }

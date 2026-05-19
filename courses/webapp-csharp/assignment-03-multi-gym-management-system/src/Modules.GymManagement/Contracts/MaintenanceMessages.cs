@@ -4,27 +4,9 @@ using App.DTO.v1.EquipmentModels;
 using App.DTO.v1.GymSettings;
 using App.DTO.v1.GymUsers;
 using App.DTO.v1.MaintenanceTasks;
-using App.DTO.v1.OpeningHours;
-using App.DTO.v1.OpeningHoursExceptions;
 using BuildingBlocks.Mediator;
 
 namespace Modules.GymManagement.Contracts;
-
-public sealed record ListOpeningHoursQuery(string GymCode) : IRequest<IReadOnlyCollection<OpeningHoursResponse>>;
-
-public sealed record CreateOpeningHoursCommand(string GymCode, OpeningHoursUpsertRequest Request) : IRequest<OpeningHoursResponse>;
-
-public sealed record UpdateOpeningHoursCommand(string GymCode, Guid OpeningHoursId, OpeningHoursUpsertRequest Request) : IRequest<OpeningHoursResponse>;
-
-public sealed record DeleteOpeningHoursCommand(string GymCode, Guid OpeningHoursId) : IRequest;
-
-public sealed record ListOpeningHourExceptionsQuery(string GymCode) : IRequest<IReadOnlyCollection<OpeningHoursExceptionResponse>>;
-
-public sealed record CreateOpeningHourExceptionCommand(string GymCode, OpeningHoursExceptionUpsertRequest Request) : IRequest<OpeningHoursExceptionResponse>;
-
-public sealed record UpdateOpeningHourExceptionCommand(string GymCode, Guid ExceptionId, OpeningHoursExceptionUpsertRequest Request) : IRequest<OpeningHoursExceptionResponse>;
-
-public sealed record DeleteOpeningHourExceptionCommand(string GymCode, Guid ExceptionId) : IRequest;
 
 public sealed record ListEquipmentModelsQuery(string GymCode) : IRequest<IReadOnlyCollection<EquipmentModelResponse>>;
 
@@ -49,8 +31,6 @@ public sealed record CreateMaintenanceTaskCommand(string GymCode, MaintenanceTas
 public sealed record UpdateMaintenanceTaskStatusCommand(string GymCode, Guid TaskId, MaintenanceStatusUpdateRequest Request) : IRequest<MaintenanceTaskResponse>;
 
 public sealed record UpdateMaintenanceTaskAssignmentCommand(string GymCode, Guid TaskId, MaintenanceAssignmentUpdateRequest Request) : IRequest<MaintenanceTaskResponse>;
-
-public sealed record ListMaintenanceTaskAssignmentHistoryQuery(string GymCode, Guid TaskId) : IRequest<IReadOnlyCollection<MaintenanceTaskAssignmentHistoryResponse>>;
 
 public sealed record GenerateDueMaintenanceTasksCommand(string GymCode) : IRequest<Message>;
 

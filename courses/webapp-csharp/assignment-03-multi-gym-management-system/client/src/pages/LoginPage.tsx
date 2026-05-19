@@ -23,7 +23,7 @@ export function LoginPage() {
   const [notice, setNotice] = useState<Notice | null>(null);
 
   if (isAuthenticated) {
-    return <Navigate replace to={session?.systemRoles.length ? "/platform" : "/members"} />;
+    return <Navigate replace to="/members" />;
   }
 
   const state = location.state as LocationState | null;

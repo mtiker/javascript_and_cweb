@@ -4,7 +4,6 @@ using App.Domain.Entities;
 using App.DTO.v1.Bookings;
 using App.DTO.v1.TrainingCategories;
 using App.DTO.v1.TrainingSessions;
-using App.DTO.v1.WorkShifts;
 
 namespace App.BLL.Mapping;
 
@@ -16,8 +15,8 @@ public sealed class TrainingMapper : ITrainingMapper
         return new TrainingCategoryResponse
         {
             Id = category.Id,
-            Name = Translate(category.Name) ?? string.Empty,
-            Description = Translate(category.Description)
+            Name = Translate(category.Name) ?? category.Name.ToString(),
+            Description = Translate(category.Description) ?? category.Description?.ToString()
         };
     }
 
@@ -27,23 +26,23 @@ public sealed class TrainingMapper : ITrainingMapper
         return categories.Select(ToCategory).ToArray();
     }
 
-    public TrainingSessionResponse ToSession(TrainingSession session, IEnumerable<Guid> trainerContractIds)
+    public TrainingSessionResponse ToSession(TrainingSession session)
     {
         ArgumentNullException.ThrowIfNull(session);
-        ArgumentNullException.ThrowIfNull(trainerContractIds);
         return new TrainingSessionResponse
         {
             Id = session.Id,
             CategoryId = session.CategoryId,
-            Name = Translate(session.Name) ?? string.Empty,
-            Description = Translate(session.Description),
+            Name = Translate(session.Name) ?? session.Name.ToString(),
+            Description = Translate(session.Description) ?? session.Description?.ToString(),
             StartAtUtc = session.StartAtUtc,
             EndAtUtc = session.EndAtUtc,
             Capacity = session.Capacity,
             BasePrice = session.BasePrice,
             CurrencyCode = session.CurrencyCode,
             Status = session.Status,
-            TrainerContractIds = trainerContractIds.ToList()
+            TrainerStaffId = session.TrainerStaffId,
+            TrainerName = FormatStaffName(session.TrainerStaff)
         };
     }
 
@@ -54,7 +53,7 @@ public sealed class TrainingMapper : ITrainingMapper
         {
             Id = booking.Id,
             TrainingSessionId = booking.TrainingSessionId,
-            TrainingSessionName = Translate(booking.TrainingSession?.Name) ?? string.Empty,
+            TrainingSessionName = Translate(booking.TrainingSession?.Name) ?? booking.TrainingSession?.Name.ToString() ?? string.Empty,
             MemberId = booking.MemberId,
             MemberName = $"{booking.Member?.Person?.FirstName} {booking.Member?.Person?.LastName}".Trim(),
             MemberCode = booking.Member?.MemberCode ?? string.Empty,
@@ -70,29 +69,15 @@ public sealed class TrainingMapper : ITrainingMapper
         return bookings.Select(ToBooking).ToArray();
     }
 
-    public WorkShiftResponse ToWorkShift(WorkShift workShift)
-    {
-        ArgumentNullException.ThrowIfNull(workShift);
-        return new WorkShiftResponse
-        {
-            Id = workShift.Id,
-            ContractId = workShift.ContractId,
-            StartAtUtc = workShift.StartAtUtc,
-            EndAtUtc = workShift.EndAtUtc,
-            ShiftType = workShift.ShiftType,
-            TrainingSessionId = workShift.TrainingSessionId,
-            Comment = workShift.Comment
-        };
-    }
-
-    public IReadOnlyCollection<WorkShiftResponse> ToWorkShiftList(IEnumerable<WorkShift> workShifts)
-    {
-        ArgumentNullException.ThrowIfNull(workShifts);
-        return workShifts.Select(ToWorkShift).ToArray();
-    }
-
     private static string? Translate(LangStr? value)
     {
         return value?.Translate(CultureInfo.CurrentUICulture.Name);
+    }
+
+    private static string? FormatStaffName(Staff? staff)
+    {
+        return staff == null
+            ? null
+            : $"{staff.Person?.FirstName} {staff.Person?.LastName}".Trim();
     }
 }

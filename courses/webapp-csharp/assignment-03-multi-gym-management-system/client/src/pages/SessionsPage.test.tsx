@@ -25,7 +25,8 @@ describe("SessionsPage", () => {
             basePrice: 18,
             currencyCode: "EUR",
             status: 1,
-            trainerContractIds: ["contract-1"],
+            trainerStaffId: "staff-1",
+            trainerName: "Tanel Trainer",
           },
         ]),
       )
@@ -60,7 +61,8 @@ describe("SessionsPage", () => {
           basePrice: 18,
           currencyCode: "EUR",
           status: 1,
-          trainerContractIds: ["contract-1"],
+          trainerStaffId: "staff-1",
+          trainerName: "Tanel Trainer",
         }),
       )
       .mockResolvedValueOnce(
@@ -117,7 +119,8 @@ describe("SessionsPage", () => {
           basePrice: 12,
           currencyCode: "EUR",
           status: 1,
-          trainerContractIds: [],
+          trainerStaffId: null,
+          trainerName: null,
         }),
       )
       .mockResolvedValueOnce(
@@ -132,7 +135,8 @@ describe("SessionsPage", () => {
           basePrice: 12,
           currencyCode: "EUR",
           status: 1,
-          trainerContractIds: [],
+          trainerStaffId: null,
+          trainerName: null,
         }),
       );
 

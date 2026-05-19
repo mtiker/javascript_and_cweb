@@ -32,36 +32,11 @@ export interface RawApiResponse {
   data: unknown;
 }
 
-export enum SubscriptionPlan {
-  Starter = 0,
-  Growth = 1,
-  Enterprise = 2,
-}
-
-export enum SubscriptionStatus {
-  Trial = 0,
-  Active = 1,
-  Suspended = 2,
-  Cancelled = 3,
-}
-
-export enum SupportTicketPriority {
-  Low = 0,
-  Medium = 1,
-  High = 2,
-}
-
-export enum SupportTicketStatus {
-  Open = 0,
-  InProgress = 1,
-  Resolved = 2,
-}
-
 export interface PlatformAnalytics {
   gymCount: number;
   userCount: number;
   memberCount: number;
-  openSupportTicketCount: number;
+  activeMaintenanceTaskCount: number;
 }
 
 export interface GymSummary {
@@ -79,26 +54,6 @@ export interface GymSnapshot {
   memberCount: number;
   sessionCount: number;
   openMaintenanceTaskCount: number;
-}
-
-export interface SubscriptionSummary {
-  gymId: string;
-  gymName: string;
-  plan: SubscriptionPlan;
-  status: SubscriptionStatus;
-  monthlyPrice: number;
-  startDate: string;
-  endDate?: string | null;
-}
-
-export interface SupportTicket {
-  ticketId: string;
-  gymId: string;
-  gymName: string;
-  title: string;
-  status: SupportTicketStatus;
-  priority: SupportTicketPriority;
-  createdAtUtc: string;
 }
 
 export interface ApiProblem {
@@ -166,7 +121,8 @@ export interface TrainingSession {
   basePrice: number;
   currencyCode: string;
   status: TrainingSessionStatus;
-  trainerContractIds: string[];
+  trainerStaffId?: string | null;
+  trainerName?: string | null;
 }
 
 export interface TrainingSessionUpsertRequest {
@@ -179,7 +135,7 @@ export interface TrainingSessionUpsertRequest {
   basePrice: number;
   currencyCode: string;
   status: TrainingSessionStatus;
-  trainerContractIds: string[];
+  trainerStaffId?: string | null;
 }
 
 export enum BookingStatus {
@@ -248,18 +204,6 @@ export interface MaintenanceTask {
   isOverdue: boolean;
   notes?: string | null;
   completionNotes?: string | null;
-  assignmentHistory: MaintenanceTaskAssignmentHistory[];
-}
-
-export interface MaintenanceTaskAssignmentHistory {
-  id: string;
-  maintenanceTaskId: string;
-  assignedStaffId?: string | null;
-  assignedStaffName?: string | null;
-  assignedByStaffId?: string | null;
-  assignedByStaffName?: string | null;
-  assignedAtUtc: string;
-  notes?: string | null;
 }
 
 export interface MaintenanceTaskUpsertRequest {
@@ -375,88 +319,6 @@ export interface Payment {
   bookingId?: string | null;
 }
 
-export enum InvoiceStatus {
-  Draft = 0,
-  Issued = 1,
-  PartiallyPaid = 2,
-  Paid = 3,
-  Overdue = 4,
-  Cancelled = 5,
-  Refunded = 6,
-}
-
-export interface InvoiceLine {
-  id: string;
-  description: string;
-  quantity: number;
-  unitPrice: number;
-  lineTotal: number;
-  isCredit: boolean;
-  notes?: string | null;
-}
-
-export interface InvoicePayment {
-  id: string;
-  amount: number;
-  isRefund: boolean;
-  appliedAtUtc: string;
-  reference?: string | null;
-  notes?: string | null;
-}
-
-export interface Invoice {
-  id: string;
-  memberId: string;
-  memberName: string;
-  invoiceNumber: string;
-  issuedAtUtc: string;
-  dueAtUtc: string;
-  currencyCode: string;
-  subtotalAmount: number;
-  creditAmount: number;
-  totalAmount: number;
-  paidAmount: number;
-  outstandingAmount: number;
-  isOverdue: boolean;
-  status: InvoiceStatus;
-  notes?: string | null;
-  lines: InvoiceLine[];
-  payments: InvoicePayment[];
-}
-
-export interface InvoiceLineRequest {
-  description: string;
-  quantity: number;
-  unitPrice: number;
-  isCredit: boolean;
-  notes?: string | null;
-}
-
-export interface InvoiceCreateRequest {
-  memberId: string;
-  dueAtUtc: string;
-  currencyCode: string;
-  notes?: string | null;
-  lines: InvoiceLineRequest[];
-}
-
-export interface InvoicePaymentRequest {
-  amount: number;
-  reference?: string | null;
-  notes?: string | null;
-}
-
-export interface FinanceWorkspace {
-  memberId: string;
-  memberName: string;
-  memberCode: string;
-  outstandingBalance: number;
-  totalRefundCredits: number;
-  overdueInvoiceCount: number;
-  invoices: Invoice[];
-  paymentHistory: InvoicePayment[];
-}
-
 export interface MemberWorkspaceBooking {
   bookingId: string;
   trainingSessionId: string;
@@ -480,104 +342,10 @@ export interface MemberWorkspace {
   memberships: Membership[];
   payments: Payment[];
   bookings: MemberWorkspaceBooking[];
-  invoices: Invoice[];
   attendedSessionCount: number;
   upcomingBookingCount: number;
   outstandingBalance: number;
   outstandingActions: MemberOutstandingAction[];
-}
-
-export enum CoachingPlanStatus {
-  Draft = 0,
-  Published = 1,
-  Active = 2,
-  Completed = 3,
-  Cancelled = 4,
-}
-
-export enum CoachingPlanItemDecision {
-  Accepted = 0,
-  Deferred = 1,
-  Completed = 2,
-  Skipped = 3,
-}
-
-export interface CoachingPlanItem {
-  id: string;
-  sequence: number;
-  title: string;
-  notes?: string | null;
-  targetDate?: string | null;
-  decision?: CoachingPlanItemDecision | null;
-  decisionAtUtc?: string | null;
-  decisionByStaffName?: string | null;
-  decisionNotes?: string | null;
-}
-
-export interface CoachingPlan {
-  id: string;
-  memberId: string;
-  memberName: string;
-  trainerStaffId?: string | null;
-  trainerStaffName?: string | null;
-  createdByStaffId?: string | null;
-  title: string;
-  notes?: string | null;
-  status: CoachingPlanStatus;
-  publishedAtUtc?: string | null;
-  activatedAtUtc?: string | null;
-  completedAtUtc?: string | null;
-  cancelledAtUtc?: string | null;
-  items: CoachingPlanItem[];
-}
-
-export interface CoachingPlanItemRequest {
-  sequence: number;
-  title: string;
-  notes?: string | null;
-  targetDate?: string | null;
-}
-
-export interface CoachingPlanCreateRequest {
-  memberId: string;
-  trainerStaffId?: string | null;
-  createdByStaffId?: string | null;
-  title: string;
-  notes?: string | null;
-  items: CoachingPlanItemRequest[];
-}
-
-export interface CoachingPlanUpdateRequest {
-  trainerStaffId?: string | null;
-  title: string;
-  notes?: string | null;
-  items: CoachingPlanItemRequest[];
-}
-
-export interface CoachingPlanStatusUpdateRequest {
-  status: CoachingPlanStatus;
-  notes?: string | null;
-}
-
-export interface CoachingPlanItemDecisionRequest {
-  decision: CoachingPlanItemDecision;
-  notes?: string | null;
-}
-
-export interface OpeningHours {
-  id: string;
-  weekday: number;
-  opensAt: string;
-  closesAt: string;
-}
-
-export interface OpeningHoursException {
-  id: string;
-  exceptionDate: string;
-  isClosed: boolean;
-  opensAt?: string | null;
-  closesAt?: string | null;
-  reason?: string | null;
 }
 
 export enum EquipmentType {
