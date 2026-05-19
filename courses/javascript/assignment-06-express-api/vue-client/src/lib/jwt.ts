@@ -29,13 +29,16 @@ export function decodeJwtPayload(token: string): Record<string, unknown> {
 
 export function buildCurrentUser(token: string): CurrentUser {
   const payload = decodeJwtPayload(token);
-  const email = String(payload[CLAIMS.email] ?? payload[CLAIMS.name] ?? "");
-  const firstName = String(payload[CLAIMS.firstName] ?? "");
-  const lastName = String(payload[CLAIMS.lastName] ?? "");
+  const email = String(
+    payload.email ?? payload[CLAIMS.email] ?? payload[CLAIMS.name] ?? "",
+  );
+  const firstName = String(payload.firstName ?? payload[CLAIMS.firstName] ?? "");
+  const lastName = String(payload.lastName ?? payload[CLAIMS.lastName] ?? "");
   const displayName = [firstName, lastName].filter(Boolean).join(" ").trim() || email;
+  const userId = payload.userId ?? payload[CLAIMS.userId];
 
   return {
-    userId: payload[CLAIMS.userId] ? String(payload[CLAIMS.userId]) : null,
+    userId: userId ? String(userId) : null,
     email,
     firstName,
     lastName,
