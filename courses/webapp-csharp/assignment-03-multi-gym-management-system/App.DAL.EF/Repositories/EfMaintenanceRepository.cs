@@ -38,6 +38,30 @@ public sealed class EfMaintenanceRepository(AppDbContext dbContext) : IMaintenan
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyList<Equipment>> ListEquipmentByGymFilteredAsync(
+        Guid gymId,
+        EquipmentStatus? status,
+        Guid? equipmentModelId,
+        string? search,
+        CancellationToken cancellationToken = default)
+    {
+        var query = dbContext.Equipment.Where(entity => entity.GymId == gymId);
+
+        if (status.HasValue) query = query.Where(e => e.CurrentStatus == status.Value);
+        if (equipmentModelId.HasValue) query = query.Where(e => e.EquipmentModelId == equipmentModelId.Value);
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.Trim().ToLower();
+            query = query.Where(e =>
+                (e.AssetTag != null && Microsoft.EntityFrameworkCore.EF.Functions.Like(e.AssetTag.ToLower(), $"%{term}%")) ||
+                (e.SerialNumber != null && Microsoft.EntityFrameworkCore.EF.Functions.Like(e.SerialNumber.ToLower(), $"%{term}%")));
+        }
+
+        return await query
+            .OrderBy(entity => entity.AssetTag)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<IReadOnlyList<Equipment>> ListEquipmentWithModelByGymAsync(Guid gymId, int limit, CancellationToken cancellationToken = default)
     {
         return await dbContext.Equipment
@@ -83,6 +107,30 @@ public sealed class EfMaintenanceRepository(AppDbContext dbContext) : IMaintenan
     {
         return await MaintenanceTaskAggregateQuery()
             .Where(entity => entity.GymId == gymId)
+            .OrderByDescending(entity => entity.CreatedAtUtc)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<MaintenanceTask>> ListMaintenanceTasksByGymFilteredAsync(
+        Guid gymId,
+        MaintenanceTaskStatus? status,
+        MaintenancePriority? priority,
+        MaintenanceTaskType? taskType,
+        Guid? equipmentId,
+        Guid? assignedStaffId,
+        DateTime? dueBeforeUtc,
+        CancellationToken cancellationToken = default)
+    {
+        var query = MaintenanceTaskAggregateQuery().Where(entity => entity.GymId == gymId);
+
+        if (status.HasValue) query = query.Where(t => t.Status == status.Value);
+        if (priority.HasValue) query = query.Where(t => t.Priority == priority.Value);
+        if (taskType.HasValue) query = query.Where(t => t.TaskType == taskType.Value);
+        if (equipmentId.HasValue) query = query.Where(t => t.EquipmentId == equipmentId.Value);
+        if (assignedStaffId.HasValue) query = query.Where(t => t.AssignedStaffId == assignedStaffId.Value);
+        if (dueBeforeUtc.HasValue) query = query.Where(t => t.DueAtUtc != null && t.DueAtUtc <= dueBeforeUtc.Value);
+
+        return await query
             .OrderByDescending(entity => entity.CreatedAtUtc)
             .ToListAsync(cancellationToken);
     }

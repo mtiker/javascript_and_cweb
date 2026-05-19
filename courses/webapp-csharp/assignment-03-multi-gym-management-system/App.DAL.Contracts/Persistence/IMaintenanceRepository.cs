@@ -1,4 +1,5 @@
 using App.Domain.Entities;
+using App.Domain.Enums;
 
 namespace App.DAL.Contracts.Persistence;
 
@@ -10,6 +11,12 @@ public interface IMaintenanceRepository
     void RemoveEquipmentModel(EquipmentModel entity);
 
     Task<IReadOnlyList<Equipment>> ListEquipmentByGymAsync(Guid gymId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<Equipment>> ListEquipmentByGymFilteredAsync(
+        Guid gymId,
+        EquipmentStatus? status,
+        Guid? equipmentModelId,
+        string? search,
+        CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Equipment>> ListEquipmentWithModelByGymAsync(Guid gymId, int limit, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Equipment>> ListEquipmentDueCandidatesAsync(Guid gymId, CancellationToken cancellationToken = default);
     Task<Equipment?> FindEquipmentAsync(Guid gymId, Guid id, CancellationToken cancellationToken = default);
@@ -18,6 +25,15 @@ public interface IMaintenanceRepository
     void RemoveEquipment(Equipment entity);
 
     Task<IReadOnlyList<MaintenanceTask>> ListMaintenanceTasksByGymAsync(Guid gymId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<MaintenanceTask>> ListMaintenanceTasksByGymFilteredAsync(
+        Guid gymId,
+        MaintenanceTaskStatus? status,
+        MaintenancePriority? priority,
+        MaintenanceTaskType? taskType,
+        Guid? equipmentId,
+        Guid? assignedStaffId,
+        DateTime? dueBeforeUtc,
+        CancellationToken cancellationToken = default);
     Task<IReadOnlyList<MaintenanceTask>> ListIncompleteMaintenanceTasksWithStaffByGymAsync(Guid gymId, int limit, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<MaintenanceTask>> ListAssignedTasksWithEquipmentByStaffAsync(Guid gymId, Guid staffId, int limit, CancellationToken cancellationToken = default);
     Task<MaintenanceTask?> FindMaintenanceTaskAsync(Guid gymId, Guid id, CancellationToken cancellationToken = default);

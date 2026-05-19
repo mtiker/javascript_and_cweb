@@ -1,10 +1,20 @@
 using App.Domain.Entities;
+using App.Domain.Enums;
 
 namespace App.DAL.Contracts.Persistence;
 
 public interface IBookingRepository
 {
     Task<IReadOnlyList<Booking>> ListByGymAsync(Guid gymId, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<Booking>> ListByGymFilteredAsync(
+        Guid gymId,
+        BookingStatus? status,
+        Guid? memberId,
+        Guid? trainingSessionId,
+        DateTime? fromUtc,
+        DateTime? toUtc,
+        CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<Booking>> ListForSessionAsync(Guid gymId, Guid trainingSessionId, CancellationToken cancellationToken = default);
 

@@ -16,6 +16,36 @@ public sealed class EfMemberRepository(AppDbContext dbContext) : IMemberReposito
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyList<Member>> ListByGymFilteredAsync(
+        Guid gymId,
+        string? search,
+        App.Domain.Enums.MemberStatus? status,
+        CancellationToken cancellationToken = default)
+    {
+        var query = dbContext.Members
+            .Include(member => member.Person)
+            .Where(member => member.GymId == gymId);
+
+        if (status.HasValue)
+        {
+            query = query.Where(member => member.Status == status.Value);
+        }
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.Trim().ToLower();
+            query = query.Where(member =>
+                Microsoft.EntityFrameworkCore.EF.Functions.Like(member.MemberCode.ToLower(), $"%{term}%") ||
+                Microsoft.EntityFrameworkCore.EF.Functions.Like(member.Person!.FirstName.ToLower(), $"%{term}%") ||
+                Microsoft.EntityFrameworkCore.EF.Functions.Like(member.Person!.LastName.ToLower(), $"%{term}%"));
+        }
+
+        return await query
+            .OrderBy(member => member.Person!.LastName)
+            .ThenBy(member => member.Person!.FirstName)
+            .ToListAsync(cancellationToken);
+    }
+
     public Task<Member?> FindAsync(Guid gymId, Guid memberId, CancellationToken cancellationToken = default)
     {
         return dbContext.Members

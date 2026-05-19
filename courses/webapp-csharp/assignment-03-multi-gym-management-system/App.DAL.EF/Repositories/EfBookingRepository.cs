@@ -14,6 +14,47 @@ public sealed class EfBookingRepository(AppDbContext dbContext) : IBookingReposi
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyList<Booking>> ListByGymFilteredAsync(
+        Guid gymId,
+        BookingStatus? status,
+        Guid? memberId,
+        Guid? trainingSessionId,
+        DateTime? fromUtc,
+        DateTime? toUtc,
+        CancellationToken cancellationToken = default)
+    {
+        var query = BaseListQuery(gymId);
+
+        if (status.HasValue)
+        {
+            query = query.Where(booking => booking.Status == status.Value);
+        }
+
+        if (memberId.HasValue)
+        {
+            query = query.Where(booking => booking.MemberId == memberId.Value);
+        }
+
+        if (trainingSessionId.HasValue)
+        {
+            query = query.Where(booking => booking.TrainingSessionId == trainingSessionId.Value);
+        }
+
+        if (fromUtc.HasValue)
+        {
+            query = query.Where(booking => booking.BookedAtUtc >= fromUtc.Value);
+        }
+
+        if (toUtc.HasValue)
+        {
+            query = query.Where(booking => booking.BookedAtUtc <= toUtc.Value);
+        }
+
+        return await query
+            .OrderByDescending(booking => booking.BookedAtUtc)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<IReadOnlyList<Booking>> ListForSessionAsync(Guid gymId, Guid trainingSessionId, CancellationToken cancellationToken = default)
     {
         return await BaseListQuery(gymId)

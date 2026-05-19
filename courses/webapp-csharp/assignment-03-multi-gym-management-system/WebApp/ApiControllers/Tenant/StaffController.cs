@@ -1,4 +1,5 @@
 using App.BLL.Contracts.Services;
+using App.Domain.Enums;
 using App.DTO.v1;
 using App.DTO.v1.Staff;
 using Asp.Versioning;
@@ -13,9 +14,14 @@ public class StaffController(IStaffWorkflowService staffWorkflowService) : ApiCo
 {
     [HttpGet("staff")]
     [ProducesResponseType(typeof(IReadOnlyCollection<StaffResponse>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<IReadOnlyCollection<StaffResponse>>> GetStaff(string gymCode, CancellationToken cancellationToken)
+    public async Task<ActionResult<IReadOnlyCollection<StaffResponse>>> GetStaff(
+        string gymCode,
+        CancellationToken cancellationToken,
+        [FromQuery] StaffStatus? status = null,
+        [FromQuery] string? search = null)
     {
-        return Ok(await staffWorkflowService.GetStaffAsync(gymCode, cancellationToken));
+        var filter = new StaffFilter { Status = status, Search = search };
+        return Ok(await staffWorkflowService.GetStaffAsync(gymCode, filter, cancellationToken));
     }
 
     [HttpPost("staff")]
@@ -30,6 +36,13 @@ public class StaffController(IStaffWorkflowService staffWorkflowService) : ApiCo
     public async Task<ActionResult<StaffResponse>> UpdateStaff(string gymCode, Guid id, [FromBody] StaffUpsertRequest request, CancellationToken cancellationToken)
     {
         return Ok(await staffWorkflowService.UpdateStaffAsync(gymCode, id, request, cancellationToken));
+    }
+
+    [HttpPut("staff/{id:guid}/status")]
+    [ProducesResponseType(typeof(StaffResponse), StatusCodes.Status200OK)]
+    public async Task<ActionResult<StaffResponse>> UpdateStaffStatus(string gymCode, Guid id, [FromBody] StaffStatusUpdateRequest request, CancellationToken cancellationToken)
+    {
+        return Ok(await staffWorkflowService.UpdateStaffStatusAsync(gymCode, id, request, cancellationToken));
     }
 
     [HttpDelete("staff/{id:guid}")]

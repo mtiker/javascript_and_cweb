@@ -68,10 +68,15 @@ public class TrainingWorkflowService(
         await unitOfWork.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<IReadOnlyCollection<TrainingSessionResponse>> GetSessionsAsync(string gymCode, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyCollection<TrainingSessionResponse>> GetSessionsAsync(string gymCode, TrainingSessionFilter? filter = null, CancellationToken cancellationToken = default)
     {
         var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin, RoleNames.Member, RoleNames.Trainer, RoleNames.Caretaker);
-        var sessions = await unitOfWork.TrainingSessions.ListByGymAsync(gymId, cancellationToken);
+
+        var hasFilter = filter is not null && (filter.Status.HasValue || filter.CategoryId.HasValue || filter.TrainerStaffId.HasValue || filter.FromUtc.HasValue || filter.ToUtc.HasValue);
+        var sessions = hasFilter
+            ? await unitOfWork.TrainingSessions.ListByGymFilteredAsync(gymId, filter!.Status, filter.CategoryId, filter.TrainerStaffId, filter.FromUtc, filter.ToUtc, cancellationToken)
+            : await unitOfWork.TrainingSessions.ListByGymAsync(gymId, cancellationToken);
+
         return sessions.Select(trainingMapper.ToSession).ToArray();
     }
 
@@ -146,7 +151,56 @@ public class TrainingWorkflowService(
         await unitOfWork.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<IReadOnlyCollection<BookingResponse>> GetBookingsAsync(string gymCode, CancellationToken cancellationToken = default)
+    public async Task<TrainingSessionResponse> UpdateSessionStatusAsync(string gymCode, Guid sessionId, TrainingSessionStatusUpdateRequest request, CancellationToken cancellationToken = default)
+    {
+        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin);
+        var session = await unitOfWork.TrainingSessions.FindAsync(gymId, sessionId, cancellationToken)
+                      ?? throw new NotFoundException("Training session was not found.");
+        session.Status = request.Status;
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+        return trainingMapper.ToSession(session);
+    }
+
+    public async Task<TrainingSessionResponse> UpdateSessionTrainerAsync(string gymCode, Guid sessionId, TrainingSessionTrainerUpdateRequest request, CancellationToken cancellationToken = default)
+    {
+        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin);
+        var session = await unitOfWork.TrainingSessions.FindAsync(gymId, sessionId, cancellationToken)
+                      ?? throw new NotFoundException("Training session was not found.");
+
+        if (request.TrainerStaffId.HasValue)
+        {
+            var trainerStaff = await unitOfWork.Repository<Staff>().ListAsync(
+                staff => staff.GymId == gymId && staff.Id == request.TrainerStaffId.Value,
+                cancellationToken);
+            if (trainerStaff.Count == 0)
+            {
+                throw new ValidationAppException("Trainer staff member was not found.");
+            }
+        }
+
+        session.TrainerStaffId = request.TrainerStaffId;
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+        return await MapSessionAsync(gymId, session.Id, cancellationToken);
+    }
+
+    public async Task<TrainingSessionResponse> RescheduleSessionAsync(string gymCode, Guid sessionId, TrainingSessionRescheduleRequest request, CancellationToken cancellationToken = default)
+    {
+        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin);
+
+        if (request.EndAtUtc <= request.StartAtUtc)
+        {
+            throw new ValidationAppException("Session end time must be later than start time.");
+        }
+
+        var session = await unitOfWork.TrainingSessions.FindAsync(gymId, sessionId, cancellationToken)
+                      ?? throw new NotFoundException("Training session was not found.");
+        session.StartAtUtc = request.StartAtUtc;
+        session.EndAtUtc = request.EndAtUtc;
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+        return trainingMapper.ToSession(session);
+    }
+
+    public async Task<IReadOnlyCollection<BookingResponse>> GetBookingsAsync(string gymCode, BookingFilter? filter = null, CancellationToken cancellationToken = default)
     {
         var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin, RoleNames.Member, RoleNames.Trainer);
         var current = userContextService.GetCurrent();
@@ -166,12 +220,32 @@ public class TrainingWorkflowService(
                 ? Array.Empty<Booking>()
                 : await unitOfWork.Bookings.ListForTrainerAsync(gymId, staff.Id, cancellationToken);
         }
+        else if (filter is not null && (filter.Status.HasValue || filter.MemberId.HasValue || filter.TrainingSessionId.HasValue || filter.FromUtc.HasValue || filter.ToUtc.HasValue))
+        {
+            bookings = await unitOfWork.Bookings.ListByGymFilteredAsync(gymId, filter.Status, filter.MemberId, filter.TrainingSessionId, filter.FromUtc, filter.ToUtc, cancellationToken);
+        }
         else
         {
             bookings = await unitOfWork.Bookings.ListByGymAsync(gymId, cancellationToken);
         }
 
+        if (filter is not null && (current.HasRole(RoleNames.Member) || current.HasRole(RoleNames.Trainer)))
+        {
+            bookings = ApplyBookingFilterInMemory(bookings, filter);
+        }
+
         return trainingMapper.ToBookingList(bookings);
+    }
+
+    private static IReadOnlyList<Booking> ApplyBookingFilterInMemory(IReadOnlyList<Booking> bookings, BookingFilter filter)
+    {
+        IEnumerable<Booking> q = bookings;
+        if (filter.Status.HasValue) q = q.Where(b => b.Status == filter.Status.Value);
+        if (filter.MemberId.HasValue) q = q.Where(b => b.MemberId == filter.MemberId.Value);
+        if (filter.TrainingSessionId.HasValue) q = q.Where(b => b.TrainingSessionId == filter.TrainingSessionId.Value);
+        if (filter.FromUtc.HasValue) q = q.Where(b => b.BookedAtUtc >= filter.FromUtc.Value);
+        if (filter.ToUtc.HasValue) q = q.Where(b => b.BookedAtUtc <= filter.ToUtc.Value);
+        return q.ToArray();
     }
 
     public async Task<BookingResponse> CreateBookingAsync(string gymCode, BookingCreateRequest request, CancellationToken cancellationToken = default)
@@ -267,6 +341,51 @@ public class TrainingWorkflowService(
             booking.CancelledAtUtc = DateTime.UtcNow;
         }
 
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+        return trainingMapper.ToBooking(booking);
+    }
+
+    public async Task<BookingResponse> RescheduleBookingAsync(string gymCode, Guid bookingId, BookingRescheduleRequest request, CancellationToken cancellationToken = default)
+    {
+        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin, RoleNames.Member);
+
+        var booking = await unitOfWork.Bookings.FindWithTrainingSessionAndMemberAsync(gymId, bookingId, cancellationToken)
+                      ?? throw new NotFoundException("Booking was not found.");
+
+        await authorizationService.EnsureBookingAccessAsync(booking, cancellationToken);
+
+        if (booking.Status != BookingStatus.Booked)
+        {
+            throw new ValidationAppException("Only active bookings can be rescheduled.");
+        }
+
+        if (booking.TrainingSessionId == request.TrainingSessionId)
+        {
+            return trainingMapper.ToBooking(booking);
+        }
+
+        var newSession = await unitOfWork.TrainingSessions.FindAsync(gymId, request.TrainingSessionId, cancellationToken)
+                         ?? throw new NotFoundException("Training session was not found.");
+
+        if (newSession.Status != TrainingSessionStatus.Published)
+        {
+            throw new ValidationAppException("Bookings can only be moved to published sessions.");
+        }
+
+        var alreadyBooked = await unitOfWork.Bookings.ExistsForMemberSessionAsync(gymId, booking.MemberId, newSession.Id, cancellationToken);
+        if (alreadyBooked)
+        {
+            throw new ValidationAppException("This member already has a booking for the selected session.");
+        }
+
+        var bookedCount = await unitOfWork.Bookings.CountActiveForSessionAsync(newSession.Id, cancellationToken);
+        if (bookedCount >= newSession.Capacity)
+        {
+            throw new ValidationAppException("Training session capacity has been reached.");
+        }
+
+        booking.TrainingSessionId = newSession.Id;
+        booking.TrainingSession = newSession;
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return trainingMapper.ToBooking(booking);
     }

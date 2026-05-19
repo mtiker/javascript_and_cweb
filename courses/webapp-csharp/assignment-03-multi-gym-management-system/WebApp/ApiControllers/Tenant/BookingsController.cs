@@ -1,4 +1,5 @@
 using App.BLL.Contracts.Services;
+using App.Domain.Enums;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
 using WebApp.ApiControllers;
@@ -12,9 +13,24 @@ public class BookingsController(ITrainingWorkflowService trainingWorkflowService
 {
     [HttpGet("bookings")]
     [ProducesResponseType(typeof(IReadOnlyCollection<BookingResponse>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<IReadOnlyCollection<BookingResponse>>> GetBookings(string gymCode, CancellationToken cancellationToken)
+    public async Task<ActionResult<IReadOnlyCollection<BookingResponse>>> GetBookings(
+        string gymCode,
+        CancellationToken cancellationToken,
+        [FromQuery] BookingStatus? status = null,
+        [FromQuery] Guid? memberId = null,
+        [FromQuery] Guid? trainingSessionId = null,
+        [FromQuery] DateTime? fromUtc = null,
+        [FromQuery] DateTime? toUtc = null)
     {
-        return Ok(await trainingWorkflowService.GetBookingsAsync(gymCode, cancellationToken));
+        var filter = new BookingFilter
+        {
+            Status = status,
+            MemberId = memberId,
+            TrainingSessionId = trainingSessionId,
+            FromUtc = fromUtc,
+            ToUtc = toUtc
+        };
+        return Ok(await trainingWorkflowService.GetBookingsAsync(gymCode, filter, cancellationToken));
     }
 
     [HttpPost("bookings")]
@@ -30,6 +46,13 @@ public class BookingsController(ITrainingWorkflowService trainingWorkflowService
     public async Task<ActionResult<BookingResponse>> UpdateAttendance(string gymCode, Guid id, [FromBody] AttendanceUpdateRequest request, CancellationToken cancellationToken)
     {
         return Ok(await trainingWorkflowService.UpdateAttendanceAsync(gymCode, id, request, cancellationToken));
+    }
+
+    [HttpPut("bookings/{id:guid}/reschedule")]
+    [ProducesResponseType(typeof(BookingResponse), StatusCodes.Status200OK)]
+    public async Task<ActionResult<BookingResponse>> RescheduleBooking(string gymCode, Guid id, [FromBody] BookingRescheduleRequest request, CancellationToken cancellationToken)
+    {
+        return Ok(await trainingWorkflowService.RescheduleBookingAsync(gymCode, id, request, cancellationToken));
     }
 
     [HttpDelete("bookings/{id:guid}")]

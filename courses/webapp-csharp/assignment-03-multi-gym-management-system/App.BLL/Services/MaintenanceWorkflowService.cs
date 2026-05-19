@@ -67,10 +67,13 @@ public class MaintenanceWorkflowService(
         await unitOfWork.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<IReadOnlyCollection<EquipmentResponse>> GetEquipmentAsync(string gymCode, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyCollection<EquipmentResponse>> GetEquipmentAsync(string gymCode, EquipmentFilter? filter = null, CancellationToken cancellationToken = default)
     {
         var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin, RoleNames.Caretaker);
-        var equipment = await unitOfWork.Maintenance.ListEquipmentByGymAsync(gymId, cancellationToken);
+        var hasFilter = filter is not null && (filter.Status.HasValue || filter.EquipmentModelId.HasValue || !string.IsNullOrWhiteSpace(filter.Search));
+        var equipment = hasFilter
+            ? await unitOfWork.Maintenance.ListEquipmentByGymFilteredAsync(gymId, filter!.Status, filter.EquipmentModelId, filter.Search, cancellationToken)
+            : await unitOfWork.Maintenance.ListEquipmentByGymAsync(gymId, cancellationToken);
         return mapper.ToEquipmentList(equipment);
     }
 
@@ -119,10 +122,31 @@ public class MaintenanceWorkflowService(
         await unitOfWork.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<IReadOnlyCollection<MaintenanceTaskResponse>> GetMaintenanceTasksAsync(string gymCode, CancellationToken cancellationToken = default)
+    public async Task<EquipmentResponse> UpdateEquipmentStatusAsync(string gymCode, Guid id, EquipmentStatusUpdateRequest request, CancellationToken cancellationToken = default)
     {
         var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin, RoleNames.Caretaker);
-        var tasks = await unitOfWork.Maintenance.ListMaintenanceTasksByGymAsync(gymId, cancellationToken);
+        var entity = await unitOfWork.Maintenance.FindEquipmentAsync(gymId, id, cancellationToken)
+                     ?? throw new NotFoundException("Equipment item was not found.");
+        entity.CurrentStatus = request.Status;
+        if (request.Status == EquipmentStatus.Decommissioned && !entity.DecommissionedAt.HasValue)
+        {
+            entity.DecommissionedAt = DateOnly.FromDateTime(DateTime.UtcNow.Date);
+        }
+        else if (request.Status == EquipmentStatus.Active)
+        {
+            entity.DecommissionedAt = null;
+        }
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+        return mapper.ToEquipment(entity);
+    }
+
+    public async Task<IReadOnlyCollection<MaintenanceTaskResponse>> GetMaintenanceTasksAsync(string gymCode, MaintenanceTaskFilter? filter = null, CancellationToken cancellationToken = default)
+    {
+        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin, RoleNames.Caretaker);
+        var hasFilter = filter is not null && (filter.Status.HasValue || filter.Priority.HasValue || filter.TaskType.HasValue || filter.EquipmentId.HasValue || filter.AssignedStaffId.HasValue || filter.DueBeforeUtc.HasValue);
+        var tasks = hasFilter
+            ? await unitOfWork.Maintenance.ListMaintenanceTasksByGymFilteredAsync(gymId, filter!.Status, filter.Priority, filter.TaskType, filter.EquipmentId, filter.AssignedStaffId, filter.DueBeforeUtc, cancellationToken)
+            : await unitOfWork.Maintenance.ListMaintenanceTasksByGymAsync(gymId, cancellationToken);
         return mapper.ToMaintenanceTaskList(tasks);
     }
 

@@ -37,7 +37,7 @@ public sealed class ClientMaintenancePageService(
         if (staff != null &&
             (context.HasRole(RoleNames.GymOwner) || context.HasRole(RoleNames.GymAdmin) || context.HasRole(RoleNames.Caretaker)))
         {
-            tasks = (await maintenanceWorkflowService.GetMaintenanceTasksAsync(context.ActiveGymCode, cancellationToken))
+            tasks = (await maintenanceWorkflowService.GetMaintenanceTasksAsync(context.ActiveGymCode, cancellationToken: cancellationToken))
                 .Where(entity => entity.AssignedStaffId == staff.Id)
                 .OrderBy(entity => entity.DueAtUtc)
                 .ToArray();
@@ -58,7 +58,7 @@ public sealed class ClientMaintenancePageService(
             return null;
         }
 
-        var task = (await maintenanceWorkflowService.GetMaintenanceTasksAsync(context.ActiveGymCode, cancellationToken))
+        var task = (await maintenanceWorkflowService.GetMaintenanceTasksAsync(context.ActiveGymCode, cancellationToken: cancellationToken))
             .FirstOrDefault(entity => entity.Id == taskId);
         if (task == null)
         {

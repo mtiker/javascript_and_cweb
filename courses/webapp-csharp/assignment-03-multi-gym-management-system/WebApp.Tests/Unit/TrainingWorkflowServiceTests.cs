@@ -510,12 +510,14 @@ public class TrainingWorkflowServiceTests
         public Task<MembershipPackageResponse> CreatePackageAsync(string gymCode, MembershipPackageUpsertRequest request, CancellationToken cancellationToken = default) => throw new NotSupportedException();
         public Task<MembershipPackageResponse> UpdatePackageAsync(string gymCode, Guid id, MembershipPackageUpsertRequest request, CancellationToken cancellationToken = default) => throw new NotSupportedException();
         public Task DeletePackageAsync(string gymCode, Guid id, CancellationToken cancellationToken = default) => Task.CompletedTask;
-        public Task<IReadOnlyCollection<MembershipResponse>> GetMembershipsAsync(string gymCode, CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyCollection<MembershipResponse>>(Array.Empty<MembershipResponse>());
+        public Task<IReadOnlyCollection<MembershipResponse>> GetMembershipsAsync(string gymCode, MembershipFilter? filter = null, CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyCollection<MembershipResponse>>(Array.Empty<MembershipResponse>());
         public Task<MembershipSaleResponse> SellMembershipAsync(string gymCode, SellMembershipRequest request, CancellationToken cancellationToken = default) => throw new NotSupportedException();
         public Task<MembershipResponse> UpdateMembershipStatusAsync(string gymCode, Guid id, MembershipStatusUpdateRequest request, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+        public Task<MembershipResponse> UpdateMembershipAsync(string gymCode, Guid id, MembershipEditRequest request, CancellationToken cancellationToken = default) => throw new NotSupportedException();
         public Task DeleteMembershipAsync(string gymCode, Guid id, CancellationToken cancellationToken = default) => Task.CompletedTask;
-        public Task<IReadOnlyCollection<PaymentResponse>> GetPaymentsAsync(string gymCode, CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyCollection<PaymentResponse>>(Array.Empty<PaymentResponse>());
+        public Task<IReadOnlyCollection<PaymentResponse>> GetPaymentsAsync(string gymCode, PaymentFilter? filter = null, CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyCollection<PaymentResponse>>(Array.Empty<PaymentResponse>());
         public Task<PaymentResponse> CreatePaymentAsync(string gymCode, PaymentCreateRequest request, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+        public Task<PaymentResponse> RefundPaymentAsync(string gymCode, Guid paymentId, PaymentRefundRequest request, CancellationToken cancellationToken = default) => throw new NotSupportedException();
         public Task<decimal> CalculateBookingPriceAsync(Guid gymId, Guid memberId, TrainingSession trainingSession, CancellationToken cancellationToken = default) => Task.FromResult(0m);
     }
 

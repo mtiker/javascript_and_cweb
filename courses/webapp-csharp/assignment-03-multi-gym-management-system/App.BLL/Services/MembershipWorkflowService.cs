@@ -31,9 +31,9 @@ public class MembershipWorkflowService(
         return membershipPackageService.DeletePackageAsync(gymCode, id, cancellationToken);
     }
 
-    public Task<IReadOnlyCollection<MembershipResponse>> GetMembershipsAsync(string gymCode, CancellationToken cancellationToken = default)
+    public Task<IReadOnlyCollection<MembershipResponse>> GetMembershipsAsync(string gymCode, MembershipFilter? filter = null, CancellationToken cancellationToken = default)
     {
-        return membershipService.GetMembershipsAsync(gymCode, cancellationToken);
+        return membershipService.GetMembershipsAsync(gymCode, filter, cancellationToken);
     }
 
     public Task<MembershipSaleResponse> SellMembershipAsync(string gymCode, SellMembershipRequest request, CancellationToken cancellationToken = default)
@@ -46,19 +46,29 @@ public class MembershipWorkflowService(
         return membershipService.UpdateMembershipStatusAsync(gymCode, id, request, cancellationToken);
     }
 
+    public Task<MembershipResponse> UpdateMembershipAsync(string gymCode, Guid id, MembershipEditRequest request, CancellationToken cancellationToken = default)
+    {
+        return membershipService.UpdateMembershipAsync(gymCode, id, request, cancellationToken);
+    }
+
     public Task DeleteMembershipAsync(string gymCode, Guid id, CancellationToken cancellationToken = default)
     {
         return membershipService.DeleteMembershipAsync(gymCode, id, cancellationToken);
     }
 
-    public Task<IReadOnlyCollection<PaymentResponse>> GetPaymentsAsync(string gymCode, CancellationToken cancellationToken = default)
+    public Task<IReadOnlyCollection<PaymentResponse>> GetPaymentsAsync(string gymCode, PaymentFilter? filter = null, CancellationToken cancellationToken = default)
     {
-        return paymentService.GetPaymentsAsync(gymCode, cancellationToken);
+        return paymentService.GetPaymentsAsync(gymCode, filter, cancellationToken);
     }
 
     public Task<PaymentResponse> CreatePaymentAsync(string gymCode, PaymentCreateRequest request, CancellationToken cancellationToken = default)
     {
         return paymentService.CreatePaymentAsync(gymCode, request, cancellationToken);
+    }
+
+    public Task<PaymentResponse> RefundPaymentAsync(string gymCode, Guid paymentId, PaymentRefundRequest request, CancellationToken cancellationToken = default)
+    {
+        return paymentService.RefundPaymentAsync(gymCode, paymentId, request, cancellationToken);
     }
 
     public Task<decimal> CalculateBookingPriceAsync(Guid gymId, Guid memberId, TrainingSession trainingSession, CancellationToken cancellationToken = default)

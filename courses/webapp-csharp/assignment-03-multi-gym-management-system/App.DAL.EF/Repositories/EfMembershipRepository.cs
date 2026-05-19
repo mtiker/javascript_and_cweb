@@ -15,6 +15,28 @@ public sealed class EfMembershipRepository(AppDbContext dbContext) : IMembership
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyList<Membership>> ListByGymFilteredAsync(
+        Guid gymId,
+        MembershipStatus? status,
+        Guid? memberId,
+        Guid? membershipPackageId,
+        DateOnly? startFrom,
+        DateOnly? startTo,
+        CancellationToken cancellationToken = default)
+    {
+        var query = dbContext.Memberships.Where(membership => membership.GymId == gymId);
+
+        if (status.HasValue) query = query.Where(m => m.Status == status.Value);
+        if (memberId.HasValue) query = query.Where(m => m.MemberId == memberId.Value);
+        if (membershipPackageId.HasValue) query = query.Where(m => m.MembershipPackageId == membershipPackageId.Value);
+        if (startFrom.HasValue) query = query.Where(m => m.StartDate >= startFrom.Value);
+        if (startTo.HasValue) query = query.Where(m => m.StartDate <= startTo.Value);
+
+        return await query
+            .OrderByDescending(membership => membership.StartDate)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<IReadOnlyList<Membership>> ListForMemberAsync(Guid gymId, Guid memberId, CancellationToken cancellationToken = default)
     {
         return await dbContext.Memberships

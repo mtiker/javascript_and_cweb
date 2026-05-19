@@ -1,4 +1,5 @@
 using App.BLL.Contracts.Services;
+using App.Domain.Enums;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
 using WebApp.ApiControllers;
@@ -12,9 +13,24 @@ public class TrainingSessionsController(ITrainingWorkflowService trainingWorkflo
 {
     [HttpGet("training-sessions")]
     [ProducesResponseType(typeof(IReadOnlyCollection<TrainingSessionResponse>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<IReadOnlyCollection<TrainingSessionResponse>>> GetSessions(string gymCode, CancellationToken cancellationToken)
+    public async Task<ActionResult<IReadOnlyCollection<TrainingSessionResponse>>> GetSessions(
+        string gymCode,
+        CancellationToken cancellationToken,
+        [FromQuery] TrainingSessionStatus? status = null,
+        [FromQuery] Guid? categoryId = null,
+        [FromQuery] Guid? trainerStaffId = null,
+        [FromQuery] DateTime? fromUtc = null,
+        [FromQuery] DateTime? toUtc = null)
     {
-        return Ok(await trainingWorkflowService.GetSessionsAsync(gymCode, cancellationToken));
+        var filter = new TrainingSessionFilter
+        {
+            Status = status,
+            CategoryId = categoryId,
+            TrainerStaffId = trainerStaffId,
+            FromUtc = fromUtc,
+            ToUtc = toUtc
+        };
+        return Ok(await trainingWorkflowService.GetSessionsAsync(gymCode, filter, cancellationToken));
     }
 
     [HttpGet("training-sessions/{id:guid}")]
@@ -37,6 +53,27 @@ public class TrainingSessionsController(ITrainingWorkflowService trainingWorkflo
     public async Task<ActionResult<TrainingSessionResponse>> UpdateSession(string gymCode, Guid id, [FromBody] TrainingSessionUpsertRequest request, CancellationToken cancellationToken)
     {
         return Ok(await trainingWorkflowService.UpsertTrainingSessionAsync(gymCode, id, request, cancellationToken));
+    }
+
+    [HttpPut("training-sessions/{id:guid}/status")]
+    [ProducesResponseType(typeof(TrainingSessionResponse), StatusCodes.Status200OK)]
+    public async Task<ActionResult<TrainingSessionResponse>> UpdateSessionStatus(string gymCode, Guid id, [FromBody] TrainingSessionStatusUpdateRequest request, CancellationToken cancellationToken)
+    {
+        return Ok(await trainingWorkflowService.UpdateSessionStatusAsync(gymCode, id, request, cancellationToken));
+    }
+
+    [HttpPut("training-sessions/{id:guid}/trainer")]
+    [ProducesResponseType(typeof(TrainingSessionResponse), StatusCodes.Status200OK)]
+    public async Task<ActionResult<TrainingSessionResponse>> UpdateSessionTrainer(string gymCode, Guid id, [FromBody] TrainingSessionTrainerUpdateRequest request, CancellationToken cancellationToken)
+    {
+        return Ok(await trainingWorkflowService.UpdateSessionTrainerAsync(gymCode, id, request, cancellationToken));
+    }
+
+    [HttpPut("training-sessions/{id:guid}/reschedule")]
+    [ProducesResponseType(typeof(TrainingSessionResponse), StatusCodes.Status200OK)]
+    public async Task<ActionResult<TrainingSessionResponse>> RescheduleSession(string gymCode, Guid id, [FromBody] TrainingSessionRescheduleRequest request, CancellationToken cancellationToken)
+    {
+        return Ok(await trainingWorkflowService.RescheduleSessionAsync(gymCode, id, request, cancellationToken));
     }
 
     [HttpDelete("training-sessions/{id:guid}")]

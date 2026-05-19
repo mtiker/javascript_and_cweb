@@ -1,4 +1,5 @@
 using App.BLL.Contracts.Services;
+using App.Domain.Enums;
 using App.DTO.v1;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
@@ -13,9 +14,15 @@ public class EquipmentController(IMaintenanceWorkflowService maintenanceWorkflow
 {
     [HttpGet("equipment")]
     [ProducesResponseType(typeof(IReadOnlyCollection<EquipmentResponse>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<IReadOnlyCollection<EquipmentResponse>>> GetEquipment(string gymCode, CancellationToken cancellationToken)
+    public async Task<ActionResult<IReadOnlyCollection<EquipmentResponse>>> GetEquipment(
+        string gymCode,
+        CancellationToken cancellationToken,
+        [FromQuery] EquipmentStatus? status = null,
+        [FromQuery] Guid? equipmentModelId = null,
+        [FromQuery] string? search = null)
     {
-        return Ok(await maintenanceWorkflowService.GetEquipmentAsync(gymCode, cancellationToken));
+        var filter = new EquipmentFilter { Status = status, EquipmentModelId = equipmentModelId, Search = search };
+        return Ok(await maintenanceWorkflowService.GetEquipmentAsync(gymCode, filter, cancellationToken));
     }
 
     [HttpPost("equipment")]
@@ -30,6 +37,13 @@ public class EquipmentController(IMaintenanceWorkflowService maintenanceWorkflow
     public async Task<ActionResult<EquipmentResponse>> UpdateEquipment(string gymCode, Guid id, [FromBody] EquipmentUpsertRequest request, CancellationToken cancellationToken)
     {
         return Ok(await maintenanceWorkflowService.UpdateEquipmentAsync(gymCode, id, request, cancellationToken));
+    }
+
+    [HttpPut("equipment/{id:guid}/status")]
+    [ProducesResponseType(typeof(EquipmentResponse), StatusCodes.Status200OK)]
+    public async Task<ActionResult<EquipmentResponse>> UpdateEquipmentStatus(string gymCode, Guid id, [FromBody] EquipmentStatusUpdateRequest request, CancellationToken cancellationToken)
+    {
+        return Ok(await maintenanceWorkflowService.UpdateEquipmentStatusAsync(gymCode, id, request, cancellationToken));
     }
 
     [HttpDelete("equipment/{id:guid}")]

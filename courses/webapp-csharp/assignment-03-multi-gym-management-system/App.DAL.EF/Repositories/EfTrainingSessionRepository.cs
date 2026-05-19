@@ -1,5 +1,6 @@
 using App.DAL.Contracts.Persistence;
 using App.Domain.Entities;
+using App.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace App.DAL.EF.Repositories;
@@ -12,6 +13,50 @@ public sealed class EfTrainingSessionRepository(AppDbContext dbContext) : ITrain
             .Include(session => session.TrainerStaff)
                 .ThenInclude(staff => staff!.Person)
             .Where(session => session.GymId == gymId)
+            .OrderBy(session => session.StartAtUtc)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<TrainingSession>> ListByGymFilteredAsync(
+        Guid gymId,
+        TrainingSessionStatus? status,
+        Guid? categoryId,
+        Guid? trainerStaffId,
+        DateTime? fromUtc,
+        DateTime? toUtc,
+        CancellationToken cancellationToken = default)
+    {
+        var query = dbContext.TrainingSessions
+            .Include(session => session.TrainerStaff)
+                .ThenInclude(staff => staff!.Person)
+            .Where(session => session.GymId == gymId);
+
+        if (status.HasValue)
+        {
+            query = query.Where(session => session.Status == status.Value);
+        }
+
+        if (categoryId.HasValue)
+        {
+            query = query.Where(session => session.CategoryId == categoryId.Value);
+        }
+
+        if (trainerStaffId.HasValue)
+        {
+            query = query.Where(session => session.TrainerStaffId == trainerStaffId.Value);
+        }
+
+        if (fromUtc.HasValue)
+        {
+            query = query.Where(session => session.StartAtUtc >= fromUtc.Value);
+        }
+
+        if (toUtc.HasValue)
+        {
+            query = query.Where(session => session.StartAtUtc <= toUtc.Value);
+        }
+
+        return await query
             .OrderBy(session => session.StartAtUtc)
             .ToListAsync(cancellationToken);
     }

@@ -14,12 +14,16 @@ public interface ITrainingWorkflowService
     Task<TrainingCategoryResponse> CreateCategoryAsync(string gymCode, TrainingCategoryUpsertRequest request, CancellationToken cancellationToken = default);
     Task<TrainingCategoryResponse> UpdateCategoryAsync(string gymCode, Guid id, TrainingCategoryUpsertRequest request, CancellationToken cancellationToken = default);
     Task DeleteCategoryAsync(string gymCode, Guid id, CancellationToken cancellationToken = default);
-    Task<IReadOnlyCollection<TrainingSessionResponse>> GetSessionsAsync(string gymCode, CancellationToken cancellationToken = default);
+    Task<IReadOnlyCollection<TrainingSessionResponse>> GetSessionsAsync(string gymCode, TrainingSessionFilter? filter = null, CancellationToken cancellationToken = default);
     Task<TrainingSessionResponse> GetSessionAsync(string gymCode, Guid id, CancellationToken cancellationToken = default);
     Task<TrainingSessionResponse> UpsertTrainingSessionAsync(string gymCode, Guid? sessionId, TrainingSessionUpsertRequest request, CancellationToken cancellationToken = default);
+    Task<TrainingSessionResponse> UpdateSessionStatusAsync(string gymCode, Guid sessionId, TrainingSessionStatusUpdateRequest request, CancellationToken cancellationToken = default);
+    Task<TrainingSessionResponse> UpdateSessionTrainerAsync(string gymCode, Guid sessionId, TrainingSessionTrainerUpdateRequest request, CancellationToken cancellationToken = default);
+    Task<TrainingSessionResponse> RescheduleSessionAsync(string gymCode, Guid sessionId, TrainingSessionRescheduleRequest request, CancellationToken cancellationToken = default);
     Task DeleteSessionAsync(string gymCode, Guid id, CancellationToken cancellationToken = default);
-    Task<IReadOnlyCollection<BookingResponse>> GetBookingsAsync(string gymCode, CancellationToken cancellationToken = default);
+    Task<IReadOnlyCollection<BookingResponse>> GetBookingsAsync(string gymCode, BookingFilter? filter = null, CancellationToken cancellationToken = default);
     Task<BookingResponse> CreateBookingAsync(string gymCode, BookingCreateRequest request, CancellationToken cancellationToken = default);
     Task<BookingResponse> UpdateAttendanceAsync(string gymCode, Guid bookingId, AttendanceUpdateRequest request, CancellationToken cancellationToken = default);
+    Task<BookingResponse> RescheduleBookingAsync(string gymCode, Guid bookingId, BookingRescheduleRequest request, CancellationToken cancellationToken = default);
     Task CancelBookingAsync(string gymCode, Guid id, CancellationToken cancellationToken = default);
 }

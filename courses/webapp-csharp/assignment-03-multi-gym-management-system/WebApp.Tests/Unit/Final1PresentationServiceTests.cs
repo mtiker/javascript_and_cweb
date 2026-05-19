@@ -313,15 +313,17 @@ public class Final1PresentationServiceTests
 
         public Task DeleteEquipmentModelAsync(string gymCode, Guid id, CancellationToken cancellationToken = default) => throw new NotSupportedException();
 
-        public Task<IReadOnlyCollection<EquipmentResponse>> GetEquipmentAsync(string gymCode, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+        public Task<IReadOnlyCollection<EquipmentResponse>> GetEquipmentAsync(string gymCode, EquipmentFilter? filter = null, CancellationToken cancellationToken = default) => throw new NotSupportedException();
 
         public Task<EquipmentResponse> CreateEquipmentAsync(string gymCode, EquipmentUpsertRequest request, CancellationToken cancellationToken = default) => throw new NotSupportedException();
 
         public Task<EquipmentResponse> UpdateEquipmentAsync(string gymCode, Guid id, EquipmentUpsertRequest request, CancellationToken cancellationToken = default) => throw new NotSupportedException();
 
+        public Task<EquipmentResponse> UpdateEquipmentStatusAsync(string gymCode, Guid id, EquipmentStatusUpdateRequest request, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+
         public Task DeleteEquipmentAsync(string gymCode, Guid id, CancellationToken cancellationToken = default) => throw new NotSupportedException();
 
-        public Task<IReadOnlyCollection<MaintenanceTaskResponse>> GetMaintenanceTasksAsync(string gymCode, CancellationToken cancellationToken = default) => Task.FromResult(tasks);
+        public Task<IReadOnlyCollection<MaintenanceTaskResponse>> GetMaintenanceTasksAsync(string gymCode, MaintenanceTaskFilter? filter = null, CancellationToken cancellationToken = default) => Task.FromResult(tasks);
 
         public Task<MaintenanceTaskResponse> CreateTaskAsync(string gymCode, MaintenanceTaskUpsertRequest request, CancellationToken cancellationToken = default) => throw new NotSupportedException();
 

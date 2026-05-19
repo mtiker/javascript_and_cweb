@@ -1,4 +1,5 @@
 using App.BLL.Contracts.Services;
+using App.Domain.Enums;
 using App.DTO.v1;
 using App.DTO.v1.MaintenanceTasks;
 using Asp.Versioning;
@@ -13,9 +14,26 @@ public class MaintenanceTasksController(IMaintenanceWorkflowService maintenanceW
 {
     [HttpGet("maintenance-tasks")]
     [ProducesResponseType(typeof(IReadOnlyCollection<MaintenanceTaskResponse>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<IReadOnlyCollection<MaintenanceTaskResponse>>> GetMaintenanceTasks(string gymCode, CancellationToken cancellationToken)
+    public async Task<ActionResult<IReadOnlyCollection<MaintenanceTaskResponse>>> GetMaintenanceTasks(
+        string gymCode,
+        CancellationToken cancellationToken,
+        [FromQuery] MaintenanceTaskStatus? status = null,
+        [FromQuery] MaintenancePriority? priority = null,
+        [FromQuery] MaintenanceTaskType? taskType = null,
+        [FromQuery] Guid? equipmentId = null,
+        [FromQuery] Guid? assignedStaffId = null,
+        [FromQuery] DateTime? dueBeforeUtc = null)
     {
-        return Ok(await maintenanceWorkflowService.GetMaintenanceTasksAsync(gymCode, cancellationToken));
+        var filter = new MaintenanceTaskFilter
+        {
+            Status = status,
+            Priority = priority,
+            TaskType = taskType,
+            EquipmentId = equipmentId,
+            AssignedStaffId = assignedStaffId,
+            DueBeforeUtc = dueBeforeUtc
+        };
+        return Ok(await maintenanceWorkflowService.GetMaintenanceTasksAsync(gymCode, filter, cancellationToken));
     }
 
     [HttpPost("maintenance-tasks")]

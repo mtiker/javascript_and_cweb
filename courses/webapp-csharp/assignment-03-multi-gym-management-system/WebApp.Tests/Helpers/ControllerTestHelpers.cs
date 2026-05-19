@@ -100,8 +100,14 @@ public sealed class DelegatingMemberWorkflowService : IMemberWorkflowService
     public Func<string, Guid, CancellationToken, Task> DeleteMemberAsyncHandler { get; set; } =
         static (_, _, _) => Task.CompletedTask;
 
-    public Task<IReadOnlyCollection<MemberResponse>> GetMembersAsync(string gymCode, CancellationToken cancellationToken = default) =>
+    public Func<string, Guid, MemberStatusUpdateRequest, CancellationToken, Task<MemberDetailResponse>> UpdateMemberStatusAsyncHandler { get; set; } =
+        static (_, _, _, _) => Task.FromException<MemberDetailResponse>(new InvalidOperationException("UpdateMemberStatusAsyncHandler not configured."));
+
+    public Task<IReadOnlyCollection<MemberResponse>> GetMembersAsync(string gymCode, MemberFilter? filter = null, CancellationToken cancellationToken = default) =>
         GetMembersAsyncHandler(gymCode, cancellationToken);
+
+    public Task<MemberDetailResponse> UpdateMemberStatusAsync(string gymCode, Guid id, MemberStatusUpdateRequest request, CancellationToken cancellationToken = default) =>
+        UpdateMemberStatusAsyncHandler(gymCode, id, request, cancellationToken);
 
     public Task<MemberDetailResponse> GetCurrentMemberAsync(string gymCode, CancellationToken cancellationToken = default) =>
         GetCurrentMemberAsyncHandler(gymCode, cancellationToken);
@@ -157,6 +163,18 @@ public sealed class DelegatingTrainingWorkflowService : ITrainingWorkflowService
     public Func<string, Guid, CancellationToken, Task> CancelBookingAsyncHandler { get; set; } =
         static (_, _, _) => Task.CompletedTask;
 
+    public Func<string, Guid, BookingRescheduleRequest, CancellationToken, Task<BookingResponse>> RescheduleBookingAsyncHandler { get; set; } =
+        static (_, _, _, _) => Task.FromException<BookingResponse>(new InvalidOperationException("RescheduleBookingAsyncHandler not configured."));
+
+    public Func<string, Guid, TrainingSessionStatusUpdateRequest, CancellationToken, Task<TrainingSessionResponse>> UpdateSessionStatusAsyncHandler { get; set; } =
+        static (_, _, _, _) => Task.FromException<TrainingSessionResponse>(new InvalidOperationException("UpdateSessionStatusAsyncHandler not configured."));
+
+    public Func<string, Guid, TrainingSessionTrainerUpdateRequest, CancellationToken, Task<TrainingSessionResponse>> UpdateSessionTrainerAsyncHandler { get; set; } =
+        static (_, _, _, _) => Task.FromException<TrainingSessionResponse>(new InvalidOperationException("UpdateSessionTrainerAsyncHandler not configured."));
+
+    public Func<string, Guid, TrainingSessionRescheduleRequest, CancellationToken, Task<TrainingSessionResponse>> RescheduleSessionAsyncHandler { get; set; } =
+        static (_, _, _, _) => Task.FromException<TrainingSessionResponse>(new InvalidOperationException("RescheduleSessionAsyncHandler not configured."));
+
     public Task<IReadOnlyCollection<TrainingCategoryResponse>> GetCategoriesAsync(string gymCode, CancellationToken cancellationToken = default) =>
         GetCategoriesAsyncHandler(gymCode, cancellationToken);
 
@@ -169,7 +187,7 @@ public sealed class DelegatingTrainingWorkflowService : ITrainingWorkflowService
     public Task DeleteCategoryAsync(string gymCode, Guid id, CancellationToken cancellationToken = default) =>
         DeleteCategoryAsyncHandler(gymCode, id, cancellationToken);
 
-    public Task<IReadOnlyCollection<TrainingSessionResponse>> GetSessionsAsync(string gymCode, CancellationToken cancellationToken = default) =>
+    public Task<IReadOnlyCollection<TrainingSessionResponse>> GetSessionsAsync(string gymCode, TrainingSessionFilter? filter = null, CancellationToken cancellationToken = default) =>
         GetSessionsAsyncHandler(gymCode, cancellationToken);
 
     public Task<TrainingSessionResponse> GetSessionAsync(string gymCode, Guid id, CancellationToken cancellationToken = default) =>
@@ -178,10 +196,19 @@ public sealed class DelegatingTrainingWorkflowService : ITrainingWorkflowService
     public Task<TrainingSessionResponse> UpsertTrainingSessionAsync(string gymCode, Guid? sessionId, TrainingSessionUpsertRequest request, CancellationToken cancellationToken = default) =>
         UpsertTrainingSessionAsyncHandler(gymCode, sessionId, request, cancellationToken);
 
+    public Task<TrainingSessionResponse> UpdateSessionStatusAsync(string gymCode, Guid sessionId, TrainingSessionStatusUpdateRequest request, CancellationToken cancellationToken = default) =>
+        UpdateSessionStatusAsyncHandler(gymCode, sessionId, request, cancellationToken);
+
+    public Task<TrainingSessionResponse> UpdateSessionTrainerAsync(string gymCode, Guid sessionId, TrainingSessionTrainerUpdateRequest request, CancellationToken cancellationToken = default) =>
+        UpdateSessionTrainerAsyncHandler(gymCode, sessionId, request, cancellationToken);
+
+    public Task<TrainingSessionResponse> RescheduleSessionAsync(string gymCode, Guid sessionId, TrainingSessionRescheduleRequest request, CancellationToken cancellationToken = default) =>
+        RescheduleSessionAsyncHandler(gymCode, sessionId, request, cancellationToken);
+
     public Task DeleteSessionAsync(string gymCode, Guid id, CancellationToken cancellationToken = default) =>
         DeleteSessionAsyncHandler(gymCode, id, cancellationToken);
 
-    public Task<IReadOnlyCollection<BookingResponse>> GetBookingsAsync(string gymCode, CancellationToken cancellationToken = default) =>
+    public Task<IReadOnlyCollection<BookingResponse>> GetBookingsAsync(string gymCode, BookingFilter? filter = null, CancellationToken cancellationToken = default) =>
         GetBookingsAsyncHandler(gymCode, cancellationToken);
 
     public Task<BookingResponse> CreateBookingAsync(string gymCode, BookingCreateRequest request, CancellationToken cancellationToken = default) =>
@@ -189,6 +216,9 @@ public sealed class DelegatingTrainingWorkflowService : ITrainingWorkflowService
 
     public Task<BookingResponse> UpdateAttendanceAsync(string gymCode, Guid bookingId, AttendanceUpdateRequest request, CancellationToken cancellationToken = default) =>
         UpdateAttendanceAsyncHandler(gymCode, bookingId, request, cancellationToken);
+
+    public Task<BookingResponse> RescheduleBookingAsync(string gymCode, Guid bookingId, BookingRescheduleRequest request, CancellationToken cancellationToken = default) =>
+        RescheduleBookingAsyncHandler(gymCode, bookingId, request, cancellationToken);
 
     public Task CancelBookingAsync(string gymCode, Guid id, CancellationToken cancellationToken = default) =>
         CancelBookingAsyncHandler(gymCode, id, cancellationToken);
@@ -238,8 +268,20 @@ public class DelegatingMembershipWorkflowService : IMembershipWorkflowService
     public Task DeletePackageAsync(string gymCode, Guid id, CancellationToken cancellationToken = default) =>
         DeletePackageAsyncHandler(gymCode, id, cancellationToken);
 
-    public Task<IReadOnlyCollection<MembershipResponse>> GetMembershipsAsync(string gymCode, CancellationToken cancellationToken = default) =>
+    public Task<IReadOnlyCollection<MembershipResponse>> GetMembershipsAsync(string gymCode, MembershipFilter? filter = null, CancellationToken cancellationToken = default) =>
         GetMembershipsAsyncHandler(gymCode, cancellationToken);
+
+    public Func<string, Guid, MembershipEditRequest, CancellationToken, Task<MembershipResponse>> UpdateMembershipAsyncHandler { get; set; } =
+        static (_, _, _, _) => Task.FromException<MembershipResponse>(new InvalidOperationException("UpdateMembershipAsyncHandler not configured."));
+
+    public Task<MembershipResponse> UpdateMembershipAsync(string gymCode, Guid id, MembershipEditRequest request, CancellationToken cancellationToken = default) =>
+        UpdateMembershipAsyncHandler(gymCode, id, request, cancellationToken);
+
+    public Func<string, Guid, PaymentRefundRequest, CancellationToken, Task<PaymentResponse>> RefundPaymentAsyncHandler { get; set; } =
+        static (_, _, _, _) => Task.FromException<PaymentResponse>(new InvalidOperationException("RefundPaymentAsyncHandler not configured."));
+
+    public Task<PaymentResponse> RefundPaymentAsync(string gymCode, Guid paymentId, PaymentRefundRequest request, CancellationToken cancellationToken = default) =>
+        RefundPaymentAsyncHandler(gymCode, paymentId, request, cancellationToken);
 
     public Task<MembershipSaleResponse> SellMembershipAsync(string gymCode, SellMembershipRequest request, CancellationToken cancellationToken = default) =>
         SellMembershipAsyncHandler(gymCode, request, cancellationToken);
@@ -250,7 +292,7 @@ public class DelegatingMembershipWorkflowService : IMembershipWorkflowService
     public Task DeleteMembershipAsync(string gymCode, Guid id, CancellationToken cancellationToken = default) =>
         DeleteMembershipAsyncHandler(gymCode, id, cancellationToken);
 
-    public Task<IReadOnlyCollection<PaymentResponse>> GetPaymentsAsync(string gymCode, CancellationToken cancellationToken = default) =>
+    public Task<IReadOnlyCollection<PaymentResponse>> GetPaymentsAsync(string gymCode, PaymentFilter? filter = null, CancellationToken cancellationToken = default) =>
         GetPaymentsAsyncHandler(gymCode, cancellationToken);
 
     public Task<PaymentResponse> CreatePaymentAsync(string gymCode, PaymentCreateRequest request, CancellationToken cancellationToken = default) =>
@@ -331,8 +373,14 @@ public class DelegatingMaintenanceWorkflowService : IMaintenanceWorkflowService
     public Task DeleteEquipmentModelAsync(string gymCode, Guid id, CancellationToken cancellationToken = default) =>
         DeleteEquipmentModelAsyncHandler(gymCode, id, cancellationToken);
 
-    public Task<IReadOnlyCollection<EquipmentResponse>> GetEquipmentAsync(string gymCode, CancellationToken cancellationToken = default) =>
+    public Task<IReadOnlyCollection<EquipmentResponse>> GetEquipmentAsync(string gymCode, EquipmentFilter? filter = null, CancellationToken cancellationToken = default) =>
         GetEquipmentAsyncHandler(gymCode, cancellationToken);
+
+    public Func<string, Guid, EquipmentStatusUpdateRequest, CancellationToken, Task<EquipmentResponse>> UpdateEquipmentStatusAsyncHandler { get; set; } =
+        static (_, _, _, _) => Task.FromException<EquipmentResponse>(new InvalidOperationException("UpdateEquipmentStatusAsyncHandler not configured."));
+
+    public Task<EquipmentResponse> UpdateEquipmentStatusAsync(string gymCode, Guid id, EquipmentStatusUpdateRequest request, CancellationToken cancellationToken = default) =>
+        UpdateEquipmentStatusAsyncHandler(gymCode, id, request, cancellationToken);
 
     public Task<EquipmentResponse> CreateEquipmentAsync(string gymCode, EquipmentUpsertRequest request, CancellationToken cancellationToken = default) =>
         CreateEquipmentAsyncHandler(gymCode, request, cancellationToken);
@@ -343,7 +391,7 @@ public class DelegatingMaintenanceWorkflowService : IMaintenanceWorkflowService
     public Task DeleteEquipmentAsync(string gymCode, Guid id, CancellationToken cancellationToken = default) =>
         DeleteEquipmentAsyncHandler(gymCode, id, cancellationToken);
 
-    public Task<IReadOnlyCollection<MaintenanceTaskResponse>> GetMaintenanceTasksAsync(string gymCode, CancellationToken cancellationToken = default) =>
+    public Task<IReadOnlyCollection<MaintenanceTaskResponse>> GetMaintenanceTasksAsync(string gymCode, MaintenanceTaskFilter? filter = null, CancellationToken cancellationToken = default) =>
         GetMaintenanceTasksAsyncHandler(gymCode, cancellationToken);
 
     public Task<MaintenanceTaskResponse> CreateTaskAsync(string gymCode, MaintenanceTaskUpsertRequest request, CancellationToken cancellationToken = default) =>
@@ -391,8 +439,14 @@ public sealed class DelegatingStaffWorkflowService : IStaffWorkflowService
     public Func<string, Guid, CancellationToken, Task> DeleteStaffAsyncHandler { get; set; } =
         static (_, _, _) => Task.CompletedTask;
 
-    public Task<IReadOnlyCollection<StaffResponse>> GetStaffAsync(string gymCode, CancellationToken cancellationToken = default) =>
+    public Task<IReadOnlyCollection<StaffResponse>> GetStaffAsync(string gymCode, StaffFilter? filter = null, CancellationToken cancellationToken = default) =>
         GetStaffAsyncHandler(gymCode, cancellationToken);
+
+    public Func<string, Guid, StaffStatusUpdateRequest, CancellationToken, Task<StaffResponse>> UpdateStaffStatusAsyncHandler { get; set; } =
+        static (_, _, _, _) => Task.FromException<StaffResponse>(new InvalidOperationException("UpdateStaffStatusAsyncHandler not configured."));
+
+    public Task<StaffResponse> UpdateStaffStatusAsync(string gymCode, Guid id, StaffStatusUpdateRequest request, CancellationToken cancellationToken = default) =>
+        UpdateStaffStatusAsyncHandler(gymCode, id, request, cancellationToken);
 
     public Task<StaffResponse> CreateStaffAsync(string gymCode, StaffUpsertRequest request, CancellationToken cancellationToken = default) =>
         CreateStaffAsyncHandler(gymCode, request, cancellationToken);

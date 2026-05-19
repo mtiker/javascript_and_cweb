@@ -86,7 +86,7 @@ public sealed class ClientSessionsPageService(
         return ClientSessionsPageResult<SessionsPageViewModel>.Success(new SessionsPageViewModel
         {
             GymCode = context.ActiveGymCode!,
-            Sessions = await trainingWorkflowService.GetSessionsAsync(context.ActiveGymCode!, cancellationToken)
+            Sessions = await trainingWorkflowService.GetSessionsAsync(context.ActiveGymCode!, cancellationToken: cancellationToken)
         });
     }
 

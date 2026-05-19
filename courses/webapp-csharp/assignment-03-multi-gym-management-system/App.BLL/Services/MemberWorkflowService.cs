@@ -12,12 +12,35 @@ public class MemberWorkflowService(
     ISubscriptionTierLimitService subscriptionTierLimitService,
     IMemberMapper memberMapper) : IMemberWorkflowService
 {
-    public async Task<IReadOnlyCollection<MemberResponse>> GetMembersAsync(string gymCode, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyCollection<MemberResponse>> GetMembersAsync(string gymCode, MemberFilter? filter = null, CancellationToken cancellationToken = default)
     {
         var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, App.Domain.RoleNames.GymOwner, App.Domain.RoleNames.GymAdmin);
 
-        var members = await unitOfWork.Members.ListByGymAsync(gymId, cancellationToken);
+        var members = filter is null || (filter.Search is null && filter.Status is null)
+            ? await unitOfWork.Members.ListByGymAsync(gymId, cancellationToken)
+            : await unitOfWork.Members.ListByGymFilteredAsync(gymId, filter.Search, filter.Status, cancellationToken);
         return memberMapper.ToSummaryList(members);
+    }
+
+    public async Task<MemberDetailResponse> UpdateMemberStatusAsync(string gymCode, Guid id, MemberStatusUpdateRequest request, CancellationToken cancellationToken = default)
+    {
+        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, App.Domain.RoleNames.GymOwner, App.Domain.RoleNames.GymAdmin);
+
+        var member = await unitOfWork.Members.FindWithPersonAsync(gymId, id, cancellationToken)
+                     ?? throw new NotFoundException("Member was not found.");
+
+        member.Status = request.Status;
+        if (request.Status == App.Domain.Enums.MemberStatus.Left && !member.LeftAt.HasValue)
+        {
+            member.LeftAt = DateOnly.FromDateTime(DateTime.UtcNow.Date);
+        }
+        else if (request.Status == App.Domain.Enums.MemberStatus.Active)
+        {
+            member.LeftAt = null;
+        }
+
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+        return memberMapper.ToDetail(member);
     }
 
     public async Task<MemberDetailResponse> GetCurrentMemberAsync(string gymCode, CancellationToken cancellationToken = default)

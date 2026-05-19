@@ -1,4 +1,5 @@
 using App.BLL.Contracts.Services;
+using App.Domain.Enums;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
 using WebApp.ApiControllers;
@@ -12,9 +13,24 @@ public class PaymentsController(IMembershipWorkflowService membershipWorkflowSer
 {
     [HttpGet("payments")]
     [ProducesResponseType(typeof(IReadOnlyCollection<PaymentResponse>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<IReadOnlyCollection<PaymentResponse>>> GetPayments(string gymCode, CancellationToken cancellationToken)
+    public async Task<ActionResult<IReadOnlyCollection<PaymentResponse>>> GetPayments(
+        string gymCode,
+        CancellationToken cancellationToken,
+        [FromQuery] PaymentStatus? status = null,
+        [FromQuery] Guid? membershipId = null,
+        [FromQuery] Guid? bookingId = null,
+        [FromQuery] DateTime? fromUtc = null,
+        [FromQuery] DateTime? toUtc = null)
     {
-        return Ok(await membershipWorkflowService.GetPaymentsAsync(gymCode, cancellationToken));
+        var filter = new PaymentFilter
+        {
+            Status = status,
+            MembershipId = membershipId,
+            BookingId = bookingId,
+            FromUtc = fromUtc,
+            ToUtc = toUtc
+        };
+        return Ok(await membershipWorkflowService.GetPaymentsAsync(gymCode, filter, cancellationToken));
     }
 
     [HttpPost("payments")]
@@ -22,5 +38,12 @@ public class PaymentsController(IMembershipWorkflowService membershipWorkflowSer
     public async Task<ActionResult<PaymentResponse>> CreatePayment(string gymCode, [FromBody] PaymentCreateRequest request, CancellationToken cancellationToken)
     {
         return Ok(await membershipWorkflowService.CreatePaymentAsync(gymCode, request, cancellationToken));
+    }
+
+    [HttpPost("payments/{id:guid}/refund")]
+    [ProducesResponseType(typeof(PaymentResponse), StatusCodes.Status200OK)]
+    public async Task<ActionResult<PaymentResponse>> RefundPayment(string gymCode, Guid id, [FromBody] PaymentRefundRequest request, CancellationToken cancellationToken)
+    {
+        return Ok(await membershipWorkflowService.RefundPaymentAsync(gymCode, id, request, cancellationToken));
     }
 }

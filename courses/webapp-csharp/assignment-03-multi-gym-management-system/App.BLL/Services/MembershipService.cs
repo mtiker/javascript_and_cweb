@@ -13,7 +13,7 @@ public class MembershipService(
     IAuthorizationService authorizationService,
     IMembershipFinanceMapper mapper) : IMembershipService
 {
-    public async Task<IReadOnlyCollection<MembershipResponse>> GetMembershipsAsync(string gymCode, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyCollection<MembershipResponse>> GetMembershipsAsync(string gymCode, MembershipFilter? filter = null, CancellationToken cancellationToken = default)
     {
         var gymId = await authorizationService.EnsureTenantAccessAsync(
             gymCode,
@@ -23,11 +23,66 @@ public class MembershipService(
             RoleNames.Member);
 
         var member = await authorizationService.GetCurrentMemberAsync(gymId, cancellationToken);
-        var memberships = member == null
-            ? await unitOfWork.Memberships.ListByGymAsync(gymId, cancellationToken)
-            : await unitOfWork.Memberships.ListForMemberAsync(gymId, member.Id, cancellationToken);
+        var hasFilter = filter is not null && (filter.Status.HasValue || filter.MemberId.HasValue || filter.MembershipPackageId.HasValue || filter.StartFrom.HasValue || filter.StartTo.HasValue);
+
+        IReadOnlyList<Membership> memberships;
+        if (member != null)
+        {
+            memberships = await unitOfWork.Memberships.ListForMemberAsync(gymId, member.Id, cancellationToken);
+            if (hasFilter)
+            {
+                memberships = ApplyMembershipFilterInMemory(memberships, filter!);
+            }
+        }
+        else if (hasFilter)
+        {
+            memberships = await unitOfWork.Memberships.ListByGymFilteredAsync(gymId, filter!.Status, filter.MemberId, filter.MembershipPackageId, filter.StartFrom, filter.StartTo, cancellationToken);
+        }
+        else
+        {
+            memberships = await unitOfWork.Memberships.ListByGymAsync(gymId, cancellationToken);
+        }
 
         return mapper.ToMembershipResponses(memberships);
+    }
+
+    private static IReadOnlyList<Membership> ApplyMembershipFilterInMemory(IReadOnlyList<Membership> memberships, MembershipFilter filter)
+    {
+        IEnumerable<Membership> q = memberships;
+        if (filter.Status.HasValue) q = q.Where(m => m.Status == filter.Status.Value);
+        if (filter.MemberId.HasValue) q = q.Where(m => m.MemberId == filter.MemberId.Value);
+        if (filter.MembershipPackageId.HasValue) q = q.Where(m => m.MembershipPackageId == filter.MembershipPackageId.Value);
+        if (filter.StartFrom.HasValue) q = q.Where(m => m.StartDate >= filter.StartFrom.Value);
+        if (filter.StartTo.HasValue) q = q.Where(m => m.StartDate <= filter.StartTo.Value);
+        return q.ToArray();
+    }
+
+    public async Task<MembershipResponse> UpdateMembershipAsync(string gymCode, Guid id, MembershipEditRequest request, CancellationToken cancellationToken = default)
+    {
+        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin);
+
+        if (request.EndDate < request.StartDate)
+        {
+            throw new ValidationAppException("End date must be on or after start date.");
+        }
+
+        var membership = await unitOfWork.Memberships.FindAsync(gymId, id, cancellationToken)
+                         ?? throw new NotFoundException("Membership was not found.");
+
+        var package = await unitOfWork.MembershipPackages.FindAsync(gymId, request.MembershipPackageId, cancellationToken)
+                      ?? throw new NotFoundException("Membership package was not found.");
+
+        if (membership.Status is MembershipStatus.Cancelled or MembershipStatus.Refunded or MembershipStatus.Expired)
+        {
+            throw new ValidationAppException("This membership can no longer be edited.");
+        }
+
+        membership.MembershipPackageId = package.Id;
+        membership.StartDate = request.StartDate;
+        membership.EndDate = request.EndDate;
+
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+        return mapper.ToMembershipResponse(membership);
     }
 
     public async Task<IReadOnlyCollection<MembershipAdminSummaryResponse>> GetActiveMembershipSummariesAsync(string gymCode, CancellationToken cancellationToken = default)

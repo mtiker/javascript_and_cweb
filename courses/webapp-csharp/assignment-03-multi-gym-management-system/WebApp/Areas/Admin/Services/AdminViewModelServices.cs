@@ -178,7 +178,7 @@ public sealed class AdminMembersPageService(IMemberWorkflowService memberWorkflo
 {
     public async Task<AdminMembersPageViewModel> BuildIndexAsync(string gymCode, CancellationToken cancellationToken = default)
     {
-        var members = await memberWorkflowService.GetMembersAsync(gymCode, cancellationToken);
+        var members = await memberWorkflowService.GetMembersAsync(gymCode, cancellationToken: cancellationToken);
         var summaries = members
             .Select(member => new AdminMemberSummaryViewModel
             {

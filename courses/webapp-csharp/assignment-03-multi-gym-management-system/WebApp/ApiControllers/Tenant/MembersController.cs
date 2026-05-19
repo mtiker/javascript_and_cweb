@@ -1,4 +1,5 @@
 using App.BLL.Contracts.Services;
+using App.Domain.Enums;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
 using WebApp.ApiControllers;
@@ -12,9 +13,21 @@ public class MembersController(IMemberWorkflowService memberWorkflowService) : A
 {
     [HttpGet]
     [ProducesResponseType(typeof(IReadOnlyCollection<MemberResponse>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<IReadOnlyCollection<MemberResponse>>> GetMembers(string gymCode, CancellationToken cancellationToken)
+    public async Task<ActionResult<IReadOnlyCollection<MemberResponse>>> GetMembers(
+        string gymCode,
+        CancellationToken cancellationToken,
+        [FromQuery] string? search = null,
+        [FromQuery] MemberStatus? status = null)
     {
-        return Ok(await memberWorkflowService.GetMembersAsync(gymCode, cancellationToken));
+        var filter = new MemberFilter { Search = search, Status = status };
+        return Ok(await memberWorkflowService.GetMembersAsync(gymCode, filter, cancellationToken));
+    }
+
+    [HttpPut("{id:guid}/status")]
+    [ProducesResponseType(typeof(MemberDetailResponse), StatusCodes.Status200OK)]
+    public async Task<ActionResult<MemberDetailResponse>> UpdateMemberStatus(string gymCode, Guid id, [FromBody] MemberStatusUpdateRequest request, CancellationToken cancellationToken)
+    {
+        return Ok(await memberWorkflowService.UpdateMemberStatusAsync(gymCode, id, request, cancellationToken));
     }
 
     [HttpGet("me")]

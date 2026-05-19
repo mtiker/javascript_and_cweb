@@ -1,5 +1,6 @@
 using App.DAL.Contracts.Persistence;
 using App.Domain.Entities;
+using App.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace App.DAL.EF.Repositories;
@@ -10,6 +11,28 @@ public sealed class EfPaymentRepository(AppDbContext dbContext) : IPaymentReposi
     {
         return await dbContext.Payments
             .Where(payment => payment.GymId == gymId)
+            .OrderByDescending(payment => payment.PaidAtUtc)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<Payment>> ListByGymFilteredAsync(
+        Guid gymId,
+        PaymentStatus? status,
+        Guid? membershipId,
+        Guid? bookingId,
+        DateTime? fromUtc,
+        DateTime? toUtc,
+        CancellationToken cancellationToken = default)
+    {
+        var query = dbContext.Payments.Where(payment => payment.GymId == gymId);
+
+        if (status.HasValue) query = query.Where(payment => payment.Status == status.Value);
+        if (membershipId.HasValue) query = query.Where(payment => payment.MembershipId == membershipId.Value);
+        if (bookingId.HasValue) query = query.Where(payment => payment.BookingId == bookingId.Value);
+        if (fromUtc.HasValue) query = query.Where(payment => payment.PaidAtUtc >= fromUtc.Value);
+        if (toUtc.HasValue) query = query.Where(payment => payment.PaidAtUtc <= toUtc.Value);
+
+        return await query
             .OrderByDescending(payment => payment.PaidAtUtc)
             .ToListAsync(cancellationToken);
     }
@@ -27,6 +50,11 @@ public sealed class EfPaymentRepository(AppDbContext dbContext) : IPaymentReposi
                 (payment.BookingId.HasValue && bookingIds.Contains(payment.BookingId.Value)))
             .OrderByDescending(payment => payment.PaidAtUtc)
             .ToListAsync(cancellationToken);
+    }
+
+    public Task<Payment?> FindAsync(Guid gymId, Guid paymentId, CancellationToken cancellationToken = default)
+    {
+        return dbContext.Payments.FirstOrDefaultAsync(p => p.GymId == gymId && p.Id == paymentId, cancellationToken);
     }
 
     public async Task AddAsync(Payment payment, CancellationToken cancellationToken = default)

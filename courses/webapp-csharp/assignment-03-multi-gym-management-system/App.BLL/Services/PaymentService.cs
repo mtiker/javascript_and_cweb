@@ -13,7 +13,7 @@ public class PaymentService(
     IAuthorizationService authorizationService,
     IMembershipFinanceMapper mapper) : IPaymentService
 {
-    public async Task<IReadOnlyCollection<PaymentResponse>> GetPaymentsAsync(string gymCode, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyCollection<PaymentResponse>> GetPaymentsAsync(string gymCode, PaymentFilter? filter = null, CancellationToken cancellationToken = default)
     {
         var gymId = await authorizationService.EnsureTenantAccessAsync(
             gymCode,
@@ -24,6 +24,7 @@ public class PaymentService(
 
         var member = await authorizationService.GetCurrentMemberAsync(gymId, cancellationToken);
         IReadOnlyList<Payment> payments;
+        var hasFilter = filter is not null && (filter.Status.HasValue || filter.MembershipId.HasValue || filter.BookingId.HasValue || filter.FromUtc.HasValue || filter.ToUtc.HasValue);
 
         if (member != null)
         {
@@ -31,6 +32,14 @@ public class PaymentService(
             var bookings = await unitOfWork.Bookings.ListForMemberAsync(gymId, member.Id, cancellationToken);
             var bookingIds = bookings.Select(booking => booking.Id).ToArray();
             payments = await unitOfWork.Payments.ListForMembershipOrBookingIdsAsync(gymId, membershipIds, bookingIds, cancellationToken);
+            if (hasFilter)
+            {
+                payments = ApplyInMemory(payments, filter!);
+            }
+        }
+        else if (hasFilter)
+        {
+            payments = await unitOfWork.Payments.ListByGymFilteredAsync(gymId, filter!.Status, filter.MembershipId, filter.BookingId, filter.FromUtc, filter.ToUtc, cancellationToken);
         }
         else
         {
@@ -38,6 +47,61 @@ public class PaymentService(
         }
 
         return mapper.ToPaymentResponses(payments);
+    }
+
+    public async Task<PaymentResponse> RefundPaymentAsync(string gymCode, Guid paymentId, PaymentRefundRequest request, CancellationToken cancellationToken = default)
+    {
+        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin);
+
+        var payment = await unitOfWork.Payments.FindAsync(gymId, paymentId, cancellationToken)
+                      ?? throw new NotFoundException("Payment was not found.");
+
+        if (payment.Status == PaymentStatus.Refunded)
+        {
+            throw new ValidationAppException("Payment is already refunded.");
+        }
+
+        if (payment.Status != PaymentStatus.Completed)
+        {
+            throw new ValidationAppException("Only completed payments can be refunded.");
+        }
+
+        var refundAmount = request.Amount ?? payment.Amount;
+        if (refundAmount <= 0 || refundAmount > payment.Amount)
+        {
+            throw new ValidationAppException("Refund amount must be greater than zero and not exceed the original amount.");
+        }
+
+        payment.Status = PaymentStatus.Refunded;
+
+        var refundReference = string.IsNullOrWhiteSpace(request.Reason)
+            ? $"REFUND-{payment.Id}"
+            : $"REFUND-{payment.Id}-{request.Reason.Trim()}";
+
+        await unitOfWork.Payments.AddAsync(new Payment
+        {
+            GymId = gymId,
+            MembershipId = payment.MembershipId,
+            BookingId = payment.BookingId,
+            Amount = -refundAmount,
+            CurrencyCode = payment.CurrencyCode,
+            Status = PaymentStatus.Refunded,
+            Reference = refundReference
+        }, cancellationToken);
+
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+        return mapper.ToPaymentResponse(payment);
+    }
+
+    private static IReadOnlyList<Payment> ApplyInMemory(IReadOnlyList<Payment> payments, PaymentFilter filter)
+    {
+        IEnumerable<Payment> q = payments;
+        if (filter.Status.HasValue) q = q.Where(p => p.Status == filter.Status.Value);
+        if (filter.MembershipId.HasValue) q = q.Where(p => p.MembershipId == filter.MembershipId.Value);
+        if (filter.BookingId.HasValue) q = q.Where(p => p.BookingId == filter.BookingId.Value);
+        if (filter.FromUtc.HasValue) q = q.Where(p => p.PaidAtUtc >= filter.FromUtc.Value);
+        if (filter.ToUtc.HasValue) q = q.Where(p => p.PaidAtUtc <= filter.ToUtc.Value);
+        return q.ToArray();
     }
 
     public async Task<PaymentResponse> CreatePaymentAsync(string gymCode, PaymentCreateRequest request, CancellationToken cancellationToken = default)
