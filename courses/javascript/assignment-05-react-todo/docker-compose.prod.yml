@@ -1,0 +1,11 @@
+services:
+  react-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-https://taltech.akaver.com}
+    container_name: mtiker-js-react
+    ports:
+      - "88:3000"
+    restart: unless-stopped

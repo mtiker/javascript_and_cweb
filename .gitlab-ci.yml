@@ -23,6 +23,14 @@ variables:
   - courses/javascript/assignment-04-vue-secure-todo/**/*
   - .gitlab-ci.yml
 
+.javascript_assignment05_changes: &javascript_assignment05_changes
+  - courses/javascript/assignment-05-react-todo/**/*
+  - .gitlab-ci.yml
+
+.javascript_assignment06_changes: &javascript_assignment06_changes
+  - courses/javascript/assignment-06-express-api/**/*
+  - .gitlab-ci.yml
+
 .assignment18_changes: &assignment18_changes
   - courses/webapp-csharp/assignment-18-dental-clinic-platform/**/*
   - .gitlab-ci.yml
@@ -49,6 +57,26 @@ javascript_assignment04_pipeline:
     strategy: depend
   rules:
     - changes: *javascript_assignment04_changes
+    - when: never
+
+javascript_assignment05_pipeline:
+  stage: orchestrate
+  trigger:
+    include:
+      - local: "courses/javascript/assignment-05-react-todo/.gitlab-ci.yml"
+    strategy: depend
+  rules:
+    - changes: *javascript_assignment05_changes
+    - when: never
+
+javascript_assignment06_pipeline:
+  stage: orchestrate
+  trigger:
+    include:
+      - local: "courses/javascript/assignment-06-express-api/.gitlab-ci.yml"
+    strategy: depend
+  rules:
+    - changes: *javascript_assignment06_changes
     - when: never
 
 assignment18_pipeline:

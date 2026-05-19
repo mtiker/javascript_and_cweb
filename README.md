@@ -9,6 +9,8 @@ Code: `232786IADB`
 - `courses/javascript`: JavaScript subject assignments
 - `courses/javascript/assignment-03-ci-cd-1`: Docker + GitLab CI/CD deployment for JavaScript assignments 01 and 02
 - `courses/javascript/assignment-04-vue-secure-todo`: Vue 3 secure Todo app against the shared TalTech backend
+- `courses/javascript/assignment-05-react-todo`: React/Next.js (App Router) secure Todo app against the shared TalTech backend
+- `courses/javascript/assignment-06-express-api`: Express.js + TypeScript + Postgres Todo backend with the A04 Vue and A05 React clients redeployed against it
 - `courses/webapp-csharp`: Web App in C# subject assignments
 - `courses/webapp-csharp/backend-differences-assignment-03-vs-18.md`: controller comparison and modernization gap report for C# assignments 03 and 18
 - `courses/webapp-csharp/assignment-03-multi-gym-management-system`: Assignment 3 full SaaS multi-gym management system
@@ -24,6 +26,14 @@ Code: `232786IADB`
 - JavaScript Assignment 02 proxy target: `http://192.168.181.122:82`
 - JavaScript Assignment 04 public URL: `https://mtiker-js-vue.proxy.itcollege.ee`
 - JavaScript Assignment 04 proxy target: `http://192.168.181.122:84`
+- JavaScript Assignment 05 public URL: `https://mtiker-js-react.proxy.itcollege.ee`
+- JavaScript Assignment 05 proxy target: `http://192.168.181.122:88`
+- JavaScript Assignment 06 API public URL: `https://mtiker-js-express.proxy.itcollege.ee`
+- JavaScript Assignment 06 API proxy target: `http://192.168.181.122:86`
+- JavaScript Assignment 06 Vue client public URL: `https://mtiker-js-vue-a6.proxy.itcollege.ee`
+- JavaScript Assignment 06 Vue client proxy target: `http://192.168.181.122:87`
+- JavaScript Assignment 06 React client public URL: `https://mtiker-js-react-a6.proxy.itcollege.ee`
+- JavaScript Assignment 06 React client proxy target: `http://192.168.181.122:89`
 - Web App C# Assignment 03 public URL: `https://mtiker-cweb-4.proxy.itcollege.ee`
 - Web App C# Assignment 03 proxy target: `http://192.168.181.122:83`
 - Web App C# Assignment 18 public URL: `https://mtiker-cweb-a3.proxy.itcollege.ee`
@@ -53,6 +63,8 @@ Deployment still pending:
 - Assignment-specific CI files live inside the assignment they belong to.
 - Current child pipelines exist for `courses/javascript/assignment-03-ci-cd-1`.
 - Current child pipelines exist for `courses/javascript/assignment-04-vue-secure-todo`.
+- Current child pipelines exist for `courses/javascript/assignment-05-react-todo`.
+- Current child pipelines exist for `courses/javascript/assignment-06-express-api`.
 - Current child pipelines exist for `courses/webapp-csharp/assignment-03-multi-gym-management-system`.
 - Current child pipelines exist for `courses/webapp-csharp/assignment-18-dental-clinic-platform`.
 - Each child `.gitlab-ci.yml` must declare its own stages; child pipelines do not inherit the root pipeline stage list.
@@ -60,6 +72,8 @@ Deployment still pending:
 - Runner host configuration stays outside version control; document runner tags and deployment expectations in `docs/ci-cd.md`.
 - JavaScript Assignment 03 deploys Assignment 01 on host port `81` and Assignment 02 on host port `82`.
 - JavaScript Assignment 04 deploys the Vue secure Todo app on host port `84`.
+- JavaScript Assignment 05 deploys the React/Next.js secure Todo app on host port `88`.
+- JavaScript Assignment 06 deploys the Express API on host port `86`, the Vue client on `87`, and the React client on `89`.
 
 Examples:
 - `feat(javascript/a01): add task CRUD`
