@@ -24,8 +24,8 @@ The reference project contains:
 - public API contracts in `App.DTO/v1`
 - repository contracts and Unit of Work in `App.DAL.Contracts`
 - EF Core persistence, repositories, migrations, and seeding in `App.DAL.EF`
-- BLL service contracts in `App.BLL.Contracts`
-- BLL services and DTO mappers in `App.BLL`
+- BLL service contracts in root `App.BLL.Contracts`
+- BLL service implementations and DTO mappers in root `App.BLL`
 - MVC Admin, Technician, and User areas in `WebApp/Areas`
 - versioned REST API controllers in `WebApp/ApiControllers`
 - Bootstrap-based Razor shells with sidebars, breadcrumbs, language switching,
@@ -40,13 +40,14 @@ The reference project contains:
 | Laboratories, departments, locations | Gyms, gym settings, staff, members, equipment |
 | Equipment bookings | Training sessions, bookings, attendance, maintenance |
 | Training certifications | Training categories, trainer assignment, member booking rules |
-| Admin area | `src/WebApp/Areas/Admin` |
-| User area | `src/WebApp/Areas/Client` mounted under `/mvc-client` |
+| Admin area | `WebApp/Areas/Admin` |
+| User area | `WebApp/Areas/Client` mounted under `/mvc-client` |
 | Technician area | Caretaker maintenance flows in MVC Client and React maintenance pages |
-| `App.DAL.Contracts/IAppUOW` | `App.BLL/Contracts/Persistence/IAppUnitOfWork` |
-| EF repositories | `src/App.DAL.EF/Repositories/Ef*Repository.cs` |
-| BLL services and mappers | `src/App.BLL/Services` and `src/App.BLL/Mapping` |
-| API controllers | `src/WebApp/ApiControllers/Identity`, `System`, and `Tenant` |
+| `App.DAL.Contracts/IAppUOW` | `App.DAL.Contracts/Persistence/IAppUnitOfWork` |
+| EF repositories | `App.DAL.EF/Repositories/Ef*Repository.cs` |
+| BLL service contracts | `App.BLL.Contracts/Services` |
+| BLL services and mappers | `App.BLL/Services` and `App.BLL/Mappers` |
+| API controllers | `WebApp/ApiControllers/Identity`, `System`, and `Tenant` |
 | Bootstrap Admin shell | Added to gym Admin and Client MVC area layouts |
 | MVC tests | Existing `WebApp.Tests` MVC compliance and rendering tests |
 
@@ -70,16 +71,17 @@ to make the current `panel`, `metric-card`, `data-table`, `primary`,
 
 These differences are intentional:
 - The gym project keeps the Final2 modular-monolith projects
-  (`Modules.Users`, `Modules.GymManagement`, `Modules.Training`,
-  `Modules.MembershipFinance`) as preserved partial Final2 evidence. They are
+  (`former Users module`, `former GymManagement module`, `former Training module`,
+  `former MembershipFinance module`) as preserved partial Final2 evidence. They are
   intentionally not treated as complete module isolation for the Final1
   defense.
 - The gym project keeps its separate React + TypeScript client because the
   official personal project requirements expect a separate API-consuming client
   with JWT and refresh-token flow.
-- Persistence contracts remain under `App.BLL/Contracts/Persistence` rather
-  than a separate `App.DAL.Contracts` project. This keeps EF implementation
-  details outward while the BLL owns the contracts it depends on.
+- EF-shaped `IAppDbContext` remains a temporary BLL infrastructure boundary
+  while remaining direct context consumers are migrated to repository/UOW
+  contracts. Repository and Unit of Work contracts already live in root
+  `App.DAL.Contracts`.
 - The target remains multi-tenant gym management. Lab-specific terms such as
   laboratory, calibration, manufacturer, and training certification are not
   copied as domain concepts.

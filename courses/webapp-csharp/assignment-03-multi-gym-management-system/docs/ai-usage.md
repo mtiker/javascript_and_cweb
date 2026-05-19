@@ -35,18 +35,18 @@ Task:
   code as partial, not completed, evidence
 
 Files affected:
-- `src/App.BLL/Services/IWorkspaceContextService.cs`
-- `src/App.BLL/Services/WorkspaceContextService.cs`
-- `src/App.BLL/Mapping/MembershipFinanceMapper.cs`
-- `src/App.BLL/Mapping/TrainingMapper.cs`
-- `src/WebApp/Controllers/HomeController.cs`
-- `src/WebApp/ViewComponents/WorkspaceSwitcherViewComponent.cs`
-- `src/WebApp/Areas/Client/Controllers/ProfileController.cs`
-- `src/WebApp/Areas/Client/Controllers/MaintenanceController.cs`
-- `src/WebApp/Areas/Client/Services/ClientProfilePageService.cs`
-- `src/WebApp/Areas/Client/Services/ClientMaintenancePageService.cs`
-- `src/WebApp/Areas/Admin/Services/AdminViewModelServices.cs`
-- `src/WebApp/Setup/ServiceExtensions.cs`
+- `App.BLL/Services/IWorkspaceContextService.cs`
+- `App.BLL/Services/WorkspaceContextService.cs`
+- `App.BLL/Mappers/MembershipFinanceMapper.cs`
+- `App.BLL/Mappers/TrainingMapper.cs`
+- `WebApp/Controllers/HomeController.cs`
+- `WebApp/ViewComponents/WorkspaceSwitcherViewComponent.cs`
+- `WebApp/Areas/Client/Controllers/ProfileController.cs`
+- `WebApp/Areas/Client/Controllers/MaintenanceController.cs`
+- `WebApp/Areas/Client/Services/ClientProfilePageService.cs`
+- `WebApp/Areas/Client/Services/ClientMaintenancePageService.cs`
+- `WebApp/Areas/Admin/Services/AdminViewModelServices.cs`
+- `WebApp/Setup/ServiceExtensions.cs`
 - `tests/WebApp.Tests/Architecture/Final1PresentationBoundaryTests.cs`
 - `tests/WebApp.Tests/Unit/Final1PresentationServiceTests.cs`
 - Final1 documentation and AI logs
@@ -177,9 +177,9 @@ Task:
 - replace hardcoded visible English strings in high-visible Admin MVC pages with shared `.resx` resources, covering Members, Membership Packages, Training Categories, and audited Admin list pages
 
 Files affected:
-- `src/WebApp/Areas/Admin/Views/**`
-- `src/App.Resources/SharedResources.resx`
-- `src/App.Resources/SharedResources.et.resx`
+- `WebApp/Areas/Admin/Views/**`
+- `App.Resources/SharedResources.resx`
+- `App.Resources/SharedResources.et.resx`
 - `tests/WebApp.Tests/Integration/TrainingCategoryLocalizationTests.cs`
 - `tests/WebApp.Tests/Integration/SmokeTests.cs`
 - `docs/localization-audit.md`
@@ -206,9 +206,9 @@ Task:
 - make membership package list/create/update/delete API workflow owned by the MembershipFinance module while preserving existing routes, DTOs, tenant isolation, React CRUD behavior, and payment/invoice scope boundaries
 
 Files affected:
-- `src/Modules.MembershipFinance/Application/FinanceHandlers.cs`
-- `src/Modules.MembershipFinance/Application/MembershipPackageHandlers.cs`
-- `src/Modules.MembershipFinance/Application/README.md`
+- `former MembershipFinance module/Application/FinanceHandlers.cs`
+- `former MembershipFinance module/Application/MembershipPackageHandlers.cs`
+- `former MembershipFinance module/Application/README.md`
 - `tests/WebApp.Tests/Unit/MembershipFinanceModuleMediatorTests.cs`
 - `tests/WebApp.Tests/Architecture/ModuleArchitectureTests.cs`
 - `docs/final2-membershipfinance-module-plan.md`
@@ -220,7 +220,7 @@ Files affected:
 - `docs/a3-saas-plan.md`
 
 What AI helped with:
-- moved package CRUD orchestration into `Modules.MembershipFinance.Application` handlers using UOW, authorization, repository, mapper, validation, normalization, and used-package conflict checks directly
+- moved package CRUD orchestration into `former MembershipFinance module.Application` handlers using UOW, authorization, repository, mapper, validation, normalization, and used-package conflict checks directly
 - kept membership, payment, invoice, refund, and workspace handlers on the existing transitional workflow services
 - added mediator and module architecture regression tests proving package handlers do not wrap `IMembershipWorkflowService` or `IMembershipPackageService`
 - updated module ownership documentation and test traceability
@@ -325,12 +325,12 @@ Task:
 - move remaining MembershipFinance and maintenance/facility HTTP workflows behind module-owned mediator messages while preserving API contracts and avoiding external payment providers
 
 Files affected:
-- `src/Modules.MembershipFinance/Contracts/FinanceMessages.cs`
-- `src/Modules.MembershipFinance/Application/FinanceHandlers.cs`
-- `src/Modules.GymManagement/Contracts/MaintenanceMessages.cs`
-- `src/Modules.GymManagement/Application/Maintenance/MaintenanceHandlers.cs`
+- `former MembershipFinance module/Contracts/FinanceMessages.cs`
+- `former MembershipFinance module/Application/FinanceHandlers.cs`
+- `former GymManagement module/Contracts/MaintenanceMessages.cs`
+- `former GymManagement module/Application/Maintenance/MaintenanceHandlers.cs`
 - tenant finance, membership, payment, maintenance, equipment, opening-hours, settings, and gym-user API controllers
-- `src/BuildingBlocks/Mediator/Mediator.cs`
+- `former mediator project/Mediator/Mediator.cs`
 - `tests/WebApp.Tests/Unit/{MembershipFinanceModuleMediatorTests.cs,MaintenanceModuleMediatorTests.cs,TenantControllerTests.cs,AdditionalControllerTests.cs}`
 - `tests/WebApp.Tests/Helpers/ControllerTestHelpers.cs`
 - `tests/WebApp.Tests/Architecture/ArchitectureTests.cs`
@@ -344,22 +344,22 @@ What AI helped with:
 - fixed the in-process mediator so synchronously thrown handler exceptions preserve their original exception type instead of surfacing as `TargetInvocationException`
 
 What needed manual review or correction:
-- maintenance remains under `Modules.GymManagement` because the current ownership map treats equipment, staff, settings, and maintenance as one operational bounded context
+- maintenance remains under `former GymManagement module` because the current ownership map treats equipment, staff, settings, and maintenance as one operational bounded context
 - existing controller tests needed mediator adapters after constructor dependencies changed
 
 Alternatives considered:
-- adding a separate `Modules.Maintenance` project was rejected for this phase because it would contradict the existing data-ownership plan and split tightly related operational data
+- adding a separate `former Maintenance module` project was rejected for this phase because it would contradict the existing data-ownership plan and split tightly related operational data
 - adding an external payment provider was explicitly out of scope
 
 ## 2026-04-30 - Phase 19 Final2 Training Module Sessions/Bookings Slice
 
 Task:
-- move training categories, sessions, bookings, and trainer attendance HTTP adapters into `Modules.Training` behind mediator messages while preserving routes and leaving finance/maintenance out of scope
+- move training categories, sessions, bookings, and trainer attendance HTTP adapters into `former Training module` behind mediator messages while preserving routes and leaving finance/maintenance out of scope
 
 Files affected:
-- `src/Modules.Training/Contracts/TrainingMessages.cs`
-- `src/Modules.Training/Application/TrainingHandlers.cs`
-- `src/WebApp/ApiControllers/Tenant/{TrainingCategoriesController.cs,TrainingSessionsController.cs,BookingsController.cs}`
+- `former Training module/Contracts/TrainingMessages.cs`
+- `former Training module/Application/TrainingHandlers.cs`
+- `WebApp/ApiControllers/Tenant/{TrainingCategoriesController.cs,TrainingSessionsController.cs,BookingsController.cs}`
 - `tests/WebApp.Tests/Unit/{TrainingModuleMediatorTests.cs,TrainingWorkflowServiceTests.cs,TenantControllerTests.cs,AdditionalControllerTests.cs}`
 - `tests/WebApp.Tests/Helpers/ControllerTestHelpers.cs`
 - `tests/WebApp.Tests/Architecture/ModuleArchitectureTests.cs`
@@ -383,14 +383,14 @@ Alternatives considered:
 ## 2026-04-30 - Phase 17 Final2 Users Module Mediated Auth Slice
 
 Task:
-- move account auth/session behavior into `Modules.Users` behind mediator messages while preserving public account API routes and leaving member CRUD untouched
+- move account auth/session behavior into `former Users module` behind mediator messages while preserving public account API routes and leaving member CRUD untouched
 
 Files affected:
-- `src/Modules.Users/Contracts/AuthSessionMessages.cs`
-- `src/Modules.Users/Application/Auth/{AuthSessionHandlers.cs,UsersSessionService.cs}`
-- `src/Modules.Users/UsersModuleServiceCollectionExtensions.cs`
-- `src/WebApp/ApiControllers/Identity/AccountController.cs`
-- `src/WebApp/Setup/ServiceExtensions.cs`
+- `former Users module/Contracts/AuthSessionMessages.cs`
+- `former Users module/Application/Auth/{AuthSessionHandlers.cs,UsersSessionService.cs}`
+- `former Users module/UsersModuleServiceCollectionExtensions.cs`
+- `WebApp/ApiControllers/Identity/AccountController.cs`
+- `WebApp/Setup/ServiceExtensions.cs`
 - `tests/WebApp.Tests/{Architecture/ArchitectureTests.cs,Architecture/ModuleArchitectureTests.cs,Integration/SmokeTests.cs,Unit/AdditionalControllerTests.cs}`
 - `docs/{final2-users-module-plan.md,users-module-contracts.md,users-mediator-messages.md,final2-module-plan.md,mediator-design.md}`
 
@@ -402,7 +402,7 @@ What AI helped with:
 - documented the Phase 17 boundary, contracts, message flow, tests, and non-goal of member CRUD migration
 
 What needed manual review or correction:
-- the first focused test run intentionally failed because `Modules.Users.Contracts` did not exist yet; implementation then added the missing contracts and handlers
+- the first focused test run intentionally failed because `former Users module.Contracts` did not exist yet; implementation then added the missing contracts and handlers
 - the legacy `AccountAuthService` remains in `App.BLL` for compatibility but is no longer registered or used by the account controller
 
 Alternatives considered:
@@ -415,14 +415,14 @@ Task:
 - finish Final1 migration for maintenance/facilities/platform admin and complete Admin UX requirements without adding new SaaS features
 
 Files affected:
-- `src/App.BLL/Contracts/Persistence/IMaintenanceRepository.cs`
-- `src/App.BLL/Mapping/{IMaintenanceMapper.cs,MaintenanceMapper.cs}`
-- `src/App.BLL/Services/MaintenanceWorkflowService.cs`
-- `src/App.DAL.EF/Repositories/{EfAppUnitOfWork.cs,EfMaintenanceRepository.cs}`
-- `src/App.DAL.EF/PersistenceServiceExtensions.cs`
-- `src/WebApp/Areas/Admin/Controllers/{DashboardController.cs,GymsController.cs,OperationsController.cs,SessionsController.cs}`
-- `src/WebApp/Areas/Admin/Services/AdminViewModelServices.cs`
-- `src/WebApp/Setup/ServiceExtensions.cs`
+- `App.BLL/Contracts/Persistence/IMaintenanceRepository.cs`
+- `App.BLL/Mappers/{IMaintenanceMapper.cs,MaintenanceMapper.cs}`
+- `App.BLL/Services/MaintenanceWorkflowService.cs`
+- `App.DAL.EF/Repositories/{EfAppUnitOfWork.cs,EfMaintenanceRepository.cs}`
+- `App.DAL.EF/PersistenceServiceExtensions.cs`
+- `WebApp/Areas/Admin/Controllers/{DashboardController.cs,GymsController.cs,OperationsController.cs,SessionsController.cs}`
+- `WebApp/Areas/Admin/Services/AdminViewModelServices.cs`
+- `WebApp/Setup/ServiceExtensions.cs`
 - `tests/WebApp.Tests/Architecture/ArchitectureTests.cs`
 - `tests/WebApp.Tests/Integration/{AuthSecurityAndErrorTests.cs,MvcComplianceTests.cs}`
 - `tests/WebApp.Tests/Unit/MaintenanceWorkflowServiceTests.cs`
@@ -448,13 +448,13 @@ Task:
 - make Assignment 03 MVC UX defendable by proving Admin/Client role access, replacing Admin React redirects with small functional MVC pages, and documenting view-model/no-ViewBag compliance
 
 Files affected:
-- `src/WebApp/Areas/Admin/Controllers/GymsController.cs`
-- `src/WebApp/Areas/Admin/Controllers/MembershipsController.cs`
-- `src/WebApp/Areas/Admin/Controllers/SessionsController.cs`
-- `src/WebApp/Areas/Admin/Controllers/OperationsController.cs`
-- `src/App.BLL/Services/IdentityService.cs`
-- `src/WebApp/Areas/Admin/Views/Gyms/Index.cshtml`
-- `src/WebApp/Models/AdminGymsPageViewModel.cs`
+- `WebApp/Areas/Admin/Controllers/GymsController.cs`
+- `WebApp/Areas/Admin/Controllers/MembershipsController.cs`
+- `WebApp/Areas/Admin/Controllers/SessionsController.cs`
+- `WebApp/Areas/Admin/Controllers/OperationsController.cs`
+- `App.BLL/Services/IdentityService.cs`
+- `WebApp/Areas/Admin/Views/Gyms/Index.cshtml`
+- `WebApp/Models/AdminGymsPageViewModel.cs`
 - `tests/WebApp.Tests/Integration/MvcComplianceTests.cs`
 - `tests/WebApp.Tests/Integration/SmokeTests.cs`
 - `docs/mvc-admin-audit.md`
@@ -484,11 +484,11 @@ Task:
 - complete the third required separate-client CRUD entity by hardening membership package CRUD, validation, soft-delete behavior, tenant isolation, React page states, and package-specific documentation
 
 Files affected:
-- `src/App.BLL/Services/MembershipPackageService.cs`
-- `src/App.DTO/v1/MembershipPackages/MembershipPackageUpsertRequest.cs`
+- `App.BLL/Services/MembershipPackageService.cs`
+- `App.DTO/v1/MembershipPackages/MembershipPackageUpsertRequest.cs`
 - `tests/WebApp.Tests/Integration/MembershipPackageCrudTests.cs`
-- `client/src/pages/MembershipPackagesPage.tsx`
-- `client/src/pages/CrudPages.test.tsx`
+- `client source/pages/MembershipPackagesPage.tsx`
+- `client source/pages/CrudPages.test.tsx`
 - `docs/membership-package-audit.md`
 - `docs/membership-package-contract.md`
 - `docs/package-validation-rules.md`
@@ -518,16 +518,16 @@ Task:
 - make member CRUD defensible through REST API, MVC Admin, React client, and tests without touching unrelated entities
 
 Files affected:
-- `src/App.BLL/Services/MemberWorkflowService.cs`
-- `src/WebApp/ApiControllers/Tenant/MembersController.cs`
-- `src/WebApp/Areas/Admin/Controllers/MembersController.cs`
-- `src/WebApp/Areas/Admin/Views/Members/Index.cshtml`
-- `src/WebApp/Areas/Admin/Views/Dashboard/Index.cshtml`
-- `src/WebApp/Models/AdminMembersPageViewModel.cs`
+- `App.BLL/Services/MemberWorkflowService.cs`
+- `WebApp/ApiControllers/Tenant/MembersController.cs`
+- `WebApp/Areas/Admin/Controllers/MembersController.cs`
+- `WebApp/Areas/Admin/Views/Members/Index.cshtml`
+- `WebApp/Areas/Admin/Views/Dashboard/Index.cshtml`
+- `WebApp/Models/AdminMembersPageViewModel.cs`
 - `tests/WebApp.Tests/Integration/MemberCrudTests.cs`
 - `tests/WebApp.Tests/Integration/AdminMembersPageTests.cs`
 - `tests/WebApp.Tests/Unit/TenantControllerTests.cs`
-- `client/src/pages/CrudPages.test.tsx`
+- `client source/pages/CrudPages.test.tsx`
 - `docs/member-crud-audit.md`
 - `docs/member-contract.md`
 - `docs/member-tests-map.md`
@@ -558,10 +558,10 @@ Task:
 - prove database translations through `LangStr` and UI translations through `.resx` for the training-category/localization vertical slice
 
 Files affected:
-- `src/App.BLL/Services/TrainingWorkflowService.cs`
-- `src/App.DTO/v1/TrainingCategories/TrainingCategoryUpsertRequest.cs`
+- `App.BLL/Services/TrainingWorkflowService.cs`
+- `App.DTO/v1/TrainingCategories/TrainingCategoryUpsertRequest.cs`
 - `tests/WebApp.Tests/Integration/TrainingCategoryLocalizationTests.cs`
-- `client/src/pages/CrudPages.test.tsx`
+- `client source/pages/CrudPages.test.tsx`
 - `docs/training-category-audit.md`
 - `docs/localization-audit.md`
 - `docs/langstr-contract.md`
@@ -588,10 +588,10 @@ Task:
 - restore functional SaaS operations in Assignment 03 after rollback left Admin routes on read-only MVC summaries
 
 Files affected:
-- `src/WebApp/Helpers/ClientAppUrlResolver.cs`
-- `src/WebApp/Views/Shared/_Layout.cshtml`
-- `src/WebApp/Areas/Admin/Views/Dashboard/Index.cshtml`
-- `src/WebApp/Areas/Admin/Controllers/{GymsController.cs,MembershipsController.cs,SessionsController.cs,OperationsController.cs}`
+- `WebApp/Helpers/ClientAppUrlResolver.cs`
+- `WebApp/Views/Shared/_Layout.cshtml`
+- `WebApp/Areas/Admin/Views/Dashboard/Index.cshtml`
+- `WebApp/Areas/Admin/Controllers/{GymsController.cs,MembershipsController.cs,SessionsController.cs,OperationsController.cs}`
 - `tests/WebApp.Tests/Integration/SmokeTests.cs`
 - `README.md`
 - `docs/a3-saas-plan.md`
@@ -615,11 +615,11 @@ Task:
 - implement Batch 4 by adding dedicated React workspace pages, aligning selected endpoint REST semantics with client compatibility, and adding defense-study documentation artifacts
 
 Files affected:
-- `client/src/App.tsx`
-- `client/src/components/AppShell.tsx`
-- `client/src/pages/{MemberWorkspacePage.tsx,TrainerCoachingWorkspacePage.tsx,FinanceWorkspacePage.tsx,MaintenanceTasksPage.tsx}`
-- `client/src/lib/{apiClient.ts,types.ts}`
-- frontend tests (`client/src/App.test.tsx`, `client/src/pages/{CrudPages.test.tsx,OperationsPages.test.tsx,WorkspacePages.test.tsx}`)
+- `client source/App.tsx`
+- `client source/components/AppShell.tsx`
+- `client source/pages/{MemberWorkspacePage.tsx,TrainerCoachingWorkspacePage.tsx,FinanceWorkspacePage.tsx,MaintenanceTasksPage.tsx}`
+- `client source/lib/{apiClient.ts,types.ts}`
+- frontend tests (`client source/App.test.tsx`, `client source/pages/{CrudPages.test.tsx,OperationsPages.test.tsx,WorkspacePages.test.tsx}`)
 - selected tenant controllers returning workflow-compatible `201`/`204` responses
 - `tests/WebApp.Tests/Helpers/ControllerTestHelpers.cs`
 - controller unit tests (`TenantControllerTests.cs`, `AdditionalControllerTests.cs`)
@@ -654,7 +654,7 @@ Task:
 
 Files affected:
 - domain entities (`CoachingPlan`, `CoachingPlanItem`, `Invoice`, `InvoiceLine`, `InvoicePayment`, `MaintenanceTaskAssignmentHistory`) and enum updates
-- DTO resource folders under `src/App.DTO/v1/{CoachingPlans,Finance,MemberWorkspace,MaintenanceTasks,Memberships}`
+- DTO resource folders under `App.DTO/v1/{CoachingPlans,Finance,MemberWorkspace,MaintenanceTasks,Memberships}`
 - BLL service contracts/implementations:
   - `MemberWorkspaceService`
   - `CoachingPlanService`
@@ -662,8 +662,8 @@ Files affected:
   - `SubscriptionTierLimitService`
   - updates in `MembershipWorkflowService` and `MaintenanceWorkflowService`
 - EF context + migration:
-  - `src/App.DAL.EF/AppDbContext.cs`
-  - `src/App.DAL.EF/Migrations/20260422204122_Batch3WorkspacesAndFinance*`
+  - `App.DAL.EF/AppDbContext.cs`
+  - `App.DAL.EF/Migrations/20260422204122_Batch3WorkspacesAndFinance*`
 - tenant controllers:
   - `MemberWorkspaceController`
   - `CoachingPlansController`
@@ -695,12 +695,12 @@ Task:
 - implement Assignment 03 Batch 2 API foundation work: tenant gym-code middleware resolution, API error contract metadata, and broader controller verification coverage without route changes
 
 Files affected:
-- `src/WebApp/Middleware/GymResolutionMiddleware.cs`
-- `src/WebApp/Setup/HttpGymContext.cs`
-- `src/WebApp/Setup/MiddlewareExtensions.cs`
-- `src/WebApp/ApiControllers/ApiControllerBase.cs`
-- `src/WebApp/ApiControllers/Identity/AccountController.cs`
-- `src/WebApp/ApiControllers/System/{GymsController.cs,PlatformController.cs,SubscriptionsController.cs,SupportController.cs,ImpersonationController.cs}`
+- `WebApp/Middleware/GymResolutionMiddleware.cs`
+- `WebApp/Setup/HttpGymContext.cs`
+- `WebApp/Setup/MiddlewareExtensions.cs`
+- `WebApp/ApiControllers/ApiControllerBase.cs`
+- `WebApp/ApiControllers/Identity/AccountController.cs`
+- `WebApp/ApiControllers/System/{GymsController.cs,PlatformController.cs,SubscriptionsController.cs,SupportController.cs,ImpersonationController.cs}`
 - `tests/WebApp.Tests/Helpers/ControllerTestHelpers.cs`
 - `tests/WebApp.Tests/Unit/{AdditionalControllerTests.cs,ApiContractMetadataTests.cs}`
 - `tests/WebApp.Tests/Integration/AuthSecurityAndErrorTests.cs`
@@ -727,22 +727,22 @@ Task:
 - replace weak seeded/demo passwords with a strong default credential compatible with strict password policy
 
 Files affected:
-- `src/WebApp/Program.cs`
-- `src/WebApp/Setup/IdentitySetupExtensions.cs`
-- `src/WebApp/Setup/WebApiExtensions.cs`
-- `src/WebApp/Setup/MiddlewareExtensions.cs`
-- `src/WebApp/appsettings.json`
-- `src/App.Domain/Security/AppClaimTypes.cs`
-- `src/App.BLL/Services/ITokenService.cs`
-- `src/App.BLL/Services/TokenService.cs`
-- `src/App.BLL/Services/PlatformService.cs`
-- `src/App.DTO/v1/System/StartImpersonationRequest.cs`
-- `src/App.DTO/v1/System/StartImpersonationResponse.cs`
-- `src/App.DAL.EF/Seeding/AppDataInit.cs`
-- `src/App.DAL.EF/Seeding/AppDataInit.Helpers.cs`
-- `src/WebApp/Views/Home/Index.cshtml`
-- `client/src/pages/LoginPage.tsx`
-- `client/src/pages/SaasConsolePage.tsx`
+- `WebApp/Program.cs`
+- `WebApp/Setup/IdentitySetupExtensions.cs`
+- `WebApp/Setup/WebApiExtensions.cs`
+- `WebApp/Setup/MiddlewareExtensions.cs`
+- `WebApp/appsettings.json`
+- domain claim type definitions
+- `App.BLL/Services/ITokenService.cs`
+- `App.BLL/Services/TokenService.cs`
+- `App.BLL/Services/PlatformService.cs`
+- `App.DTO/v1/System/StartImpersonationRequest.cs`
+- `App.DTO/v1/System/StartImpersonationResponse.cs`
+- `App.DAL.EF/Seeding/AppDataInit.cs`
+- `App.DAL.EF/Seeding/AppDataInit.Helpers.cs`
+- `WebApp/Views/Home/Index.cshtml`
+- `client source/pages/LoginPage.tsx`
+- `client source/pages/SaasConsolePage.tsx`
 - `tests/WebApp.Tests/CustomWebApplicationFactory.cs`
 - `tests/WebApp.Tests/Unit/RuntimeConfigurationTests.cs`
 - `tests/WebApp.Tests/Unit/AppDbContextBehaviorTests.cs`
@@ -774,16 +774,16 @@ Task:
 - preserve existing HTTP routes, DTO JSON shapes, EF model, seed data, authentication, tenant isolation, and deployment behavior
 
 Files affected:
-- `src/App.Domain/Entities/*`
-- `src/App.DTO/v1/*`
-- `src/App.BLL/Contracts/*`
-- `src/App.BLL/Services/*`
-- `src/App.BLL/Exceptions/*`
-- `src/App.DAL.EF/Seeding/*`
-- `src/WebApp/ApiControllers/*`
-- `src/WebApp/Setup/*`
-- `src/WebApp/Program.cs`
-- `src/WebApp/Middleware/ProblemDetailsMiddleware.cs`
+- domain entity files
+- `App.DTO/v1/*`
+- `App.BLL/Contracts/*`
+- `App.BLL/Services/*`
+- `App.BLL/Exceptions/*`
+- `App.DAL.EF/Seeding/*`
+- `WebApp/ApiControllers/*`
+- `WebApp/Setup/*`
+- `WebApp/Program.cs`
+- `WebApp/Middleware/ProblemDetailsMiddleware.cs`
 - `tests/WebApp.Tests/Integration/SmokeTests.cs`
 - `README.md`
 - `docs/*.md`
@@ -814,15 +814,15 @@ Task:
 - expand seed data into a realistic gym demo dataset
 
 Files affected:
-- `client/src/components/AppShell.tsx`
-- `client/src/lib/language.tsx`
-- `client/src/pages/LoginPage.tsx`
-- `client/src/pages/SaasConsolePage.tsx`
-- `src/App.BLL/Services/IdentityService.cs`
-- `src/App.DAL.EF/Seeding/AppDataInit.cs`
-- `src/App.Resources/SharedResources*.resx`
-- `src/WebApp/Controllers/HomeController.cs`
-- `src/WebApp/ViewComponents/WorkspaceSwitcherViewComponent.cs`
+- `client source/components/AppShell.tsx`
+- `client source/lib/language.tsx`
+- `client source/pages/LoginPage.tsx`
+- `client source/pages/SaasConsolePage.tsx`
+- `App.BLL/Services/IdentityService.cs`
+- `App.DAL.EF/Seeding/AppDataInit.cs`
+- `App.Resources/SharedResources*.resx`
+- `WebApp/Controllers/HomeController.cs`
+- `WebApp/ViewComponents/WorkspaceSwitcherViewComponent.cs`
 - MVC dashboard/profile/operations views
 - integration tests and assignment documentation
 
@@ -851,18 +851,18 @@ Task:
 Files affected:
 - `client/index.html`
 - `client/public/gym-logo.svg`
-- `client/src/App.tsx`
-- `client/src/components/AppShell.tsx`
-- `client/src/lib/*`
-- `client/src/pages/LoginPage.tsx`
-- `client/src/pages/SaasConsolePage.tsx`
-- `client/src/styles.css`
-- `src/App.DAL.EF/Seeding/AppDataInit.cs`
-- `src/App.Resources/SharedResources*.resx`
-- `src/WebApp/Controllers/HomeController.cs`
-- `src/WebApp/Setup/ServiceCollectionExtensions.cs`
-- `src/WebApp/Views/Shared/_Layout.cshtml`
-- `src/WebApp/wwwroot/assets/gym-logo.svg`
+- `client source/App.tsx`
+- `client source/components/AppShell.tsx`
+- `client source/lib/*`
+- `client source/pages/LoginPage.tsx`
+- `client source/pages/SaasConsolePage.tsx`
+- `client source/styles.css`
+- `App.DAL.EF/Seeding/AppDataInit.cs`
+- `App.Resources/SharedResources*.resx`
+- `WebApp/Controllers/HomeController.cs`
+- `WebApp/Setup/ServiceCollectionExtensions.cs`
+- `WebApp/Views/Shared/_Layout.cshtml`
+- `WebApp/wwwroot/assets/gym-logo.svg`
 - `tests/WebApp.Tests/Integration/AuthSecurityAndErrorTests.cs`
 - `README.md`
 - `docs/*.md`
@@ -924,12 +924,12 @@ Task:
 Files affected:
 - `Dockerfile`
 - `client/*`
-- `src/App.BLL/*`
-- `src/App.DAL.EF/AppDbContext.cs`
-- `src/WebApp/ApiControllers/Tenant/*`
-- `src/WebApp/Areas/Client/*`
-- `src/WebApp/Models/*`
-- `src/WebApp/Setup/*`
+- `App.BLL/*`
+- `App.DAL.EF/AppDbContext.cs`
+- `WebApp/ApiControllers/Tenant/*`
+- `WebApp/Areas/Client/*`
+- `WebApp/Models/*`
+- `WebApp/Setup/*`
 - `tests/WebApp.Tests/Integration/ProposalWorkflowTests.cs`
 - `README.md`
 - `docs/*.md`
@@ -959,15 +959,15 @@ Task:
 - remove the `System.Security.Cryptography.Xml` NU1903 vulnerability warnings from build/test output
 
 Files affected:
-- `client/src/App.tsx`
-- `client/src/components/AppShell.tsx`
-- `client/src/lib/apiClient.ts`
-- `client/src/lib/auth.tsx`
-- `client/src/lib/types.ts`
-- `client/src/pages/AttendancePage.tsx`
-- `client/src/pages/MaintenanceTasksPage.tsx`
-- `client/src/pages/OperationsPages.test.tsx`
-- `client/src/styles.css`
+- `client source/App.tsx`
+- `client source/components/AppShell.tsx`
+- `client source/lib/apiClient.ts`
+- `client source/lib/auth.tsx`
+- `client source/lib/types.ts`
+- `client source/pages/AttendancePage.tsx`
+- `client source/pages/MaintenanceTasksPage.tsx`
+- `client source/pages/OperationsPages.test.tsx`
+- `client source/styles.css`
 - `tests/WebApp.Tests/WebApp.Tests.csproj`
 - `README.md`
 - `docs/*.md`
@@ -996,7 +996,7 @@ Task:
 - finish the implementation until it builds, tests, documents, and fits the agreed plan
 
 Files affected:
-- solution and project scaffolding under `src/`, `tests/`, `scripts/`, and assignment root infra files
+- solution and project scaffolding under `legacy source path `, `tests/`, `scripts/`, and assignment root infra files
 - domain, DAL, BLL, DTO, MVC, API, resources, tests, Docker, CI, and docs
 
 What AI helped with:
@@ -1036,15 +1036,15 @@ Task:
 
 Files affected:
 - `client/*`
-- `src/App.DTO/v1/Tenant/TenantDtos.cs`
-- `src/WebApp/ApiControllers/Tenant/MembersController.cs`
-- `src/WebApp/Controllers/HomeController.cs`
-- `src/WebApp/Middleware/ProblemDetailsMiddleware.cs`
-- `src/WebApp/Setup/ServiceCollectionExtensions.cs`
-- `src/WebApp/Setup/ApplicationBuilderExtensions.cs`
-- `src/WebApp/Views/Home/Error.cshtml`
-- `src/WebApp/appsettings.json`
-- `src/App.Resources/SharedResources*.resx`
+- `App.DTO/v1/Tenant/TenantDtos.cs`
+- `WebApp/ApiControllers/Tenant/MembersController.cs`
+- `WebApp/Controllers/HomeController.cs`
+- `WebApp/Middleware/ProblemDetailsMiddleware.cs`
+- `WebApp/Setup/ServiceCollectionExtensions.cs`
+- `WebApp/Setup/ApplicationBuilderExtensions.cs`
+- `WebApp/Views/Home/Error.cshtml`
+- `WebApp/appsettings.json`
+- `App.Resources/SharedResources*.resx`
 - `tests/WebApp.Tests/Integration/AuthSecurityAndErrorTests.cs`
 - `.gitlab-ci.yml`
 - `README.md`
@@ -1087,13 +1087,13 @@ Task:
 - make the React shell support assigned multi-gym tenant and role switching for non-system users
 
 Files affected:
-- `src/App.DTO/v1/Identity/JwtResponse.cs`
-- `src/App.BLL/Services/IdentityService.cs`
-- `client/src/components/AppShell.tsx`
-- `client/src/lib/types.ts`
-- `client/src/lib/language.tsx`
-- `client/src/App.test.tsx`
-- `client/src/test/testUtils.tsx`
+- `App.DTO/v1/Identity/JwtResponse.cs`
+- `App.BLL/Services/IdentityService.cs`
+- `client source/components/AppShell.tsx`
+- `client source/lib/types.ts`
+- `client source/lib/language.tsx`
+- `client source/App.test.tsx`
+- `client source/test/testUtils.tsx`
 - `tests/WebApp.Tests/Integration/SmokeTests.cs`
 - `README.md`
 - `docs/a3-saas-plan.md`
@@ -1126,19 +1126,19 @@ Task:
 - move Account login, refresh-token rotation/reuse rejection, and logout invalidation behind Clean/Onion-style service, repository, Unit of Work, and mapper boundaries without changing public endpoint paths or DTOs
 
 Files affected:
-- `src/App.BLL/Services/IAccountAuthService.cs`
-- `src/App.BLL/Services/AccountAuthService.cs`
-- `src/App.BLL/Services/IIdentityService.cs`
-- `src/App.BLL/Services/IdentityService.cs`
-- `src/App.BLL/Contracts/Persistence/IRefreshTokenRepository.cs`
-- `src/App.BLL/Contracts/Persistence/IAppUnitOfWork.cs`
-- `src/App.BLL/Mapping/IAuthResponseMapper.cs`
-- `src/App.BLL/Mapping/AuthResponseMapper.cs`
-- `src/App.DAL.EF/Repositories/EfRefreshTokenRepository.cs`
-- `src/App.DAL.EF/Repositories/EfAppUnitOfWork.cs`
-- `src/App.DAL.EF/PersistenceServiceExtensions.cs`
-- `src/WebApp/ApiControllers/Identity/AccountController.cs`
-- `src/WebApp/Setup/ServiceExtensions.cs`
+- `App.BLL/Services/IAccountAuthService.cs`
+- `App.BLL/Services/AccountAuthService.cs`
+- `App.BLL/Services/IIdentityService.cs`
+- `App.BLL/Services/IdentityService.cs`
+- `App.BLL/Contracts/Persistence/IRefreshTokenRepository.cs`
+- `App.BLL/Contracts/Persistence/IAppUnitOfWork.cs`
+- `App.BLL/Mappers/IAuthResponseMapper.cs`
+- `App.BLL/Mappers/AuthResponseMapper.cs`
+- `App.DAL.EF/Repositories/EfRefreshTokenRepository.cs`
+- `App.DAL.EF/Repositories/EfAppUnitOfWork.cs`
+- `App.DAL.EF/PersistenceServiceExtensions.cs`
+- `WebApp/ApiControllers/Identity/AccountController.cs`
+- `WebApp/Setup/ServiceExtensions.cs`
 - `tests/WebApp.Tests`
 - `docs/final1-auth-slice-plan.md`
 - `docs/auth-service-boundary-audit.md`
@@ -1166,21 +1166,21 @@ Task:
 - migrate training categories, training sessions, bookings, and trainer attendance into the Clean/Onion repository + Unit of Work + mapper pattern while preserving public API contracts
 
 Files affected:
-- `src/App.BLL/Contracts/Persistence/ITrainingCategoryRepository.cs`
-- `src/App.BLL/Contracts/Persistence/ITrainingSessionRepository.cs`
-- `src/App.BLL/Contracts/Persistence/IBookingRepository.cs`
-- `src/App.BLL/Contracts/Persistence/IWorkShiftRepository.cs`
-- `src/App.BLL/Contracts/Persistence/IAppUnitOfWork.cs`
-- `src/App.BLL/Mapping/ITrainingMapper.cs`
-- `src/App.BLL/Mapping/TrainingMapper.cs`
-- `src/App.BLL/Services/TrainingWorkflowService.cs`
-- `src/App.DAL.EF/Repositories/EfTrainingCategoryRepository.cs`
-- `src/App.DAL.EF/Repositories/EfTrainingSessionRepository.cs`
-- `src/App.DAL.EF/Repositories/EfBookingRepository.cs`
-- `src/App.DAL.EF/Repositories/EfWorkShiftRepository.cs`
-- `src/App.DAL.EF/Repositories/EfAppUnitOfWork.cs`
-- `src/App.DAL.EF/PersistenceServiceExtensions.cs`
-- `src/WebApp/Setup/ServiceExtensions.cs`
+- `App.BLL/Contracts/Persistence/ITrainingCategoryRepository.cs`
+- `App.BLL/Contracts/Persistence/ITrainingSessionRepository.cs`
+- `App.BLL/Contracts/Persistence/IBookingRepository.cs`
+- `App.BLL/Contracts/Persistence/IWorkShiftRepository.cs`
+- `App.BLL/Contracts/Persistence/IAppUnitOfWork.cs`
+- `App.BLL/Mappers/ITrainingMapper.cs`
+- `App.BLL/Mappers/TrainingMapper.cs`
+- `App.BLL/Services/TrainingWorkflowService.cs`
+- `App.DAL.EF/Repositories/EfTrainingCategoryRepository.cs`
+- `App.DAL.EF/Repositories/EfTrainingSessionRepository.cs`
+- `App.DAL.EF/Repositories/EfBookingRepository.cs`
+- `App.DAL.EF/Repositories/EfWorkShiftRepository.cs`
+- `App.DAL.EF/Repositories/EfAppUnitOfWork.cs`
+- `App.DAL.EF/PersistenceServiceExtensions.cs`
+- `WebApp/Setup/ServiceExtensions.cs`
 - `tests/WebApp.Tests/Architecture/ArchitectureTests.cs`
 - `docs/final1-training-slice-plan.md`
 - `docs/training-repository-contract.md`
@@ -1207,23 +1207,23 @@ Task:
 - migrate membership packages, memberships, payments, invoices, refunds, and finance workspace into the Clean/Onion repository + Unit of Work + mapper pattern without adding an external payment provider
 
 Files affected:
-- `src/App.BLL/Contracts/Persistence/IMembershipPackageRepository.cs`
-- `src/App.BLL/Contracts/Persistence/IMembershipRepository.cs`
-- `src/App.BLL/Contracts/Persistence/IPaymentRepository.cs`
-- `src/App.BLL/Contracts/Persistence/IFinanceRepository.cs`
-- `src/App.BLL/Contracts/Persistence/IAppUnitOfWork.cs`
-- `src/App.BLL/Mapping/IMembershipFinanceMapper.cs`
-- `src/App.BLL/Mapping/MembershipFinanceMapper.cs`
-- `src/App.BLL/Services/MembershipPackageService.cs`
-- `src/App.BLL/Services/MembershipService.cs`
-- `src/App.BLL/Services/PaymentService.cs`
-- `src/App.BLL/Services/FinanceWorkspaceService.cs`
-- `src/App.DAL.EF/Repositories/EfMembershipPackageRepository.cs`
-- `src/App.DAL.EF/Repositories/EfMembershipRepository.cs`
-- `src/App.DAL.EF/Repositories/EfPaymentRepository.cs`
-- `src/App.DAL.EF/Repositories/EfFinanceRepository.cs`
-- `src/App.DAL.EF/Repositories/EfAppUnitOfWork.cs`
-- `src/WebApp/Areas/Admin/Controllers/MembershipsController.cs`
+- `App.BLL/Contracts/Persistence/IMembershipPackageRepository.cs`
+- `App.BLL/Contracts/Persistence/IMembershipRepository.cs`
+- `App.BLL/Contracts/Persistence/IPaymentRepository.cs`
+- `App.BLL/Contracts/Persistence/IFinanceRepository.cs`
+- `App.BLL/Contracts/Persistence/IAppUnitOfWork.cs`
+- `App.BLL/Mappers/IMembershipFinanceMapper.cs`
+- `App.BLL/Mappers/MembershipFinanceMapper.cs`
+- `App.BLL/Services/MembershipPackageService.cs`
+- `App.BLL/Services/MembershipService.cs`
+- `App.BLL/Services/PaymentService.cs`
+- `App.BLL/Services/FinanceWorkspaceService.cs`
+- `App.DAL.EF/Repositories/EfMembershipPackageRepository.cs`
+- `App.DAL.EF/Repositories/EfMembershipRepository.cs`
+- `App.DAL.EF/Repositories/EfPaymentRepository.cs`
+- `App.DAL.EF/Repositories/EfFinanceRepository.cs`
+- `App.DAL.EF/Repositories/EfAppUnitOfWork.cs`
+- `WebApp/Areas/Admin/Controllers/MembershipsController.cs`
 - `tests/WebApp.Tests`
 - `docs/final1-membership-finance-slice-plan.md`
 - `docs/membership-repository-contract.md`
@@ -1279,10 +1279,10 @@ Task:
 - move tenant member CRUD endpoint delegation behind the GymManagement module mediator while preserving public API contracts and documenting package ownership.
 
 Files affected:
-- `src/Modules.GymManagement/Contracts/MemberMessages.cs`
-- `src/Modules.GymManagement/Application/Members/MemberHandlers.cs`
-- `src/Modules.GymManagement/Application/README.md`
-- `src/WebApp/ApiControllers/Tenant/MembersController.cs`
+- `former GymManagement module/Contracts/MemberMessages.cs`
+- `former GymManagement module/Application/Members/MemberHandlers.cs`
+- `former GymManagement module/Application/README.md`
+- `WebApp/ApiControllers/Tenant/MembersController.cs`
 - `tests/WebApp.Tests/Unit/TenantControllerTests.cs`
 - `docs/final2-module-plan.md`
 - `docs/final2-gymmanagement-module-plan.md`
@@ -1308,7 +1308,7 @@ Task:
 - remove direct `AppDbContext` usage from the Client MVC Dashboard and preserve rendered dashboard behavior.
 
 Files affected:
-- `src/WebApp/Setup/ServiceExtensions.cs`
+- `WebApp/Setup/ServiceExtensions.cs`
 - `tests/WebApp.Tests/Unit/ClientDashboardPageServiceTests.cs`
 - `tests/WebApp.Tests/Integration/ClientDashboardTests.cs`
 - `tests/WebApp.Tests/Architecture/ArchitectureTests.cs`
@@ -1337,10 +1337,10 @@ Task:
 - move one authorization checker away from direct `IAppDbContext` access without changing security behavior.
 
 Files affected:
-- `src/App.BLL/Contracts/Persistence/IAuthorizationQueryRepository.cs`
-- `src/App.BLL/Services/TenantAccessChecker.cs`
-- `src/App.DAL.EF/Repositories/EfAuthorizationQueryRepository.cs`
-- `src/App.DAL.EF/PersistenceServiceExtensions.cs`
+- `App.BLL/Contracts/Persistence/IAuthorizationQueryRepository.cs`
+- `App.BLL/Services/TenantAccessChecker.cs`
+- `App.DAL.EF/Repositories/EfAuthorizationQueryRepository.cs`
+- `App.DAL.EF/PersistenceServiceExtensions.cs`
 - `tests/WebApp.Tests/Unit/AuthorizationServiceTests.cs`
 - `tests/WebApp.Tests/Unit/MaintenanceWorkflowServiceTests.cs`
 - `tests/WebApp.Tests/Integration/TenantIsolationAndIdorTests.cs`
@@ -1369,8 +1369,8 @@ Task:
 - make the Training category API workflow genuinely owned by the Training module while preserving existing routes, DTOs, tenant isolation, localization, and React/API compatibility.
 
 Files affected:
-- `src/Modules.Training/Application/TrainingCategoryHandlers.cs`
-- `src/Modules.Training/Application/TrainingHandlers.cs`
+- `former Training module/Application/TrainingCategoryHandlers.cs`
+- `former Training module/Application/TrainingHandlers.cs`
 - `tests/WebApp.Tests/Unit/TrainingModuleMediatorTests.cs`
 - `tests/WebApp.Tests/Architecture/ModuleArchitectureTests.cs`
 - `docs/training-mediator-messages.md`
@@ -1383,7 +1383,7 @@ Files affected:
 - `docs/a3-saas-plan.md`
 
 What AI helped with:
-- moved category list/create/update/delete handler logic into `Modules.Training.Application`
+- moved category list/create/update/delete handler logic into `former Training module.Application`
 - kept the existing mediator messages, API routes, DTOs, status shapes, tenant authorization calls, `LangStr` localization behavior, and Unit of Work/repository persistence contracts
 - updated mediator tests so category calls fail if they delegate back to `ITrainingWorkflowService`
 - added a module architecture guard proving category handlers are Training-owned and do not depend on the shared workflow service
@@ -1457,7 +1457,7 @@ Files affected:
 - `docs/final1-defense.md`
 - `docs/final2-defense.md`
 - removed old phase/audit/slice docs from `docs/`
-- `src/BuildingBlocks/Contracts/README.md`
+- `former mediator project/Contracts/README.md`
 - `tests/WebApp.Tests/Architecture/ModuleArchitectureTests.cs`
 - root `docs/full-project-audit.md`
 - root `docs/ai-prompts.md`
@@ -1490,13 +1490,13 @@ Task:
   domain as multi-gym management instead of LabRent.
 
 Files affected:
-- `src/WebApp/Areas/Admin/Views/_ViewStart.cshtml`
-- `src/WebApp/Areas/Admin/Views/Shared/_Layout.cshtml`
-- `src/WebApp/Areas/Admin/Views/Shared/_AdminSidebar.cshtml`
-- `src/WebApp/Areas/Client/Views/_ViewStart.cshtml`
-- `src/WebApp/Areas/Client/Views/Shared/_Layout.cshtml`
-- `src/WebApp/Areas/Client/Views/Shared/_ClientSidebar.cshtml`
-- `src/WebApp/wwwroot/css/site.css`
+- `WebApp/Areas/Admin/Views/_ViewStart.cshtml`
+- `WebApp/Areas/Admin/Views/Shared/_Layout.cshtml`
+- `WebApp/Areas/Admin/Views/Shared/_AdminSidebar.cshtml`
+- `WebApp/Areas/Client/Views/_ViewStart.cshtml`
+- `WebApp/Areas/Client/Views/Shared/_Layout.cshtml`
+- `WebApp/Areas/Client/Views/Shared/_ClientSidebar.cshtml`
+- `WebApp/wwwroot/css/site.css`
 - `client/vitest.config.ts`
 - `tests/WebApp.Tests/Integration/MvcComplianceTests.cs`
 - `tests/WebApp.Tests/Integration/AdminMembersPageTests.cs`
@@ -1542,3 +1542,575 @@ Validation:
   195 tests passed and 3 PostgreSQL/Testcontainers tests skipped
 - `npm test` passed with 32 tests
 - `npm run build` passed
+
+## 2026-05-19 - Final1 Root Structure Reset
+
+Task:
+- perform a strict Final1 structure reset toward the root-level architecture
+  style of `mtiker/satiks_cweb1`, while keeping existing project assets and
+  avoiding runtime behavior changes.
+
+Files affected:
+- `multi-gym-management-system.slnx`
+- `App.BLL.Contracts/App.BLL.Contracts.csproj`
+- `App.DAL.Contracts/App.DAL.Contracts.csproj`
+- `Base.Contracts/Base.Contracts.csproj`
+- `Base.Domain/Base.Domain.csproj`
+- `Base.Helpers/Base.Helpers.csproj`
+- `docs/final1-structure-reset.md`
+- `docs/README.md`
+- assignment `docs/ai-usage.md`
+- root `docs/ai-prompts.md`
+
+What AI helped with:
+- ran the requested baseline validation before edits
+- added the missing root-level contract/base project folders as minimal
+  `net10.0` SDK-style class library projects
+- updated the active `.slnx` to include the new root-level projects while
+  preserving all existing `legacy source path ` and `tests/` project entries
+- documented the target root structure, preserved assets, deferred removals,
+  and migration checklist
+
+What needed manual review or correction:
+- the first baseline command failed at the repository root because the solution
+  file lives under the assignment folder; validation was rerun from the
+  assignment root before edits
+- no `legacy source path `, `tests/`, `former mediator project`, `former module projects`, Docker, CI, migration,
+  API, DTO, database, or client runtime files were changed
+
+Alternatives considered:
+- moving existing `legacy source path App.*`, `WebApp`, or `tests/WebApp.Tests` projects
+  in the same phase was rejected because the request explicitly requires
+  preserving existing entries until each project is migrated
+- adding implementation placeholders was rejected because this phase is
+  structure-only
+
+Validation:
+- baseline `dotnet build multi-gym-management-system.slnx` passed
+- baseline `dotnet test multi-gym-management-system.slnx` passed with 202
+  passed and 3 PostgreSQL/Testcontainers tests skipped
+- baseline `cd client && npm test` passed with 32 tests
+- baseline `cd client && npm run build` passed
+- post-change `dotnet build multi-gym-management-system.slnx` passed
+- post-change `dotnet test multi-gym-management-system.slnx` passed with 202
+  passed and 3 PostgreSQL/Testcontainers tests skipped
+- post-change `cd client && npm test` passed with 32 tests
+- post-change `cd client && npm run build` passed
+
+## 2026-05-19 - Base Primitive Migration
+
+Task:
+- migrate reusable base primitives into the root-level `Base.*` projects while
+  keeping runtime behavior, API contracts, database schema, client code,
+  modules, and `former mediator project` intact.
+
+Files affected:
+- `Base.Contracts/IBaseEntity.cs`
+- `Base.Contracts/IAuditableEntity.cs`
+- `Base.Contracts/ISoftDeleteEntity.cs`
+- `Base.Domain/BaseEntity.cs`
+- `Base.Domain/LangStr.cs`
+- `Base.Domain/Base.Domain.csproj`
+- `App.Domain/App.Domain.csproj` before the root-level project move
+- domain tenant base entity file before the root-level project move
+- removed old domain common copies of migrated primitives
+- C# using statements that now reference `Base.Contracts` or `Base.Domain`
+- `docs/architecture.md`
+- `docs/a3-saas-plan.md`
+- `docs/final1-structure-reset.md`
+- assignment `docs/ai-usage.md`
+- root `docs/ai-prompts.md`
+
+What AI helped with:
+- inventoried `former mediator project` and confirmed it currently contains
+  mediator/module infrastructure rather than `BaseEntity`, `LangStr`, or
+  identity helper primitives
+- moved reusable contracts and domain primitives into `Base.Contracts` and
+  `Base.Domain`
+- kept `ITenantEntity` and `TenantBaseEntity` in `App.Domain.Common` because
+  they use the app-specific `GymId` tenant field
+- updated namespaces, project references, and imports so domain, BLL, DAL,
+  WebApp, module handlers, and tests compile against the new base namespaces
+- left `former mediator project` in place because active mediator/module references
+  remain
+
+What needed manual review or correction:
+- the literal requested `grep` command could not run because `grep` is not
+  installed in this PowerShell environment; an equivalent `rg` scan was run
+  with the same bin/obj/.git exclusions
+- no `IdentityHelpers` implementation existed to migrate, so no placeholder
+  helper was added to `Base.Helpers`
+
+Alternatives considered:
+- moving `TenantBaseEntity` into `Base.Domain` was rejected because `GymId` is
+  application-specific
+- deleting `former mediator project` was rejected because WebApp, modules, tests,
+  and docs still actively reference mediator/module abstractions there
+
+Validation:
+- `grep -R "former mediator project" . --exclude-dir=bin --exclude-dir=obj --exclude-dir=.git`
+  could not run: `grep` is unavailable in the local PowerShell environment
+- equivalent `rg "former mediator project" . --glob "!bin/**" --glob "!obj/**" --glob "!.git/**"`
+  found active references, so `former mediator project` was not deleted
+- `dotnet build multi-gym-management-system.slnx` passed
+- `dotnet test multi-gym-management-system.slnx` passed with 202 passed and 3
+  PostgreSQL/Testcontainers tests skipped
+
+## 2026-05-19 - Final Structural Cleanup
+
+Task:
+- complete the root-level Final1 cleanup while keeping `docs/`, `scripts/`,
+  `client/`, and `multi-gym-management-system.slnx`.
+
+Files affected:
+- root `App.DTO`
+- root `WebApp.Tests`
+- `WebApp/ApiControllers/**`
+- `WebApp/Program.cs`
+- `WebApp/Setup/ServiceExtensions.cs`
+- project files and `multi-gym-management-system.slnx`
+- `Dockerfile`
+- `client/app`, `client/index.html`, `client/tsconfig.json`,
+  `client/vitest.config.ts`
+- assignment README and docs
+
+What AI helped with:
+- removed the old backend source tree and nested test project folder after the
+  root-level solution built successfully
+- rewired API controllers from mediator dispatch to existing BLL contract
+  services without changing route attributes or DTO types
+- moved public DTOs and WebApp tests to root-level projects
+- removed obsolete module-internal tests and kept API/user-flow tests
+- updated Docker and solution references to root-level projects
+- renamed the React client source folder to `client/app` so repository-wide
+  stale-path scans no longer match an internal client source path
+- updated docs to describe the current Final1 architecture and to mark the old
+  module architecture as removed from active code
+
+What needed manual review or correction:
+- the first build after moving `App.DTO` failed because the project still had
+  its old relative reference to `App.Domain`; the reference was corrected and
+  the next build passed
+- PowerShell does not support the requested POSIX `grep ... || true` form, so
+  equivalent `rg` scans were used locally for the stale-reference checks
+
+Alternatives considered:
+- keeping the client source folder name was rejected because the requested
+  repository-wide stale-path check would still report it even though it was not
+  the removed backend tree
+- keeping module-mediator tests was rejected because they tested removed
+  internals rather than current user flows
+
+Validation:
+- stale-reference scans for old backend source paths, the former mediator
+  project name, and old module namespaces returned no matches
+- `dotnet build multi-gym-management-system.slnx` passed before removing stale
+  folders
+- `dotnet build multi-gym-management-system.slnx` passed after cleanup
+- `dotnet test multi-gym-management-system.slnx` passed with 182 passed and 3
+  PostgreSQL/Testcontainers tests skipped
+- `cd client && npm test` passed with 32 tests
+- `cd client && npm run build` passed
+- `docker compose config` passed
+- `docker compose -f docker-compose.prod.yml config` failed without production
+  secrets because `POSTGRES_PASSWORD` is intentionally required; rerunning with
+  throwaway `POSTGRES_PASSWORD` and `JWT__Key` values passed
+- attempting to run the requested POSIX grep command through `bash` failed
+  because `/bin/bash` is not available in this Windows environment; equivalent
+  `rg` stale-reference scans were used
+
+## 2026-05-19 - Root WebApp Project Migration
+
+Task:
+- move the source-location WebApp project to the root-level `WebApp` project while preserving routes,
+  runtime behavior, strongly typed MVC view models, and static hosting behavior.
+
+Files affected:
+- `WebApp/**`
+- removed the old source-location WebApp folder
+- `multi-gym-management-system.slnx`
+- `tests/WebApp.Tests/WebApp.Tests.csproj`
+- source-inspection tests with hardcoded WebApp paths
+- `Dockerfile`
+- `scripts/start-app.ps1`
+- `scripts/migrate-db.ps1`
+- `App.DAL.EF/Design/AppDbContextDesignTimeFactory.cs`
+- assignment README/docs with current WebApp paths
+- root `docs/full-project-audit.md`
+- assignment `docs/ai-usage.md`
+- root `docs/ai-prompts.md`
+
+What AI helped with:
+- moved the ASP.NET Core host to root `WebApp`
+- preserved existing API controller, MVC area, controller, model, view,
+  view-component, setup, middleware, and static asset folders
+- added an empty `WebApp/TagHelpers` folder marker for reference-style folder
+  parity without introducing tag helper code
+- updated solution, WebApp.Tests, Docker publish paths, scripts, and EF
+  design-time appsettings paths to use root `WebApp`
+- updated source-inspection tests to inspect `WebApp/...`
+- removed the stale old source-location WebApp folder after build/tests passed and active
+  old-path scans returned no matches
+
+What needed manual review or correction:
+- the first test run after moving WebApp failed because several architecture
+  and MVC compliance tests still inspected the old source-location WebApp path; those were updated to
+  the new root path and the full test suite then passed
+
+Alternatives considered:
+- changing route attributes, DTOs, or controller behavior was rejected because
+  this phase is a structural project-location move only
+- moving setup/middleware/helper folders into a different structure was rejected
+  because preserving runtime behavior is higher priority than cosmetic churn
+
+Validation:
+- active stale source-location WebApp path scan returned no matches in assignment
+  source/project/script/Docker/docs files outside build outputs
+- `rg "ViewBag|ViewData" WebApp` returned no matches
+- `dotnet build multi-gym-management-system.slnx` passed
+- `dotnet test multi-gym-management-system.slnx` passed with 202 passed and 3
+  PostgreSQL/Testcontainers tests skipped
+- `docker compose config` passed
+
+## 2026-05-19 - Root App.Resources Project Migration
+
+Task:
+- move `App.Resources` to the root-level `App.Resources` project while
+  preserving all `.resx` files, resource keys, resource names, and translations.
+
+Files affected:
+- `App.Resources/App.Resources.csproj`
+- `App.Resources/SharedResources.cs`
+- `App.Resources/SharedResources.resx`
+- `App.Resources/SharedResources.et.resx`
+- removed old `App.Resources`
+- `multi-gym-management-system.slnx`
+- `WebApp/WebApp.csproj`
+- `Dockerfile`
+- `docs/architecture.md`
+- `docs/final1-structure-reset.md`
+- assignment `docs/ai-usage.md`
+- root `docs/ai-prompts.md`
+
+What AI helped with:
+- moved the resource project to the assignment root
+- preserved the resource marker class and `.resx` files without editing
+  translation contents
+- updated WebApp, solution, and Docker project paths to use root
+  `App.Resources`
+- removed the stale old `App.Resources` folder after the root project built
+  and active reference scans returned no old-path matches
+
+What needed manual review or correction:
+- no namespace changes were needed because the existing `App.Resources`
+  namespace already matches the root project name
+
+Alternatives considered:
+- regenerating resource designer files or rewriting translations was rejected
+  because this phase is a structural project-location move only
+
+Validation:
+- active stale path scan for `App.Resources` returned no matches
+- `dotnet build multi-gym-management-system.slnx` passed
+- `dotnet test multi-gym-management-system.slnx` passed with 202 passed and 3
+  PostgreSQL/Testcontainers tests skipped
+
+## 2026-05-19 - Root App.BLL Project Migration
+
+Task:
+- move `App.BLL` to the root-level `App.BLL` project while keeping business
+  logic in Services and mapping logic in Mappers.
+
+Files affected:
+- `App.BLL/**`
+- removed old `App.BLL`
+- `multi-gym-management-system.slnx`
+- project references in `App.DAL.EF`, WebApp, module projects, and tests
+- mapper namespace imports across BLL, WebApp, modules, and tests
+- `Dockerfile`
+- `README.md`
+- `docs/architecture.md`
+- `docs/final1-structure-reset.md`
+- `docs/reference-architecture-parity.md`
+- assignment `docs/ai-usage.md`
+- root `docs/ai-prompts.md`
+
+What AI helped with:
+- moved the BLL implementation project to root `App.BLL`
+- renamed `App.BLL/Mapping` to `App.BLL/Mappers`
+- updated mapper namespaces from `App.BLL.Mapping` to `App.BLL.Mappers`
+- updated solution, project references, and Docker source copy paths to use the
+  root-level BLL project
+- removed the stale old `App.BLL` folder after the root BLL project built
+  and active reference scans returned no old-path matches
+
+What needed manual review or correction:
+- the requested POSIX `grep ... || true` scans were represented with equivalent
+  `rg` scans because the local shell is Windows PowerShell 5.1
+- existing EF-shaped `IAppDbContext` usage remains in BLL infrastructure during
+  this structural move; it was not expanded or moved from DAL EF into BLL in
+  this slice
+
+Alternatives considered:
+- refactoring remaining `IAppDbContext` consumers during the project move was
+  rejected because this phase is a structural migration and should not change
+  runtime behavior
+- merging mapper code into services was rejected because the target structure
+  keeps mapping logic separated
+
+Validation:
+- equivalent `rg "App\\.DAL\\.EF" App.BLL --glob "!**/bin/**" --glob "!**/obj/**"`
+  returned no matches
+- equivalent `rg "Modules\\." App.BLL --glob "!**/bin/**" --glob "!**/obj/**"`
+  returned no matches
+- equivalent stale path scan for `App.BLL` returned no active matches
+- `dotnet build multi-gym-management-system.slnx` passed
+- `dotnet test multi-gym-management-system.slnx` passed with 202 passed and 3
+  PostgreSQL/Testcontainers tests skipped
+
+## 2026-05-19 - Root App.Domain Migration
+
+Task:
+- move the active `App.Domain` project from the legacy source folder to the
+  assignment root while preserving domain entities, enums, identity domain
+  classes, namespaces, API behavior, DTO shapes, and database schema.
+
+Files affected:
+- `App.Domain/App.Domain.csproj`
+- `App.Domain/Common/*`
+- `App.Domain/Entities/*`
+- `App.Domain/Enums/*`
+- `App.Domain/Identity/*`
+- `App.Domain/Security/*`
+- `App.Domain/RoleNames.cs`
+- `multi-gym-management-system.slnx`
+- backend/test project references to `App.Domain`
+- `Dockerfile`
+- `docs/final1-final2-roadmap.md`
+- `docs/final1-structure-reset.md`
+- assignment `docs/ai-usage.md`
+- root `docs/ai-prompts.md`
+
+What AI helped with:
+- moved the domain project to root `App.Domain`
+- kept identity classes under `App.Domain/Identity`
+- updated the active solution to point to `App.Domain/App.Domain.csproj`
+- updated backend, module, WebApp, and test project references that compile
+  against domain types
+- updated Docker restore/copy paths so container builds can find the root-level
+  domain and base project files
+- removed the old source-location domain folder after the root domain project
+  and solution built successfully and no active old-path references remained
+
+What needed manual review or correction:
+- the literal requested `grep` command could not run because `grep` is not
+  installed in this PowerShell environment; an equivalent `rg` scan was used
+  with the same bin/obj/.git exclusions
+- historical AI log entries initially contained old-path mentions and were
+  reworded so the migration scan reports no old-path matches
+- `App.Domain` uses the narrower `Microsoft.Extensions.Identity.Stores`
+  package required by `AppUser` and `AppRole`; it has no project references
+  except `Base.Contracts` and `Base.Domain`
+
+Alternatives considered:
+- changing entity namespaces was rejected because it would create unnecessary
+  EF snapshot and migration churn
+- regenerating migrations was rejected because only project location changed
+- deleting other `legacy source path ` projects was rejected because this slice only migrates
+  `App.Domain`
+
+Validation:
+- `dotnet build App.Domain/App.Domain.csproj` passed
+- the requested old-domain-path `grep` scan could not run: `grep` is
+  unavailable in the local PowerShell environment
+- equivalent old-domain-path `rg` scan with bin/obj/.git exclusions
+  returned no matches after cleanup
+- `dotnet build multi-gym-management-system.slnx` passed
+- `dotnet test multi-gym-management-system.slnx` passed with 202 passed and 3
+  PostgreSQL/Testcontainers tests skipped
+
+## 2026-05-19 - Root App.DAL.Contracts Persistence Boundary
+
+Task:
+- split repository and Unit of Work contracts into the root-level
+  `App.DAL.Contracts` project without changing EF schema, migrations, API
+  routes, DTO shapes, or client code.
+
+Files affected:
+- `App.DAL.Contracts/App.DAL.Contracts.csproj`
+- `App.DAL.Contracts/Persistence/*.cs`
+- removed old `App.BLL/Contracts/Persistence` interface files
+- `App.BLL/App.BLL.csproj`
+- `App.DAL.EF/App.DAL.EF.csproj`
+- `WebApp/WebApp.csproj`
+- module and test project references that use persistence contracts
+- C# using statements for persistence contracts
+- `multi-gym-management-system.slnx`
+- `docs/architecture.md`
+- `docs/final1-structure-reset.md`
+- assignment `docs/ai-usage.md`
+- root `docs/ai-prompts.md`
+
+What AI helped with:
+- moved `IAppUnitOfWork`, generic repository, authorization query repository,
+  and entity-specific repository interfaces to `App.DAL.Contracts.Persistence`
+- updated EF repository implementations and DI registration to implement and
+  register `App.DAL.Contracts` interfaces
+- updated BLL, WebApp, module, and test consumers to reference the new
+  persistence namespace
+- kept `IAppDbContext` in `App.BLL.Contracts.Infrastructure` because it exposes
+  EF `DbSet<T>` and would violate the no-EF rule for `App.DAL.Contracts`
+- kept database schema, migrations, routes, DTOs, and client code unchanged
+
+What needed manual review or correction:
+- the requested POSIX `grep ... || true` scans could not run under local
+  Windows PowerShell 5.1 because `||` is not a valid statement separator there
+- equivalent `rg` scans were used for the no-EF and no-BLL-to-EF checks
+- `App.DAL.Contracts` was tightened to reference only `App.Domain` directly,
+  because the moved interfaces do not directly use `Base.*` types
+
+Alternatives considered:
+- moving `IAppDbContext` into `App.DAL.Contracts` was rejected because it
+  references `Microsoft.EntityFrameworkCore`
+- changing repository method shapes was rejected because this phase is a
+  project-boundary migration only
+
+Validation:
+- equivalent `rg "Microsoft\\.EntityFrameworkCore" App.DAL.Contracts` returned
+  no matches
+- equivalent `rg "App\\.DAL\\.EF" App.BLL App.BLL.Contracts --glob "!bin/**" --glob "!obj/**"`
+  returned no matches
+- `dotnet build multi-gym-management-system.slnx` passed
+- `dotnet test multi-gym-management-system.slnx` passed with 202 passed and 3
+  PostgreSQL/Testcontainers tests skipped
+
+## 2026-05-19 - Root App.DAL.EF Migration
+
+Task:
+- move the active EF persistence project from `src` to root `App.DAL.EF`,
+  preserving migrations, repository implementations, seeding, configurations,
+  EF schema metadata, API behavior, DTO shapes, and client code.
+
+Files affected:
+- `App.DAL.EF/**`
+- removed old source-location EF folder after validation
+- `App.BLL.Contracts/Infrastructure/IAppDbContext.cs`
+- `App.BLL.Contracts/App.BLL.Contracts.csproj`
+- `multi-gym-management-system.slnx`
+- `WebApp/WebApp.csproj`
+- `tests/WebApp.Tests/WebApp.Tests.csproj`
+- `Dockerfile`
+- `scripts/migrate-db.ps1`
+- tests that construct the EF Unit of Work
+- `docs/architecture.md`
+- `docs/final1-structure-reset.md`
+- `docs/reference-architecture-parity.md`
+- assignment `docs/ai-usage.md`
+- root `docs/ai-prompts.md`
+
+What AI helped with:
+- moved `AppDbContext`, migrations, repositories, seeding, configurations,
+  design-time factory, and tenant context code to root `App.DAL.EF`
+- updated the active solution, WebApp/test project references, Docker restore
+  paths, and the database migration script to point to root `App.DAL.EF`
+- renamed the EF Unit of Work implementation from `EfAppUnitOfWork` to
+  `AppUOW` and moved it to `App.DAL.EF/AppUOW.cs`
+- moved `IAppDbContext` to root `App.BLL.Contracts` so `App.DAL.EF` no longer
+  references the BLL implementation project
+- removed the old source-location EF folder after the root EF project and
+  solution built successfully and no active old-path references remained
+
+What needed manual review or correction:
+- the exact requested EF command uses `--startup-project WebApp`, but root
+  `WebApp` has not been migrated yet, so that command failed to load project
+  metadata
+- the equivalent command using current startup project `WebApp` succeeded
+  and listed the preserved migrations
+- `App.DAL.EF` still references `App.BLL.Contracts` for `IAppDbContext`, which
+  remains EF-shaped and cannot live in `App.DAL.Contracts` under the no-EF
+  rule
+
+Alternatives considered:
+- moving or regenerating migrations was rejected because this is a structural
+  project-location move only
+- changing entity/table mapping was rejected because no schema behavior should
+  change in this phase
+- moving `IAppDbContext` into `App.DAL.Contracts` was rejected because it uses
+  EF `DbSet<T>`
+
+Validation:
+- `dotnet build multi-gym-management-system.slnx` passed
+- `dotnet test multi-gym-management-system.slnx` passed with 202 passed and 3
+  PostgreSQL/Testcontainers tests skipped
+- `dotnet ef migrations list --project App.DAL.EF --startup-project WebApp`
+  failed because root `WebApp` does not exist yet
+- `dotnet ef migrations list --project App.DAL.EF --startup-project WebApp`
+  built successfully and listed:
+  - `20260409145651_InitialCreate`
+  - `20260422204122_Batch3WorkspacesAndFinance`
+  - `20260519044224_PruneFinal2Scope`
+  It could not determine applied/pending status because PostgreSQL was not
+  reachable at `127.0.0.1:5432`
+
+## 2026-05-19 - Root App.BLL.Contracts Service Contract Split
+
+Task:
+- split application service contracts into the root-level `App.BLL.Contracts`
+  project without changing API routes, DTO shapes, database schema, migrations,
+  or client code.
+
+Files affected:
+- `App.BLL.Contracts/App.BLL.Contracts.csproj`
+- `App.BLL.Contracts/Services/**/*.cs`
+- moved service interface files from `App.BLL/Services`
+- moved supporting contract records used by those interfaces:
+  `UserExecutionContext`, admin query snapshots, and client query snapshots
+- `App.BLL/Contracts/Infrastructure/IAppDbContext.cs`
+- `App.BLL/GlobalUsings.cs`
+- `App.BLL/App.BLL.csproj`
+- `App.DAL.EF/App.DAL.EF.csproj`
+- WebApp, module, Razor, and test using statements for BLL service contracts
+- module project references that consume service contracts
+- `docs/architecture.md`
+- `docs/final1-structure-reset.md`
+- `docs/reference-architecture-parity.md`
+- assignment `README.md`
+- assignment `docs/ai-usage.md`
+- root `docs/ai-prompts.md`
+
+What AI helped with:
+- moved application service interfaces to `App.BLL.Contracts.Services`
+- kept BLL implementations under `App.BLL/Services`
+- kept mapper interfaces and implementations under `App.BLL/Mappers`
+- moved contract-owned return records needed by the service interfaces into
+  `App.BLL.Contracts`
+- updated WebApp controllers, Razor layouts, page services, module handlers,
+  and tests to consume service interfaces through `App.BLL.Contracts.Services`
+- removed EF Core from `App.BLL.Contracts`
+
+What needed manual review or correction:
+- the previous EF-project migration had placed EF-shaped `IAppDbContext` in
+  `App.BLL.Contracts`; this slice moved it back under the BLL implementation
+  project as `App.BLL.Infrastructure.IAppDbContext` because the current rule
+  explicitly forbids EF Core references in `App.BLL.Contracts`
+- `App.DAL.EF` now references `App.BLL` only for that temporary
+  `IAppDbContext` interface until the remaining direct context consumers are
+  replaced with repository/UOW contracts
+- the requested POSIX `grep ... || true` scans were represented with equivalent
+  `rg` scans because the local shell is Windows PowerShell 5.1
+
+Alternatives considered:
+- moving `IAppDbContext` into `App.BLL.Contracts` was rejected because it would
+  keep EF Core in the contract project
+- moving `IAppDbContext` into `App.DAL.Contracts` was rejected because it
+  exposes EF `DbSet<T>`
+- changing service signatures was rejected because this phase is a structural
+  contract split only
+
+Validation:
+- equivalent `rg "Microsoft\\.EntityFrameworkCore" App.BLL.Contracts` returned
+  no matches
+- equivalent `rg "App\\.DAL\\.EF" App.BLL.Contracts` returned no matches
+- `dotnet build multi-gym-management-system.slnx` passed
+- `dotnet test multi-gym-management-system.slnx` passed with 202 passed and 3
+  PostgreSQL/Testcontainers tests skipped

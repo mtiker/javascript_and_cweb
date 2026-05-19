@@ -25,16 +25,16 @@ Scope: `courses/webapp-csharp/assignment-03-multi-gym-management-system`
 
 | Requirement | Status | Evidence | Missing / Weak Area | Risk | Recommended Fix Phase |
 |---|---|---|---|---|---|
-| ASP.NET Core backend | PASS | `src/WebApp/WebApp.csproj`, `src/WebApp/Program.cs`, `dotnet build` PASS | None found | LOW | Keep stable |
+| ASP.NET Core backend | PASS | `WebApp/WebApp.csproj`, `WebApp/Program.cs`, `dotnet build` PASS | None found | LOW | Keep stable |
 | At least 10 meaningful DB entities | PASS | 33 entity files in `src/App.Domain/Entities`, plus Identity entities; `src/App.DAL.EF/AppDbContext.cs` exposes DbSets | None for count; business richness still needs demo verification | LOW | Keep stable |
-| REST API controllers | PASS | 28 API controllers under `src/WebApp/ApiControllers`, including tenant/system/identity controllers | None found | LOW | Keep stable |
-| API versioning | PASS | `src/WebApp/Setup/WebApiExtensions.cs` uses URL segment versioning; controllers use `[ApiVersion("1.0")]` and `api/v{version:apiVersion}` routes | Only v1 exists, which is acceptable | LOW | Keep stable |
+| REST API controllers | PASS | 28 API controllers under `WebApp/ApiControllers`, including tenant/system/identity controllers | None found | LOW | Keep stable |
+| API versioning | PASS | `WebApp/Setup/WebApiExtensions.cs` uses URL segment versioning; controllers use `[ApiVersion("1.0")]` and `api/v{version:apiVersion}` routes | Only v1 exists, which is acceptable | LOW | Keep stable |
 | Public DTOs | PASS | 85 DTO files under `src/App.DTO/v1`; controllers return DTO response types | None found | LOW | Keep stable |
-| Swagger | PASS | `src/WebApp/Setup/WebApiExtensions.cs`, `src/WebApp/ConfigureSwaggerOptions.cs`, `Swashbuckle.AspNetCore` package | Swagger UI not manually opened during audit | LOW | Manual smoke phase |
-| JWT authentication | PASS | `src/WebApp/Setup/IdentitySetupExtensions.cs`, `src/App.BLL/Services/TokenService.cs`, `src/WebApp/ApiControllers/ApiControllerBase.cs` | None found | LOW | Keep stable |
+| Swagger | PASS | `WebApp/Setup/WebApiExtensions.cs`, `WebApp/ConfigureSwaggerOptions.cs`, `Swashbuckle.AspNetCore` package | Swagger UI not manually opened during audit | LOW | Manual smoke phase |
+| JWT authentication | PASS | `WebApp/Setup/IdentitySetupExtensions.cs`, `src/App.BLL/Services/TokenService.cs`, `WebApp/ApiControllers/ApiControllerBase.cs` | None found | LOW | Keep stable |
 | Refresh-token flow | PASS | `src/Modules.Users/Application/Auth/UsersSessionService.cs`, `src/App.DAL.EF/Repositories/EfRefreshTokenRepository.cs`, tests in `AuthSecurityAndErrorTests.cs` | Token storage is JS-accessible in React client | MEDIUM | Security hardening phase |
-| MVC client UX | PARTIAL | `src/WebApp/Areas/Client/Controllers`, `src/WebApp/Areas/Client/Views`, smoke tests in `SmokeTests.cs` | Client MVC controllers query `AppDbContext`; UX coverage is narrower than React client | MEDIUM | MVC completion phase |
-| MVC admin UX protected, usable, no ViewBag/ViewData, view models | PARTIAL | `src/WebApp/Areas/Admin`, `src/WebApp/Models/Admin*ViewModel.cs`, `[Authorize]`, `MvcComplianceTests.cs` | Admin pages are mostly read-only; no full admin CRUD/forms were found | HIGH | Admin UX phase |
+| MVC client UX | PARTIAL | `WebApp/Areas/Client/Controllers`, `WebApp/Areas/Client/Views`, smoke tests in `SmokeTests.cs` | Client MVC controllers query `AppDbContext`; UX coverage is narrower than React client | MEDIUM | MVC completion phase |
+| MVC admin UX protected, usable, no ViewBag/ViewData, view models | PARTIAL | `WebApp/Areas/Admin`, `WebApp/Models/Admin*ViewModel.cs`, `[Authorize]`, `MvcComplianceTests.cs` | Admin pages are mostly read-only; no full admin CRUD/forms were found | HIGH | Admin UX phase |
 | UI translations using `.resx` | PASS | `src/App.Resources/SharedResources.resx`, `SharedResources.et.resx`, MVC localizer injection | Several Admin page strings are still hardcoded in English | MEDIUM | Localization polish phase |
 | DB translations using LangStr/equivalent | PASS | `src/App.Domain/Common/LangStr.cs`, EF conversion in `AppDbContext.cs`, tests in `TrainingCategoryLocalizationTests.cs` | Full entity translation coverage not exhaustive | LOW | Localization polish phase |
 | IDOR protection | PASS | `TenantAccessChecker`, `ResourceAuthorizationChecker`, global tenant filters in `AppDbContext.cs`, `TenantIsolationAndIdorTests.cs` | Continue adding tests for every new endpoint | LOW | Keep as regression suite |
@@ -48,7 +48,7 @@ Scope: `courses/webapp-csharp/assignment-03-multi-gym-management-system`
 
 Backend projects:
 
-- `src/WebApp/WebApp.csproj`: ASP.NET Core host, API, MVC, Identity, Swagger, composition root.
+- `WebApp/WebApp.csproj`: ASP.NET Core host, API, MVC, Identity, Swagger, composition root.
 - `src/App.Domain/App.Domain.csproj`: entities, enums, common base types, roles, claims.
 - `src/App.BLL/App.BLL.csproj`: services, contracts, mappers, exceptions.
 - `src/App.DAL.EF/App.DAL.EF.csproj`: EF Core PostgreSQL context, repositories, migrations, seeding.
@@ -59,13 +59,13 @@ Backend projects:
 
 Routes and controllers:
 
-- Identity: `api/v1/account/register`, `login`, `logout`, `renew-refresh-token`, `switch-gym`, `switch-role`, `forgot-password`, `reset-password` in `src/WebApp/ApiControllers/Identity/AccountController.cs`.
+- Identity: `api/v1/account/register`, `login`, `logout`, `renew-refresh-token`, `switch-gym`, `switch-role`, `forgot-password`, `reset-password` in `WebApp/ApiControllers/Identity/AccountController.cs`.
 - System: `api/v1/system/gyms`, `system/platform`, `system/subscriptions`, `system/support`, `system/impersonation`.
 - Tenant routes: `api/v1/{gymCode}/members`, `training-categories`, `training-sessions`, `bookings`, `membership-packages`, `memberships`, `payments`, `finance-workspace`, `invoices`, `maintenance-tasks`, `equipment`, `opening-hours`, `gym-settings`, `gym-users`, staff/contract/vacation/job-role endpoints.
 
 Findings:
 
-- API versioning: PASS. Configured in `src/WebApp/Setup/WebApiExtensions.cs` with `UrlSegmentApiVersionReader`.
+- API versioning: PASS. Configured in `WebApp/Setup/WebApiExtensions.cs` with `UrlSegmentApiVersionReader`.
 - Swagger setup: PASS. `AddSwaggerGen`, `ConfigureSwaggerOptions`, and `UseSwaggerUI` are present.
 - Auth endpoints: PASS. Account routes are stable and tested by `SmokeTests.cs` and `AuthSecurityAndErrorTests.cs`.
 - JWT generation/validation: PASS. `TokenService` signs HMAC SHA-256 tokens and `IdentitySetupExtensions` validates issuer, audience, signing key, and lifetime.
@@ -85,8 +85,8 @@ Risky backend code:
 
 - `src/App.BLL/Services/IdentityService.cs` and `src/Modules.Users/Application/Auth/UsersSessionService.cs` duplicate much of the auth/session logic. This creates drift risk.
 - `src/App.BLL/Services/AccountAuthService.cs` appears unused in production DI after migration to Users module. It is still referenced by tests/helpers and should be removed only in a planned cleanup.
-- `src/WebApp/Setup/WebApiExtensions.cs` allows broad forwarded headers by clearing known proxies and adding `IPAddress.Any/IPv6Any`. This is convenient behind course proxies but risky in uncontrolled production unless the reverse proxy boundary is trusted.
-- `src/WebApp/Controllers/HomeController.cs` and Client MVC controllers use `AppDbContext` directly, which is a Final1 boundary risk.
+- `WebApp/Setup/WebApiExtensions.cs` allows broad forwarded headers by clearing known proxies and adding `IPAddress.Any/IPv6Any`. This is convenient behind course proxies but risky in uncontrolled production unless the reverse proxy boundary is trusted.
+- `WebApp/Controllers/HomeController.cs` and Client MVC controllers use `AppDbContext` directly, which is a Final1 boundary risk.
 
 ## Domain Model Audit
 
@@ -119,14 +119,14 @@ Constraints and safety:
 
 Client MVC UX:
 
-- Evidence: `src/WebApp/Areas/Client/Controllers`, `src/WebApp/Areas/Client/Views`, models such as `ClientDashboardViewModel`, `SessionsPageViewModel`, `MaintenancePageViewModel`.
+- Evidence: `WebApp/Areas/Client/Controllers`, `WebApp/Areas/Client/Views`, models such as `ClientDashboardViewModel`, `SessionsPageViewModel`, `MaintenancePageViewModel`.
 - Protected: PASS. Client area controllers use `[Authorize]`.
 - Functional domain proof: PARTIAL/PASS. It supports dashboard, sessions, booking/cancel, attendance roster, profile, and maintenance status flows.
 - Risk: Client MVC controllers use `AppDbContext` directly, for example `DashboardController`, `SessionsController`, `ProfileController`, and `MaintenanceController`. This is a Final1 boundary risk.
 
 Admin MVC UX:
 
-- Evidence: `src/WebApp/Areas/Admin/Controllers`, `src/WebApp/Areas/Admin/Views`, `src/WebApp/Models/Admin*ViewModel.cs`, `src/WebApp/Areas/Admin/Services/AdminViewModelServices.cs`.
+- Evidence: `WebApp/Areas/Admin/Controllers`, `WebApp/Areas/Admin/Views`, `WebApp/Models/Admin*ViewModel.cs`, `WebApp/Areas/Admin/Services/AdminViewModelServices.cs`.
 - Protected: PASS. Admin controllers use `[Authorize]` and role checks redirect/forbid unauthorized users.
 - View models: PASS. Admin views are strongly typed and tested by `MvcComplianceTests.cs`.
 - ViewBag/ViewData: PASS. Static tests verify no Admin page use.
@@ -234,7 +234,7 @@ Evidence:
 
 - Module projects exist: `src/Modules.Users`, `src/Modules.GymManagement`, `src/Modules.Training`, `src/Modules.MembershipFinance`.
 - Building blocks exist: `src/BuildingBlocks/Modules/IModule.cs`, `src/BuildingBlocks/Mediator`.
-- Composition root uses `src/WebApp/Setup/ModuleExtensions.cs`.
+- Composition root uses `WebApp/Setup/ModuleExtensions.cs`.
 - Mediator usage exists in API controllers and module handlers.
 - Boundary tests exist in `tests/WebApp.Tests/Architecture/ModuleArchitectureTests.cs`.
 - Candidate modules satisfy "Users plus 2 business modules"; current set is Users plus three business modules.
@@ -243,7 +243,7 @@ Gaps:
 
 - Modules reference shared `App.BLL`, `App.Domain`, and `App.DTO`. That may be acceptable as an intermediate modular monolith, but it is not full isolated module ownership.
 - Module DI extension comments state some services still need to move into modules, for example Training, GymManagement, and MembershipFinance comments mention future movement.
-- Data ownership per module is mostly documented in `docs/module-data-ownership.md` and related module docs, but persistence remains centralized in `App.DAL.EF/AppDbContext.cs`.
+- Data ownership per module is mostly documented in `courses/webapp-csharp/assignment-03-multi-gym-management-system/docs/module-boundaries.md`, but persistence remains centralized in `App.DAL.EF/AppDbContext.cs`.
 - Cross-module communication uses mediator for several controller flows, but some business services still communicate through shared BLL/data abstractions.
 
 Recommended readiness judgment:
@@ -267,7 +267,7 @@ Docker/deployment files:
 - `docker-compose.prod.yml`: PostgreSQL, backend, optional client profile.
 - `scripts/deploy.sh`: backend stack deploy.
 - `scripts/deploy-client.sh`: standalone client deploy.
-- `docs/deployment.md`, `docs/current-deployment-inventory.md`, `docs/cicd-audit.md`, `docs/separate-client-hosting-audit.md`.
+- `courses/webapp-csharp/assignment-03-multi-gym-management-system/docs/deployment.md`.
 
 Findings:
 
@@ -343,7 +343,7 @@ Nice to have / bonus:
    Done when: backend and client URLs are documented and verified from a third device/network.
 
 3. Objective: Complete Admin MVC UX for grading.
-   Files likely touched: `src/WebApp/Areas/Admin/Controllers`, `Views`, `Models`, Admin page services, BLL services as needed.
+   Files likely touched: `WebApp/Areas/Admin/Controllers`, `Views`, `Models`, Admin page services, BLL services as needed.
    Tests to add first: failing MVC integration tests for Admin create/edit/delete and authorization.
    Validation commands: `dotnet test`, targeted MVC/Admin tests.
    Done when: Admin can manage core tenant entities using view models, anti-forgery, validation messages, and no ViewBag/ViewData.

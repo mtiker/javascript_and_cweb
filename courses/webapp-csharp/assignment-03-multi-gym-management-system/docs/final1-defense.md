@@ -38,7 +38,7 @@ What is not claimed:
 | Data model and tenancy | [data-model.md](data-model.md), `AppDbContextBehaviorTests` |
 | API and DTOs | [api.md](api.md), `ApiContractMetadataTests` |
 | Security and roles | [security-and-access.md](security-and-access.md), `AuthSecurityAndErrorTests`, `AuthorizationServiceTests` |
-| MVC Admin/Client | `src/WebApp/Areas/Admin`, `src/WebApp/Areas/Client`, `MvcComplianceTests`, `Admin*CrudTests` |
+| MVC Admin/Client | `WebApp/Areas/Admin`, `WebApp/Areas/Client`, `MvcComplianceTests`, `Admin*CrudTests` |
 | React client | `client/`, Vitest coverage listed in [testing.md](testing.md) |
 | Tests | [testing.md](testing.md) |
 | Deployment and CI/CD | [deployment.md](deployment.md), assignment `.gitlab-ci.yml` |

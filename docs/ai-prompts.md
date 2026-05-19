@@ -16,6 +16,36 @@ Record AI-assisted development evidence here.
 
 ## Entries
 
+- Date: 2026-05-19
+- Subject: webapp-csharp
+- Assignment: assignment-03-multi-gym-management-system
+- Prompt: Fix the stale architectural comparison documentation against `C:\Users\marti\VS_Code_Projects\satiks-cweb-personal1-main.zip` after the Final1 presentation-boundary refactor.
+- Files affected: `courses/webapp-csharp/assignment-03-multi-gym-management-system/docs/reference-architecture-parity.md`, assignment `docs/ai-usage.md`, root `docs/ai-prompts.md`.
+- AI output used: Updated the reference parity document to state Final1 as the target, mark Final2 modules as preserved partial evidence, remove stale `AppDbContext` presentation follow-up wording, add the new boundary-test evidence, and refresh validation results to 202 backend tests passed plus 3 skipped PostgreSQL/Testcontainers tests.
+- What AI got wrong / needed correction: The earlier parity document still described already-completed presentation EF cleanup as remaining work.
+- Changes made manually: No production code changed; tests were not rerun because this was documentation-only.
+- Alternatives considered: Making the project folder-for-folder identical to the reference was rejected because the React client, Final2 module projects, and multi-gym SaaS domain are intentional differences.
+
+- Date: 2026-05-19
+- Subject: webapp-csharp
+- Assignment: assignment-03-multi-gym-management-system
+- Prompt: Finish Assignment 03 for Final1 only by removing concrete `AppDbContext` usage from MVC presentation paths, adding focused page/query services and architecture tests, preserving existing Final2 module code without claiming Final2 completion, and validating backend/frontend behavior.
+- Files affected: `courses/webapp-csharp/assignment-03-multi-gym-management-system/src/App.BLL/Services/{IWorkspaceContextService.cs,WorkspaceContextService.cs}`, `src/WebApp/Controllers/HomeController.cs`, `src/WebApp/ViewComponents/WorkspaceSwitcherViewComponent.cs`, `src/WebApp/Areas/Client/{Controllers,Services}/**`, `src/WebApp/Areas/Admin/Services/AdminViewModelServices.cs`, `src/WebApp/Setup/ServiceExtensions.cs`, BLL mappers, `tests/WebApp.Tests/{Architecture,Unit}/Final1Presentation*`, Final1 docs, assignment `README.md`, and root `docs/ai-prompts.md`.
+- AI output used: Added workspace, client profile, and client maintenance page services; refactored MVC controllers/view component/admin page services away from concrete EF; added Final1 boundary and service tests; preserved public routes, DTOs, seeded users, React behavior, and partial Final2 modules.
+- What AI got wrong / needed correction: The first admin refactor used localized DTO reads, which broke existing MVC expectations under Estonian culture; it was corrected to use repository-backed domain reads while keeping concrete EF out of WebApp.
+- Changes made manually: Verified `dotnet build multi-gym-management-system.slnx --no-restore`, `dotnet test multi-gym-management-system.slnx --no-restore` with 202 passed and 3 skipped, `cd client && npm test` with 32 passed, and `cd client && npm run build`. Docker was unavailable, so PostgreSQL/Testcontainers and live public smoke checks remain unverified.
+- Alternatives considered: Adding a new optional admin workflow or hardening Final2 modules was rejected because the requested target is Final1 only.
+
+- Date: 2026-05-19
+- Subject: webapp-csharp
+- Assignment: assignment-03-multi-gym-management-system
+- Prompt: Implement the Final2 readiness and scope-reduction plan: keep the project as a modular monolith, prune optional enterprise contexts, reduce React and API surfaces, add an EF migration, keep modules wrapping the BLL where transitional, and validate backend/frontend behavior.
+- Files affected: `courses/webapp-csharp/assignment-03-multi-gym-management-system/src/**`, `client/src/**`, `tests/WebApp.Tests/**`, `docs/**`, assignment `README.md`, and root `docs/ai-prompts.md`.
+- AI output used: Removed support/subscription/impersonation, coaching, invoice/refund, roster, opening-hours, and assignment-history surfaces; simplified training assignment to `TrainerStaffId`; added `PruneFinal2Scope`; updated route snapshots, workflow tests, React routes/types/tests, and current defense/API/data-model/module/testing docs.
+- What AI got wrong / needed correction: The first test pass exposed stale route/test expectations and one missing maintenance assignment note mapping; those were corrected before continuing.
+- Changes made manually: Verified `dotnet build`, `dotnet test`, `cd client && npm test`, and `cd client && npm run build`. Fresh migration apply, Swagger review, Compose config, and browser smoke remain follow-ups before a final defense tag.
+- Alternatives considered: Keeping the broad enterprise scope was rejected because it made Final2 harder to defend; microservices, RabbitMQ, separate module schemas, and per-module DbContexts were rejected as Final3 scope.
+
 - Date: 2026-05-11
 - Subject: webapp-csharp
 - Assignment: assignment-03-multi-gym-management-system
@@ -917,3 +947,123 @@ Record AI-assisted development evidence here.
 - What AI got wrong / needed correction: The local shell is Windows PowerShell 5.1, so `cd client && ...` was run through `cmd /c` and POSIX environment-prefix Compose commands were run through Git Bash; the docs record the intended command payloads and results.
 - Changes made manually: Reviewed validation output and kept the update documentation-only.
 - Alternatives considered: Claiming live deployment from Compose config was rejected because no public smoke test was run; claiming full module isolation was rejected because several module handlers still use shared BLL services and one `AppDbContext`.
+
+- Date: 2026-05-18
+- Subject: webapp-csharp
+- Assignment: assignment-03-multi-gym-management-system
+- Prompt: Clean up Assignment 03 docs, remove irrelevant or useless stale docs, consolidate useful material, and make the remaining docs more helpful for Final1 and Final2 development.
+- Files affected: assignment `README.md`; assignment docs `README.md`, `a3-saas-plan.md`, `final1-final2-roadmap.md`, `module-boundaries.md`, `security-and-access.md`, `domain-workflows.md`, `testing.md`, `deployment.md`, `final1-defense.md`, `final2-defense.md`, `ai-usage.md`; removed old phase/audit/slice docs; `src/BuildingBlocks/Contracts/README.md`; `tests/WebApp.Tests/Architecture/ModuleArchitectureTests.cs`; root `docs/full-project-audit.md`; root `docs/ai-prompts.md`.
+- AI output used: Inventoried the existing documentation, checked the official Final1/Final2 course pages, created a smaller durable documentation set, consolidated current development guidance and risks, removed stale one-off reports, and updated the assignment README doc map.
+- What AI got wrong / needed correction: The first delete pass accidentally removed `testing.md`, which was immediately recreated as a consolidated current testing guide before validation.
+- Changes made manually: Reviewed that retained live docs no longer point to deleted audit/phase files, while historical AI log references remain as history.
+- Alternatives considered: Archiving stale files was rejected because the assignment needs a concise living docs set rather than a larger folder with an archive to search through.
+
+- Date: 2026-05-19
+- Subject: webapp-csharp
+- Assignment: assignment-03-multi-gym-management-system
+- Prompt: Use `C:\Users\marti\VS_Code_Projects\satiks-cweb-personal1-main.zip` as the architectural source of truth, copy the UI and parts that should exist in the gym-management project, but keep the gym-management context instead of the reference LabRent context.
+- Files affected: Assignment MVC Admin/Client area layouts and sidebars, `src/WebApp/wwwroot/css/site.css`, `client/vitest.config.ts`, MVC integration tests, assignment README/docs, `docs/reference-architecture-parity.md`, assignment AI usage log, root `docs/ai-prompts.md`.
+- AI output used: Inspected the reference zip, mapped LabRent architecture parts to gym equivalents, preserved the current working gym architecture, added Bootstrap reference-style Admin and Client MVC shells, adjusted CSS for existing Razor views, updated MVC rendering/compliance/smoke tests, stabilized the React test timeout, and documented the parity decisions.
+- What AI got wrong / needed correction: Nothing material after scope was narrowed; the initial broad request was handled as a low-risk UI/parity pass instead of wholesale project replacement.
+- Changes made manually: Reviewed the current dirty working tree and kept existing user changes intact; verified the backend and React client built before edits.
+- Alternatives considered: Replacing the solution with the reference project was rejected because it would remove gym-specific domain, Final2 modules, REST/React contracts, deployment work, and test evidence. Adding separate contract projects was deferred because current BLL-owned persistence contracts already preserve the intended dependency direction.
+
+- Date: 2026-05-19
+- Subject: webapp-csharp
+- Assignment: assignment-03-multi-gym-management-system
+- Prompt: Perform a strict Final1 structure reset to match the root-level architecture style of `mtiker/satiks_cweb1`, keeping `docs/`, `scripts/`, `multi-gym-management-system.slnx`, and `client/`, and not deleting current `src/`, `tests/`, `BuildingBlocks`, or `Modules.*` assets.
+- Files affected: `courses/webapp-csharp/assignment-03-multi-gym-management-system/multi-gym-management-system.slnx`, new root-level `App.BLL.Contracts`, `App.DAL.Contracts`, `Base.Contracts`, `Base.Domain`, and `Base.Helpers` project files, `docs/final1-structure-reset.md`, assignment docs index, assignment AI usage log, root `docs/ai-prompts.md`.
+- AI output used: Ran the requested baseline checks, added missing root-level contract/base projects as minimal `net10.0` class library projects, kept all existing `src/` and `tests/` solution entries, and documented the migration checklist and deferred removals.
+- What AI got wrong / needed correction: The first baseline command was run from the repository root and failed because the assignment solution lives under `courses/webapp-csharp/assignment-03-multi-gym-management-system`; validation was rerun successfully from the assignment root before edits.
+- Changes made manually: Verified no API routes, DTO shapes, database schema, migrations, Docker, CI, or client runtime behavior files were changed.
+- Alternatives considered: Moving existing projects to root-level folders in this phase was rejected because the reset is intentionally non-behavioral and existing solution entries must remain until each project is migrated.
+
+- Date: 2026-05-19
+- Subject: webapp-csharp
+- Assignment: assignment-03-multi-gym-management-system
+- Prompt: Migrate shared base primitives from `src/BuildingBlocks` into root-level `Base.*` projects; move only reusable base/infrastructure primitives; do not touch modules, routes, DTO shapes, database schema, or client code; run the BuildingBlocks reference scan, build, and tests.
+- Files affected: `Base.Contracts/IBaseEntity.cs`, `Base.Contracts/IAuditableEntity.cs`, `Base.Contracts/ISoftDeleteEntity.cs`, `Base.Domain/BaseEntity.cs`, `Base.Domain/LangStr.cs`, `Base.Domain/Base.Domain.csproj`, `src/App.Domain/App.Domain.csproj`, `src/App.Domain/Common/TenantBaseEntity.cs`, removed old `src/App.Domain/Common` copies of the migrated primitives, namespace imports across backend/test code, `docs/architecture.md`, `docs/a3-saas-plan.md`, `docs/final1-structure-reset.md`, assignment AI usage log, root `docs/ai-prompts.md`.
+- AI output used: Confirmed `src/BuildingBlocks` only contained mediator/module infrastructure, moved the actual reusable base primitives from `App.Domain.Common` into `Base.Contracts` and `Base.Domain`, updated references/usings, and kept `ITenantEntity`, `TenantBaseEntity`, and `src/BuildingBlocks` in place where they are still app-specific or actively referenced.
+- What AI got wrong / needed correction: The literal `grep` command could not run because `grep` is unavailable in the local PowerShell environment; an equivalent `rg` scan with bin/obj/.git exclusions was used and showed active `BuildingBlocks` references remain.
+- Changes made manually: Verified no API routes, DTO shapes, database schema, migrations, Docker, CI, or client files were changed.
+- Alternatives considered: Moving `TenantBaseEntity` to `Base.Domain` was rejected because it uses the gym-specific `GymId`; adding a placeholder `IdentityHelpers` was rejected because no existing implementation was present to migrate.
+
+- Date: 2026-05-19
+- Subject: webapp-csharp
+- Assignment: assignment-03-multi-gym-management-system
+- Prompt: Move `src/App.Domain` into the root-level `App.Domain` project while preserving all multi-gym domain entities, enums, and identity classes; update references and solution entries; do not change API routes, entity property names, EF migrations, database schema, or client code.
+- Files affected: root `App.Domain/**`, removed old source-location domain folder, `multi-gym-management-system.slnx`, backend/module/WebApp/test project references to `App.Domain`, `Dockerfile`, assignment structure/roadmap docs, assignment AI usage log, root `docs/ai-prompts.md`.
+- AI output used: Moved the domain project to root, kept namespaces and identity class locations stable, updated solution/project references, updated Docker restore/copy paths, removed the old source-location domain folder after validation, and kept migrations/schema/API/client code unchanged.
+- What AI got wrong / needed correction: The requested `grep` command could not run because `grep` is not installed in the local PowerShell environment; an equivalent `rg` scan with bin/obj/.git exclusions was used and returned no old-path matches after cleanup.
+- Changes made manually: Verified `App.Domain` has project references only to `Base.Contracts` and `Base.Domain`; switched the domain identity dependency to `Microsoft.Extensions.Identity.Stores` because the domain identity classes derive from ASP.NET Core Identity store types.
+- Alternatives considered: Changing entity namespaces or regenerating migrations was rejected because the move is structural only and should not alter EF metadata or database schema.
+
+- Date: 2026-05-19
+- Subject: webapp-csharp
+- Assignment: assignment-03-multi-gym-management-system
+- Prompt: Split DAL contracts into root-level `App.DAL.Contracts`; move `IAppUnitOfWork`, generic repository, and entity-specific repository interfaces only; ensure `App.DAL.Contracts` has no EF Core dependency and `App.BLL` does not depend on `App.DAL.EF`.
+- Files affected: `App.DAL.Contracts/App.DAL.Contracts.csproj`, `App.DAL.Contracts/Persistence/*.cs`, removed old `src/App.BLL/Contracts/Persistence` interface files, `src/App.BLL/App.BLL.csproj`, `src/App.DAL.EF/App.DAL.EF.csproj`, WebApp/module/test project references, persistence-contract using statements, `multi-gym-management-system.slnx`, assignment architecture/structure docs, assignment AI usage log, root `docs/ai-prompts.md`.
+- AI output used: Moved repository and Unit of Work interfaces to `App.DAL.Contracts.Persistence`, updated EF repository implementations and DI registration to use the new namespace, updated BLL/WebApp/module/test consumers, and kept `IAppDbContext` in BLL infrastructure because it exposes EF `DbSet<T>`.
+- What AI got wrong / needed correction: The requested POSIX `grep ... || true` commands could not run under Windows PowerShell 5.1; equivalent `rg` scans were used and returned no EF references in `App.DAL.Contracts` and no `App.DAL.EF` references in `App.BLL` or `App.BLL.Contracts`.
+- Changes made manually: Tightened `App.DAL.Contracts` to reference only `App.Domain` directly, because the moved interfaces do not directly use `Base.*` types.
+- Alternatives considered: Moving `IAppDbContext` was rejected because it would violate the no-EntityFrameworkCore rule for `App.DAL.Contracts`; changing repository method shapes was rejected because the task is structural only.
+
+- Date: 2026-05-19
+- Subject: webapp-csharp
+- Assignment: assignment-03-multi-gym-management-system
+- Prompt: Move `src/App.DAL.EF` into root-level `App.DAL.EF`, preserve migrations, update scripts/Docker/solution paths, remove the old source folder only after validation, and run build, tests, and EF migration listing.
+- Files affected: root `App.DAL.EF/**`, removed old source-location EF folder, `App.BLL.Contracts/Infrastructure/IAppDbContext.cs`, `App.BLL.Contracts/App.BLL.Contracts.csproj`, `multi-gym-management-system.slnx`, `src/WebApp/WebApp.csproj`, `tests/WebApp.Tests/WebApp.Tests.csproj`, `Dockerfile`, `scripts/migrate-db.ps1`, tests using the EF Unit of Work, assignment architecture/structure/reference docs, assignment AI usage log, root `docs/ai-prompts.md`.
+- AI output used: Moved EF project contents to root, preserved migrations and model snapshot, renamed `EfAppUnitOfWork` to root-level `AppUOW`, updated solution/project/Docker/script references, moved `IAppDbContext` to `App.BLL.Contracts` to avoid an EF project dependency on the BLL implementation project, and removed the old EF source folder after validation.
+- What AI got wrong / needed correction: The requested `dotnet ef ... --startup-project WebApp` command failed because root `WebApp` has not been migrated yet; equivalent `--startup-project src\\WebApp` succeeded and listed all preserved migrations, although applied/pending status could not be determined because PostgreSQL was not reachable.
+- Changes made manually: Verified no old `src/App.DAL.EF` path references remain outside build outputs and no schema/migration files were generated.
+- Alternatives considered: Moving `IAppDbContext` into `App.DAL.Contracts` was rejected because it exposes EF `DbSet<T>` and would violate the no-EF rule; regenerating migrations was rejected because this was a project-location move only.
+
+- Date: 2026-05-19
+- Subject: webapp-csharp
+- Assignment: assignment-03-multi-gym-management-system
+- Prompt: Split BLL contracts into root-level `App.BLL.Contracts`; move service interfaces only, keep BLL implementations under Services and mappers under Mapping, ensure `App.BLL.Contracts` has no EF Core or `App.DAL.EF` references, update project references, and run boundary scans, build, and tests.
+- Files affected: `App.BLL.Contracts/App.BLL.Contracts.csproj`, `App.BLL.Contracts/Services/**/*.cs`, moved service interface files from `src/App.BLL/Services`, supporting service contract records, `src/App.BLL/Contracts/Infrastructure/IAppDbContext.cs`, `src/App.BLL/GlobalUsings.cs`, `App.DAL.EF/App.DAL.EF.csproj`, module project references, WebApp/module/Razor/test using statements, assignment README and architecture docs, assignment AI usage log, root `docs/ai-prompts.md`.
+- AI output used: Moved application service interfaces to `App.BLL.Contracts.Services`, kept implementations and mappers in `src/App.BLL`, moved contract-owned return records required by those interfaces, updated WebApp controllers/views/modules/tests to use contract namespaces, and removed EF Core from `App.BLL.Contracts`.
+- What AI got wrong / needed correction: The previous EF migration had placed EF-shaped `IAppDbContext` in `App.BLL.Contracts`; this slice corrected that by moving it back under BLL infrastructure because the current rule explicitly forbids EF Core in `App.BLL.Contracts`. The requested POSIX `grep ... || true` scans were replaced by equivalent `rg` scans under Windows PowerShell 5.1.
+- Changes made manually: Verified no API routes, DTO shapes, database schema, migrations, Docker, CI, or client code were changed.
+- Alternatives considered: Moving `IAppDbContext` into `App.DAL.Contracts` was rejected because it exposes EF `DbSet<T>`; changing service signatures was rejected because this was a structural contract split only.
+
+- Date: 2026-05-19
+- Subject: webapp-csharp
+- Assignment: assignment-03-multi-gym-management-system
+- Prompt: Move `src/App.BLL` into the root-level `App.BLL` project; keep business logic in Services, mapping logic in Mappers, avoid WebApp/Modules/App.DAL.EF references from BLL, update solution/project references, remove the old folder only after validation, and run boundary scans, build, and tests.
+- Files affected: root `App.BLL/**`, removed old `src/App.BLL`, `multi-gym-management-system.slnx`, project references in `App.DAL.EF`, WebApp, module projects, and tests, mapper namespace imports across backend/test code, `Dockerfile`, assignment README/architecture docs, assignment AI usage log, root `docs/ai-prompts.md`.
+- AI output used: Moved the BLL project to root, renamed `Mapping` to `Mappers`, updated mapper namespaces to `App.BLL.Mappers`, retargeted project references and Docker copy paths, and removed the stale old BLL folder after build and stale-reference checks passed.
+- What AI got wrong / needed correction: The requested POSIX `grep ... || true` scans were replaced by equivalent `rg` scans under Windows PowerShell 5.1.
+- Changes made manually: Verified no API routes or DTO shapes were changed and kept the existing BLL service/mapping separation.
+- Alternatives considered: Refactoring remaining `IAppDbContext` usage was rejected for this structural move because it would risk behavior changes outside the requested scope.
+
+- Date: 2026-05-19
+- Subject: webapp-csharp
+- Assignment: assignment-03-multi-gym-management-system
+- Prompt: Move `src/App.Resources` into the root-level `App.Resources` project; preserve all `.resx` files, resource keys, resource names, and translations; update WebApp, solution, and references; remove the old folder only after validation; run build and tests.
+- Files affected: root `App.Resources/**`, removed old `src/App.Resources`, `multi-gym-management-system.slnx`, `src/WebApp/WebApp.csproj`, `Dockerfile`, assignment architecture/reset docs, assignment AI usage log, root `docs/ai-prompts.md`.
+- AI output used: Moved the resource marker class and `.resx` files to root `App.Resources`, updated WebApp and Docker paths, and removed the stale source-location resources folder after the root project built and old-path scans passed.
+- What AI got wrong / needed correction: No namespace changes were required because the existing `App.Resources` namespace already matched the root-level project.
+- Changes made manually: Verified resource files were moved without rewriting translations.
+- Alternatives considered: Regenerating resource files was rejected because this was a structural move only.
+
+- Date: 2026-05-19
+- Subject: webapp-csharp
+- Assignment: assignment-03-multi-gym-management-system
+- Prompt: Move `src/WebApp` into the root-level `WebApp` project and align folders with the reference style while preserving routes/runtime behavior; update Docker, compose/CI/scripts/launch settings and tests that point to `src/WebApp`; run build, tests, and `docker compose config`.
+- Files affected: root `WebApp/**`, removed old `src/WebApp`, `multi-gym-management-system.slnx`, `tests/WebApp.Tests/WebApp.Tests.csproj`, source-inspection tests, `Dockerfile`, `scripts/start-app.ps1`, `scripts/migrate-db.ps1`, `App.DAL.EF/Design/AppDbContextDesignTimeFactory.cs`, assignment README/docs, root `docs/full-project-audit.md`, assignment AI usage log, root `docs/ai-prompts.md`.
+- AI output used: Moved the ASP.NET Core host to root `WebApp`, kept API/MVC/model/view/static folders intact, added a `TagHelpers` folder marker for target layout parity, retargeted solution/project/Docker/script/design-time paths, updated tests that inspected WebApp source paths, and removed the stale old source-location WebApp folder after validation.
+- What AI got wrong / needed correction: The first post-move test run failed because six architecture/MVC compliance tests still read `src/WebApp`; those hardcoded paths were updated to `WebApp` and the full suite passed.
+- Changes made manually: Verified no `ViewBag`/`ViewData` references were introduced and no API route or DTO shape changes were made.
+- Alternatives considered: Reorganizing setup/middleware/helpers beyond the move was rejected because the task is structural and runtime behavior must remain stable.
+
+- Date: 2026-05-19
+- Subject: webapp-csharp
+- Assignment: assignment-03-multi-gym-management-system
+- Prompt: Perform final structural cleanup while keeping docs, scripts, client, and the active solution file; delete only fully migrated old project locations; remove stale mediator/module references; update docs, scripts, Docker, CI, and solution paths; run stale-reference scans, build, tests, client tests/build, and compose config checks.
+- Files affected: root `App.DTO/**`, root `WebApp.Tests/**`, `WebApp/ApiControllers/**`, `WebApp/Program.cs`, `WebApp/Setup/ServiceExtensions.cs`, project files, `multi-gym-management-system.slnx`, `Dockerfile`, `client/app/**`, `client/index.html`, `client/tsconfig.json`, `client/vitest.config.ts`, assignment README and docs.
+- AI output used: Moved DTO and test projects to root, removed the old backend tree and nested test folder after build validation, rewired controllers to existing BLL contract services, removed obsolete module-internal tests, normalized Docker/solution/project paths, and updated docs to describe the current Final1 architecture.
+- What AI got wrong / needed correction: The first build after moving DTOs failed because the DTO project still referenced `App.Domain` with its old relative path; that project reference was corrected and the next build passed.
+- Changes made manually: Verified route attributes and DTO types stayed unchanged while controller orchestration moved from mediator dispatch to BLL contracts.
+- Alternatives considered: Keeping the client source folder name was rejected because the required repository-wide stale-path scan would keep reporting it even though it was unrelated to the removed backend tree.

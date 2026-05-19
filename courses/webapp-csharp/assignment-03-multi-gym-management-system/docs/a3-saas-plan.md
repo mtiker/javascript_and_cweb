@@ -50,33 +50,30 @@ production Compose `client` profile.
 ## Architecture Baseline
 
 Projects:
+- `Base.Contracts`
+- `Base.Domain`
+- `Base.Helpers`
 - `App.Domain`
 - `App.DTO`
+- `App.BLL.Contracts`
 - `App.BLL`
+- `App.DAL.Contracts`
 - `App.DAL.EF`
 - `App.Resources`
-- `BuildingBlocks`
-- `Modules.Users`
-- `Modules.GymManagement`
-- `Modules.Training`
-- `Modules.MembershipFinance`
 - `WebApp`
 - `WebApp.Tests`
 - `client`
 
 Current posture:
-- Final1 Clean/Onion layering is implemented for the most important slices,
-  with remaining direct EF access documented in
-  [final1-final2-roadmap.md](final1-final2-roadmap.md).
-- Final2 modular-monolith structure exists, with partial module ownership and
-  mediator-based routing documented in
-  [module-boundaries.md](module-boundaries.md).
+- Final1 Clean/Onion-style layering is implemented with root-level projects and
+  stable WebApp, BLL, DAL, DTO, domain, resource, and base boundaries.
+- The earlier module architecture was removed from active code. See
+  [module-boundaries.md](module-boundaries.md) for the retained status note.
 - The public API and client routes are intentionally reduced to the defended
-  Final2 product while internals continue moving across layer or module
-  boundaries.
+  product while internals follow Final1 layer boundaries.
 - The MVC Admin and MVC Client shells are aligned with the local LabRent
-  reference project while preserving the gym domain, routes, DTOs, React
-  client, and module structure. The mapping is documented in
+  reference project while preserving the gym domain, routes, DTOs, and React
+  client. The mapping is documented in
   [reference-architecture-parity.md](reference-architecture-parity.md).
 
 ## Core Invariants
@@ -110,13 +107,11 @@ Final1 hardening:
 4. add one more MVC Admin mutation workflow if the defense needs a broader
    Admin UX story
 
-Final2 hardening:
-1. move Users session logic off `IAppDbContext`
-2. move GymManagement member workflow logic into module handlers
-3. move Training session/booking/attendance logic into module handlers
-4. move MembershipFinance membership/payment logic into module handlers
-5. move maintenance/facility/staff operations into GymManagement module
-6. tighten module architecture tests after each migration
+Future architecture work:
+1. continue reducing direct `IAppDbContext` use from BLL infrastructure where
+   repository contracts are already available
+2. keep controller orchestration thin and service-driven
+3. add boundary tests when a new dependency rule is introduced
 
 ## Evidence To Keep Current
 

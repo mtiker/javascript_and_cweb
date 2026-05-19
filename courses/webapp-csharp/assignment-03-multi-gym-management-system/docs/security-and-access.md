@@ -16,7 +16,7 @@ Required JWT configuration:
 - `Jwt:Issuer`
 - `Jwt:Audience`
 
-Local development should set these through user secrets from `src/WebApp`.
+Local development should set these through user secrets from `WebApp`.
 Production should set them through environment variables such as `JWT__Key`.
 The app must not rely on committed production secrets.
 

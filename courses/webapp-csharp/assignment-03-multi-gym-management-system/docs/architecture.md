@@ -32,21 +32,21 @@ Separate client:
 ## Layered Structure
 
 Projects:
-- `App.Domain`: entities, enums, role names, claim types, shared abstractions
+- `Base.Contracts`: reusable entity/audit/soft-delete contracts
+- `Base.Domain`: reusable base domain primitives such as `BaseEntity` and `LangStr`
+- `Base.Helpers`: reserved for reusable helper primitives; no migrated helpers currently exist
+- `App.Domain`: gym domain entities, enums, role names, claim types, and app-specific domain abstractions
+- `App.BLL.Contracts`: application service contracts and supporting application contract records used by WebApp and tests
+- `App.DAL.Contracts`: repository, Unit of Work, and authorization query contracts
 - `App.DAL.EF`: `AppDbContext`, mappings, migrations, tenant filters, seeding, repository implementations, EF Unit of Work
-- `App.BLL`: business services, `IAppDbContext` boundary, repository/UOW contracts, authorization query contracts, authorization helpers, token and SaaS workflows
+- `App.BLL`: business services, authorization helpers, token and SaaS workflows
 - `App.DTO`: public API contracts
-- `App.Resources`: `.resx` localization resources
-- `BuildingBlocks`: mediator and module registration abstractions
-- `Modules.Users`: account session mediator messages and handlers
-- `Modules.GymManagement`: gym/member/staff/equipment/maintenance/settings module messages and handlers
-- `Modules.Training`: training category/session/booking/attendance module messages and handlers
-- `Modules.MembershipFinance`: package/membership/payment module messages and handlers
-- `WebApp`: API controllers, MVC controllers, middleware, views, startup
+- `App.Resources`: root-level `.resx` localization resources
+- `WebApp`: root-level API controllers, MVC controllers, middleware, views, startup
 - `WebApp.Tests`: unit and integration tests
 - `client`: separate React client and frontend tests
 
-Code organization mirrors the Assignment 18 backend style: each domain entity has its own file, DTOs are split by API resource namespace, BLL service interfaces live beside their implementations, seed data is split through partial files, and `WebApp/Setup` separates database, identity, service registration, web API, middleware, and data initialization.
+Code organization mirrors the Assignment 18 backend style: each domain entity has its own file, DTOs are split by API resource namespace, BLL service contracts live in root `App.BLL.Contracts`, BLL implementations live under `App.BLL/Services`, mapper abstractions and implementations live under `App.BLL/Mappers`, seed data is split through partial files, and `WebApp/Setup` separates database, identity, service registration, web API, middleware, and data initialization.
 
 The MVC shell also mirrors the local LabRent/LabTrack reference project:
 Admin and Client areas have their own Bootstrap-based layouts, sidebar
@@ -55,23 +55,14 @@ TempData alerts. The gym-specific mapping and deliberate deviations from that
 reference are tracked in
 [reference-architecture-parity.md](reference-architecture-parity.md).
 
-## Module Boundary Posture
+## Boundary Posture
 
-Final2 module ownership is preserved but intentionally partial and explicit:
+The active architecture is Final1. Presentation code calls BLL contract
+services directly, business workflows stay in `App.BLL`, persistence contracts
+stay in `App.DAL.Contracts`, and EF implementations stay in `App.DAL.EF`.
 
-- module projects do not reference each other directly
-- WebApp is the composition root and dispatches migrated API slices through
-  `IMediator`
-- Training category CRUD and MembershipFinance package CRUD own their
-  orchestration inside module application handlers
-- Users account-session messages, GymManagement member/maintenance/equipment
-  messages, Training session/booking/attendance messages, and broader
-  MembershipFinance messages are mediated through module contracts
-- several mediated handlers still call shared BLL services
-- all modules still share one `AppDbContext`
-
-This is modular-monolith evidence, not a claim of full module isolation or
-microservice extraction.
+The earlier module and mediator architecture has been removed from active code.
+It should not be presented as part of the current implementation.
 
 ## Request Flows
 
@@ -204,18 +195,18 @@ Current frontend scope:
 - caretaker maintenance task status updates
 
 Frontend structure:
-- `src/lib/apiClient.ts`: HTTP client, refresh retry logic, DTO mapping
-- `src/lib/auth.tsx`: auth context, route protection, session persistence
-- `src/lib/language.tsx`: language state and API localization header source
-- `src/pages/*`: CRUD pages and login
-- `src/components/*`: shell and notice components
+- `client/app/lib/apiClient.ts`: HTTP client, refresh retry logic, DTO mapping
+- `client/app/lib/auth.tsx`: auth context, route protection, session persistence
+- `client/app/lib/language.tsx`: language state and API localization header source
+- `client/app/pages/*`: CRUD pages and login
+- `client/app/components/*`: shell and notice components
 
 Boundary note:
 - tenant members, training, membership, payment, and maintenance workflows now run through BLL services backed by repository contracts, Unit of Work, and BLL mappers
 - account login, logout, and refresh-token renewal now run through `IAccountAuthService`, `IRefreshTokenRepository`, `IAppUnitOfWork`, and `AuthResponseMapper`
 - `TenantAccessChecker` now uses `IAuthorizationQueryRepository` for route-gym lookup, keeping active-gym and role decisions in BLL while EF query details stay in DAL
 - MVC controllers and view components delegate to page/query services and do not inject concrete `AppDbContext`; `Final1PresentationBoundaryTests` guards this boundary
-- staff, resource authorization, and platform workflows still use focused BLL services; remaining `IAppDbContext` usage is intentionally limited to BLL/module internals not yet migrated and framework infrastructure such as Identity/EF setup
+- staff, resource authorization, and platform workflows use focused BLL services; remaining `IAppDbContext` usage is intentionally limited to BLL infrastructure and framework integration such as Identity/EF setup
 
 ## CORS
 

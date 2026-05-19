@@ -5,11 +5,11 @@ smoke-tested against the current build.
 
 # Assignment 03 - Multi-Gym Management System
 
-Assignment 03 Final1 is implemented as a SaaS multi-gym management system under `courses/webapp-csharp/assignment-03-multi-gym-management-system`. Final2 module code is preserved as partial evidence only; this README does not claim Final2 completion.
+Assignment 03 Final1 is implemented as a SaaS multi-gym management system under `courses/webapp-csharp/assignment-03-multi-gym-management-system`. The earlier module architecture has been removed from the active codebase and is not part of the current Final1 structure.
 
 The project now has three user-facing surfaces:
-- MVC admin UX inside `src/WebApp/Areas/Admin`
-- MVC client UX inside `src/WebApp/Areas/Client`, served under `/mvc-client`
+- MVC admin UX inside `WebApp/Areas/Admin`
+- MVC client UX inside `WebApp/Areas/Client`, served under `/mvc-client`
 - a separate React + TypeScript SaaS client under `client/`
 
 Admin route note:
@@ -23,7 +23,7 @@ The backend remains one ASP.NET Core host that serves the MVC areas, Swagger, th
 This assignment currently covers:
 - multi-tenant gym SaaS domain design with more than 10 meaningful entities
 - versioned REST API controllers under `/api/v1/...`
-- public DTOs in `src/App.DTO/v1`
+- public DTOs in `App.DTO/v1`
 - Swagger
 - JWT authentication with refresh-token rotation
 - MVC admin UX, including tenant-scoped CRUD for members, training categories, and membership packages
@@ -45,7 +45,7 @@ This assignment currently covers:
 - member, training, membership/payment, and maintenance workspace APIs and React workflow pages
 - member CRUD documentation and tests across REST API, MVC Admin, and React client (`docs/domain-workflows.md`, `docs/testing.md`)
 - membership package CRUD, validation, unused-package soft delete, used-package conflict, and tenant-isolation documentation/tests (`docs/domain-workflows.md`, `docs/testing.md`)
-- preserved partial Final2 modular-monolith evidence with Users, GymManagement, Training, and MembershipFinance modules; mediator dispatch; no direct module references; partial module-owned workflows; data-ownership and route-stability reports
+- root-level Final1 backend structure with service contracts, BLL services, EF persistence, DTOs, resources, WebApp, and WebApp tests
 - expanded membership lifecycle statuses (`Pending`, `Active`, `Paused`, `Expired`, `Cancelled`, `Refunded`, `Renewed`)
 - preserved Final2 scope reduction from the earlier enterprise model to the defended multi-gym operations + memberships product
 - expanded maintenance workflow with recurring due-task generation, assignment notes, completion notes, and equipment downtime fields
@@ -89,15 +89,18 @@ assignment-03-multi-gym-management-system/
   client/
   docs/
   scripts/
-  src/
-    App.BLL/
-    App.DAL.EF/
-    App.Domain/
-    App.DTO/
-    App.Resources/
-    WebApp/
-  tests/
-    WebApp.Tests/
+  App.BLL.Contracts/
+  App.BLL/
+  App.DAL.Contracts/
+  App.DAL.EF/
+  App.DTO/
+  App.Domain/
+  App.Resources/
+  Base.Contracts/
+  Base.Domain/
+  Base.Helpers/
+  WebApp/
+  WebApp.Tests/
   .gitlab-ci.yml
   Dockerfile
   docker-compose.yml
@@ -108,11 +111,11 @@ assignment-03-multi-gym-management-system/
 Backend organization now follows the Assignment 18 reference style:
 - `App.Domain/Entities` keeps one public entity per file.
 - `App.DTO/v1` is split by API resource instead of grouped DTO files.
-- BLL service interfaces live beside their implementations in `App.BLL/Services`; infrastructure-only contracts live under `App.BLL/Contracts`.
+- BLL service contracts live in root `App.BLL.Contracts/Services`; implementations live under `App.BLL/Services`, with mapper abstractions and implementations under `App.BLL/Mappers`.
 - `WebApp/Setup` is split into focused database, identity, service, API, middleware, and data-initialization extension files.
 - `App.DAL.EF/AppDbContext` keeps cross-cutting behavior while entity mapping/index/precision rules are split into grouped `IEntityTypeConfiguration<T>` classes under `App.DAL.EF/Configurations`.
 - membership/payment workflows use repository contracts, Unit of Work, BLL mappers, and focused services for package, membership, and payment responsibilities.
-- Final2 module skeletons live under `src/Modules.*`; Users, GymManagement member/staff/equipment/maintenance, Training category/session/booking/attendance, and MembershipFinance package/membership/payment HTTP adapters dispatch through the shared mediator where migrated. Full internal module isolation is not claimed because several handlers still use shared BLL contracts and the single `AppDbContext`.
+- The former module/mediator architecture has been removed. API controllers now depend on `App.BLL.Contracts` services directly, while `WebApp` references `App.DAL.EF` only for database and DI setup.
 - MVC Admin and MVC Client area shells now follow the local LabRent/LabTrack
   reference project pattern: Bootstrap layout, sidebar navigation,
   breadcrumbs, language/workspace controls, logout, and TempData alerts, with
@@ -136,7 +139,7 @@ dotnet dev-certs https --trust
 Configure local WebApp secrets:
 
 ```powershell
-cd src/WebApp
+cd WebApp
 dotnet user-secrets set "Jwt:Key" "<long-local-jwt-secret>"
 dotnet user-secrets set "Jwt:Issuer" "MultiGymManagementSystem"
 dotnet user-secrets set "Jwt:Audience" "MultiGymManagementSystem"
@@ -416,12 +419,11 @@ Repository CI integration:
 
 Start here:
 - docs index: [docs/README.md](docs/README.md)
-- Final1/Final2 development roadmap: [docs/final1-final2-roadmap.md](docs/final1-final2-roadmap.md)
+- Final1 architecture reset notes: [docs/final1-structure-reset.md](docs/final1-structure-reset.md)
 - A3 SaaS scope plan: [docs/a3-saas-plan.md](docs/a3-saas-plan.md)
 
 Reference docs:
 - architecture: [docs/architecture.md](docs/architecture.md)
-- module boundaries: [docs/module-boundaries.md](docs/module-boundaries.md)
 - domain workflows: [docs/domain-workflows.md](docs/domain-workflows.md)
 - security and access: [docs/security-and-access.md](docs/security-and-access.md)
 - data model and ERD: [docs/data-model.md](docs/data-model.md)
@@ -431,7 +433,6 @@ Reference docs:
 
 Defense and logs:
 - Final1 defense pack: [docs/final1-defense.md](docs/final1-defense.md)
-- Final2 defense pack: [docs/final2-defense.md](docs/final2-defense.md)
 - AI usage: [docs/ai-usage.md](docs/ai-usage.md)
 
 ## Known Limitations

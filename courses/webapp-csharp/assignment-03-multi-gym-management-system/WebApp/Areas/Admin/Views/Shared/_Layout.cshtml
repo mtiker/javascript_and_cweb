@@ -1,0 +1,100 @@
+@using System.Globalization
+@using App.BLL.Contracts.Services
+@inject IStringLocalizer<SharedResources> L
+@inject IConfiguration Configuration
+@inject IUserContextService UserContextService
+@{
+    var currentCulture = CultureInfo.CurrentUICulture.Name;
+    var returnUrl = Context.Request.Path + Context.Request.QueryString;
+    var controller = ViewContext.RouteData.Values["controller"]?.ToString();
+    var action = ViewContext.RouteData.Values["action"]?.ToString();
+    var clientAppBaseUrl = ClientAppUrlResolver.GetBaseUrl(Configuration);
+    var userContext = User.Identity?.IsAuthenticated == true ? UserContextService.GetCurrent() : null;
+}
+<!DOCTYPE html>
+<html lang="@currentCulture">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@L["AppTitle"]</title>
+    <link rel="icon" type="image/svg+xml" href="~/assets/gym-logo.svg" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body class="mvc-area-body">
+<div class="container-fluid">
+    <div class="row min-vh-100">
+        @await Html.PartialAsync("_AdminSidebar")
+        <main class="col-md-10 ms-sm-auto px-4 py-3">
+            <div class="area-toolbar d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
+                <div>
+                    <div class="d-md-none fw-bold fs-5">
+                        <i class="bi bi-activity me-2 text-primary"></i>GymOps Admin
+                    </div>
+                    @if (userContext is not null)
+                    {
+                        <div class="small text-muted">
+                            @L["ActiveGym"]: @(userContext.ActiveGymCode ?? "-") · @L["Role"]: @(userContext.ActiveRole ?? "-")
+                        </div>
+                    }
+                </div>
+                <div class="d-flex flex-wrap align-items-center gap-2">
+                    <nav class="d-md-none mobile-area-nav" aria-label="Admin shortcuts">
+                        <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index">@L["Dashboard"]</a>
+                        <a asp-area="Admin" asp-controller="Members" asp-action="Index">@L["Members"]</a>
+                        <a asp-area="Admin" asp-controller="Sessions" asp-action="Index">@L["Sessions"]</a>
+                    </nav>
+                    <a class="btn btn-outline-secondary btn-sm" href="@clientAppBaseUrl">
+                        <i class="bi bi-window-sidebar me-1"></i>@L["ClientArea"]
+                    </a>
+                    <partial name="_CultureSwitcher" />
+                    <vc:workspace-switcher></vc:workspace-switcher>
+                    <form asp-area="" asp-controller="Home" asp-action="Logout" method="post" class="d-inline">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-outline-danger btn-sm">
+                            <i class="bi bi-box-arrow-right me-1"></i>@L["Logout"]
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <nav aria-label="breadcrumb" class="mb-3">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item">
+                        <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index">@L["AdminArea"]</a>
+                    </li>
+                    @if (!string.IsNullOrWhiteSpace(controller))
+                    {
+                        <li class="breadcrumb-item">@controller</li>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(action))
+                    {
+                        <li class="breadcrumb-item active" aria-current="page">@action</li>
+                    }
+                </ol>
+            </nav>
+
+            @if (TempData["Success"] is string success)
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="bi bi-check-circle-fill me-2"></i>@success
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+            @if (TempData["Error"] is string error)
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>@error
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+
+            @RenderBody()
+        </main>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+@await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

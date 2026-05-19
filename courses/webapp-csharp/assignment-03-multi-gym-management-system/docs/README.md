@@ -1,8 +1,8 @@
 # Assignment 03 Documentation
 
-This folder is intentionally small. Its purpose is to help finish and defend
-the Assignment 03 project through Final1 and Final2 without forcing developers
-to read old phase audits that no longer describe the current system.
+This folder is intentionally small. Its purpose is to help defend and maintain
+the Assignment 03 Final1 project without forcing developers to read old phase
+audits that no longer describe the current system.
 
 Official requirement sources:
 - Final1: https://courses.taltech.akaver.com/web-applications-with-csharp/assignments/home-assignments/Personal%20Project%20Final1
@@ -12,8 +12,11 @@ Official requirement sources:
 
 - [../README.md](../README.md) - runnable assignment overview, URLs, demo users,
   validation snapshot, and high-level feature coverage.
-- [final1-final2-roadmap.md](final1-final2-roadmap.md) - current Final1 and
-  Final2 development checklist, remaining risks, and recommended work order.
+- [final1-final2-roadmap.md](final1-final2-roadmap.md) - current Final1
+  maintenance checklist, remaining risks, and recommended work order.
+- [final1-structure-reset.md](final1-structure-reset.md) - root-level
+  architecture reset target, preserved assets, deferred removals, and migration
+  checklist.
 - [a3-saas-plan.md](a3-saas-plan.md) - current product and scope blueprint for
   the multi-gym SaaS assignment.
 
@@ -24,8 +27,8 @@ Official requirement sources:
 - [reference-architecture-parity.md](reference-architecture-parity.md) - mapping
   from the local LabRent reference zip to the gym implementation, including
   copied UI shell patterns and deliberate architecture differences.
-- [module-boundaries.md](module-boundaries.md) - Final2 module map, ownership,
-  mediator contracts, boundary posture, and next module migrations.
+- [module-boundaries.md](module-boundaries.md) - retained status note explaining
+  that the earlier module architecture is no longer active.
 - [domain-workflows.md](domain-workflows.md) - business workflows and rules by
   domain area.
 - [security-and-access.md](security-and-access.md) - auth, roles, tenant
@@ -41,8 +44,8 @@ Official requirement sources:
 
 - [final1-defense.md](final1-defense.md) - compact Final1 evidence and defense
   notes.
-- [final2-defense.md](final2-defense.md) - compact Final2 evidence and defense
-  notes.
+- [final2-defense.md](final2-defense.md) - status note for the removed module
+  architecture.
 
 ## Logs
 
@@ -56,8 +59,8 @@ The removed docs were mostly one-time phase plans, audits, or narrow contract
 notes. Useful current information was consolidated into the durable docs above.
 
 Do not add a new document for every slice. Prefer updating one of these files:
-- Final1 or Final2 development priority -> `final1-final2-roadmap.md`
-- module boundary or mediator change -> `module-boundaries.md`
+- Final1 development priority -> `final1-final2-roadmap.md`
+- architecture boundary change -> `architecture.md`
 - domain rule or workflow behavior -> `domain-workflows.md`
 - auth, roles, tenant isolation, token, or CORS behavior ->
   `security-and-access.md`

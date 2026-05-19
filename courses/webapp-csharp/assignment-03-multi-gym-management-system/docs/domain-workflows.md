@@ -32,9 +32,8 @@ Rules:
   needed by edit forms
 
 Development notes:
-- member APIs currently route through GymManagement mediator messages
-- deeper member workflow logic still lives in shared BLL and should move into
-  GymManagement module handlers during Final2 hardening
+- member APIs call `IMemberWorkflowService` directly from controllers
+- member workflow logic lives in `App.BLL/Services/MemberWorkflowService.cs`
 
 ## Training
 
@@ -54,11 +53,9 @@ Rules:
 - trainer assignment uses optional `TrainerStaffId`
 
 Development notes:
-- Training category CRUD is already module-owned in
-  `Modules.Training.Application.TrainingCategoryHandlers`
-- sessions, bookings, and attendance are mediated
-  but still delegate to shared BLL services
-- next Final2 step is moving those handlers to direct UOW/repository usage
+- training APIs call `ITrainingWorkflowService` directly from controllers
+- training category, session, booking, and attendance workflow logic lives in
+  `App.BLL/Services/TrainingWorkflowService.cs`
 
 ## Membership And Finance
 
@@ -91,11 +88,10 @@ Finance rules:
   provider is integrated
 
 Development notes:
-- Membership package CRUD is already module-owned in
-  `Modules.MembershipFinance.Application.MembershipPackageHandlers`
-- membership sale/status/delete and payments are mediated but still partly transitional
-- next Final2 step is moving those broader workflows into
-  MembershipFinance module handlers
+- membership and payment APIs call `IMembershipWorkflowService` directly from
+  controllers
+- package, membership, and payment workflow logic lives in
+  `App.BLL/Services/MembershipWorkflowService.cs`
 
 ## Maintenance And Facilities
 
@@ -116,10 +112,10 @@ Rules:
 - gym admins/owners can manage broader maintenance data
 
 Development notes:
-- maintenance/equipment endpoints are mediated through GymManagement contracts
-- most handlers still delegate to `IMaintenanceWorkflowService`
-- move these handlers into module-owned GymManagement application code after
-  member workflow migration
+- maintenance, equipment, settings, and gym-user APIs call
+  `IMaintenanceWorkflowService` directly from controllers
+- maintenance workflow logic lives in
+  `App.BLL/Services/MaintenanceWorkflowService.cs`
 
 ## Staff And Operations
 
@@ -132,8 +128,7 @@ Rules:
 
 Development notes:
 - `StaffWorkflowService` still uses `IAppDbContext`
-- migrating staff to repository contracts and GymManagement module handlers is
-  a high-value Final1/Final2 cleanup
+- migrating staff to repository contracts is a high-value Final1 cleanup
 
 ## MVC Admin Scope
 
@@ -152,12 +147,12 @@ Current read/action areas:
 Defense wording:
 
 "MVC Admin demonstrates real Razor pages with focused tested CRUD for three
-tenant entities and read/action dashboards for the defended Final2 domain. The
+tenant entities and read/action dashboards for the defended gym domain. The
 React client and REST API expose the same focused gym-operations workflows."
 
 If more time is available, add one additional MVC Admin mutation workflow:
-1. membership sale/status action, because it demonstrates MembershipFinance
-2. equipment CRUD, because it demonstrates GymManagement operations
+1. membership sale/status action, because it demonstrates finance operations
+2. equipment CRUD, because it demonstrates gym operations
 3. equipment CRUD, because it is already inside the defended operations scope
 
 ## React Client Scope

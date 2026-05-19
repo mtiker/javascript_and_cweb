@@ -10,7 +10,7 @@ All API routes use URL-segment versioning:
 
 Tenant routes also pass through `GymResolutionMiddleware`, which resolves `gymCode` early and rejects unknown or inactive gyms before controller/BLL execution.
 
-Controllers return public DTOs from `src/App.DTO/v1`.
+Controllers return public DTOs from `App.DTO/v1`.
 
 ## Authentication
 

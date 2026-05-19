@@ -11,7 +11,7 @@ try {
     & "$PSScriptRoot\\start-db.ps1"
 
     Write-Host "Starting WebApp..."
-    $runArgs = @("--project", "src/WebApp")
+    $runArgs = @("--project", "WebApp")
     if ($NoBuild) {
         $runArgs += "--no-build"
     }

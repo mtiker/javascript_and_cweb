@@ -12,20 +12,35 @@ WORKDIR /src
 
 COPY Directory.Build.props ./
 COPY multi-gym-management-system.slnx ./
-COPY src/App.Domain/App.Domain.csproj src/App.Domain/
-COPY src/App.DAL.EF/App.DAL.EF.csproj src/App.DAL.EF/
-COPY src/App.BLL/App.BLL.csproj src/App.BLL/
-COPY src/App.DTO/App.DTO.csproj src/App.DTO/
-COPY src/App.Resources/App.Resources.csproj src/App.Resources/
-COPY src/WebApp/WebApp.csproj src/WebApp/
-COPY tests/WebApp.Tests/WebApp.Tests.csproj tests/WebApp.Tests/
+COPY App.BLL.Contracts/App.BLL.Contracts.csproj App.BLL.Contracts/
+COPY App.DAL.Contracts/App.DAL.Contracts.csproj App.DAL.Contracts/
+COPY App.Domain/App.Domain.csproj App.Domain/
+COPY Base.Contracts/Base.Contracts.csproj Base.Contracts/
+COPY Base.Domain/Base.Domain.csproj Base.Domain/
+COPY Base.Helpers/Base.Helpers.csproj Base.Helpers/
+COPY App.DAL.EF/App.DAL.EF.csproj App.DAL.EF/
+COPY App.BLL/App.BLL.csproj App.BLL/
+COPY App.DTO/App.DTO.csproj App.DTO/
+COPY App.Resources/App.Resources.csproj App.Resources/
+COPY WebApp/WebApp.csproj WebApp/
+COPY WebApp.Tests/WebApp.Tests.csproj WebApp.Tests/
 
 RUN dotnet restore multi-gym-management-system.slnx
 
-COPY src ./src
-COPY tests ./tests
+COPY App.BLL.Contracts ./App.BLL.Contracts
+COPY App.BLL ./App.BLL
+COPY App.DAL.Contracts ./App.DAL.Contracts
+COPY App.DAL.EF ./App.DAL.EF
+COPY App.DTO ./App.DTO
+COPY App.Resources ./App.Resources
+COPY App.Domain ./App.Domain
+COPY Base.Contracts ./Base.Contracts
+COPY Base.Domain ./Base.Domain
+COPY Base.Helpers ./Base.Helpers
+COPY WebApp ./WebApp
+COPY WebApp.Tests ./WebApp.Tests
 
-RUN dotnet publish src/WebApp/WebApp.csproj -c Release -o /app/publish --no-restore
+RUN dotnet publish WebApp/WebApp.csproj -c Release -o /app/publish --no-restore
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
