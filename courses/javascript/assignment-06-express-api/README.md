@@ -40,7 +40,7 @@ Todo entities (Bearer JWT required):
 | GET    | `/api/v1/TodoTasks`                  | List user's tasks                  |
 | GET    | `/api/v1/TodoTasks/:id`              | Read one                           |
 | POST   | `/api/v1/TodoTasks`                  | Create                             |
-| PUT    | `/api/v1/TodoTasks/:id`              | Update (partial body OK)           |
+| PUT    | `/api/v1/TodoTasks/:id`              | Update (partial body OK; at least one task field required) |
 | DELETE | `/api/v1/TodoTasks/:id`              | 200 with no body on success        |
 | GET / POST / PUT / DELETE | `/api/v1/TodoCategories[/:id]` | Same CRUD pattern           |
 | GET / POST / PUT / DELETE | `/api/v1/TodoPriorities[/:id]` | Same CRUD pattern           |
@@ -98,6 +98,17 @@ Invoke-RestMethod http://localhost:86/api/v1/health
 # → status=ok, db=postgres
 ```
 
+Run backend validation:
+
+```powershell
+cd api
+npm ci
+npm run build
+npm test
+```
+
+The API tests use Vitest + supertest against the real Express routes, SQL migrations, repositories, bcrypt, and JWT helpers with an in-process Postgres-compatible test database (`pg-mem`). Covered flows include register/login/refresh-token rotation and reuse rejection, authenticated task CRUD, empty-update validation, and cross-user task read rejection.
+
 Run the API outside Docker (e.g. against a local Postgres):
 
 ```powershell
@@ -135,8 +146,15 @@ A04 (Vue) reads the API base URL from a single `import.meta.env.VITE_API_BASE_UR
 
 ## Tech stack
 
-- **Backend:** Express 5 · TypeScript (NodeNext modules) · `pg` (raw SQL, migrations runner) · bcrypt · `jsonwebtoken` (15-minute access tokens, single-use refresh tokens, 7-day refresh TTL)
+- **Backend:** Express 5 · TypeScript (NodeNext modules) · `pg` (raw SQL, migrations runner) · bcrypt · `jsonwebtoken` (15-minute access tokens, single-use 256-bit refresh tokens, 7-day refresh TTL) · Helmet · `express-rate-limit`
 - **Database:** Postgres 16 (`gen_random_uuid()` for primary keys)
+- **Backend tests:** Vitest · supertest · `pg-mem`
 - **Vue client:** Vue 3 · Vite · Pinia · axios · vee-validate + zod
 - **React client:** Next.js 16 App Router · React 19 · axios · react-hook-form
-- **Container runtime:** Docker Compose with a shared `pgdata` volume; the API auto-applies SQL migrations from `dist/db/migrations` on startup
+- **Container runtime:** Docker Compose with a shared `pgdata` volume and Postgres healthcheck; the API auto-applies SQL migrations from `dist/db/migrations` on startup
+
+Security notes:
+
+- Refresh-token rotation is atomic: the old token is deleted with `DELETE ... RETURNING` inside the refresh transaction before a replacement token is stored. A reused token is rejected.
+- CORS is allow-list driven by `CORS_ORIGIN`; if that env var is missing, cross-origin browser requests are denied instead of reflected.
+- Login and register routes have a conservative per-IP rate limit. Password rules intentionally remain compatible with the course/API contract: required and at least 8 characters.

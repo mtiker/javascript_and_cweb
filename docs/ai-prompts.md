@@ -16,6 +16,17 @@ Record AI-assisted development evidence here.
 
 ## Entries
 
+- Date: 2026-05-25
+- Subject: javascript
+- Assignment: assignment-06-express-api
+- Prompt: Fix the low-risk issues from `review-js-a06-express-api.md` without putting other work under unnecessary risk.
+- Files affected: `courses/javascript/assignment-06-express-api/api/src/{app.ts,auth.ts,routes/account.ts,routes/tasks.ts}`, API `package.json`/`package-lock.json`, API tests, API `Dockerfile`, assignment `docker-compose.yml`, assignment `.gitlab-ci.yml`, assignment `README.md`, and this root AI prompt log.
+- AI output used: Tightened refresh-token rotation by deleting the old token atomically inside a transaction, switched refresh tokens to 256-bit random values, added Helmet and auth route rate limiting, made CORS deny cross-origin requests when `CORS_ORIGIN` is missing, rejected empty task update bodies, made Docker builds use `npm ci`, added a Postgres healthcheck, and added supertest/Vitest API regression tests for auth refresh reuse, task CRUD, and cross-user task access.
+- What AI got wrong / needed correction: The first pg-mem-backed test run failed because pg-mem lacked Postgres `char_length`, and the UUID function had to be registered as impure so defaults produce fresh values. Both were fixed in the test harness.
+- Changes made manually: Password-complexity and login-status-code changes were intentionally left unchanged to preserve the existing TalTech-compatible API/client behavior.
+- Alternatives considered: Replacing the hand-built task update SQL and adding structured logging were rejected as broader refactors; Docker-backed integration tests were rejected because pg-mem gives deterministic route/repository coverage without requiring Docker for every local/CI API test.
+- Validation: `npm test` passed for the A06 API with 4 integration tests; `npm run build` passed for the A06 API; `docker compose --env-file .env.example config` passed; `docker compose --env-file .env.example build express-api` passed.
+
 - Date: 2026-05-19
 - Subject: webapp-csharp
 - Assignment: assignment-03-multi-gym-management-system

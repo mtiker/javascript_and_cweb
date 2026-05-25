@@ -1,5 +1,6 @@
 import cors from 'cors';
 import express from 'express';
+import helmet from 'helmet';
 import accountRouter from './routes/account.js';
 import categoriesRouter from './routes/categories.js';
 import prioritiesRouter from './routes/priorities.js';
@@ -7,10 +8,16 @@ import tasksRouter from './routes/tasks.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
 const app = express();
+const corsOrigins = process.env.CORS_ORIGIN
+  ?.split(',')
+  .map((origin) => origin.trim())
+  .filter((origin) => origin.length > 0);
 
+app.set('trust proxy', 1);
+app.use(helmet({ contentSecurityPolicy: false }));
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN?.split(',') ?? true,
+    origin: corsOrigins && corsOrigins.length > 0 ? corsOrigins : false,
     credentials: true
   })
 );

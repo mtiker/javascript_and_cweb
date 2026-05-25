@@ -4,6 +4,16 @@ import { taskRepository } from '../db/taskRepository.js';
 import { ITodoTask, ICreateTaskDTO, IApiMessage } from '../types/index.js';
 
 const router = Router();
+const updatableTaskFields = [
+  'taskName',
+  'taskSort',
+  'createdDt',
+  'dueDt',
+  'isCompleted',
+  'isArchived',
+  'todoCategoryId',
+  'todoPriorityId'
+] as const;
 
 router.use(authenticate);
 
@@ -45,6 +55,11 @@ router.put('/:id', async (req: Request, res: Response, next: NextFunction) => {
     const userId = req.user!.userId;
     const id = req.params.id as string;
     const body = req.body as Partial<ICreateTaskDTO>;
+
+    if (!updatableTaskFields.some((field) => Object.hasOwn(body, field))) {
+      return res.status(400).json({ messages: ['At least one task field must be provided'] } as IApiMessage);
+    }
+
     const updated = await taskRepository.update(id, body, userId);
     if (!updated) return res.status(404).json({ messages: ['Not found'] } as IApiMessage);
     res.status(200).json(updated as ITodoTask);

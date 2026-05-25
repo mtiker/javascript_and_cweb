@@ -9,6 +9,11 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-a06_todo}
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-a06_todo}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   express-api:
     build:
@@ -24,7 +29,8 @@ services:
     ports:
       - "86:3001"
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
 
   vue-client:
     build:

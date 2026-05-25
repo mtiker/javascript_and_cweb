@@ -1,6 +1,6 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { randomUUID } from 'crypto';
+import { randomBytes } from 'crypto';
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
@@ -21,7 +21,7 @@ export function generateTokens(payload: {
   email: string;
 }): { token: string; refreshToken: string } {
   const token = jwt.sign(payload, JWT_SECRET!, { expiresIn: '15m' });
-  const refreshToken = randomUUID();
+  const refreshToken = randomBytes(32).toString('base64url');
 
   return { token, refreshToken };
 }
