@@ -1,9 +1,10 @@
-Configured public URL: `https://mtiker-cweb-4.proxy.itcollege.ee`
-
-Do not claim the public deployment as live for defense until that URL has been
-smoke-tested against the current build.
-
 # Assignment 03 - Multi-Gym Management System
+
+> **Public deployment:** `https://mtiker-cweb-4.proxy.itcollege.ee`
+>
+> Do not claim the public deployment as live for defense until that URL has been
+> smoke-tested against the current build. See [Docker and CI/CD](#docker-and-cicd)
+> for the local fallback if the proxy route is unreachable.
 
 Assignment 03 Final1 is implemented as a SaaS multi-gym management system under `courses/webapp-csharp/assignment-03-multi-gym-management-system`. The earlier module architecture has been removed from the active codebase and is not part of the current Final1 structure.
 

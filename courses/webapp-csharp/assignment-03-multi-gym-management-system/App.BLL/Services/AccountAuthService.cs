@@ -83,7 +83,18 @@ public sealed class AccountAuthService(
         unitOfWork.RefreshTokens.Remove(refreshToken);
         var replacementToken = tokenService.CreateRefreshToken(user.Id, refreshToken);
         await unitOfWork.RefreshTokens.AddAsync(replacementToken, cancellationToken);
-        await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        try
+        {
+            await unitOfWork.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            // A concurrent renew (legitimate multi-tab or replay) already consumed the
+            // tracked row, so the DELETE affected 0 rows. EF Core surfaces that as a
+            // concurrency failure; treat it as token reuse rather than a 500.
+            throw new ForbiddenException("Refresh token is invalid or expired.");
+        }
 
         return await BuildJwtResponseAsync(user, activeLink, replacementToken, cancellationToken);
     }

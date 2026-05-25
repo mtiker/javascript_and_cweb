@@ -130,6 +130,23 @@ public class MvcComplianceTests(CustomWebApplicationFactory factory) : IClassFix
     }
 
     [Fact]
+    public async Task AdminPost_WithoutAntiForgeryToken_IsRejected()
+    {
+        var client = await CreateMvcClientAsync("admin@peakforge.local", allowAutoRedirect: false);
+
+        var response = await client.PostAsync(
+            "/Admin/Members/Create",
+            new FormUrlEncodedContent(new Dictionary<string, string>
+            {
+                ["GivenName"] = "NoToken",
+                ["FamilyName"] = "Should401",
+                ["Status"] = "Active"
+            }));
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
     public void AdminControllers_ReturnStronglyTypedViewModels()
     {
         var assignmentRoot = ResolveAssignmentRoot();
