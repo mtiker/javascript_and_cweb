@@ -14,6 +14,7 @@ Code: `232786IADB`
 - `courses/webapp-csharp`: Web App in C# subject assignments
 - `courses/webapp-csharp/backend-differences-assignment-03-vs-18.md`: controller comparison and modernization gap report for C# assignments 03 and 18
 - `courses/webapp-csharp/assignment-03-multi-gym-management-system`: Assignment 3 full SaaS multi-gym management system
+- `courses/webapp-csharp/assignment05_final2`: Assignment 5 Final2 modular-monolith evolution of the multi-gym system
 - `courses/webapp-csharp/assignment-18-dental-clinic-platform`: later C# assignment kept separate from Assignment 03
 - `shared`: reusable code/assets moved here when both subjects need them
 - `docs`: prompts, checklists, and submission notes
@@ -36,10 +37,14 @@ Code: `232786IADB`
 - JavaScript Assignment 06 React client proxy target: `http://192.168.181.122:89`
 - Web App C# Assignment 03 public URL: `https://mtiker-cweb-4.proxy.itcollege.ee`
 - Web App C# Assignment 03 proxy target: `http://192.168.181.122:83`
+- Web App C# Assignment 05 Final2 backend public URL: `https://mtiker-cweb-4.proxy.itcollege.ee`
+- Web App C# Assignment 05 Final2 standalone client public URL: `https://mtiker-cweb-4-client.proxy.itcollege.ee`
 - Web App C# Assignment 18 public URL: `https://mtiker-cweb-a3.proxy.itcollege.ee`
 
 Deployment still pending:
-- None currently documented.
+- Web App C# Assignment 05 Final2 public smoke verification. A local Docker
+  production-stack smoke passed on 2026-05-25, but the public backend still
+  returned HTTP 404 for `/health`.
 
 ## Naming Rules
 
@@ -66,6 +71,7 @@ Deployment still pending:
 - Current child pipelines exist for `courses/javascript/assignment-05-react-todo`.
 - Current child pipelines exist for `courses/javascript/assignment-06-express-api`.
 - Current child pipelines exist for `courses/webapp-csharp/assignment-03-multi-gym-management-system`.
+- Current child pipelines exist for `courses/webapp-csharp/assignment05_final2`.
 - Current child pipelines exist for `courses/webapp-csharp/assignment-18-dental-clinic-platform`.
 - Each child `.gitlab-ci.yml` must declare its own stages; child pipelines do not inherit the root pipeline stage list.
 - Docker-related files should stay beside the deployable assignment, not in the monorepo root unless they are truly shared.

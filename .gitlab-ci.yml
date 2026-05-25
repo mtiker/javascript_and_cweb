@@ -39,6 +39,10 @@ variables:
   - courses/webapp-csharp/assignment-03-multi-gym-management-system/**/*
   - .gitlab-ci.yml
 
+.assignment05_final2_changes: &assignment05_final2_changes
+  - courses/webapp-csharp/assignment05_final2/**/*
+  - .gitlab-ci.yml
+
 javascript_assignment03_pipeline:
   stage: orchestrate
   trigger:
@@ -97,4 +101,14 @@ assignment03_pipeline:
     strategy: depend
   rules:
     - changes: *assignment03_changes
+    - when: never
+
+assignment05_final2_pipeline:
+  stage: orchestrate
+  trigger:
+    include:
+      - local: "courses/webapp-csharp/assignment05_final2/.gitlab-ci.yml"
+    strategy: depend
+  rules:
+    - changes: *assignment05_final2_changes
     - when: never

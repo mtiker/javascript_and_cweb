@@ -27,6 +27,67 @@ Record AI-assisted development evidence here.
 - Alternatives considered: Replacing the hand-built task update SQL and adding structured logging were rejected as broader refactors; Docker-backed integration tests were rejected because pg-mem gives deterministic route/repository coverage without requiring Docker for every local/CI API test.
 - Validation: `npm test` passed for the A06 API with 4 integration tests; `npm run build` passed for the A06 API; `docker compose --env-file .env.example config` passed; `docker compose --env-file .env.example build express-api` passed.
 
+- Date: 2026-05-25
+- Subject: webapp-csharp
+- Assignment: assignment05_final2
+- Prompt: Continue CWEB Assignment 5 development and do the next phase.
+- Files affected: root `README.md`, root `docs/ci-cd.md`, `courses/webapp-csharp/assignment05_final2/scripts/smoke-deploy.sh`, assignment `README.md`, `PHASE_STATUS.md`, `docs/deployment.md`, `docs/final2-defense.md`, `docs/final2-architecture.md`, `docs/final2-traceability.md`, `docs/testing.md`, assignment AI usage log, and this root AI prompt log.
+- AI output used: Advanced Phase 14 by starting Docker Desktop, building the production backend and standalone client images, adding `SMOKE_CORS_ORIGIN` support to the smoke script, replacing a brittle dumped-header `grep` assertion with Python/Node parsing, and running a local production-stack deployment smoke for backend, PostgreSQL, standalone client, production-origin CORS, login, refresh-token renewal, and an authenticated tenant API read.
+- What AI got wrong / needed correction: The first local smoke exposed that Git Bash `grep` aborted while checking dumped curl headers. A manual `curl.exe -i` check confirmed CORS was correct, then the script was fixed to parse headers through the selected Python/Node runtime.
+- Changes made manually: Kept Phase 14 marked partial because the public backend still returns HTTP 404 for `/health`; local smoke containers and the temporary smoke volume were removed after validation.
+- Alternatives considered: Starting Final3/RabbitMQ microservice extraction was rejected because Phase 14 remains the first open phase in the tracker; relaxing production CORS to allow localhost was rejected in favor of testing local container URLs with the configured public origin.
+- Validation: Git Bash syntax validation passed for deploy/smoke scripts; production Compose config passed with and without the standalone client profile; production Compose image build passed; local production-stack `scripts/smoke-deploy.sh` passed on ports `18083`/`18081` with public client CORS origin; public `scripts/smoke-deploy.sh` still failed at backend `/health` with HTTP 404.
+
+- Date: 2026-05-25
+- Subject: webapp-csharp
+- Assignment: assignment05_final2
+- Prompt: Continue C# Web Assignment 05 Final2 development by doing the next pending phase from `PHASE_STATUS.md`.
+- Files affected: root `.gitlab-ci.yml`, root `README.md`, root `docs/ci-cd.md`, `courses/webapp-csharp/assignment05_final2/.gitlab-ci.yml`, `scripts/{deploy.sh,deploy-client.sh,smoke-deploy.sh}`, `client/app/lib/language.tsx`, assignment `README.md`, `PHASE_STATUS.md`, `docs/deployment.md`, and assignment AI usage logs.
+- AI output used: Completed Phase 12 by validating the React client, correcting Final2 child-pipeline/job paths and names, preserving the API base URL/auth/language contracts, adding standalone-client CORS preflight smoke coverage, and making Final2 deploy scripts use a Final2-specific Compose project name.
+- What AI got wrong / needed correction: Initial smoke-script implementation used curl `header_json`; this was replaced with portable header dumping. WSL `bash` failed on this machine, so Git Bash was used for script syntax validation.
+- Changes made manually: Verified client tests/build, focused CORS tests, full backend tests, production Compose config with and without the client profile, and shell-script syntax through Git Bash.
+- Alternatives considered: Starting Final3 microservice/RabbitMQ extraction was rejected because the tracker’s next phase was Final2 Phase 12.
+
+- Date: 2026-05-20
+- Subject: webapp-csharp
+- Assignment: assignment05_final2
+- Prompt: Continue C# Web Assignment 05 Final2 next phase from the assignment root `PHASE_STATUS.md`; do not read other assignments.
+- Files affected: `courses/webapp-csharp/assignment05_final2/Modules.Maintenance/Application/Persistence/IMaintenanceRepository.cs`, `Modules.Maintenance/Application/MaintenanceWorkflowService.cs`, `Modules.Maintenance/Infrastructure/EfMaintenanceRepository.cs`, `Modules.Maintenance/Api/MaintenanceModuleExtensions.cs`, `App.DAL.Contracts/Persistence/IAppUnitOfWork.cs`, `App.DAL.EF/AppUOW.cs`, `App.BLL/App.BLL.csproj`, maintenance/dashboard query services, unit tests, `docs/final2-module-map.md`, `PHASE_STATUS.md`, and AI logs.
+- AI output used: Continued Phase 10d by moving the maintenance repository contract into the Maintenance module, injecting it directly into Maintenance workflow and legacy dashboard query services, and removing `IAppUnitOfWork.Maintenance`.
+- What AI got wrong / needed correction: Initial scan caught two legacy dashboard query services still using `unitOfWork.Maintenance`; they were changed before build validation.
+- Changes made manually: Verified build, focused Architecture/Maintenance tests, and full backend tests locally.
+- Alternatives considered: Completing all remaining Phase 10d persistence migration in one pass was deferred because Memberships repositories, AppDbContext/migrations, and seeding still require separate coherent slices to avoid project-reference cycles and runtime migration risk.
+
+- Date: 2026-05-20
+- Subject: webapp-csharp
+- Assignment: assignment05_final2
+- Prompt: Continue C# Web Assignment 05 Final2 next phase from `PHASE_STATUS.md`; update phase status in the assignment root folder.
+- Files affected: `courses/webapp-csharp/assignment05_final2/App.DAL.EF/ModularPersistence/*`, `courses/webapp-csharp/assignment05_final2/Modules.*/Infrastructure/Persistence/*DbContext.cs`, module `Api/*ModuleExtensions.cs`, `Architecture.Tests/*`, assignment README/docs, `PHASE_STATUS.md`, and AI logs.
+- AI output used: Added module-owned EF context boundaries for Users, Gyms, Memberships, Training, and Maintenance; added shared transitional EF behavior for tenant filters/audit/soft delete/UTC/`LangStr`; added architecture tests proving module contexts can save/read owned slices and preventing foreign module DbContext references.
+- What AI got wrong / needed correction: First architecture test run exposed `UsersDbContext` accidentally discovering `AppUser.GymRoles`; the foreign navigation was ignored so Users no longer pulls gym/localized entities into its model.
+- Changes made manually: Kept Phase 9 open in `PHASE_STATUS.md` because legacy `AppDbContext`, migrations, seeding, Identity setup, and `IAppUnitOfWork` runtime persistence remain active.
+- Alternatives considered: Moving runtime repositories directly to module DbContexts was rejected for this pass because `App.DAL.EF` owns the active UOW and cannot reference `Modules.*` without a project-reference cycle.
+
+- Date: 2026-05-20
+- Subject: webapp-csharp
+- Assignment: assignment05_final2
+- Prompt: Continue Assignment 05 Final2 with the next pending phase from `PHASE_STATUS.md`.
+- Files affected: `courses/webapp-csharp/assignment05_final2/Modules.Maintenance/**`, `App.DAL.EF/{AppUOW.cs,PersistenceServiceExtensions.cs}`, moved maintenance workflow/mapper/repository/controller files, `WebApp/Setup/ServiceExtensions.cs`, `WebApp.Tests/**`, assignment README/docs, `PHASE_STATUS.md`, root `docs/ai-prompts.md`.
+- AI output used: Completed Phase 8 by moving Maintenance-owned tenant API controllers, workflow service, mapper, and EF repository into `Modules.Maintenance`; rewired DI and API controller discovery while preserving route contracts.
+- What AI got wrong / needed correction: The first compile pass missed a relocated workflow-service contract import and a stale test namespace import; both were corrected before validation. Full entity/configuration movement was intentionally deferred to Phase 9.
+- Changes made manually: Verified `dotnet build`, Maintenance and Architecture test filters, full backend test pass, and React client tests.
+- Alternatives considered: Direct Maintenance-to-Training references and immediate EF schema/DbContext splitting were rejected to preserve the planned Phase 9/10 sequence and current route/client stability.
+
+- Date: 2026-05-20
+- Subject: webapp-csharp
+- Assignment: assignment05_final2
+- Prompt: Continue Assignment 05 Final2 with the next pending phase from `PHASE_STATUS.md`.
+- Files affected: `courses/webapp-csharp/assignment05_final2/Modules.Training/**`, `Shared.Contracts/ModuleApis/{ITrainingModuleApi.cs,StaffSummary.cs,TrainingSessionSummary.cs}`, `App.DAL.EF/{AppUOW.cs,PersistenceServiceExtensions.cs}`, moved Training workflow/service/mapper/repository/controller files, `WebApp/Setup/ServiceExtensions.cs`, `WebApp.Tests/**`, assignment README/docs, `PHASE_STATUS.md`, root `docs/ai-prompts.md`.
+- AI output used: Completed Phase 7 by moving Training-owned tenant API controllers, workflow services, booking pricing, mapper, and EF repositories into `Modules.Training`; added the outward `ITrainingModuleApi` projection contract; rewired DI and API controller discovery while preserving route contracts.
+- What AI got wrong / needed correction: The first build after moving controllers into a class-library module missed explicit `StatusCodes` imports; this was corrected with `Microsoft.AspNetCore.Http` imports. Full entity/configuration movement was intentionally deferred because Phase 9 owns persistence splitting.
+- Changes made manually: Verified `dotnet build`, Training and Booking test filters, Architecture filter, full backend test pass, and React client tests.
+- Alternatives considered: Direct module-to-module references and immediate EF metadata/schema movement were rejected to preserve the planned Phase 9/10 sequence and current route/client stability.
+
 - Date: 2026-05-19
 - Subject: webapp-csharp
 - Assignment: assignment-03-multi-gym-management-system
@@ -1078,3 +1139,91 @@ Record AI-assisted development evidence here.
 - What AI got wrong / needed correction: The first build after moving DTOs failed because the DTO project still referenced `App.Domain` with its old relative path; that project reference was corrected and the next build passed.
 - Changes made manually: Verified route attributes and DTO types stayed unchanged while controller orchestration moved from mediator dispatch to BLL contracts.
 - Alternatives considered: Keeping the client source folder name was rejected because the required repository-wide stale-path scan would keep reporting it even though it was unrelated to the removed backend tree.
+
+- Date: 2026-05-20
+- Subject: webapp-csharp
+- Assignment: assignment05_final2
+- Prompt: Continue C# Assignment 5 from the assignment root `PHASE_STATUS.md`, keep scope inside the assignment 5 folder, and do not read other assignments.
+- Files affected: `courses/webapp-csharp/assignment05_final2/Modules.*/*DbContext.cs`, `courses/webapp-csharp/assignment05_final2/Architecture.Tests/ModuleDbContextOwnershipTests.cs`, `courses/webapp-csharp/assignment05_final2/README.md`, `courses/webapp-csharp/assignment05_final2/docs/final2-module-map.md`, `courses/webapp-csharp/assignment05_final2/docs/ai-usage.md`, `courses/webapp-csharp/assignment05_final2/PHASE_STATUS.md`, root `docs/ai-prompts.md`.
+- AI output used: Identified Phase 9 as the first open Final2 phase, added module default schemas for the five module-owned DbContexts, added architecture tests for module DbContext DI registration and schema intent, and documented the Phase 9/Phase 10 boundary.
+- What AI got wrong / needed correction: The tracker already contained a Phase 9 partial status note, so the implementation had to avoid pretending the legacy runtime bridge was removed. The remaining `AppDbContext`/`IAppUnitOfWork` center is explicitly left for Phase 10.
+- Changes made manually: Kept the active `AppDbContext` migration/deployment path unchanged and limited the pass to persistence boundary hardening plus documentation.
+- Alternatives considered: Runtime repository migration and module migration generation were rejected for this phase because the tracker says that depends on the Phase 10 dependency-center cleanup.
+- Validation: Architecture tests passed with 15 passed and 1 skipped Phase-10 boundary test; full backend solution tests passed with Architecture.Tests 15 passed/1 skipped and WebApp.Tests 182 passed/3 PostgreSQL opt-in tests skipped. PostgreSQL opt-in validation could not run to completion because Testcontainers could not connect to Docker at `npipe://./pipe/docker_engine`.
+
+- Date: 2026-05-20
+- Subject: webapp-csharp
+- Assignment: assignment05_final2
+- Prompt: Continue C# Assignment 5 phase work from the assignment root tracker.
+- Files affected: `courses/webapp-csharp/assignment05_final2/Modules.Users/Application/Persistence/IRefreshTokenRepository.cs`, Users auth services, `Modules.Users/Infrastructure/EfRefreshTokenRepository.cs`, `Modules.Users/Api/UsersModuleExtensions.cs`, `Modules.Users/Modules.Users.csproj`, `App.DAL.Contracts/Persistence/IAppUnitOfWork.cs`, removed `App.DAL.Contracts/Persistence/IRefreshTokenRepository.cs`, `App.DAL.EF/AppUOW.cs`, `App.DAL.EF/PersistenceServiceExtensions.cs`, four WebApp unit tests, `PHASE_STATUS.md`, `docs/final2-module-map.md`, assignment AI usage log, root `docs/ai-prompts.md`.
+- AI output used: Continued Phase 10 with a bounded Users persistence slice, moved the refresh-token repository contract into the Users module, removed refresh tokens from the transitional unit of work, and rewired Users auth services to inject the module-owned repository directly.
+- What AI got wrong / needed correction: The broad Phase 10d migration/seeding cutover is still too large for this slice, so the work was recorded as partial under 10d instead of marking 10d complete.
+- Changes made manually: Kept `EfRefreshTokenRepository` backed by `AppDbContext` to preserve the current migration/runtime table path.
+- Alternatives considered: Switching the repository to `UsersDbContext` was rejected until module migrations create and deploy the target Users schema/table.
+- Validation: `dotnet build multi-gym-management-system.slnx` passed; targeted Account/Auth/Architecture tests passed with Architecture.Tests 15 passed/1 skipped and WebApp.Tests 40 passed; full backend tests passed with Architecture.Tests 15 passed/1 skipped and WebApp.Tests 182 passed/3 PostgreSQL opt-in tests skipped.
+
+- Date: 2026-05-20
+- Subject: webapp-csharp
+- Assignment: assignment05_final2
+- Prompt: Continue the current C# Assignment 5 phase.
+- Files affected: `courses/webapp-csharp/assignment05_final2/App.BLL.Contracts/Infrastructure/IAppDbContext.cs`, removed old `App.BLL/Contracts/Infrastructure/IAppDbContext.cs`, `App.BLL.Contracts/App.BLL.Contracts.csproj`, `App.DAL.EF/AppDbContext.cs`, `App.DAL.EF/App.DAL.EF.csproj`, `Modules.Training/Modules.Training.csproj`, Users auth mapper files, `PHASE_STATUS.md`, `README.md`, `docs/final2-module-map.md`, assignment AI usage log, root `docs/ai-prompts.md`.
+- AI output used: Moved `IAppDbContext` from the `App.BLL` implementation project to `App.BLL.Contracts`, updated consumers, removed direct `App.BLL` references from `App.DAL.EF` and `Modules.Training`, and moved `IAuthResponseMapper` into the Users module after the build exposed that hidden transitive dependency.
+- What AI got wrong / needed correction: The first build failed because removing `App.DAL.EF -> App.BLL` also removed the transitive source of `App.BLL.Mappers.IAuthResponseMapper` for `Modules.Users`; this was corrected by moving the mapper interface into `Modules.Users/Application/Mappers`.
+- Changes made manually: Kept `IAppDbContext` explicitly documented as a temporary EF-shaped compatibility contract.
+- Alternatives considered: Moving `IAppDbContext` to `SharedKernel` was rejected for now because it still references `App.Domain` entity types and would create a cycle.
+- Validation: `dotnet build multi-gym-management-system.slnx` passed; boundary scans found no module direct `App.BLL` project references; targeted Architecture/Training/Account/Auth tests passed with Architecture.Tests 15 passed/1 skipped and WebApp.Tests 71 passed; full backend tests passed with Architecture.Tests 15 passed/1 skipped and WebApp.Tests 182 passed/3 PostgreSQL opt-in tests skipped.
+
+- Date: 2026-05-20
+- Subject: webapp-csharp
+- Assignment: assignment05_final2
+- Prompt: Continue C# Assignment 5 from the assignment root `PHASE_STATUS.md`, keep scope inside assignment 5, and do not read other assignments.
+- Files affected: `courses/webapp-csharp/assignment05_final2/Modules.Training/Application/Persistence/*Repository.cs`, Training EF repositories, `TrainingModuleExtensions`, `TrainingWorkflowService`, `App.DAL.Contracts/Persistence/IAppUnitOfWork.cs`, `App.DAL.EF/AppUOW.cs`, `App.DAL.EF/PersistenceServiceExtensions.cs`, affected App.BLL admin/client/payment services, `App.BLL/App.BLL.csproj`, `WebApp/Areas/Admin/Services/AdminViewModelServices.cs`, unit tests that instantiate `AppUOW` or affected services, `PHASE_STATUS.md`, `docs/final2-module-map.md`, assignment AI usage log, root `docs/ai-prompts.md`.
+- AI output used: Moved Training repository contracts into `Modules.Training/Application/Persistence`, rewired Training workflow/admin/client/payment consumers to inject them directly, removed Training repositories from the transitional unit of work, and kept EF implementations on the active `AppDbContext` table path.
+- What AI got wrong / needed correction: The solution-level full `dotnet test` timed out and left an orphaned `vstest.console` process; that process was stopped and `WebApp.Tests` plus `Architecture.Tests` were rerun separately.
+- Changes made manually: Recorded the temporary `App.BLL -> Modules.Training` reference as a Phase 10d/10e bridge because some legacy BLL services still consume Training repository contracts.
+- Alternatives considered: Switching repositories to `TrainingDbContext` was rejected until module migrations and schema/table cutover are ready; moving broader entity/service ownership was rejected because Phase 10c/10e dependency-cycle decisions remain open.
+- Validation: `dotnet build multi-gym-management-system.slnx` passed with known transitive NuGet warnings; targeted Architecture/Training/Sessions/Payment tests passed with Architecture.Tests 15 passed/1 skipped and WebApp.Tests 41 passed; `WebApp.Tests` passed 182 passed/3 PostgreSQL opt-in skipped; `Architecture.Tests` passed 15 passed/1 skipped.
+
+- Date: 2026-05-21
+- Subject: webapp-csharp
+- Assignment: assignment05_final2
+- Prompt: Continue C# Assignment 5 from the assignment root `PHASE_STATUS.md`, keep token usage low by not reading other assignments.
+- Files affected: `courses/webapp-csharp/assignment05_final2/Modules.Memberships/Application/Persistence/*Repository.cs`, Memberships EF repositories, `MembershipsModuleExtensions`, `Modules.Training/Application/TrainingWorkflowService.cs`, Training mapper files, `App.DAL.Contracts/Persistence/IAppUnitOfWork.cs`, `App.DAL.EF/AppUOW.cs`, `App.DAL.EF/PersistenceServiceExtensions.cs`, affected App.BLL services, admin page service, unit tests, `PHASE_STATUS.md`, assignment docs, assignment AI usage log, root `docs/ai-prompts.md`.
+- AI output used: Continued Phase 10d with the Memberships repository slice, moved member/membership/payment repository ownership into `Modules.Memberships`, removed those repositories from the transitional unit of work, and routed Training member validation through `IMembershipsModuleApi`.
+- What AI got wrong / needed correction: The first full backend test run caught a booking-create response regression after removing a cross-module `Booking.Member` navigation assignment. A mapper overload using `MemberSummary` restored the response fields without reintroducing the entity dependency.
+- Changes made manually: Kept Memberships EF repositories backed by the active shared `AppDbContext` and recorded the remaining module migration/schema cutover as later work.
+- Alternatives considered: Direct Training-to-Memberships references were rejected in favor of the existing shared module API; switching to `MembershipsDbContext` was deferred until migrations are ready.
+- Validation: `dotnet build multi-gym-management-system.slnx` passed with known NuGet warnings; targeted Architecture/Member/Membership/Payment/Training/Proposal tests passed with Architecture.Tests 15 passed/1 skipped and WebApp.Tests 107 passed/1 skipped; full backend tests passed with Architecture.Tests 15 passed/1 skipped and WebApp.Tests 182 passed/3 PostgreSQL opt-in skipped. PostgreSQL opt-in tests were attempted with `RUN_POSTGRES_TESTS=1`, but Testcontainers could not connect to Docker at `npipe://./pipe/docker_engine`.
+
+- Date: 2026-05-21
+- Subject: webapp-csharp
+- Assignment: assignment05_final2
+- Prompt: Continue C# Assignment 5 from the assignment root `PHASE_STATUS.md`, do the next open phase or complete remaining open work, and do not read other assignments.
+- Files affected: `courses/webapp-csharp/assignment05_final2/SharedKernel/Persistence/*`, removed `App.DAL.EF/Tenant/IGymContext.cs`, removed `App.DAL.EF/ModularPersistence/*`, affected module/WebApp/test imports, `App.DAL.EF/App.DAL.EF.csproj`, `SharedKernel/SharedKernel.csproj`, `Architecture.Tests/ModuleBoundaryTests.cs`, assignment README/docs/status, assignment AI usage log, root `docs/ai-prompts.md`.
+- AI output used: Advanced Phase 10f by moving shared module persistence plumbing (`IGymContext`, module DbContext base behavior, module DbContext registration) from the legacy EF bridge into `SharedKernel.Persistence`, updated consumers, and added an architecture guard that prevents those files from drifting back into `App.DAL.EF`.
+- What AI got wrong / needed correction: The first build exposed a generic inference issue in the moved `JsonSerializer.Deserialize` call and duplicate using directives from namespace replacement; both were corrected before validation.
+- Changes made manually: Kept active repositories and `AppDbContext` on the existing compatibility persistence path to avoid changing runtime table/migration behavior.
+- Alternatives considered: Unskipping the full legacy `App.*` architecture test and switching repositories to module DbContexts were rejected for this slice because remaining `App.BLL.Contracts`, `App.DAL.EF`, `App.DAL.Contracts`, and `App.Domain` dependencies are real and module DbContexts intentionally ignore several current cross-module navigations.
+- Validation: `dotnet build multi-gym-management-system.slnx` passed with known NuGet warnings; architecture tests passed with Architecture.Tests 17 passed/1 skipped and WebApp.Tests 2 passed; full backend tests passed with Architecture.Tests 17 passed/1 skipped and WebApp.Tests 182 passed/3 PostgreSQL opt-in skipped; React client tests passed 32 tests across 6 files with existing React Router v7 future-flag warnings; React production build passed.
+
+- Date: 2026-05-25
+- Subject: webapp-csharp
+- Assignment: assignment05_final2
+- Prompt: Continue C# Assignment 5 development and do the next open phase.
+- Files affected: `courses/webapp-csharp/assignment05_final2/Modules.Users/Api/AccountController.cs`, `WebApp/Controllers/HomeController.cs`, `WebApp.Tests/Unit/ApiContractMetadataTests.cs`, `WebApp.Tests/Integration/SmokeTests.cs`, `docs/final2-architecture.md`, `docs/final2-traceability.md`, `docs/final2-defense.md`, `docs/README.md`, `docs/testing.md`, `README.md`, `PHASE_STATUS.md`, assignment AI usage log, root `docs/ai-prompts.md`.
+- AI output used: Completed Phase 13 coverage and traceability hardening, added API versioning and `[ApiController]` metadata tests, added Swagger/JWT OpenAPI smoke coverage, created Final2 architecture and traceability docs, refreshed defense/testing docs, and marked Phase 13 complete.
+- What AI got wrong / needed correction: The first Swagger smoke test exposed a real HTTP 500 from `/swagger/v1/swagger.json`; Swashbuckle was attempting to document MVC `HomeController.Error`. The fix was to exclude the MVC home controller from API explorer so Swagger documents the REST surface only.
+- Changes made manually: Kept runtime business behavior unchanged and did not start Phase 14 deployment smoke work.
+- Alternatives considered: Adding HTTP method metadata to MVC actions was rejected because MVC login/error routes are not part of the REST API contract that Swagger should represent.
+- Validation: `dotnet format multi-gym-management-system.slnx --verify-no-changes` passed with workspace-load warnings only; `dotnet build multi-gym-management-system.slnx` passed with known transitive NuGet advisories; full backend tests passed with Architecture.Tests 17 passed/1 skipped and WebApp.Tests 199 passed/3 PostgreSQL opt-in skipped; React tests passed 32 tests across 6 files; React production build passed.
+
+- Date: 2026-05-25
+- Subject: webapp-csharp
+- Assignment: assignment05_final2
+- Prompt: Continue CWEB Assignment 5 development and do the next phase.
+- Files affected: `courses/webapp-csharp/assignment05_final2/scripts/smoke-deploy.sh`, `README.md`, `docs/deployment.md`, `docs/final2-defense.md`, `docs/ai-usage.md`, `PHASE_STATUS.md`, root `docs/ai-prompts.md`.
+- AI output used: Advanced Phase 14 by extending the deployment smoke script to check Swagger/OpenAPI JSON and refresh-token renewal, rendered production Compose configurations for backend and standalone client modes, attempted the public smoke path, and documented the current deployment state.
+- What AI got wrong / needed correction: Phase 14 could not be marked complete because Docker Desktop was unavailable for image-build validation and the public backend returned HTTP 404 for `/health`.
+- Changes made manually: Kept business behavior unchanged and recorded the deployment failure as a partial phase instead of presenting it as a live deployment.
+- Alternatives considered: Skipping the live smoke attempt was rejected because Phase 14 specifically requires deployment evidence; marking deployment live was rejected because the smoke test failed.
+- Validation: Git Bash syntax validation passed for deploy/smoke scripts; production Compose config passed for backend-only and backend-plus-client profile; Docker build could not start because the Docker Desktop Linux engine pipe was unavailable; public smoke failed at backend `/health` with HTTP 404.

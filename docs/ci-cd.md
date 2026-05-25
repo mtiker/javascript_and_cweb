@@ -39,6 +39,14 @@ This keeps unrelated assignments from building when only one assignment changes 
         docker-compose.yml
         docker-compose.prod.yml
         scripts/deploy.sh
+      assignment05_final2/
+        .gitlab-ci.yml
+        Dockerfile
+        docker-compose.yml
+        docker-compose.prod.yml
+        client/
+        scripts/deploy.sh
+        scripts/deploy-client.sh
 ```
 
 ## GitLab CI Responsibility Split
@@ -199,6 +207,77 @@ For Assignment 03 production deployment, configure these values in GitLab CI/CD 
 
 At minimum, `JWT__Key` must be set. `CORS_ALLOWED_ORIGIN` defaults to `https://mtiker-cweb-4.proxy.itcollege.ee` for Assignment 03.
 
+## Assignment 05 Final2 Multi-Gym Deployment Model
+
+`courses/webapp-csharp/assignment05_final2` is the modular-monolith evolution of
+the multi-gym project. It has its own child pipeline so Final2 changes do not
+reuse the Assignment 03 build/deploy path.
+
+The assignment pipeline runs:
+
+- `assignment05_final2_client`: React client install, tests, and production build
+- `assignment05_final2_build`: .NET restore/build
+- `assignment05_final2_test`: .NET tests
+- `assignment05_final2_postgresql_tests`: optional manual PostgreSQL/Testcontainers slice
+- `assignment05_final2_docker_build`: backend image
+- `assignment05_final2_client_image`: standalone React/nginx client image
+- `assignment05_final2_deploy`: backend deployment on default branch or tags
+- `assignment05_final2_deploy_client`: manual standalone client deployment
+
+The documented Final2 routes are:
+
+- backend: `https://mtiker-cweb-4.proxy.itcollege.ee` => `http://192.168.181.122:83`
+- standalone client: `https://mtiker-cweb-4-client.proxy.itcollege.ee` => `http://192.168.181.122:8081`
+
+The standalone client deployment requires production CORS to include only the
+deployed client origin. `scripts/smoke-deploy.sh` checks backend health, client
+health, Swagger JSON, CORS preflight, login, refresh-token renewal, and one
+authenticated tenant API read. `SMOKE_CORS_ORIGIN` can be set when the smoke
+test reaches containers through local URLs but must validate the public browser
+origin allowed by production CORS.
+
+Latest recorded Final2 deployment evidence from 2026-05-25:
+
+- production Compose config rendered with and without the standalone client
+  profile
+- backend and standalone client production images built successfully
+- local Docker production-stack smoke passed for backend, PostgreSQL,
+  standalone client, public-origin CORS, login, refresh-token renewal, and an
+  authenticated tenant API read
+- public smoke against `https://mtiker-cweb-4.proxy.itcollege.ee` still failed
+  at backend `/health` with HTTP 404, so the public deployment is not verified
+
+## Assignment 05 Final2 Variables
+
+For Final2 production deployment, configure these values in GitLab CI/CD
+variables or on the VPS runner host:
+
+- `JWT__Key`
+- `POSTGRES_PASSWORD`
+- `CORS_ALLOWED_ORIGIN` for the backend/public same-origin route
+- `CORS_ALLOWED_ORIGIN_CLIENT` for the standalone client route
+- `VITE_API_BASE_URL` for the standalone client image
+- `POSTGRES_DB`
+- `POSTGRES_USER`
+- `WEBAPP_PORT`
+- `CLIENT_PORT`
+- `JWT__Issuer`
+- `JWT__Audience`
+- `JWT__AccessTokenMinutes`
+- `DATA_INIT_MIGRATE_DATABASE`
+- `DATA_INIT_SEED_DATA`
+- `MULTI_GYM_IMAGE`
+- `MULTI_GYM_CLIENT_IMAGE`
+- `COMPOSE_PROJECT_NAME`
+- `SMOKE_CORS_ORIGIN` for local smoke runs where `CLIENT_URL` is a local
+  container URL but CORS must be validated against the deployed client origin
+
+At minimum, `JWT__Key` and `POSTGRES_PASSWORD` must be set. For separate-domain
+client hosting, `CORS_ALLOWED_ORIGIN_CLIENT` and `VITE_API_BASE_URL` must also
+be set intentionally. The Final2 deploy scripts default `COMPOSE_PROJECT_NAME`
+to `assignment05-final2` so they do not reuse Assignment 03's container and
+volume names.
+
 ## Assignment 18 Deployment Model
 
 `courses/webapp-csharp/assignment-18-dental-clinic-platform` is treated as a self-contained deployable app:
@@ -245,6 +324,8 @@ The intended behavior is:
 - the JavaScript deploy script smoke-checks both local host ports after container startup
 - the JavaScript Assignment 04 deploy script smoke-checks `/healthz` and `/` after container startup
 - a change only under `assignment-18` triggers only the Assignment 18 pipeline
+- a change only under `assignment05_final2` triggers only the Assignment 05
+  Final2 pipeline
 - a change only in root documentation does not trigger Assignment 18 build/test/deploy jobs
 - a Docker or deployment-script change triggers the Docker build job
 - deployment runs only on the default branch or tags
