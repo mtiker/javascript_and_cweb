@@ -38,9 +38,13 @@ interface TodoContextType {
 
 const TodoContext = createContext<TodoContextType | undefined>(undefined);
 
-const MAX_INT_32 = 2_147_483_647;
-function getSafeSortValue(): number {
-  return Math.min(Math.floor(Date.now() / 1000), MAX_INT_32);
+// Pick the next sort value as `max(existing) + 1`. Two items created in the
+// same second therefore still get distinct, monotonically increasing sort
+// values — a Date.now()-based default collides whenever the user clicks
+// "Add" twice quickly.
+function nextSortValue<T>(items: readonly T[], getter: (item: T) => number): number {
+  if (items.length === 0) return 1;
+  return items.reduce((max, item) => Math.max(max, getter(item)), 0) + 1;
 }
 
 interface TodoProviderProps {
@@ -131,18 +135,28 @@ export function TodoProvider({ children }: TodoProviderProps) {
     }
   }, []);
 
-  const createCategory = useCallback(async (categoryName: string) => {
-    try {
-      const created = await TodoCategoryService.createCategory(categoryName);
-      dispatch({ type: "ADD_CATEGORY", payload: created });
-    } catch (error) {
-      dispatch({
-        type: "SET_ERROR",
-        payload: getErrorMessage(error, "Failed to create category"),
-      });
-      throw error;
-    }
-  }, []);
+  const createCategory = useCallback(
+    async (categoryName: string) => {
+      try {
+        const categorySort = nextSortValue(
+          state.categories,
+          (c) => c.categorySort,
+        );
+        const created = await TodoCategoryService.createCategory(
+          categoryName,
+          categorySort,
+        );
+        dispatch({ type: "ADD_CATEGORY", payload: created });
+      } catch (error) {
+        dispatch({
+          type: "SET_ERROR",
+          payload: getErrorMessage(error, "Failed to create category"),
+        });
+        throw error;
+      }
+    },
+    [state.categories],
+  );
 
   const deleteCategory = useCallback(async (id: string) => {
     try {
@@ -161,7 +175,9 @@ export function TodoProvider({ children }: TodoProviderProps) {
     async (id: string, categoryName: string) => {
       try {
         const existing = state.categories.find((c) => c.id === id);
-        const categorySort = existing?.categorySort ?? getSafeSortValue();
+        const categorySort =
+          existing?.categorySort ??
+          nextSortValue(state.categories, (c) => c.categorySort);
         const syncDt = existing?.syncDt ?? new Date().toISOString();
 
         const updated = await TodoCategoryService.updateCategory({

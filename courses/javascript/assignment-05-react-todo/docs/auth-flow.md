@@ -68,16 +68,23 @@ apiClient.get|post|put|delete
   └─ response interceptor:
         if (status === 401 && !_retry):
           _retry = true
-          POST /api/v1/Account/RefreshToken
-            body: { jwt: <expired>, refreshToken: <current> }
+          if refreshInFlight is null:
+            refreshInFlight = POST /api/v1/Account/RefreshToken
+              body: { jwt: <expired>, refreshToken: <current> }
+          await refreshInFlight        ← shared by all concurrent 401s
           on success:
             tokenStore.setTokens(newToken, newRefresh)
             onTokenRefreshed?.(newToken, newRefresh)   ← AuthContext callback
             retry original request with new Bearer
           on failure:
             tokenStore.clearTokens()
-            window.location.href = "/login"
+            onAuthFailure?.()         ← AuthContext routes to /login
 ```
+
+The shared `refreshInFlight` promise prevents the classic race where two
+requests 401 at the same time and both POST `/RefreshToken` with the same
+refresh token — the second would invariably get a 400 because rotation
+invalidates the previous refresh token, forcing a logout.
 
 `AuthContext` subscribes to the refresh callback via
 `setOnTokenRefreshed`. When it fires, the context dispatches

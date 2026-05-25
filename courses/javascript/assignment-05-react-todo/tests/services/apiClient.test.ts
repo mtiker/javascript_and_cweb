@@ -1,6 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import axios, { AxiosError, type AxiosAdapter, type AxiosResponse } from "axios";
-import apiClient, { setOnTokenRefreshed } from "@/services/apiClient";
+import apiClient, {
+  setOnAuthFailure,
+  setOnTokenRefreshed,
+} from "@/services/apiClient";
 import { tokenStore } from "@/services/tokenStore";
 
 // These tests exercise the apiClient interceptor stack against fake
@@ -54,6 +57,7 @@ describe("apiClient — refresh-on-401 flow", () => {
 
   afterEach(() => {
     setOnTokenRefreshed(null);
+    setOnAuthFailure(null);
     tokenStore.clearTokens();
     vi.restoreAllMocks();
     delete (apiClient.defaults as { adapter?: AxiosAdapter }).adapter;
@@ -113,7 +117,7 @@ describe("apiClient — refresh-on-401 flow", () => {
     expect(calls[1].authHeader).toBe("Bearer new.jwt");
   });
 
-  it("does not refresh when no refresh token is available", async () => {
+  it("does not refresh when no refresh token is available, and fires onAuthFailure", async () => {
     tokenStore.clearTokens();
     // No prior tokens at all → no Authorization header on the call.
     queueAdapter({
@@ -124,23 +128,86 @@ describe("apiClient — refresh-on-401 flow", () => {
       config: {},
     });
 
-    // Block the location.href reassignment that the interceptor does on a
-    // refresh failure path, so the test doesn't actually navigate.
-    const originalLocation = window.location;
-    Object.defineProperty(window, "location", {
-      configurable: true,
-      value: { ...originalLocation, href: "" },
-    });
+    const authFailure = vi.fn();
+    setOnAuthFailure(authFailure);
 
     await expect(apiClient.get("/api/v1/TodoTasks")).rejects.toMatchObject({
       response: { status: 401 },
     });
     expect(postSpy).not.toHaveBeenCalled();
+    expect(authFailure).toHaveBeenCalledTimes(1);
+  });
 
-    Object.defineProperty(window, "location", {
-      configurable: true,
-      value: originalLocation,
-    });
+  it("shares a single refresh across concurrent 401s", async () => {
+    // Two concurrent requests both 401, both retry after the SAME refresh.
+    // Order of adapter calls: req1→401, req2→401, req1-retry→200, req2-retry→200.
+    queueAdapter(
+      {
+        data: "Unauthorized",
+        status: 401,
+        statusText: "Unauthorized",
+        headers: {},
+        config: {},
+      },
+      {
+        data: "Unauthorized",
+        status: 401,
+        statusText: "Unauthorized",
+        headers: {},
+        config: {},
+      },
+      {
+        data: { which: "one" },
+        status: 200,
+        statusText: "OK",
+        headers: {},
+        config: {},
+      },
+      {
+        data: { which: "two" },
+        status: 200,
+        statusText: "OK",
+        headers: {},
+        config: {},
+      },
+    );
+
+    // Refresh resolves after a microtask — both 401s will be in the
+    // interceptor's catch branch before the refresh completes, so the
+    // single-flight guard is exercised.
+    postSpy.mockImplementationOnce(
+      async () =>
+        new Promise((resolve) =>
+          queueMicrotask(() =>
+            resolve({
+              data: { token: "new.jwt", refreshToken: "new.refresh" },
+            }),
+          ),
+        ),
+    );
+
+    const refreshSubscriber = vi.fn();
+    setOnTokenRefreshed(refreshSubscriber);
+
+    const [resA, resB] = await Promise.all([
+      apiClient.get("/api/v1/TodoTasks"),
+      apiClient.get("/api/v1/TodoCategories"),
+    ]);
+
+    expect(resA.data).toEqual({ which: "one" });
+    expect(resB.data).toEqual({ which: "two" });
+
+    // Only ONE refresh round-trip, not two.
+    expect(postSpy).toHaveBeenCalledTimes(1);
+    expect(refreshSubscriber).toHaveBeenCalledTimes(1);
+    expect(refreshSubscriber).toHaveBeenCalledWith("new.jwt", "new.refresh");
+
+    // Both retries used the rotated Bearer.
+    expect(adapter).toHaveBeenCalledTimes(4);
+    expect(calls[0].authHeader).toBe("Bearer old.jwt");
+    expect(calls[1].authHeader).toBe("Bearer old.jwt");
+    expect(calls[2].authHeader).toBe("Bearer new.jwt");
+    expect(calls[3].authHeader).toBe("Bearer new.jwt");
   });
 
   it("attaches Authorization header from tokenStore on protected calls", async () => {

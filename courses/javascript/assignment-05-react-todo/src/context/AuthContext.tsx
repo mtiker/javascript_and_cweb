@@ -8,9 +8,10 @@ import {
   useReducer,
   type ReactNode,
 } from "react";
+import { useRouter } from "next/navigation";
 import { authReducer, initialAuthState, type AuthState } from "@/reducers/authReducer";
 import { tokenStore } from "@/services/tokenStore";
-import { setOnTokenRefreshed } from "@/services/apiClient";
+import { setOnAuthFailure, setOnTokenRefreshed } from "@/services/apiClient";
 import { AccountService } from "@/services/AccountService";
 
 const LOCAL_STORAGE_JWT_KEY = "auth_jwt";
@@ -37,6 +38,7 @@ interface AuthProviderProps {
 
 export function AuthProvider({ children }: AuthProviderProps) {
   const [state, dispatch] = useReducer(authReducer, initialAuthState);
+  const router = useRouter();
 
   // On mount: rehydrate auth state from localStorage.
   useEffect(() => {
@@ -56,6 +58,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, []);
 
   // Mirror state.jwt / refresh into tokenStore + localStorage.
+  // Note: tokenStore is also written directly by the apiClient refresh path
+  // before this effect re-fires via TOKEN_REFRESHED — both writes target the
+  // same value so the duplication is benign.
   useEffect(() => {
     if (state.jwt && state.refreshToken && state.userEmail) {
       localStorage.setItem(LOCAL_STORAGE_JWT_KEY, state.jwt);
@@ -80,6 +85,31 @@ export function AuthProvider({ children }: AuthProviderProps) {
       });
     });
     return () => setOnTokenRefreshed(null);
+  }, []);
+
+  // Subscribe to refresh-failure events from apiClient: clear React state and
+  // route to /login without a full page reload (window.location.href would
+  // drop all React state and is unsafe under SSR).
+  useEffect(() => {
+    setOnAuthFailure(() => {
+      dispatch({ type: "LOGOUT" });
+      router.replace("/login");
+    });
+    return () => setOnAuthFailure(null);
+  }, [router]);
+
+  // Cross-tab logout: when another tab clears the JWT in localStorage, mirror
+  // that here so this tab also logs out. `storage` events only fire in OTHER
+  // tabs by spec, so there is no echo loop with our own writes.
+  useEffect(() => {
+    const onStorage = (event: StorageEvent) => {
+      if (event.key === LOCAL_STORAGE_JWT_KEY && event.newValue === null) {
+        dispatch({ type: "LOGOUT" });
+        tokenStore.clearTokens();
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {

@@ -1,9 +1,7 @@
 import axios from "axios";
 import type { IJWTResponse, ILoginData, IRegisterData } from "@/domain";
 import { getErrorMessage } from "@/utils/errorUtils";
-
-const BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://taltech.akaver.com";
+import { BASE_URL } from "./config";
 
 // Plain axios instance — login/register endpoints do not require a Bearer
 // token, so the auth interceptors in apiClient would only add noise here.

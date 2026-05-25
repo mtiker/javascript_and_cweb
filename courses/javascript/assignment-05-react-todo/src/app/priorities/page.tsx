@@ -1,15 +1,10 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { useTodo } from "@/context/TodoContext";
 import { useAuth } from "@/context/AuthContext";
 import type { ITodoPriority } from "@/domain";
-
-const MAX_INT_32 = 2_147_483_647;
-function getDefaultSort(): number {
-  return Math.min(Math.floor(Date.now() / 1000), MAX_INT_32);
-}
 
 interface EditingRow {
   id: string;
@@ -27,7 +22,7 @@ export default function PrioritiesPage() {
   } = useTodo();
   const { state: authState } = useAuth();
   const [newPriorityName, setNewPriorityName] = useState("");
-  const [newPrioritySort, setNewPrioritySort] = useState(getDefaultSort());
+  const [newPrioritySort, setNewPrioritySort] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingRow, setEditingRow] = useState<EditingRow | null>(null);
@@ -37,15 +32,28 @@ export default function PrioritiesPage() {
     void fetchPriorities().catch(() => undefined);
   }, [fetchPriorities, authState.isAuthenticated]);
 
+  // Default the "add" form's sort to one higher than the largest existing
+  // value — `max + 1`. Date.now()/1000 collides for items added in the same
+  // second; this never does.
+  const defaultNextSort = useMemo(
+    () =>
+      state.priorities.length === 0
+        ? 1
+        : state.priorities.reduce((m, p) => Math.max(m, p.prioritySort), 0) + 1,
+    [state.priorities],
+  );
+
+  const formSort = newPrioritySort ?? defaultNextSort;
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const trimmed = newPriorityName.trim();
     if (trimmed.length < 2) return;
     setIsSubmitting(true);
     try {
-      await createPriority(trimmed, newPrioritySort);
+      await createPriority(trimmed, formSort);
       setNewPriorityName("");
-      setNewPrioritySort(getDefaultSort());
+      setNewPrioritySort(null);
     } finally {
       setIsSubmitting(false);
     }
@@ -132,7 +140,7 @@ export default function PrioritiesPage() {
                     className="form-control"
                     placeholder="Sort order"
                     aria-label="Sort order"
-                    value={newPrioritySort}
+                    value={formSort}
                     onChange={(e) => setNewPrioritySort(Number(e.target.value))}
                   />
                 </div>
