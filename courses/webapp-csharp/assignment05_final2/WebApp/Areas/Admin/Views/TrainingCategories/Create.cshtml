@@ -1,0 +1,31 @@
+@model AdminTrainingCategoryFormViewModel
+@inject IStringLocalizer<SharedResources> L
+
+<section class="panel">
+    <p class="eyebrow">@L["AdminWorkspace"]</p>
+    <h1>@L["AddTrainingCategory"]</h1>
+    <p>@L["ActiveGym"]: <strong>@Model.GymCode</strong></p>
+</section>
+
+<section class="panel">
+    <form asp-area="Admin" asp-controller="TrainingCategories" asp-action="Create" method="post" class="form-grid">
+        <div asp-validation-summary="All" class="validation-summary-errors"></div>
+
+        <div class="form-row">
+            <label asp-for="Name">@L["Name"]</label>
+            <input asp-for="Name" maxlength="128" />
+            <span asp-validation-for="Name" class="field-validation-error"></span>
+        </div>
+
+        <div class="form-row">
+            <label asp-for="Description">@L["Description"]</label>
+            <textarea asp-for="Description" rows="3" maxlength="512"></textarea>
+            <span asp-validation-for="Description" class="field-validation-error"></span>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="primary">@L["Create"]</button>
+            <a asp-area="Admin" asp-controller="TrainingCategories" asp-action="Index" class="secondary">@L["Cancel"]</a>
+        </div>
+    </form>
+</section>

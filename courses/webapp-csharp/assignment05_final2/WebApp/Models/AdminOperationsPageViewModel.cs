@@ -1,0 +1,26 @@
+using Shared.Contracts.Enums;
+
+namespace WebApp.Models;
+
+public class AdminOperationsPageViewModel
+{
+    public string GymCode { get; set; } = default!;
+    public IReadOnlyCollection<EquipmentSummaryViewModel> Equipment { get; set; } = [];
+    public IReadOnlyCollection<MaintenanceSummaryViewModel> MaintenanceTasks { get; set; } = [];
+}
+
+public class EquipmentSummaryViewModel
+{
+    public string AssetTag { get; set; } = default!;
+    public string ModelName { get; set; } = default!;
+    public EquipmentStatus Status { get; set; }
+}
+
+public class MaintenanceSummaryViewModel
+{
+    public string AssetTag { get; set; } = default!;
+    public MaintenanceTaskType TaskType { get; set; }
+    public MaintenanceTaskStatus Status { get; set; }
+    public string? AssignedTo { get; set; }
+    public DateTime? DueAtUtc { get; set; }
+}

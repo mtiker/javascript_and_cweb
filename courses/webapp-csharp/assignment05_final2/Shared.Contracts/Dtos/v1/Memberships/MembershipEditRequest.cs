@@ -1,0 +1,8 @@
+namespace Shared.Contracts.Dtos.v1.Memberships;
+
+public class MembershipEditRequest
+{
+    public Guid MembershipPackageId { get; set; }
+    public DateOnly StartDate { get; set; }
+    public DateOnly EndDate { get; set; }
+}

@@ -1,0 +1,133 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { ApiClient } from "./apiClient";
+import type { AuthSession } from "./types";
+import { setCurrentLanguage } from "./language";
+import { jsonResponse } from "../test/testUtils";
+
+describe("ApiClient", () => {
+  let session: AuthSession | null;
+  let client: ApiClient;
+  let setSession: ReturnType<typeof vi.fn>;
+  let clearSession: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    setCurrentLanguage("en");
+    session = {
+      jwt: "expired-jwt",
+      refreshToken: "refresh-1",
+      expiresInSeconds: 3600,
+      activeGymCode: "peak-forge",
+      activeRole: "GymAdmin",
+      systemRoles: [],
+    };
+    setSession = vi.fn((nextSession: AuthSession) => {
+      session = nextSession;
+    });
+    clearSession = vi.fn(() => {
+      session = null;
+    });
+    client = new ApiClient({
+      baseUrl: "https://localhost:7245",
+      getSession: () => session,
+      setSession,
+      clearSession,
+    });
+    vi.stubGlobal("fetch", vi.fn());
+  });
+
+  it("retries once after refreshing the session on 401", async () => {
+    setCurrentLanguage("et-EE");
+    const fetchMock = vi.mocked(fetch);
+    fetchMock
+      .mockResolvedValueOnce(new Response(null, { status: 401 }))
+      .mockResolvedValueOnce(
+        jsonResponse({
+          jwt: "fresh-jwt",
+          refreshToken: "refresh-2",
+          expiresInSeconds: 3600,
+          activeGymCode: "peak-forge",
+          activeRole: "GymAdmin",
+          systemRoles: [],
+        }),
+      )
+      .mockResolvedValueOnce(
+        jsonResponse([
+          {
+            id: "member-1",
+            memberCode: "MEM-001",
+            fullName: "Liis Lill",
+            status: 0,
+          },
+        ]),
+      );
+
+    const members = await client.getMembers("peak-forge");
+
+    expect(members).toHaveLength(1);
+    expect(setSession).toHaveBeenCalled();
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(new Headers((fetchMock.mock.calls[0]?.[1] as RequestInit).headers).get("Authorization")).toBe("Bearer expired-jwt");
+    expect(fetchMock.mock.calls[1]?.[0]).toContain("/api/v1/account/renew-refresh-token");
+    expect(new Headers((fetchMock.mock.calls[1]?.[1] as RequestInit).headers).get("Accept-Language")).toBe("et-EE");
+    expect(new Headers((fetchMock.mock.calls[2]?.[1] as RequestInit).headers).get("Authorization")).toBe("Bearer fresh-jwt");
+  });
+
+  it("clears the session when refresh fails", async () => {
+    const fetchMock = vi.mocked(fetch);
+    fetchMock
+      .mockResolvedValueOnce(new Response(null, { status: 401 }))
+      .mockResolvedValueOnce(
+        jsonResponse(
+          {
+            title: "Forbidden",
+            detail: "Refresh token is invalid or expired.",
+          },
+          { status: 403 },
+        ),
+      );
+
+    await expect(client.getMembers("peak-forge")).rejects.toThrow("Session expired. Please sign in again.");
+    expect(clearSession).toHaveBeenCalled();
+  });
+
+  it("deduplicates concurrent 401s into a single refresh request", async () => {
+    const fetchMock = vi.mocked(fetch);
+    fetchMock
+      .mockResolvedValueOnce(new Response(null, { status: 401 }))
+      .mockResolvedValueOnce(new Response(null, { status: 401 }))
+      .mockResolvedValueOnce(
+        jsonResponse({
+          jwt: "fresh-jwt",
+          refreshToken: "refresh-2",
+          expiresInSeconds: 3600,
+          activeGymCode: "peak-forge",
+          activeRole: "GymAdmin",
+          systemRoles: [],
+        }),
+      )
+      .mockResolvedValueOnce(jsonResponse([]))
+      .mockResolvedValueOnce(jsonResponse([]));
+
+    await Promise.all([
+      client.getMembers("peak-forge"),
+      client.getMembers("peak-forge"),
+    ]);
+
+    expect(fetchMock).toHaveBeenCalledTimes(5);
+    const renewCalls = fetchMock.mock.calls.filter(([url]) =>
+      (url as string).includes("renew-refresh-token"),
+    );
+    expect(renewCalls).toHaveLength(1);
+    expect(setSession).toHaveBeenCalledTimes(1);
+  });
+
+  it("sends the selected language to localized API endpoints", async () => {
+    setCurrentLanguage("et-EE");
+    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse([]));
+
+    await client.getTrainingCategories("peak-forge");
+
+    const request = vi.mocked(fetch).mock.calls[0]?.[1] as RequestInit;
+    expect(new Headers(request.headers).get("Accept-Language")).toBe("et-EE");
+  });
+});

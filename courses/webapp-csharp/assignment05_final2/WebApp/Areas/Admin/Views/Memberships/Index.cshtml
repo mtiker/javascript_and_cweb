@@ -1,0 +1,72 @@
+@model AdminMembershipsPageViewModel
+@inject IStringLocalizer<SharedResources> L
+
+<section class="panel">
+    <p class="eyebrow">@L["AdminWorkspace"]</p>
+    <h1>@L["Memberships"]</h1>
+    <p>@L["ActiveGym"]: <strong>@Model.GymCode</strong></p>
+</section>
+
+<section class="page-grid">
+    <article class="panel">
+        <h2>@L["Packages"]</h2>
+        @if (Model.Packages.Count == 0)
+        {
+            <p class="muted-text">@L["NoMembershipPackagesYet"]</p>
+        }
+        else
+        {
+            <table class="data-table">
+                <thead>
+                <tr>
+                    <th>@L["Name"]</th>
+                    <th>@L["Price"]</th>
+                    <th>@L["TrainingBenefit"]</th>
+                </tr>
+                </thead>
+                <tbody>
+                @foreach (var packageItem in Model.Packages)
+                {
+                    <tr>
+                        <td>@packageItem.Name</td>
+                        <td>@packageItem.BasePrice @packageItem.CurrencyCode</td>
+                        <td>@(packageItem.IsTrainingFree ? L["FreeSessions"] : L["TrainingDiscountPercent", packageItem.TrainingDiscountPercent ?? 0])</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        }
+    </article>
+
+    <article class="panel">
+        <h2>@L["ActiveMemberPasses"]</h2>
+        @if (Model.ActiveMemberships.Count == 0)
+        {
+            <p class="muted-text">@L["NoActiveMembershipsFound"]</p>
+        }
+        else
+        {
+            <table class="data-table">
+                <thead>
+                <tr>
+                    <th>@L["Member"]</th>
+                    <th>@L["Package"]</th>
+                    <th>@L["Validity"]</th>
+                    <th>@L["Status"]</th>
+                </tr>
+                </thead>
+                <tbody>
+                @foreach (var membership in Model.ActiveMemberships)
+                {
+                    <tr>
+                        <td>@membership.MemberName</td>
+                        <td>@membership.PackageName</td>
+                        <td>@membership.StartDate - @membership.EndDate</td>
+                        <td>@membership.Status</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        }
+    </article>
+</section>

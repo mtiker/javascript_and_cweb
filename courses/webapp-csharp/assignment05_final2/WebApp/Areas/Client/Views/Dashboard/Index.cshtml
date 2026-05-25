@@ -1,0 +1,69 @@
+@model ClientDashboardViewModel
+@inject IStringLocalizer<SharedResources> L
+@using SharedKernel
+<section class="dashboard-grid">
+    <article class="panel">
+        <h1>@L["ClientArea"]</h1>
+        <p>@L["ActiveGym"]: <strong>@Model.ActiveGymCode</strong></p>
+        <p>@L["ActiveRole"]: <strong>@Model.ActiveRole</strong></p>
+    </article>
+    <article class="panel">
+        <h2>@L["UpcomingSessions"]</h2>
+        @if (Model.UpcomingSessions.Count == 0)
+        {
+            <p>@L["NoUpcomingSessions"]</p>
+        }
+        else
+        {
+            <ul class="compact-list">
+                @foreach (var session in Model.UpcomingSessions)
+                {
+                    <li>@session.Name - @session.StartAtUtc.ToLocalTime():g</li>
+                }
+            </ul>
+        }
+    </article>
+    <article class="panel">
+        <h2>@L["MyBookings"]</h2>
+        @if (Model.MyBookings.Count == 0)
+        {
+            <p>@L["NoBookingsYet"]</p>
+        }
+        else
+        {
+            <ul class="compact-list">
+                @foreach (var booking in Model.MyBookings)
+                {
+                    <li>@booking.TrainingSessionId - @booking.Status</li>
+                }
+            </ul>
+        }
+    </article>
+    <article class="panel">
+        <h2>@L["AssignedTasks"]</h2>
+        @if (Model.AssignedTasks.Count == 0)
+        {
+            <p>@L["NoAssignedTasks"]</p>
+        }
+        else
+        {
+            <ul class="compact-list">
+                @foreach (var task in Model.AssignedTasks)
+                {
+                    <li>@task.TaskType - @task.Status</li>
+                }
+            </ul>
+        }
+    </article>
+</section>
+<section class="panel">
+    <h2>@L["QuickLinks"]</h2>
+    <div class="link-strip">
+        <a asp-area="Client" asp-controller="Profile" asp-action="Index">@L["Profile"]</a>
+        <a asp-area="Client" asp-controller="Sessions" asp-action="Index">@L["Sessions"]</a>
+        @if (Model.ActiveRole == RoleNames.Caretaker || Model.ActiveRole == RoleNames.GymOwner || Model.ActiveRole == RoleNames.GymAdmin)
+        {
+            <a asp-area="Client" asp-controller="Maintenance" asp-action="Index">@L["Maintenance"]</a>
+        }
+    </div>
+</section>

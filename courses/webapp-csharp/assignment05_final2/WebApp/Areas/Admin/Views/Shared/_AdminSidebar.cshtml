@@ -1,0 +1,77 @@
+@using SharedKernel
+@inject IStringLocalizer<SharedResources> L
+@{
+    var controller = ViewContext.RouteData.Values["controller"]?.ToString() ?? string.Empty;
+    var isSystemAdmin = User.IsInRole(RoleNames.SystemAdmin);
+    var isTenantAdmin = User.IsInRole(RoleNames.GymOwner) || User.IsInRole(RoleNames.GymAdmin);
+}
+
+<nav class="col-md-2 d-none d-md-block shell-sidebar min-vh-100 py-3">
+    <div class="text-white px-3 mb-3 fw-bold fs-5">
+        <i class="bi bi-activity me-2 text-info"></i>GymOps Admin
+    </div>
+    <ul class="nav flex-column">
+        <li class="nav-item">
+            <a class="nav-link text-white @(controller == "Dashboard" ? "active" : "")"
+               asp-area="Admin" asp-controller="Dashboard" asp-action="Index">
+                <i class="bi bi-speedometer2 me-2"></i>@L["Dashboard"]
+            </a>
+        </li>
+        @if (isSystemAdmin)
+        {
+            <li class="nav-item">
+                <a class="nav-link text-white @(controller == "Gyms" ? "active" : "")"
+                   asp-area="Admin" asp-controller="Gyms" asp-action="Index">
+                    <i class="bi bi-buildings me-2"></i>@L["Gyms"]
+                </a>
+            </li>
+        }
+        @if (isSystemAdmin || isTenantAdmin)
+        {
+            <li class="nav-item">
+                <a class="nav-link text-white @(controller == "Members" ? "active" : "")"
+                   asp-area="Admin" asp-controller="Members" asp-action="Index">
+                    <i class="bi bi-people me-2"></i>@L["Members"]
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-white @(controller == "Memberships" ? "active" : "")"
+                   asp-area="Admin" asp-controller="Memberships" asp-action="Index">
+                    <i class="bi bi-card-checklist me-2"></i>@L["Memberships"]
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-white @(controller == "Sessions" ? "active" : "")"
+                   asp-area="Admin" asp-controller="Sessions" asp-action="Index">
+                    <i class="bi bi-calendar2-week me-2"></i>@L["Sessions"]
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-white @(controller == "TrainingCategories" ? "active" : "")"
+                   asp-area="Admin" asp-controller="TrainingCategories" asp-action="Index">
+                    <i class="bi bi-tags me-2"></i>@L["TrainingCategories"]
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-white @(controller == "MembershipPackages" ? "active" : "")"
+                   asp-area="Admin" asp-controller="MembershipPackages" asp-action="Index">
+                    <i class="bi bi-box-seam me-2"></i>@L["MembershipPackages"]
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-white @(controller == "Operations" ? "active" : "")"
+                   asp-area="Admin" asp-controller="Operations" asp-action="Index">
+                    <i class="bi bi-tools me-2"></i>@L["Operations"]
+                </a>
+            </li>
+        }
+        <li class="nav-item mt-3">
+            <hr class="border-secondary" />
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-white-50" asp-area="" asp-controller="Home" asp-action="Index">
+                <i class="bi bi-house me-2"></i>@L["Home"]
+            </a>
+        </li>
+    </ul>
+</nav>

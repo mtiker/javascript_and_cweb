@@ -1,0 +1,43 @@
+@model AdminSessionsPageViewModel
+@inject IStringLocalizer<SharedResources> L
+
+<section class="panel">
+    <p class="eyebrow">@L["AdminWorkspace"]</p>
+    <h1>@L["Sessions"]</h1>
+    <p>@L["ActiveGym"]: <strong>@Model.GymCode</strong></p>
+</section>
+
+<section class="panel">
+    @if (Model.Sessions.Count == 0)
+    {
+        <p class="muted-text">@L["NoSessionsScheduledForActiveGym"]</p>
+    }
+    else
+    {
+        <table class="data-table">
+            <thead>
+            <tr>
+                <th>@L["Session"]</th>
+                <th>@L["Time"]</th>
+                <th>@L["Bookings"]</th>
+                <th>@L["Capacity"]</th>
+                <th>@L["Trainers"]</th>
+                <th>@L["Status"]</th>
+            </tr>
+            </thead>
+            <tbody>
+            @foreach (var session in Model.Sessions)
+            {
+                <tr>
+                    <td>@session.Name</td>
+                    <td>@session.StartAtUtc.ToLocalTime():g - @session.EndAtUtc.ToLocalTime():t</td>
+                    <td>@session.BookingCount</td>
+                    <td>@session.Capacity</td>
+                    <td>@(string.IsNullOrWhiteSpace(session.TrainerNames) ? L["NoTrainersAssigned"].Value : session.TrainerNames)</td>
+                    <td>@session.Status</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    }
+</section>

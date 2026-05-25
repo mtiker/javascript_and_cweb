@@ -1,0 +1,70 @@
+@model AdminTrainingCategoriesPageViewModel
+@inject IStringLocalizer<SharedResources> L
+
+<section class="panel">
+    <p class="eyebrow">@L["AdminWorkspace"]</p>
+    <h1>@L["TrainingCategories"]</h1>
+    <p>@L["ActiveGym"]: <strong>@Model.GymCode</strong></p>
+    <p>
+        <a asp-area="Admin" asp-controller="TrainingCategories" asp-action="Create" class="primary">@L["AddTrainingCategory"]</a>
+    </p>
+</section>
+
+<section class="panel">
+    <h2>@L["TrainingCategories"]</h2>
+    @if (Model.Categories.Count == 0)
+    {
+        <p class="muted-text">@L["NoTrainingCategoriesYet"]</p>
+    }
+    else
+    {
+        <table class="data-table">
+            <thead>
+            <tr>
+                <th>@L["Name"]</th>
+                <th>@L["Description"]</th>
+                <th>@L["Actions"]</th>
+            </tr>
+            </thead>
+            <tbody>
+            @foreach (var category in Model.Categories)
+            {
+                <tr>
+                    <td>
+                        <strong>@category.Name</strong>
+                        @if (category.AlternateNames.Count > 0)
+                        {
+                            <ul class="muted-text">
+                                @foreach (var alternate in category.AlternateNames)
+                                {
+                                    <li>@alternate</li>
+                                }
+                            </ul>
+                        }
+                    </td>
+                    <td>
+                        @if (!string.IsNullOrWhiteSpace(category.Description))
+                        {
+                            <span>@category.Description</span>
+                        }
+                        @if (category.AlternateDescriptions.Count > 0)
+                        {
+                            <ul class="muted-text">
+                                @foreach (var alternate in category.AlternateDescriptions)
+                                {
+                                    <li>@alternate</li>
+                                }
+                            </ul>
+                        }
+                    </td>
+                    <td>
+                        <a asp-area="Admin" asp-controller="TrainingCategories" asp-action="Edit" asp-route-id="@category.Id">@L["Edit"]</a>
+                        <span> | </span>
+                        <a asp-area="Admin" asp-controller="TrainingCategories" asp-action="Delete" asp-route-id="@category.Id">@L["Delete"]</a>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    }
+</section>

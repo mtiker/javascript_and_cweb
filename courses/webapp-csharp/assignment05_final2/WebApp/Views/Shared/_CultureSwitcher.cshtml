@@ -1,0 +1,11 @@
+@using System.Globalization
+@inject IStringLocalizer<SharedResources> L
+<form asp-area="" asp-controller="Home" asp-action="SetCulture" method="post" class="culture-form">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="returnUrl" value="@Context.Request.Path@Context.Request.QueryString" />
+    <label for="culture-select">@L["Culture"]</label>
+    <select id="culture-select" name="culture" onchange="this.form.submit()">
+        <option value="et-EE" selected="@(CultureInfo.CurrentUICulture.Name == "et-EE")">ET</option>
+        <option value="en" selected="@(CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "en")">EN</option>
+    </select>
+</form>

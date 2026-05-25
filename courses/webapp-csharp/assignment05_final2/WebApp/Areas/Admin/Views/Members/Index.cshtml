@@ -1,0 +1,66 @@
+@model AdminMembersPageViewModel
+@inject IStringLocalizer<SharedResources> L
+
+<section class="panel">
+    <p class="eyebrow">@L["AdminWorkspace"]</p>
+    <h1>@L["Members"]</h1>
+    <p>@L["ActiveGym"]: <strong>@Model.GymCode</strong></p>
+    <p>
+        <a asp-area="Admin" asp-controller="Members" asp-action="Create" class="primary">@L["AddNewMember"]</a>
+    </p>
+</section>
+
+<section class="dashboard-grid">
+    <article class="metric-card">
+        <span>@L["TotalMembers"]</span>
+        <strong>@Model.TotalCount</strong>
+    </article>
+    <article class="metric-card">
+        <span>@L["ActiveMembers"]</span>
+        <strong>@Model.ActiveCount</strong>
+    </article>
+    <article class="metric-card">
+        <span>@L["SuspendedMembers"]</span>
+        <strong>@Model.SuspendedCount</strong>
+    </article>
+    <article class="metric-card">
+        <span>@L["LeftMembers"]</span>
+        <strong>@Model.LeftCount</strong>
+    </article>
+</section>
+
+<section class="panel">
+    <h2>@L["MemberDirectory"]</h2>
+    @if (Model.Members.Count == 0)
+    {
+        <p class="muted-text">@L["NoMembersInGymYet"]</p>
+    }
+    else
+    {
+        <table class="data-table">
+            <thead>
+            <tr>
+                <th>@L["Code"]</th>
+                <th>@L["Name"]</th>
+                <th>@L["Status"]</th>
+                <th>@L["Actions"]</th>
+            </tr>
+            </thead>
+            <tbody>
+            @foreach (var member in Model.Members)
+            {
+                <tr>
+                    <td>@member.MemberCode</td>
+                    <td>@member.FullName</td>
+                    <td>@member.Status</td>
+                    <td>
+                        <a asp-area="Admin" asp-controller="Members" asp-action="Edit" asp-route-id="@member.Id">@L["Edit"]</a>
+                        <span> | </span>
+                        <a asp-area="Admin" asp-controller="Members" asp-action="Delete" asp-route-id="@member.Id">@L["Delete"]</a>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    }
+</section>

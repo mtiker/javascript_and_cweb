@@ -1,0 +1,16 @@
+using System.Security.Claims;
+using App.Domain.Entities;
+using Shared.Contracts.Enums;
+using Shared.Contracts.Dtos.v1.Identity;
+using App.Domain.Identity;
+
+namespace App.BLL.Contracts.Services;
+
+public interface IIdentityService
+{
+    Task<JwtResponse> RegisterAsync(RegisterRequest request, CancellationToken cancellationToken = default);
+    Task<JwtResponse> SwitchGymAsync(SwitchGymRequest request, CancellationToken cancellationToken = default);
+    Task<JwtResponse> SwitchRoleAsync(SwitchRoleRequest request, CancellationToken cancellationToken = default);
+    Task<ForgotPasswordResponse> ForgotPasswordAsync(ForgotPasswordRequest request, CancellationToken cancellationToken = default);
+    Task ResetPasswordAsync(ResetPasswordRequest request, CancellationToken cancellationToken = default);
+}

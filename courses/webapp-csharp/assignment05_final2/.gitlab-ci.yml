@@ -1,0 +1,130 @@
+stages:
+  - client
+  - build
+  - test
+  - package
+  - deploy
+
+.assignment05_final2_changes: &assignment05_final2_changes
+  - courses/webapp-csharp/assignment05_final2/**/*
+  - .gitlab-ci.yml
+
+.assignment05_final2_job: &assignment05_final2_job
+  rules:
+    - changes: *assignment05_final2_changes
+    - when: never
+
+.assignment05_final2_deploy_job: &assignment05_final2_deploy_job
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH || $CI_COMMIT_TAG'
+      changes: *assignment05_final2_changes
+    - when: never
+
+assignment05_final2_client:
+  stage: client
+  tags:
+    - shared
+  <<: *assignment05_final2_job
+  script:
+    - docker run --rm --user "$(id -u):$(id -g)" -v "$CI_PROJECT_DIR/courses/webapp-csharp/assignment05_final2/client:/workspace:ro" -w /tmp -e npm_config_cache=/tmp/npm-cache node:20-alpine sh -lc "mkdir -p /tmp/app /tmp/npm-cache && cp -R /workspace/. /tmp/app && cd /tmp/app && npm ci && npm test && npm run build"
+
+assignment05_final2_build:
+  stage: build
+  tags:
+    - shared
+  needs:
+    - assignment05_final2_client
+  <<: *assignment05_final2_job
+  before_script:
+    - cd courses/webapp-csharp/assignment05_final2
+  script:
+    - dotnet restore multi-gym-management-system.slnx
+    - dotnet build multi-gym-management-system.slnx --configuration Release --no-restore
+
+assignment05_final2_test:
+  stage: test
+  tags:
+    - shared
+  needs:
+    - assignment05_final2_build
+  <<: *assignment05_final2_job
+  before_script:
+    - cd courses/webapp-csharp/assignment05_final2
+  script:
+    - dotnet test multi-gym-management-system.slnx --configuration Release --no-build
+
+assignment05_final2_postgresql_tests:
+  stage: test
+  tags:
+    - shared
+  needs:
+    - assignment05_final2_build
+  rules:
+    - changes: *assignment05_final2_changes
+      when: manual
+      allow_failure: true
+    - when: never
+  variables:
+    RUN_POSTGRES_TESTS: "1"
+  before_script:
+    - cd courses/webapp-csharp/assignment05_final2
+  script:
+    - dotnet test multi-gym-management-system.slnx --configuration Release --no-build --filter PostgreSql
+
+assignment05_final2_docker_build:
+  stage: package
+  tags:
+    - shared
+  needs:
+    - assignment05_final2_test
+  <<: *assignment05_final2_job
+  script:
+    - docker build --pull --tag "$CI_PROJECT_PATH_SLUG-assignment05-final2:$CI_COMMIT_SHORT_SHA" courses/webapp-csharp/assignment05_final2
+
+assignment05_final2_client_image:
+  stage: package
+  tags:
+    - shared
+  needs:
+    - assignment05_final2_client
+  <<: *assignment05_final2_job
+  script:
+    - >-
+      docker build --pull
+      --build-arg "VITE_API_BASE_URL=${VITE_API_BASE_URL:-}"
+      --tag "$CI_PROJECT_PATH_SLUG-assignment05-final2-client:$CI_COMMIT_SHORT_SHA"
+      -f courses/webapp-csharp/assignment05_final2/client/Dockerfile
+      courses/webapp-csharp/assignment05_final2/client
+
+assignment05_final2_deploy:
+  stage: deploy
+  tags:
+    - shared
+  needs:
+    - assignment05_final2_docker_build
+  environment:
+    name: assignment05-final2-production
+  <<: *assignment05_final2_deploy_job
+  script:
+    - cd courses/webapp-csharp/assignment05_final2
+    - chmod +x scripts/deploy.sh
+    - ./scripts/deploy.sh
+
+assignment05_final2_deploy_client:
+  stage: deploy
+  tags:
+    - shared
+  needs:
+    - assignment05_final2_client_image
+  environment:
+    name: assignment05-final2-client-production
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH || $CI_COMMIT_TAG'
+      changes: *assignment05_final2_changes
+      when: manual
+      allow_failure: true
+    - when: never
+  script:
+    - cd courses/webapp-csharp/assignment05_final2
+    - chmod +x scripts/deploy-client.sh
+    - ./scripts/deploy-client.sh

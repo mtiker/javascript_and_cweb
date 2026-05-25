@@ -1,0 +1,9 @@
+using Shared.Contracts.Dtos.v1.MemberWorkspace;
+
+namespace App.BLL.Contracts.Services;
+
+public interface IMemberWorkspaceService
+{
+    Task<MemberWorkspaceResponse> GetCurrentWorkspaceAsync(string gymCode, CancellationToken cancellationToken = default);
+    Task<MemberWorkspaceResponse> GetWorkspaceAsync(string gymCode, Guid memberId, CancellationToken cancellationToken = default);
+}

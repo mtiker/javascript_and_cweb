@@ -1,0 +1,39 @@
+@model AdminTrainingCategoryDeleteViewModel
+@inject IStringLocalizer<SharedResources> L
+
+<section class="panel">
+    <p class="eyebrow">@L["AdminWorkspace"]</p>
+    <h1>@L["ConfirmDelete"]</h1>
+    <p>@L["ActiveGym"]: <strong>@Model.GymCode</strong></p>
+</section>
+
+<section class="panel">
+    <dl class="definition-list">
+        <dt>@L["Name"]</dt>
+        <dd>
+            @Model.Name
+            @if (Model.AlternateNames.Count > 0)
+            {
+                <ul class="muted-text">
+                    @foreach (var alternate in Model.AlternateNames)
+                    {
+                        <li>@alternate</li>
+                    }
+                </ul>
+            }
+        </dd>
+        @if (!string.IsNullOrWhiteSpace(Model.Description))
+        {
+            <dt>@L["Description"]</dt>
+            <dd>@Model.Description</dd>
+        }
+    </dl>
+
+    <form asp-area="Admin" asp-controller="TrainingCategories" asp-action="Delete" asp-route-id="@Model.Id" method="post" class="form-grid">
+        <input type="hidden" name="id" value="@Model.Id" />
+        <div class="form-actions">
+            <button type="submit" class="danger">@L["Delete"]</button>
+            <a asp-area="Admin" asp-controller="TrainingCategories" asp-action="Index" class="secondary">@L["Cancel"]</a>
+        </div>
+    </form>
+</section>

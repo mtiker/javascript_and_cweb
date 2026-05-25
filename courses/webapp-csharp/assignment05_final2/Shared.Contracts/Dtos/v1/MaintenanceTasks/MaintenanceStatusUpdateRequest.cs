@@ -1,0 +1,10 @@
+using Shared.Contracts.Enums;
+
+namespace Shared.Contracts.Dtos.v1.MaintenanceTasks;
+
+public class MaintenanceStatusUpdateRequest
+{
+    public MaintenanceTaskStatus Status { get; set; }
+    public string? Notes { get; set; }
+    public string? CompletionNotes { get; set; }
+}

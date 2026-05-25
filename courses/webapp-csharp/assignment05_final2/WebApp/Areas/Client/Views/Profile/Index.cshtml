@@ -1,0 +1,78 @@
+@model ClientProfilePageViewModel
+@inject IStringLocalizer<SharedResources> L
+
+<section class="panel">
+    <p class="eyebrow">@L["ClientWorkspace"]</p>
+    <h1>@L["Profile"]</h1>
+    <p>@L["ActiveGym"]: <strong>@Model.GymCode</strong></p>
+    <p>@L["ActiveRole"]: <strong>@Model.ActiveRole</strong></p>
+</section>
+
+@if (!Model.ProfileAvailable)
+{
+    <section class="panel">
+        <p class="muted-text">@L["NoProfileInGym"]</p>
+    </section>
+}
+else
+{
+    <section class="page-grid">
+        <article class="panel">
+            <h2>@L["MemberRecord"]</h2>
+            <p><strong>@Model.MemberName</strong></p>
+            <p>@L["MemberCode"]: @Model.MemberCode</p>
+            <p>@L["Status"]: @Model.MemberStatus</p>
+        </article>
+
+        <article class="panel">
+            <h2>@L["Memberships"]</h2>
+            @if (Model.Memberships.Count == 0)
+            {
+                <p class="muted-text">@L["NoMembershipsFound"]</p>
+            }
+            else
+            {
+                <ul class="compact-list">
+                    @foreach (var membership in Model.Memberships)
+                    {
+                        <li>@membership.PackageName | @membership.StartDate - @membership.EndDate | @membership.Status</li>
+                    }
+                </ul>
+            }
+        </article>
+
+        <article class="panel">
+            <h2>@L["Bookings"]</h2>
+            @if (Model.Bookings.Count == 0)
+            {
+                <p class="muted-text">@L["NoBookingsYet"]</p>
+            }
+            else
+            {
+                <ul class="compact-list">
+                    @foreach (var booking in Model.Bookings)
+                    {
+                        <li>@booking.SessionName | @booking.StartAtUtc.ToLocalTime():g | @booking.Status</li>
+                    }
+                </ul>
+            }
+        </article>
+
+        <article class="panel">
+            <h2>@L["Payments"]</h2>
+            @if (Model.Payments.Count == 0)
+            {
+                <p class="muted-text">@L["NoPaymentsRecorded"]</p>
+            }
+            else
+            {
+                <ul class="compact-list">
+                    @foreach (var payment in Model.Payments)
+                    {
+                        <li>@payment.Amount @payment.CurrencyCode | @payment.PaidAtUtc.ToLocalTime():g | @payment.Status</li>
+                    }
+                </ul>
+            }
+        </article>
+    </section>
+}

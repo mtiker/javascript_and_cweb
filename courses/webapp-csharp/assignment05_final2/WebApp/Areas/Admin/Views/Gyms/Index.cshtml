@@ -1,0 +1,26 @@
+@model AdminGymsPageViewModel
+@inject IStringLocalizer<SharedResources> L
+<section class="panel">
+    <h1>@L["Gyms"]</h1>
+    <table class="data-table">
+        <thead>
+        <tr>
+            <th>@L["Name"]</th>
+            <th>@L["Code"]</th>
+            <th>@L["City"]</th>
+            <th>@L["Status"]</th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var gym in Model.Gyms)
+        {
+            <tr>
+                <td>@gym.Name</td>
+                <td>@gym.Code</td>
+                <td>@gym.City</td>
+                <td>@(gym.IsActive ? L["Active"] : L["Inactive"])</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</section>

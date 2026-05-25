@@ -1,0 +1,74 @@
+@model AdminOperationsPageViewModel
+@inject IStringLocalizer<SharedResources> L
+
+<section class="panel">
+    <p class="eyebrow">@L["AdminWorkspace"]</p>
+    <h1>@L["Operations"]</h1>
+    <p>@L["ActiveGym"]: <strong>@Model.GymCode</strong></p>
+</section>
+
+<section class="page-grid">
+    <article class="panel">
+        <h2>@L["Equipment"]</h2>
+        @if (Model.Equipment.Count == 0)
+        {
+            <p class="muted-text">@L["NoEquipmentRegistered"]</p>
+        }
+        else
+        {
+            <table class="data-table">
+                <thead>
+                <tr>
+                    <th>@L["AssetTag"]</th>
+                    <th>@L["Model"]</th>
+                    <th>@L["Status"]</th>
+                </tr>
+                </thead>
+                <tbody>
+                @foreach (var item in Model.Equipment)
+                {
+                    <tr>
+                        <td>@item.AssetTag</td>
+                        <td>@item.ModelName</td>
+                        <td>@item.Status</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        }
+    </article>
+
+    <article class="panel">
+        <h2>@L["MaintenanceTasks"]</h2>
+        @if (Model.MaintenanceTasks.Count == 0)
+        {
+            <p class="muted-text">@L["NoMaintenanceTasksOpen"]</p>
+        }
+        else
+        {
+            <table class="data-table">
+                <thead>
+                <tr>
+                    <th>@L["Asset"]</th>
+                    <th>@L["Type"]</th>
+                    <th>@L["Status"]</th>
+                    <th>@L["AssignedTo"]</th>
+                    <th>@L["Due"]</th>
+                </tr>
+                </thead>
+                <tbody>
+                @foreach (var task in Model.MaintenanceTasks)
+                {
+                    <tr>
+                        <td>@task.AssetTag</td>
+                        <td>@task.TaskType</td>
+                        <td>@task.Status</td>
+                        <td>@(task.AssignedTo ?? L["Unassigned"].Value)</td>
+                        <td>@(task.DueAtUtc?.ToLocalTime().ToString("g") ?? "-")</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        }
+    </article>
+</section>

@@ -1,0 +1,21 @@
+<Solution>
+  <Project Path="App.BLL.Contracts/App.BLL.Contracts.csproj" />
+  <Project Path="App.DAL.Contracts/App.DAL.Contracts.csproj" />
+  <Project Path="App.DAL.EF/App.DAL.EF.csproj" />
+  <Project Path="App.BLL/App.BLL.csproj" />
+  <Project Path="App.Domain/App.Domain.csproj" />
+  <Project Path="App.Resources/App.Resources.csproj" />
+  <Project Path="Base.Contracts/Base.Contracts.csproj" />
+  <Project Path="Base.Domain/Base.Domain.csproj" />
+  <Project Path="Base.Helpers/Base.Helpers.csproj" />
+  <Project Path="WebApp/WebApp.csproj" />
+  <Project Path="WebApp.Tests/WebApp.Tests.csproj" />
+  <Project Path="Architecture.Tests/Architecture.Tests.csproj" />
+  <Project Path="SharedKernel/SharedKernel.csproj" />
+  <Project Path="Shared.Contracts/Shared.Contracts.csproj" />
+  <Project Path="Modules.Users/Modules.Users.csproj" />
+  <Project Path="Modules.Gyms/Modules.Gyms.csproj" />
+  <Project Path="Modules.Memberships/Modules.Memberships.csproj" />
+  <Project Path="Modules.Training/Modules.Training.csproj" />
+  <Project Path="Modules.Maintenance/Modules.Maintenance.csproj" />
+</Solution>

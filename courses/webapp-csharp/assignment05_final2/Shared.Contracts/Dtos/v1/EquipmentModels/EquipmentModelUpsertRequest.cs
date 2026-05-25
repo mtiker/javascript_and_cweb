@@ -1,0 +1,12 @@
+using Shared.Contracts.Enums;
+
+namespace Shared.Contracts.Dtos.v1.EquipmentModels;
+
+public class EquipmentModelUpsertRequest
+{
+    public string Name { get; set; } = default!;
+    public EquipmentType Type { get; set; }
+    public string? Manufacturer { get; set; }
+    public int MaintenanceIntervalDays { get; set; }
+    public string? Description { get; set; }
+}
