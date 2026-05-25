@@ -1,6 +1,8 @@
 using System.Globalization;
 using SharedKernel.Exceptions;
 using App.BLL.Contracts.Services;
+using MediatR;
+using Microsoft.Extensions.Logging.Abstractions;
 using Modules.Gyms.Application.Authorization;
 using Modules.Gyms.Application.Platform;
 using Modules.Memberships.Application;
@@ -11,6 +13,7 @@ using App.DAL.EF.Repositories;
 using SharedKernel.Persistence;
 using Modules.Training.Application;
 using Modules.Training.Application.Mappers;
+using Modules.Training.Application.Pricing;
 using Modules.Training.Infrastructure;
 using Modules.Maintenance.Infrastructure;
 using Modules.Memberships.Infrastructure;
@@ -455,7 +458,21 @@ public class TrainingWorkflowServiceTests
             new TestUserContextService(),
             new TestMembershipWorkflowService(),
             new TestSubscriptionTierLimitService(),
-            mapper);
+            mapper,
+            new TestBookingPricingService(),
+            new NoOpMediator(),
+            NullLogger<TrainingWorkflowService>.Instance);
+    }
+
+    private sealed class NoOpMediator : IMediator
+    {
+        public Task<TResponse> Send<TResponse>(IRequest<TResponse> request, CancellationToken cancellationToken = default) => Task.FromResult<TResponse>(default!);
+        public Task<object?> Send(object request, CancellationToken cancellationToken = default) => Task.FromResult<object?>(null);
+        public Task Send<TRequest>(TRequest request, CancellationToken cancellationToken = default) where TRequest : IRequest => Task.CompletedTask;
+        public IAsyncEnumerable<TResponse> CreateStream<TResponse>(IStreamRequest<TResponse> request, CancellationToken cancellationToken = default) => AsyncEnumerable.Empty<TResponse>();
+        public IAsyncEnumerable<object?> CreateStream(object request, CancellationToken cancellationToken = default) => AsyncEnumerable.Empty<object?>();
+        public Task Publish(object notification, CancellationToken cancellationToken = default) => Task.CompletedTask;
+        public Task Publish<TNotification>(TNotification notification, CancellationToken cancellationToken = default) where TNotification : INotification => Task.CompletedTask;
     }
 
     private sealed class TestGymsModuleApi(AppDbContext dbContext) : IGymsModuleApi
@@ -640,7 +657,12 @@ public class TrainingWorkflowServiceTests
         public Task<IReadOnlyCollection<PaymentResponse>> GetPaymentsAsync(string gymCode, PaymentFilter? filter = null, CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyCollection<PaymentResponse>>(Array.Empty<PaymentResponse>());
         public Task<PaymentResponse> CreatePaymentAsync(string gymCode, PaymentCreateRequest request, CancellationToken cancellationToken = default) => throw new NotSupportedException();
         public Task<PaymentResponse> RefundPaymentAsync(string gymCode, Guid paymentId, PaymentRefundRequest request, CancellationToken cancellationToken = default) => throw new NotSupportedException();
-        public Task<decimal> CalculateBookingPriceAsync(Guid gymId, Guid memberId, TrainingSession trainingSession, CancellationToken cancellationToken = default) => Task.FromResult(0m);
+    }
+
+    private sealed class TestBookingPricingService : IBookingPricingService
+    {
+        public Task<decimal> CalculateBookingPriceAsync(Guid gymId, Guid memberId, TrainingSessionSummary trainingSession, CancellationToken cancellationToken = default) =>
+            Task.FromResult(trainingSession.BasePrice);
     }
 
     private sealed class TestSubscriptionTierLimitService : ISubscriptionTierLimitService

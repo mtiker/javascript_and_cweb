@@ -61,7 +61,9 @@ internal sealed class TrainingModuleApiService(AppDbContext dbContext) : ITraini
                 session.StartAtUtc,
                 session.EndAtUtc,
                 session.Capacity,
-                session.Status.ToString());
+                session.Status.ToString(),
+                session.BasePrice,
+                session.CurrencyCode);
     }
 
     public async Task<BookingSummary?> GetBookingSummaryAsync(

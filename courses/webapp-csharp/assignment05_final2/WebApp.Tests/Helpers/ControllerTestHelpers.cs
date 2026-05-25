@@ -301,9 +301,6 @@ public class DelegatingMembershipWorkflowService : IMembershipWorkflowService
 
     public Task<PaymentResponse> CreatePaymentAsync(string gymCode, PaymentCreateRequest request, CancellationToken cancellationToken = default) =>
         CreatePaymentAsyncHandler(gymCode, request, cancellationToken);
-
-    public Task<decimal> CalculateBookingPriceAsync(Guid gymId, Guid memberId, TrainingSession trainingSession, CancellationToken cancellationToken = default) =>
-        Task.FromResult(0m);
 }
 
 public class DelegatingMaintenanceWorkflowService : IMaintenanceWorkflowService

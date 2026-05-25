@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Modules.Training.Application;
 using Modules.Training.Application.Mappers;
 using Modules.Training.Application.Persistence;
+using Modules.Training.Application.Pricing;
 using Modules.Training.Infrastructure;
 using Modules.Training.Infrastructure.Persistence;
 using Shared.Contracts.Mediator.Diagnostics;

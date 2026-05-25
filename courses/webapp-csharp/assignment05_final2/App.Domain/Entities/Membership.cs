@@ -22,5 +22,11 @@ public class Membership : TenantBaseEntity
     public string CurrencyCode { get; set; } = "EUR";
 
     public MembershipStatus Status { get; set; } = MembershipStatus.Pending;
+
+    // Incremented by the Memberships module when Training publishes
+    // BookingConfirmedNotification, so the Members module can later expose
+    // consumption against this membership package.
+    public int SessionsConsumed { get; set; }
+
     public ICollection<Payment> Payments { get; set; } = new List<Payment>();
 }

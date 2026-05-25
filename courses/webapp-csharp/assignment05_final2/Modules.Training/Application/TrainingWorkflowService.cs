@@ -3,14 +3,18 @@ using App.BLL.Contracts.Services;
 using SharedKernel.Exceptions;
 using SharedKernel;
 using Base.Domain;
+using MediatR;
+using Microsoft.Extensions.Logging;
 using App.Domain.Entities;
 using Shared.Contracts.Enums;
 using Shared.Contracts.Dtos.v1.Bookings;
 using Shared.Contracts.Dtos.v1.TrainingCategories;
 using Shared.Contracts.Dtos.v1.TrainingSessions;
+using Shared.Contracts.Mediator.Notifications;
 using Shared.Contracts.ModuleApis;
 using Modules.Training.Application.Mappers;
 using Modules.Training.Application.Persistence;
+using Modules.Training.Application.Pricing;
 
 namespace Modules.Training.Application;
 
@@ -26,7 +30,10 @@ public class TrainingWorkflowService(
     IUserContextService userContextService,
     IMembershipWorkflowService membershipWorkflowService,
     ISubscriptionTierLimitService subscriptionTierLimitService,
-    ITrainingMapper trainingMapper) : ITrainingWorkflowService
+    ITrainingMapper trainingMapper,
+    IBookingPricingService bookingPricingService,
+    IMediator mediator,
+    ILogger<TrainingWorkflowService> logger) : ITrainingWorkflowService
 {
     public async Task<IReadOnlyCollection<TrainingCategoryResponse>> GetCategoriesAsync(string gymCode, CancellationToken cancellationToken = default)
     {
@@ -281,7 +288,19 @@ public class TrainingWorkflowService(
         var settings = await gymsModuleApi.GetSettingsAsync(gymId, cancellationToken)
             ?? throw new NotFoundException("Gym settings were not found.");
 
-        var chargedPrice = await membershipWorkflowService.CalculateBookingPriceAsync(gymId, member.Id, trainingSession, cancellationToken);
+        var sessionSummary = new TrainingSessionSummary(
+            trainingSession.Id,
+            trainingSession.GymId,
+            trainingSession.CategoryId,
+            trainingSession.TrainerStaffId,
+            trainingSession.Name.ToString(),
+            trainingSession.StartAtUtc,
+            trainingSession.EndAtUtc,
+            trainingSession.Capacity,
+            trainingSession.Status.ToString(),
+            trainingSession.BasePrice,
+            trainingSession.CurrencyCode);
+        var chargedPrice = await bookingPricingService.CalculateBookingPriceAsync(gymId, member.Id, sessionSummary, cancellationToken);
         if (!settings.AllowNonMemberBookings && chargedPrice == trainingSession.BasePrice)
         {
             throw new ValidationAppException("This gym does not allow non-member bookings.");
@@ -319,7 +338,35 @@ public class TrainingWorkflowService(
             }, cancellationToken);
         }
 
+        await PublishBookingConfirmedAsync(booking, cancellationToken);
+
         return trainingMapper.ToBooking(booking, member);
+    }
+
+    private async Task PublishBookingConfirmedAsync(Booking booking, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await mediator.Publish(
+                new BookingConfirmedNotification(
+                    booking.GymId,
+                    booking.Id,
+                    booking.MemberId,
+                    booking.TrainingSessionId,
+                    DateTimeOffset.UtcNow),
+                cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            // A subscriber failure must not roll back a booking the caller already
+            // sees as confirmed. The booking row exists; downstream consumers can
+            // reconcile from the persisted state.
+            logger.LogError(
+                ex,
+                "Failed to publish BookingConfirmedNotification for booking {BookingId} in gym {GymId}.",
+                booking.Id,
+                booking.GymId);
+        }
     }
 
     public async Task<BookingResponse> UpdateAttendanceAsync(string gymCode, Guid bookingId, AttendanceUpdateRequest request, CancellationToken cancellationToken = default)

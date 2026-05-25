@@ -13,4 +13,6 @@ public sealed record TrainingSessionSummary(
     DateTime StartAtUtc,
     DateTime EndAtUtc,
     int Capacity,
-    string Status);
+    string Status,
+    decimal BasePrice,
+    string CurrencyCode);

@@ -1,5 +1,4 @@
 using App.BLL.Contracts.Services;
-using App.Domain.Entities;
 using Shared.Contracts.Dtos.v1.MembershipPackages;
 using Shared.Contracts.Dtos.v1.Memberships;
 using Shared.Contracts.Dtos.v1.Payments;
@@ -9,8 +8,7 @@ namespace Modules.Memberships.Application;
 public class MembershipWorkflowService(
     IMembershipPackageService membershipPackageService,
     IMembershipService membershipService,
-    IPaymentService paymentService,
-    IBookingPricingService bookingPricingService) : IMembershipWorkflowService
+    IPaymentService paymentService) : IMembershipWorkflowService
 {
     public Task<IReadOnlyCollection<MembershipPackageResponse>> GetPackagesAsync(string gymCode, CancellationToken cancellationToken = default)
     {
@@ -72,8 +70,4 @@ public class MembershipWorkflowService(
         return paymentService.RefundPaymentAsync(gymCode, paymentId, request, cancellationToken);
     }
 
-    public Task<decimal> CalculateBookingPriceAsync(Guid gymId, Guid memberId, TrainingSession trainingSession, CancellationToken cancellationToken = default)
-    {
-        return bookingPricingService.CalculateBookingPriceAsync(gymId, memberId, trainingSession, cancellationToken);
-    }
 }

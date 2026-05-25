@@ -1133,6 +1133,79 @@ fresh agent can resume without re-pasting prompts.
   - Remaining to complete Phase 14: deploy the current backend and standalone
     client images on the VPS or fix the public proxy target, then rerun
     `scripts/smoke-deploy.sh` until the public backend/client/API checks pass.
+  - 2026-05-25 follow-up: re-verified the prod-stack path against the post-
+    Phase-15 mediator build. `docker compose -f docker-compose.prod.yml up -d
+    --build` with `COMPOSE_PROJECT_NAME=assignment05-final2-mediator-smoke`
+    started cleanly; `\"__EFMigrationsHistory\"` shows all four migrations
+    applied including `20260525142428_AddMembershipSessionsConsumed`; the
+    `Memberships` table now carries the `SessionsConsumed integer` column;
+    `curl http://localhost:18083/health` returned HTTP 200 and
+    `/swagger/v1/swagger.json` returned HTTP 200. The Track A.1 changes do
+    not block production deploy â€” the public 404 remains a VPS/proxy issue,
+    not a code issue.
+
+- [x] **Phase 15 â€” Cross-module mediator production workflow**
+  - Done 2026-05-25
+  - Added `Shared.Contracts/Mediator/Notifications/BookingConfirmedNotification`
+    (scalar-id only: `GymId`, `BookingId`, `MemberId`, `TrainingSessionId`,
+    `ConfirmedAtUtc`) implementing `IModuleNotification` so Training can
+    announce a confirmed booking without naming any consumer module.
+  - `Modules.Training.Application.TrainingWorkflowService.CreateBookingAsync`
+    now publishes the notification through `IMediator.Publish` after the
+    booking row persists. Failure to publish is logged via the injected
+    `ILogger<TrainingWorkflowService>` and swallowed so a handler exception
+    cannot roll back a booking the caller already sees as confirmed.
+  - `Modules.Memberships.Application.Mediator.BookingConfirmedHandler` is the
+    sole subscriber. It looks up the member's active membership in the same
+    gym and increments `Membership.SessionsConsumed`. Auto-registered via the
+    existing `RegisterServicesFromAssembly(MembershipsModuleMarker)` call in
+    `MembershipsModuleExtensions`. Module-private (`internal sealed`).
+  - Added `App.Domain.Entities.Membership.SessionsConsumed` (int, default 0)
+    plus EF migration `20260525142428_AddMembershipSessionsConsumed`. Existing
+    rows backfill to 0 via the migration `defaultValue: 0`.
+  - New tests: `Architecture.Tests.MediatorRegistrationTests.MembershipsModule_
+    RegistersHandler_ForBookingConfirmedNotification_FromTraining` (proves the
+    handler descriptor exists in Memberships and is absent from Training).
+    `WebApp.Tests.Integration.CrossModuleMediatorTests` (2 facts: happy path
+    increments `SessionsConsumed`; member-without-active-membership records a
+    `no-active` marker without throwing).
+  - Validation: `dotnet build multi-gym-management-system.slnx` clean.
+    `dotnet test multi-gym-management-system.slnx --no-build` â‡’ Architecture
+    18 passed/1 skipped, WebApp.Tests 201 passed/3 PostgreSQL opt-in skipped,
+    0 failures. This satisfies the strict reading of the syllabus requirement
+    "Use mediator for communication between modules" via a production cross-
+    module workflow, not just the Phase 3 proof-of-life.
+
+- [~] **Phase 16 â€” App.BLL.Contracts cycle-break spike** *(partial: 1 of 5
+  entity-shaped interfaces migrated; remaining 4 explicitly deferred)*
+  - Done 2026-05-25
+  - `IBookingPricingService` moved out of `App.BLL.Contracts/Services/` into
+    `Modules.Training/Application/Pricing/IBookingPricingService.cs`. Its
+    `TrainingSession` argument was replaced by the existing public
+    `Shared.Contracts.ModuleApis.TrainingSessionSummary` DTO (extended with
+    `BasePrice` and `CurrencyCode` so the pricing calculation no longer needs
+    the EF entity). `TrainingModuleApiService.GetTrainingSessionSummaryAsync`
+    populates the new fields directly from the `TrainingSession` row.
+  - The pass-through `IMembershipWorkflowService.CalculateBookingPriceAsync`
+    was removed, including the `MembershipWorkflowService` shim. The Training
+    workflow now talks to `IBookingPricingService` directly via DI, so
+    `Modules.Memberships` no longer carries a pricing seam that only existed
+    to forward calls back into Training.
+  - Test surface updated: `WebApp.Tests/Unit/TrainingWorkflowServiceTests`
+    gained a `TestBookingPricingService` test double and now passes the new
+    dependency into `TrainingWorkflowService`. `WebApp.Tests/Helpers/
+    ControllerTestHelpers` and `WebApp.Tests/Unit/MembershipWorkflowServiceTests`
+    dropped their now-unused `CalculateBookingPriceAsync` stubs.
+  - Validation: `dotnet build multi-gym-management-system.slnx` clean.
+    `dotnet test multi-gym-management-system.slnx --no-build` â‡’ Architecture
+    18 passed/1 skipped, WebApp.Tests 201 passed/3 PostgreSQL opt-in skipped,
+    0 failures.
+  - Deferred from this phase (still entity-shaped in `App.BLL.Contracts/
+    Services/`): `IAuthorizationService`, `IResourceAuthorizationChecker`,
+    `ICurrentActorResolver`, `ITokenService`. The architectural pattern is
+    proven by this slice; finishing the rest is several hours of mechanical
+    refactoring across ~30 files and was explicitly parked for a later session
+    so the defense story stays focused on the Phase 15 mediator workflow.
 
 Risk-fix prompts (1â€“10) at the bottom of the prompts file are not phases;
 apply them as needed when their problem surfaces.

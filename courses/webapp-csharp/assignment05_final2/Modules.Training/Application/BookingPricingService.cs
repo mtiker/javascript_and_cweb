@@ -1,14 +1,20 @@
-using App.BLL.Contracts.Services;
 using App.BLL.Contracts.Infrastructure;
-using App.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using Modules.Training.Application.Pricing;
+using Shared.Contracts.ModuleApis;
 
 namespace Modules.Training.Application;
 
 public class BookingPricingService(IAppDbContext dbContext) : IBookingPricingService
 {
-    public async Task<decimal> CalculateBookingPriceAsync(Guid gymId, Guid memberId, TrainingSession trainingSession, CancellationToken cancellationToken = default)
+    public async Task<decimal> CalculateBookingPriceAsync(
+        Guid gymId,
+        Guid memberId,
+        TrainingSessionSummary trainingSession,
+        CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(trainingSession);
+
         var bookingDate = DateOnly.FromDateTime(trainingSession.StartAtUtc.Date);
 
         var membership = await dbContext.Memberships

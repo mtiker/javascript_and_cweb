@@ -1,4 +1,3 @@
-using App.Domain.Entities;
 using Shared.Contracts.Dtos.v1.MembershipPackages;
 using Shared.Contracts.Dtos.v1.Memberships;
 using Shared.Contracts.Dtos.v1.Payments;
@@ -19,5 +18,4 @@ public interface IMembershipWorkflowService
     Task<IReadOnlyCollection<PaymentResponse>> GetPaymentsAsync(string gymCode, PaymentFilter? filter = null, CancellationToken cancellationToken = default);
     Task<PaymentResponse> CreatePaymentAsync(string gymCode, PaymentCreateRequest request, CancellationToken cancellationToken = default);
     Task<PaymentResponse> RefundPaymentAsync(string gymCode, Guid paymentId, PaymentRefundRequest request, CancellationToken cancellationToken = default);
-    Task<decimal> CalculateBookingPriceAsync(Guid gymId, Guid memberId, TrainingSession trainingSession, CancellationToken cancellationToken = default);
 }

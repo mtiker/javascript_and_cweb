@@ -196,8 +196,7 @@ public class MembershipWorkflowServiceTests
                 paymentRepository,
                 new TestTrainingModuleApi(dbContext),
                 authorizationService,
-                mapper),
-            new BookingPricingService(dbContext));
+                mapper));
     }
 
     private sealed class TestGymContext(Guid gymId) : IGymContext
