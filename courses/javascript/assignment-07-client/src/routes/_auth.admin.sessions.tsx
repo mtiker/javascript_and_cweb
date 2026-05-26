@@ -159,16 +159,22 @@ function AdminSessionsPage() {
   if (!gym) return <NoActiveGym />;
 
   const bookingCount = (sessionId: string) =>
-    (bookingsQ.data ?? []).filter((b) => b.trainingSessionId === sessionId && b.status !== BookingStatus.Cancelled).length;
+    (bookingsQ.data ?? []).filter(
+      (b) => b.trainingSessionId === sessionId && b.status !== BookingStatus.Cancelled,
+    ).length;
 
   const rosterSession = sessionsQ.data?.find((s) => s.id === rosterSessionId) ?? null;
-  const rosterBookings = (bookingsQ.data ?? []).filter((b) => b.trainingSessionId === rosterSessionId);
+  const rosterBookings = (bookingsQ.data ?? []).filter(
+    (b) => b.trainingSessionId === rosterSessionId,
+  );
 
   return (
     <section className="space-y-8">
       <header>
         <h1 className="text-2xl font-semibold">Manage sessions</h1>
-        <p className="text-sm text-muted-foreground">Create, edit and mark attendance for training sessions.</p>
+        <p className="text-sm text-muted-foreground">
+          Create, edit and mark attendance for training sessions.
+        </p>
       </header>
 
       <form
@@ -191,7 +197,9 @@ function AdminSessionsPage() {
       </form>
 
       {sessionsQ.isLoading && <p className="text-sm text-muted-foreground">Loading…</p>}
-      {sessionsQ.isError && <p className="text-sm text-destructive">{getErrorMessages(sessionsQ.error).join(" ")}</p>}
+      {sessionsQ.isError && (
+        <p className="text-sm text-destructive">{getErrorMessages(sessionsQ.error).join(" ")}</p>
+      )}
 
       {sessionsQ.data && (
         <div className="overflow-x-auto rounded-md border border-border">
@@ -277,7 +285,14 @@ function AdminSessionsPage() {
                 showStatus
               />
               <DialogFooter>
-                <Button type="button" variant="ghost" onClick={() => { setEditingId(null); setEditForm(null); }}>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => {
+                    setEditingId(null);
+                    setEditForm(null);
+                  }}
+                >
                   Cancel
                 </Button>
                 <Button type="submit" disabled={update.isPending}>
@@ -298,9 +313,7 @@ function AdminSessionsPage() {
       >
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>
-              Roster — {rosterSession?.name ?? ""}
-            </DialogTitle>
+            <DialogTitle>Roster — {rosterSession?.name ?? ""}</DialogTitle>
           </DialogHeader>
           {rosterBookings.length === 0 ? (
             <p className="text-sm text-muted-foreground">No bookings for this session.</p>
@@ -321,7 +334,9 @@ function AdminSessionsPage() {
                       size="sm"
                       variant="outline"
                       disabled={attendance.isPending || b.status === BookingStatus.Attended}
-                      onClick={() => attendance.mutate({ bookingId: b.id, status: BookingStatus.Attended })}
+                      onClick={() =>
+                        attendance.mutate({ bookingId: b.id, status: BookingStatus.Attended })
+                      }
                     >
                       Attended
                     </Button>
@@ -329,7 +344,9 @@ function AdminSessionsPage() {
                       size="sm"
                       variant="outline"
                       disabled={attendance.isPending || b.status === BookingStatus.NoShow}
-                      onClick={() => attendance.mutate({ bookingId: b.id, status: BookingStatus.NoShow })}
+                      onClick={() =>
+                        attendance.mutate({ bookingId: b.id, status: BookingStatus.NoShow })
+                      }
                     >
                       No show
                     </Button>
@@ -337,7 +354,9 @@ function AdminSessionsPage() {
                       size="sm"
                       variant="ghost"
                       disabled={attendance.isPending || b.status === BookingStatus.Cancelled}
-                      onClick={() => attendance.mutate({ bookingId: b.id, status: BookingStatus.Cancelled })}
+                      onClick={() =>
+                        attendance.mutate({ bookingId: b.id, status: BookingStatus.Cancelled })
+                      }
                     >
                       Cancel
                     </Button>
@@ -377,13 +396,19 @@ function SessionFields({
         >
           <option value="">Pick…</option>
           {categories.map((c) => (
-            <option key={c.id} value={c.id}>{c.name}</option>
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
           ))}
         </select>
       </div>
       <div className="space-y-1">
         <Label>Name</Label>
-        <Input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+        <Input
+          required
+          value={form.name}
+          onChange={(e) => setForm({ ...form, name: e.target.value })}
+        />
       </div>
       <div className="space-y-1">
         <Label>Trainer</Label>
@@ -394,7 +419,9 @@ function SessionFields({
         >
           <option value="">— none —</option>
           {staff.map((s) => (
-            <option key={s.id} value={s.id}>{s.fullName}</option>
+            <option key={s.id} value={s.id}>
+              {s.fullName}
+            </option>
           ))}
         </select>
       </div>
@@ -403,36 +430,67 @@ function SessionFields({
           <Label>Status</Label>
           <select
             value={form.status}
-            onChange={(e) => setForm({ ...form, status: Number(e.target.value) as TrainingSessionStatus })}
+            onChange={(e) =>
+              setForm({ ...form, status: Number(e.target.value) as TrainingSessionStatus })
+            }
             className="h-9 w-full rounded-md border border-input bg-background px-2 text-sm"
           >
             {Object.entries(TrainingSessionStatus)
               .filter(([, v]) => typeof v === "number")
               .map(([k, v]) => (
-                <option key={k} value={v as number}>{k}</option>
+                <option key={k} value={v as number}>
+                  {k}
+                </option>
               ))}
           </select>
         </div>
       )}
       <div className="space-y-1">
         <Label>Start</Label>
-        <Input type="datetime-local" required value={form.startAtUtc} onChange={(e) => setForm({ ...form, startAtUtc: e.target.value })} />
+        <Input
+          type="datetime-local"
+          required
+          value={form.startAtUtc}
+          onChange={(e) => setForm({ ...form, startAtUtc: e.target.value })}
+        />
       </div>
       <div className="space-y-1">
         <Label>End</Label>
-        <Input type="datetime-local" required value={form.endAtUtc} onChange={(e) => setForm({ ...form, endAtUtc: e.target.value })} />
+        <Input
+          type="datetime-local"
+          required
+          value={form.endAtUtc}
+          onChange={(e) => setForm({ ...form, endAtUtc: e.target.value })}
+        />
       </div>
       <div className="space-y-1">
         <Label>Capacity</Label>
-        <Input type="number" min={1} required value={form.capacity} onChange={(e) => setForm({ ...form, capacity: Number(e.target.value) })} />
+        <Input
+          type="number"
+          min={1}
+          required
+          value={form.capacity}
+          onChange={(e) => setForm({ ...form, capacity: Number(e.target.value) })}
+        />
       </div>
       <div className="space-y-1">
         <Label>Price</Label>
-        <Input type="number" min={0} step="0.01" required value={form.basePrice} onChange={(e) => setForm({ ...form, basePrice: Number(e.target.value) })} />
+        <Input
+          type="number"
+          min={0}
+          step="0.01"
+          required
+          value={form.basePrice}
+          onChange={(e) => setForm({ ...form, basePrice: Number(e.target.value) })}
+        />
       </div>
       <div className="space-y-1">
         <Label>Currency</Label>
-        <Input required value={form.currencyCode} onChange={(e) => setForm({ ...form, currencyCode: e.target.value.toUpperCase() })} />
+        <Input
+          required
+          value={form.currencyCode}
+          onChange={(e) => setForm({ ...form, currencyCode: e.target.value.toUpperCase() })}
+        />
       </div>
       <div className="space-y-1 sm:col-span-2 lg:col-span-4">
         <Label>Description</Label>

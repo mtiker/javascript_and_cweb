@@ -44,7 +44,6 @@ function MembershipsPage() {
         imagePosition="left center"
       />
 
-
       <div>
         <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
           Memberships

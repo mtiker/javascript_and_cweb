@@ -43,19 +43,33 @@ export class ApiClient {
 
   // ---- account ----
   login(request: LoginRequest): Promise<AuthSession> {
-    return this.req<AuthSession>("/api/v1/account/login", { method: "POST", body: JSON.stringify(request) }, false);
+    return this.req<AuthSession>(
+      "/api/v1/account/login",
+      { method: "POST", body: JSON.stringify(request) },
+      false,
+    );
   }
   register(request: RegisterRequest): Promise<AuthSession> {
-    return this.req<AuthSession>("/api/v1/account/register", { method: "POST", body: JSON.stringify(request) }, false);
+    return this.req<AuthSession>(
+      "/api/v1/account/register",
+      { method: "POST", body: JSON.stringify(request) },
+      false,
+    );
   }
   logout(): Promise<MessageResponse> {
     return this.req<MessageResponse>("/api/v1/account/logout", { method: "POST" });
   }
   switchGym(gymCode: string): Promise<AuthSession> {
-    return this.req<AuthSession>("/api/v1/account/switch-gym", { method: "POST", body: JSON.stringify({ gymCode }) });
+    return this.req<AuthSession>("/api/v1/account/switch-gym", {
+      method: "POST",
+      body: JSON.stringify({ gymCode }),
+    });
   }
   switchRole(roleName: string): Promise<AuthSession> {
-    return this.req<AuthSession>("/api/v1/account/switch-role", { method: "POST", body: JSON.stringify({ roleName }) });
+    return this.req<AuthSession>("/api/v1/account/switch-role", {
+      method: "POST",
+      body: JSON.stringify({ roleName }),
+    });
   }
 
   // ---- members ----
@@ -72,7 +86,10 @@ export class ApiClient {
     return this.req<MemberWorkspace>(`${this.t(gym)}/member-workspace/me`);
   }
   createMember(gym: string, body: MemberUpsertRequest) {
-    return this.req<MemberDetail>(`${this.t(gym)}/members`, { method: "POST", body: JSON.stringify(body) });
+    return this.req<MemberDetail>(`${this.t(gym)}/members`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
   }
   updateMember(gym: string, id: string, body: MemberUpsertRequest) {
     return this.req<MemberDetail>(`${this.t(gym)}/members/${encodeURIComponent(id)}`, {
@@ -89,16 +106,24 @@ export class ApiClient {
     return this.req<TrainingCategory[]>(`${this.t(gym)}/training-categories`);
   }
   createTrainingCategory(gym: string, body: TrainingCategoryUpsertRequest) {
-    return this.req<TrainingCategory>(`${this.t(gym)}/training-categories`, { method: "POST", body: JSON.stringify(body) });
-  }
-  updateTrainingCategory(gym: string, id: string, body: TrainingCategoryUpsertRequest) {
-    return this.req<TrainingCategory>(`${this.t(gym)}/training-categories/${encodeURIComponent(id)}`, {
-      method: "PUT",
+    return this.req<TrainingCategory>(`${this.t(gym)}/training-categories`, {
+      method: "POST",
       body: JSON.stringify(body),
     });
   }
+  updateTrainingCategory(gym: string, id: string, body: TrainingCategoryUpsertRequest) {
+    return this.req<TrainingCategory>(
+      `${this.t(gym)}/training-categories/${encodeURIComponent(id)}`,
+      {
+        method: "PUT",
+        body: JSON.stringify(body),
+      },
+    );
+  }
   deleteTrainingCategory(gym: string, id: string) {
-    return this.req<void>(`${this.t(gym)}/training-categories/${encodeURIComponent(id)}`, { method: "DELETE" });
+    return this.req<void>(`${this.t(gym)}/training-categories/${encodeURIComponent(id)}`, {
+      method: "DELETE",
+    });
   }
 
   // ---- training sessions ----
@@ -109,7 +134,10 @@ export class ApiClient {
     return this.req<TrainingSession>(`${this.t(gym)}/training-sessions/${encodeURIComponent(id)}`);
   }
   createTrainingSession(gym: string, body: TrainingSessionUpsertRequest) {
-    return this.req<TrainingSession>(`${this.t(gym)}/training-sessions`, { method: "POST", body: JSON.stringify(body) });
+    return this.req<TrainingSession>(`${this.t(gym)}/training-sessions`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
   }
   updateTrainingSession(gym: string, id: string, body: TrainingSessionUpsertRequest) {
     return this.req<TrainingSession>(`${this.t(gym)}/training-sessions/${encodeURIComponent(id)}`, {
@@ -125,16 +153,22 @@ export class ApiClient {
 
   // ---- bookings ----
   createBooking(gym: string, body: BookingCreateRequest) {
-    return this.req<Booking>(`${this.t(gym)}/bookings`, { method: "POST", body: JSON.stringify(body) });
+    return this.req<Booking>(`${this.t(gym)}/bookings`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
   }
   getBookings(gym: string) {
     return this.req<Booking[]>(`${this.t(gym)}/bookings`);
   }
   updateAttendance(gym: string, bookingId: string, body: AttendanceUpdateRequest) {
-    return this.req<Booking>(`${this.t(gym)}/bookings/${encodeURIComponent(bookingId)}/attendance`, {
-      method: "PUT",
-      body: JSON.stringify(body),
-    });
+    return this.req<Booking>(
+      `${this.t(gym)}/bookings/${encodeURIComponent(bookingId)}/attendance`,
+      {
+        method: "PUT",
+        body: JSON.stringify(body),
+      },
+    );
   }
 
   // ---- memberships / payments ----

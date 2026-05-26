@@ -1,7 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/api/auth-context";
-import { ArrowRight, Dumbbell, CalendarCheck, BarChart3, ShieldCheck, Zap, Users } from "lucide-react";
+import {
+  ArrowRight,
+  Dumbbell,
+  CalendarCheck,
+  BarChart3,
+  ShieldCheck,
+  Zap,
+  Users,
+} from "lucide-react";
 import heroImg from "@/assets/hero-gym.jpg";
 
 export const Route = createFileRoute("/")({
@@ -17,7 +25,10 @@ function Index() {
         {/* Decorative glow */}
         <div
           className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 h-[600px] w-full max-w-7xl rounded-full opacity-60 blur-[120px]"
-          style={{ background: "linear-gradient(to bottom, color-mix(in oklab, var(--primary) 18%, transparent), transparent)" }}
+          style={{
+            background:
+              "linear-gradient(to bottom, color-mix(in oklab, var(--primary) 18%, transparent), transparent)",
+          }}
         />
 
         <div className="relative z-10 mx-auto max-w-6xl">
@@ -31,7 +42,8 @@ function Index() {
           <div className="mt-8 flex flex-col items-center gap-12 lg:flex-row">
             <div className="flex-1 text-center lg:text-left">
               <h1 className="text-5xl font-extrabold leading-[1.1] tracking-tight md:text-7xl">
-                Train harder.<br />
+                Train harder.
+                <br />
                 <span
                   className="bg-clip-text text-transparent"
                   style={{ backgroundImage: "var(--gradient-primary)" }}
@@ -40,7 +52,8 @@ function Index() {
                 </span>
               </h1>
               <p className="mx-auto mt-6 max-w-xl text-lg leading-relaxed text-muted-foreground lg:mx-0">
-                One client for every gym in the network. Book sessions, manage memberships, and run your fitness business — all wired to the high-performance CWeb API.
+                One client for every gym in the network. Book sessions, manage memberships, and run
+                your fitness business — all wired to the high-performance CWeb API.
               </p>
               <div className="mt-10 flex flex-col justify-center gap-4 sm:flex-row lg:justify-start">
                 {auth.isAuthenticated ? (
@@ -100,7 +113,8 @@ function Index() {
           <div className="mb-16">
             <h2 className="text-3xl font-bold md:text-4xl">Everything you need under one roof</h2>
             <p className="mt-4 max-w-2xl text-muted-foreground">
-              A complete frontend for the cweb multi-gym backend — built for members and the people running the gym.
+              A complete frontend for the cweb multi-gym backend — built for members and the people
+              running the gym.
             </p>
           </div>
 
@@ -114,7 +128,8 @@ function Index() {
                 </div>
                 <h3 className="mb-2 text-xl font-bold">Classes & sessions</h3>
                 <p className="max-w-sm text-sm leading-relaxed text-muted-foreground">
-                  Filter by category, reserve a spot, and cancel in one tap. Capacity tracked in real time across the entire network.
+                  Filter by category, reserve a spot, and cancel in one tap. Capacity tracked in
+                  real time across the entire network.
                 </p>
               </div>
               <div className="pointer-events-none absolute bottom-0 right-0 p-4 opacity-20 grayscale transition-all group-hover:opacity-60 group-hover:grayscale-0">
@@ -144,7 +159,8 @@ function Index() {
               </div>
               <h3 className="mb-2 text-xl font-bold">Strength & equipment</h3>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                See what's available, who's training, and what's bookable across every connected gym.
+                See what's available, who's training, and what's bookable across every connected
+                gym.
               </p>
             </article>
 
@@ -154,16 +170,29 @@ function Index() {
               </div>
               <h3 className="mb-2 text-xl font-bold">Realtime everywhere</h3>
               <p className="max-w-md text-sm leading-relaxed text-muted-foreground">
-                Bookings, cancellations, capacity counters and payment events stream live — no refresh required.
+                Bookings, cancellations, capacity counters and payment events stream live — no
+                refresh required.
               </p>
             </article>
           </div>
 
           {/* Mini technical features */}
           <div className="grid gap-6 sm:grid-cols-3">
-            <TechFeature icon={<ShieldCheck className="size-5" />} title="JWT + Refresh" code="SECURE_AUTH_LAYER" />
-            <TechFeature icon={<Users className="size-5" />} title="Role aware" code="DYNAMIC_RBAC" />
-            <TechFeature icon={<Zap className="size-5" />} title="Multi-tenant" code="CROSS_NETWORK_HUB" />
+            <TechFeature
+              icon={<ShieldCheck className="size-5" />}
+              title="JWT + Refresh"
+              code="SECURE_AUTH_LAYER"
+            />
+            <TechFeature
+              icon={<Users className="size-5" />}
+              title="Role aware"
+              code="DYNAMIC_RBAC"
+            />
+            <TechFeature
+              icon={<Zap className="size-5" />}
+              title="Multi-tenant"
+              code="CROSS_NETWORK_HUB"
+            />
           </div>
         </div>
       </section>
@@ -174,14 +203,17 @@ function Index() {
           <h2 className="mb-8 text-4xl font-extrabold md:text-5xl">Ready to lift?</h2>
           <div className="flex flex-col items-center gap-6">
             <div className="flex flex-wrap items-center justify-center gap-3 rounded-lg border border-border bg-card px-4 py-2">
-              <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">API Endpoint</span>
+              <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                API Endpoint
+              </span>
               <code className="text-sm text-primary">
                 {import.meta.env.VITE_API_BASE_URL ?? "https://mtiker-cweb-4.proxy.itcollege.ee"}
               </code>
             </div>
             <Button asChild size="lg" className="shadow-[var(--shadow-glow)]">
               <Link to={auth.isAuthenticated ? "/sessions" : "/login"}>
-                {auth.isAuthenticated ? "Go to sessions" : "Sign in"} <ArrowRight className="ml-1" />
+                {auth.isAuthenticated ? "Go to sessions" : "Sign in"}{" "}
+                <ArrowRight className="ml-1" />
               </Link>
             </Button>
           </div>
@@ -191,16 +223,34 @@ function Index() {
   );
 }
 
-function Stat({ value, label, className = "" }: { value: string; label: string; className?: string }) {
+function Stat({
+  value,
+  label,
+  className = "",
+}: {
+  value: string;
+  label: string;
+  className?: string;
+}) {
   return (
     <div className={`space-y-1 ${className}`}>
       <div className="text-4xl font-extrabold tracking-tighter">{value}</div>
-      <div className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">{label}</div>
+      <div className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+        {label}
+      </div>
     </div>
   );
 }
 
-function TechFeature({ icon, title, code }: { icon: React.ReactNode; title: string; code: string }) {
+function TechFeature({
+  icon,
+  title,
+  code,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  code: string;
+}) {
   return (
     <div className="flex items-start gap-4 rounded-2xl border border-border/60 bg-card/40 p-6">
       <div className="rounded-lg bg-muted p-2 text-primary">{icon}</div>

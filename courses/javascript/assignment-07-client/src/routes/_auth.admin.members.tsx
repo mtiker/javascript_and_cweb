@@ -54,10 +54,7 @@ function AdminMembersPage() {
     queryFn: () => auth.api.getMembers(gym!),
   });
 
-  const suggestedCode = useMemo(
-    () => suggestMemberCode(listQ.data ?? []),
-    [listQ.data],
-  );
+  const suggestedCode = useMemo(() => suggestMemberCode(listQ.data ?? []), [listQ.data]);
 
   const [form, setForm] = useState({
     firstName: "",
@@ -154,11 +151,21 @@ function AdminMembersPage() {
         <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
           <div className="space-y-1">
             <Label htmlFor="firstName">First name</Label>
-            <Input id="firstName" required value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} />
+            <Input
+              id="firstName"
+              required
+              value={form.firstName}
+              onChange={(e) => setForm({ ...form, firstName: e.target.value })}
+            />
           </div>
           <div className="space-y-1">
             <Label htmlFor="lastName">Last name</Label>
-            <Input id="lastName" required value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })} />
+            <Input
+              id="lastName"
+              required
+              value={form.lastName}
+              onChange={(e) => setForm({ ...form, lastName: e.target.value })}
+            />
           </div>
           <div className="space-y-1">
             <Label>Member code</Label>
@@ -169,11 +176,20 @@ function AdminMembersPage() {
           </div>
           <div className="space-y-1">
             <Label htmlFor="personalCode">Personal code</Label>
-            <Input id="personalCode" value={form.personalCode} onChange={(e) => setForm({ ...form, personalCode: e.target.value })} />
+            <Input
+              id="personalCode"
+              value={form.personalCode}
+              onChange={(e) => setForm({ ...form, personalCode: e.target.value })}
+            />
           </div>
           <div className="space-y-1">
             <Label htmlFor="dob">DoB</Label>
-            <Input id="dob" type="date" value={form.dateOfBirth} onChange={(e) => setForm({ ...form, dateOfBirth: e.target.value })} />
+            <Input
+              id="dob"
+              type="date"
+              value={form.dateOfBirth}
+              onChange={(e) => setForm({ ...form, dateOfBirth: e.target.value })}
+            />
           </div>
         </div>
         <Button type="submit" className="mt-3" disabled={create.isPending}>
@@ -182,7 +198,9 @@ function AdminMembersPage() {
       </form>
 
       {listQ.isLoading && <p className="text-sm text-muted-foreground">Loading…</p>}
-      {listQ.isError && <p className="text-sm text-destructive">{getErrorMessages(listQ.error).join(" ")}</p>}
+      {listQ.isError && (
+        <p className="text-sm text-destructive">{getErrorMessages(listQ.error).join(" ")}</p>
+      )}
       {listQ.data && (
         <div className="overflow-x-auto rounded-md border border-border">
           <table className="w-full text-sm">
@@ -201,11 +219,7 @@ function AdminMembersPage() {
                   <td className="px-3 py-2">{m.fullName}</td>
                   <td className="px-3 py-2">{enumLabel(MemberStatus, m.status)}</td>
                   <td className="px-3 py-2 text-right">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => openEdit(m.id)}
-                    >
+                    <Button size="sm" variant="ghost" onClick={() => openEdit(m.id)}>
                       Edit
                     </Button>
                     <Button
@@ -257,11 +271,21 @@ function AdminMembersPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <Label htmlFor="ef-firstName">First name</Label>
-                  <Input id="ef-firstName" required value={editForm.firstName} onChange={(e) => setEditForm({ ...editForm, firstName: e.target.value })} />
+                  <Input
+                    id="ef-firstName"
+                    required
+                    value={editForm.firstName}
+                    onChange={(e) => setEditForm({ ...editForm, firstName: e.target.value })}
+                  />
                 </div>
                 <div className="space-y-1">
                   <Label htmlFor="ef-lastName">Last name</Label>
-                  <Input id="ef-lastName" required value={editForm.lastName} onChange={(e) => setEditForm({ ...editForm, lastName: e.target.value })} />
+                  <Input
+                    id="ef-lastName"
+                    required
+                    value={editForm.lastName}
+                    onChange={(e) => setEditForm({ ...editForm, lastName: e.target.value })}
+                  />
                 </div>
                 <div className="space-y-1">
                   <Label>Member code</Label>
@@ -274,27 +298,47 @@ function AdminMembersPage() {
                   <select
                     id="ef-status"
                     value={editForm.status}
-                    onChange={(e) => setEditForm({ ...editForm, status: Number(e.target.value) as MemberStatus })}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, status: Number(e.target.value) as MemberStatus })
+                    }
                     className="h-10 w-full rounded-md border border-input bg-background px-2 text-sm"
                   >
                     {Object.entries(MemberStatus)
                       .filter(([, v]) => typeof v === "number")
                       .map(([k, v]) => (
-                        <option key={k} value={v as number}>{k}</option>
+                        <option key={k} value={v as number}>
+                          {k}
+                        </option>
                       ))}
                   </select>
                 </div>
                 <div className="space-y-1">
                   <Label htmlFor="ef-personalCode">Personal code</Label>
-                  <Input id="ef-personalCode" value={editForm.personalCode} onChange={(e) => setEditForm({ ...editForm, personalCode: e.target.value })} />
+                  <Input
+                    id="ef-personalCode"
+                    value={editForm.personalCode}
+                    onChange={(e) => setEditForm({ ...editForm, personalCode: e.target.value })}
+                  />
                 </div>
                 <div className="space-y-1">
                   <Label htmlFor="ef-dob">DoB</Label>
-                  <Input id="ef-dob" type="date" value={editForm.dateOfBirth} onChange={(e) => setEditForm({ ...editForm, dateOfBirth: e.target.value })} />
+                  <Input
+                    id="ef-dob"
+                    type="date"
+                    value={editForm.dateOfBirth}
+                    onChange={(e) => setEditForm({ ...editForm, dateOfBirth: e.target.value })}
+                  />
                 </div>
               </div>
               <DialogFooter>
-                <Button type="button" variant="ghost" onClick={() => { setEditingId(null); setEditForm(null); }}>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => {
+                    setEditingId(null);
+                    setEditForm(null);
+                  }}
+                >
                   Cancel
                 </Button>
                 <Button type="submit" disabled={update.isPending}>

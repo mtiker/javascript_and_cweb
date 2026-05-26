@@ -41,8 +41,7 @@ export function PageBanner({
         <div
           className="absolute inset-0"
           style={{
-            background:
-              "linear-gradient(180deg, transparent 60%, oklch(0.16 0.02 260) 100%)",
+            background: "linear-gradient(180deg, transparent 60%, oklch(0.16 0.02 260) 100%)",
           }}
         />
       </div>
@@ -54,13 +53,9 @@ export function PageBanner({
               {eyebrow}
             </span>
           )}
-          <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
-            {title}
-          </h1>
+          <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">{title}</h1>
           {subtitle && (
-            <p className="mt-2 text-sm text-muted-foreground sm:text-base">
-              {subtitle}
-            </p>
+            <p className="mt-2 text-sm text-muted-foreground sm:text-base">{subtitle}</p>
           )}
         </div>
         {actions && <div className="flex flex-wrap gap-2">{actions}</div>}

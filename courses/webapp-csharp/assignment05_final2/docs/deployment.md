@@ -38,6 +38,15 @@ npm install
 npm run dev
 ```
 
+JavaScript Assignment 07 client against this backend:
+
+```powershell
+cd ..\..\javascript\assignment-07-client
+npm install
+$env:VITE_API_BASE_URL = "http://localhost:5107"
+npm run dev
+```
+
 Default React dev URL:
 - `http://localhost:5173`
 
@@ -64,6 +73,10 @@ Current documented backend proxy target:
 
 Suggested standalone client route:
 - `https://mtiker-cweb-4-client.proxy.itcollege.ee`
+
+JavaScript Assignment 07 standalone route:
+- `https://mtiker-js-a07.proxy.itcollege.ee`
+- include this origin in backend `Cors:AllowedOrigins` when that client is deployed
 
 Suggested standalone client host port:
 - `8081`

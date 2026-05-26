@@ -54,13 +54,18 @@ function SessionsPage() {
         image={bannerImg}
         eyebrow="Training"
         title="Sessions"
-        subtitle={<>Browse and book sessions at <strong className="text-foreground">{gym}</strong>.</>}
+        subtitle={
+          <>
+            Browse and book sessions at <strong className="text-foreground">{gym}</strong>.
+          </>
+        }
         imagePosition="center"
       />
 
       <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-muted-foreground">
-          {sessionsQ.data?.length ?? 0} session{(sessionsQ.data?.length ?? 0) === 1 ? "" : "s"} available
+          {sessionsQ.data?.length ?? 0} session{(sessionsQ.data?.length ?? 0) === 1 ? "" : "s"}{" "}
+          available
         </p>
         <div className="flex flex-wrap items-center gap-2">
           <Input
@@ -124,10 +129,26 @@ function SessionsPage() {
               {s.description ?? "—"}
             </p>
             <dl className="relative mt-4 grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
-              <DataCell icon={<Calendar className="size-3" />} label="Start" value={fmtDate(s.startAtUtc)} />
-              <DataCell icon={<Users className="size-3" />} label="Capacity" value={String(s.capacity)} />
-              <DataCell icon={<Wallet className="size-3" />} label="Price" value={fmtMoney(s.basePrice, s.currencyCode)} />
-              <DataCell icon={<UserCircle2 className="size-3" />} label="Trainer" value={s.trainerName ?? "—"} />
+              <DataCell
+                icon={<Calendar className="size-3" />}
+                label="Start"
+                value={fmtDate(s.startAtUtc)}
+              />
+              <DataCell
+                icon={<Users className="size-3" />}
+                label="Capacity"
+                value={String(s.capacity)}
+              />
+              <DataCell
+                icon={<Wallet className="size-3" />}
+                label="Price"
+                value={fmtMoney(s.basePrice, s.currencyCode)}
+              />
+              <DataCell
+                icon={<UserCircle2 className="size-3" />}
+                label="Trainer"
+                value={s.trainerName ?? "—"}
+              />
             </dl>
           </Link>
         ))}
@@ -142,7 +163,10 @@ function SessionsPage() {
 function DataCell({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
     <div>
-      <dt className="flex items-center gap-1 text-muted-foreground">{icon}{label}</dt>
+      <dt className="flex items-center gap-1 text-muted-foreground">
+        {icon}
+        {label}
+      </dt>
       <dd className="mt-0.5 truncate font-medium text-foreground">{value}</dd>
     </div>
   );

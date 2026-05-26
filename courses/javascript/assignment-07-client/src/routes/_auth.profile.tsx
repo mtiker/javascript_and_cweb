@@ -31,7 +31,6 @@ function ProfilePage() {
         imagePosition="center 40%"
       />
 
-
       <div className="rounded-md border border-border p-4">
         <h2 className="text-sm font-semibold">Session</h2>
         <dl className="mt-3 grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
@@ -44,7 +43,9 @@ function ProfilePage() {
           <dt className="text-muted-foreground">Available tenants</dt>
           <dd>
             {auth.session?.availableTenants?.length
-              ? auth.session.availableTenants.map((t) => `${t.gymCode} (${t.roles.join("/")})`).join(", ")
+              ? auth.session.availableTenants
+                  .map((t) => `${t.gymCode} (${t.roles.join("/")})`)
+                  .join(", ")
               : "—"}
           </dd>
         </dl>

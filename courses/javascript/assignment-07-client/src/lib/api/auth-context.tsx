@@ -1,4 +1,11 @@
-import { createContext, useContext, useMemo, useRef, useState, type PropsWithChildren } from "react";
+import {
+  createContext,
+  useContext,
+  useMemo,
+  useRef,
+  useState,
+  type PropsWithChildren,
+} from "react";
 import { ApiClient, resolveApiBaseUrl } from "./client";
 import { clearStoredSession, loadStoredSession, saveStoredSession } from "./storage";
 import type { AuthSession, LoginRequest, RegisterRequest } from "./types";
@@ -43,9 +50,9 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const value = useMemo<AuthContextValue>(() => {
     const api = clientRef.current!;
     const isAuthenticated = Boolean(session?.jwt);
-    const isAdmin = Boolean(
-      session?.activeRole && ADMIN_ROLES.has(session.activeRole),
-    ) || Boolean(session?.systemRoles?.some((r) => ADMIN_ROLES.has(r)));
+    const isAdmin =
+      Boolean(session?.activeRole && ADMIN_ROLES.has(session.activeRole)) ||
+      Boolean(session?.systemRoles?.some((r) => ADMIN_ROLES.has(r)));
 
     return {
       api,
@@ -87,12 +94,16 @@ export function AuthProvider({ children }: PropsWithChildren) {
           activeRole: isAdmin ? "GymAdmin" : "Member",
           systemRoles: isAdmin ? ["GymAdmin"] : ["Member"],
           availableTenants: [
-            { gymId: "mock-gym", gymCode: "DEMO", gymName: "Demo Gym", roles: [isAdmin ? "GymAdmin" : "Member"] },
+            {
+              gymId: "mock-gym",
+              gymCode: "DEMO",
+              gymName: "Demo Gym",
+              roles: [isAdmin ? "GymAdmin" : "Member"],
+            },
           ],
         });
       },
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

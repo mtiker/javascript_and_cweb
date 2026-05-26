@@ -27,12 +27,7 @@ export function Logo({ className, showText = true, size = "md" }: LogoProps) {
         style={{ width: s.img, height: s.img }}
       />
       {showText && (
-        <span
-          className={cn(
-            "font-bold tracking-tight leading-none",
-            s.text
-          )}
-        >
+        <span className={cn("font-bold tracking-tight leading-none", s.text)}>
           <span className="text-primary">CWeb</span>
           <span className="text-foreground">Gym</span>
         </span>

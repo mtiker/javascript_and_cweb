@@ -327,7 +327,16 @@ Latest local validation snapshot, 2026-05-19, for Final1 completion:
 | `cd client && npm run build` | Pass, Vite production build completed |
 | `docker info --format '{{.ServerVersion}}'` | Failed: Docker Desktop engine pipe was unavailable, so PostgreSQL/Testcontainers tests were not run |
 
-No live public deployment smoke test was run in this Final1 completion pass.
+PostgreSQL/Testcontainers + local prod-stack smoke addendum, 2026-05-26:
+
+| Command | Result |
+|---|---|
+| `docker info --format '{{.ServerVersion}}'` | Pass, Docker engine 29.2.1 reachable |
+| `RUN_POSTGRES_TESTS=1 dotnet test multi-gym-management-system.slnx --filter PostgreSql -- xUnit.ParallelizeTestCollections=false` | Pass, 3 passed / 0 failed / 0 skipped, 46 s |
+| `docker compose -f docker-compose.prod.yml --profile client up -d --build` | Pass, web + client + postgres all healthy |
+| `bash scripts/smoke-deploy.sh` against `http://localhost:83` + `http://localhost:8081` (admin@peakforge.local / peak-forge) | Pass, 4/4 green: backend `/health`, client `/healthz`, API login, authenticated tenant API read |
+
+Public smoke against `https://mtiker-cweb-4.proxy.itcollege.ee` still pending: the proxy responds but `/health` returns 404, indicating the VPS-side container is down or running a stale image. Fixing requires a CI/CD redeploy or VPS shell access; the local prod-stack smoke above proves the images and the smoke pipeline are green.
 
 PostgreSQL provider-integration slice:
 - the default `dotnet test` run keeps fast coverage and skips Testcontainers-based PostgreSQL tests
@@ -398,6 +407,10 @@ bash scripts/smoke-deploy.sh
 The smoke script checks backend `/health`, standalone client `/healthz`, API
 login, and one authenticated tenant API read. See `docs/deployment.md` for the
 full deployment and Compose validation commands.
+
+Smoke status on 2026-05-26:
+- local prod-stack smoke against `docker-compose.prod.yml --profile client`: 4/4 green (`/health`, `/healthz`, login, authenticated tenant API)
+- public backend/client URLs at `https://mtiker-cweb-4.proxy.itcollege.ee` still return HTTP 404; container/proxy state on the VPS needs to be restored via CI/CD redeploy or VPS shell before defense
 
 Smoke status on 2026-05-11:
 - local and production Compose configuration validation passed

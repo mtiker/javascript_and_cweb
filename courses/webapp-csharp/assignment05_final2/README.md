@@ -246,6 +246,8 @@ Client environment notes:
 - example file: `client/.env.example`
 - backend CORS defaults allow `http://localhost:5173`, `https://localhost:5173`, and `http://127.0.0.1:5173`
 - outside development, `Cors:AllowedOrigins` must be explicitly configured with safe public origins (no localhost or wildcard entries)
+- the JavaScript Assignment 07 client in `courses/javascript/assignment-07-client` is also wired to this API; run it on Vite port `5173` and set `VITE_API_BASE_URL=http://localhost:5107` for local backend smoke testing
+- if JavaScript Assignment 07 is deployed separately, add `https://mtiker-js-a07.proxy.itcollege.ee` to `Cors:AllowedOrigins`
 
 ## Separate Client Scope
 

@@ -35,7 +35,10 @@ function SessionDetailPage() {
   });
 
   const myBooking = (bookingsQ.data ?? []).find(
-    (b) => b.trainingSessionId === sessionId && b.memberId === meQ.data?.id && b.status !== BookingStatus.Cancelled,
+    (b) =>
+      b.trainingSessionId === sessionId &&
+      b.memberId === meQ.data?.id &&
+      b.status !== BookingStatus.Cancelled,
   );
 
   const book = useMutation({

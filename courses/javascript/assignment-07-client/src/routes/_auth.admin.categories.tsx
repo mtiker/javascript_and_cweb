@@ -26,7 +26,11 @@ function AdminCategoriesPage() {
   const [form, setForm] = useState({ name: "", description: "" });
 
   const create = useMutation({
-    mutationFn: () => auth.api.createTrainingCategory(gym!, { name: form.name, description: form.description || null }),
+    mutationFn: () =>
+      auth.api.createTrainingCategory(gym!, {
+        name: form.name,
+        description: form.description || null,
+      }),
     onSuccess: () => {
       toast.success("Category added.");
       setForm({ name: "", description: "" });
@@ -62,7 +66,12 @@ function AdminCategoriesPage() {
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="space-y-1">
             <Label htmlFor="name">Name</Label>
-            <Input id="name" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+            <Input
+              id="name"
+              required
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+            />
           </div>
           <div className="space-y-1">
             <Label htmlFor="description">Description</Label>
@@ -80,11 +89,16 @@ function AdminCategoriesPage() {
       </form>
 
       {listQ.isLoading && <p className="text-sm text-muted-foreground">Loading…</p>}
-      {listQ.isError && <p className="text-sm text-destructive">{getErrorMessages(listQ.error).join(" ")}</p>}
+      {listQ.isError && (
+        <p className="text-sm text-destructive">{getErrorMessages(listQ.error).join(" ")}</p>
+      )}
       {listQ.data && (
         <ul className="space-y-2">
           {listQ.data.map((c) => (
-            <li key={c.id} className="flex items-start justify-between rounded-md border border-border p-3">
+            <li
+              key={c.id}
+              className="flex items-start justify-between rounded-md border border-border p-3"
+            >
               <div>
                 <p className="font-medium">{c.name}</p>
                 <p className="text-sm text-muted-foreground">{c.description ?? "—"}</p>

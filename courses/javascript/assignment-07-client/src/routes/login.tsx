@@ -76,8 +76,8 @@ function LoginPage() {
               </span>
             </h2>
             <p className="mt-4 text-muted-foreground">
-              Sign in to book classes, manage your membership, and track everything
-              across every connected gym.
+              Sign in to book classes, manage your membership, and track everything across every
+              connected gym.
             </p>
           </div>
         </div>
@@ -165,8 +165,8 @@ function LoginPage() {
                   Preview mode (no backend)
                 </div>
                 <p className="mb-3 text-xs text-muted-foreground">
-                  Fakes a session locally so you can tour the design without the
-                  cweb API. Data pages will show empty / error states.
+                  Fakes a session locally so you can tour the design without the cweb API. Data
+                  pages will show empty / error states.
                 </p>
                 <div className="grid grid-cols-2 gap-2">
                   <Button

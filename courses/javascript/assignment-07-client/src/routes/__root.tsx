@@ -68,7 +68,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "Multi-Gym Client — Assignment 7" },
-      { name: "description", content: "Full client app for the cweb multi-gym management backend." },
+      {
+        name: "description",
+        content: "Full client app for the cweb multi-gym management backend.",
+      },
     ],
     links: [{ rel: "stylesheet", href: appCss }],
   }),

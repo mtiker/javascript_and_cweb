@@ -9,10 +9,9 @@ backend (`courses/webapp-csharp/assignment05_final2`). Implements the
 versioned REST API at `/api/v1/...` with JWT + refresh-token rotation.
 
 Built on the Lovable React template (TanStack Start + TanStack Router +
-TanStack Query + Tailwind v4 + shadcn/ui). All routes are plain React
-components — when copied into this repo at
-`courses/javascript/assignment-07-full-client-app/`, the router can be
-swapped for `react-router-dom` if a defense favours that.
+TanStack Query + Tailwind v4 + shadcn/ui). The client lives in
+`courses/javascript/assignment-07-client` and is wired directly to the
+cweb Assignment 05 Final2 REST API.
 
 ## Scope
 
@@ -40,33 +39,40 @@ backend — not applicable to this gym backend.
 All authenticated calls go through `src/lib/api/client.ts`. Tenant base:
 `/api/v1/{gymCode}`.
 
-| Purpose                         | Method + path                                            |
-|---------------------------------|----------------------------------------------------------|
-| Login                           | POST `/api/v1/account/login`                             |
-| Register                        | POST `/api/v1/account/register`                          |
-| Refresh token                   | POST `/api/v1/account/renew-refresh-token`               |
-| Logout                          | POST `/api/v1/account/logout`                            |
-| Switch gym / role               | POST `/api/v1/account/switch-gym` / `switch-role`        |
-| Sessions                        | GET/POST/PUT `/api/v1/{gym}/training-sessions[...]`      |
-| Categories                      | GET/POST/PUT/DELETE `/api/v1/{gym}/training-categories`  |
-| Members                         | GET/POST/PUT/DELETE `/api/v1/{gym}/members`              |
-| Current member                  | GET `/api/v1/{gym}/members/me`                           |
-| Member workspace                | GET `/api/v1/{gym}/member-workspace/me`                  |
-| Bookings                        | GET/POST `/api/v1/{gym}/bookings`                        |
-| Booking attendance / cancel     | PUT `/api/v1/{gym}/bookings/{id}/attendance`             |
+| Purpose                     | Method + path                                           |
+| --------------------------- | ------------------------------------------------------- |
+| Login                       | POST `/api/v1/account/login`                            |
+| Register                    | POST `/api/v1/account/register`                         |
+| Refresh token               | POST `/api/v1/account/renew-refresh-token`              |
+| Logout                      | POST `/api/v1/account/logout`                           |
+| Switch gym / role           | POST `/api/v1/account/switch-gym` / `switch-role`       |
+| Sessions                    | GET/POST/PUT `/api/v1/{gym}/training-sessions[...]`     |
+| Categories                  | GET/POST/PUT/DELETE `/api/v1/{gym}/training-categories` |
+| Members                     | GET/POST/PUT/DELETE `/api/v1/{gym}/members`             |
+| Current member              | GET `/api/v1/{gym}/members/me`                          |
+| Member workspace            | GET `/api/v1/{gym}/member-workspace/me`                 |
+| Bookings                    | GET/POST `/api/v1/{gym}/bookings`                       |
+| Booking attendance / cancel | PUT `/api/v1/{gym}/bookings/{id}/attendance`            |
 
 ## Run
 
 ```sh
-bun install
-bun run dev
+npm install
+npm run dev
 ```
 
 `VITE_API_BASE_URL` overrides the backend URL (default:
 `https://mtiker-cweb-4.proxy.itcollege.ee`).
 
 ```sh
-VITE_API_BASE_URL=https://mtiker-cweb-4.proxy.itcollege.ee bun run dev
+npm run dev
+```
+
+On Windows PowerShell:
+
+```powershell
+$env:VITE_API_BASE_URL = "https://mtiker-cweb-4.proxy.itcollege.ee"
+npm run dev
 ```
 
 ## Notes on tenancy
@@ -76,12 +82,17 @@ tenant prefix for all `/api/v1/{gym}/...` calls. If your account has no
 active gym (no membership/role assignment), the UI shows a notice on
 each protected page and the user can ask a GymAdmin to add them.
 
+Seeded local/demo accounts from the cweb backend:
+
+- Gym admin: `admin@peakforge.local` / `GymStrong123!`
+- Member: `member@peakforge.local` / `GymStrong123!`
+
 ## Deployment
 
 Build static assets:
 
 ```sh
-bun run build
+npm run build
 ```
 
 Serve the production build behind the `mtiker-js-a07.proxy.itcollege.ee`

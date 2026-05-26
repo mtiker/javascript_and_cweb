@@ -11,6 +11,7 @@ Code: `232786IADB`
 - `courses/javascript/assignment-04-vue-secure-todo`: Vue 3 secure Todo app against the shared TalTech backend
 - `courses/javascript/assignment-05-react-todo`: React/Next.js (App Router) secure Todo app against the shared TalTech backend
 - `courses/javascript/assignment-06-express-api`: Express.js + TypeScript + Postgres Todo backend with the A04 Vue and A05 React clients redeployed against it
+- `courses/javascript/assignment-07-client`: React/TanStack full client app for the C# Assignment 05 Final2 multi-gym backend
 - `courses/webapp-csharp`: Web App in C# subject assignments
 - `courses/webapp-csharp/backend-differences-assignment-03-vs-18.md`: controller comparison and modernization gap report for C# assignments 03 and 18
 - `courses/webapp-csharp/assignment-03-multi-gym-management-system`: Assignment 3 full SaaS multi-gym management system
@@ -35,6 +36,7 @@ Code: `232786IADB`
 - JavaScript Assignment 06 Vue client proxy target: `http://192.168.181.122:87`
 - JavaScript Assignment 06 React client public URL: `https://mtiker-js-react-a6.proxy.itcollege.ee`
 - JavaScript Assignment 06 React client proxy target: `http://192.168.181.122:89`
+- JavaScript Assignment 07 client public URL: `https://mtiker-js-a07.proxy.itcollege.ee`
 - Web App C# Assignment 03 public URL: `https://mtiker-cweb-4.proxy.itcollege.ee`
 - Web App C# Assignment 03 proxy target: `http://192.168.181.122:83`
 - Web App C# Assignment 05 Final2 backend public URL: `https://mtiker-cweb-4.proxy.itcollege.ee`
@@ -45,6 +47,9 @@ Deployment still pending:
 - Web App C# Assignment 05 Final2 public smoke verification. A local Docker
   production-stack smoke passed on 2026-05-25, but the public backend still
   returned HTTP 404 for `/health`.
+- JavaScript Assignment 07 public smoke verification depends on a working
+  C# Assignment 05 Final2 public backend URL; local development smoke passed
+  against `http://localhost:5107`.
 
 ## Naming Rules
 

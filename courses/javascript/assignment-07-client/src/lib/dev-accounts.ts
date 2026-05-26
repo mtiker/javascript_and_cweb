@@ -15,14 +15,14 @@ export interface DevAccount {
 export const DEV_ACCOUNTS: DevAccount[] = [
   {
     label: "Dev login · Gym admin",
-    email: (env.VITE_DEV_ADMIN_EMAIL as string) ?? "admin@itcollege.ee",
-    password: (env.VITE_DEV_ADMIN_PASSWORD as string) ?? "Foo.Bar.1",
+    email: (env.VITE_DEV_ADMIN_EMAIL as string) ?? "admin@peakforge.local",
+    password: (env.VITE_DEV_ADMIN_PASSWORD as string) ?? "GymStrong123!",
     hint: "Seeded GymAdmin/SystemAdmin account from the cweb backend",
   },
   {
     label: "Dev login · Member",
-    email: (env.VITE_DEV_MEMBER_EMAIL as string) ?? "member@itcollege.ee",
-    password: (env.VITE_DEV_MEMBER_PASSWORD as string) ?? "Foo.Bar.1",
+    email: (env.VITE_DEV_MEMBER_EMAIL as string) ?? "member@peakforge.local",
+    password: (env.VITE_DEV_MEMBER_PASSWORD as string) ?? "GymStrong123!",
     hint: "Seeded regular Member account",
   },
 ];
