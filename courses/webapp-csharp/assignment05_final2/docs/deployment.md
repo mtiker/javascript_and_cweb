@@ -76,9 +76,15 @@ Suggested standalone client route:
 
 JavaScript Assignment 07 standalone route:
 - `https://mtiker-js-a07.proxy.itcollege.ee`
-- include this origin in backend `Cors:AllowedOrigins` when that client is deployed
+- already pre-allowed via `Cors__AllowedOrigins__2` in
+  `docker-compose.prod.yml` (default value is the public a07 host; override
+  via `CORS_ALLOWED_ORIGIN_A07`)
+- the a07 client lives in
+  `courses/javascript/assignment-07-client/` and has its own
+  `Dockerfile`, `docker-compose.yml`, and `scripts/deploy.sh`
+- suggested host port for the a07 container: `90`
 
-Suggested standalone client host port:
+Suggested legacy in-repo standalone client host port:
 - `8081`
 
 ## Production Files
@@ -104,6 +110,12 @@ Mode B adds:
 - `VITE_API_BASE_URL`
 - `CLIENT_PORT`
 - `MULTI_GYM_CLIENT_IMAGE` when pulling a prebuilt client image
+
+JS Assignment 07 standalone client:
+- `CORS_ALLOWED_ORIGIN_A07` — defaults to `https://mtiker-js-a07.proxy.itcollege.ee`.
+  Set to a different origin (or blank) to override the third CORS slot. The
+  default lets the a07 client talk to the backend without any extra setup once
+  it is deployed at the documented URL.
 
 Optional:
 - `JWT__Issuer`

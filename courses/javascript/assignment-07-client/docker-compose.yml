@@ -1,0 +1,16 @@
+services:
+  a07-client:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-https://mtiker-cweb-4.proxy.itcollege.ee}
+    image: ${A07_CLIENT_IMAGE:-mtiker-js-a07-client:local}
+    container_name: mtiker-js-a07-client
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      HOST: 0.0.0.0
+    ports:
+      - "${A07_PORT:-90}:3000"

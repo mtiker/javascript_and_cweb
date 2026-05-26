@@ -89,13 +89,61 @@ Seeded local/demo accounts from the cweb backend:
 
 ## Deployment
 
-Build static assets:
+The app ships as a single Node SSR container. The TanStack Start build target
+is Node (the `@cloudflare/vite-plugin` is disabled in `vite.config.ts` via
+`cloudflare: false` — `wrangler.jsonc` and the CF-shaped `src/server.ts`
+wrapper remain in the tree but are unused in production). At runtime,
+`start-node.mjs` boots [srvx](https://srvx.h3.dev) on `:3000`, mounts
+`dist/client/` for hashed assets and images, and forwards everything else
+to the TanStack Start SSR handler in `dist/server/server.js`.
 
-```sh
-npm run build
+Build the image:
+
+```bash
+docker build \
+  --build-arg VITE_API_BASE_URL=https://mtiker-cweb-4.proxy.itcollege.ee \
+  -t mtiker-js-a07-client:local .
 ```
 
-Serve the production build behind the `mtiker-js-a07.proxy.itcollege.ee`
-proxy. Backend CORS in `assignment05_final2` already allows configured
-non-localhost origins — add this client's published origin to the
-backend's CORS allowlist before going live.
+Run it locally (mapped to host port 3090):
+
+```bash
+docker run --rm -p 3090:3000 mtiker-js-a07-client:local
+# then:
+curl http://127.0.0.1:3090/healthz   # -> "ok"
+open  http://127.0.0.1:3090/         # -> SSR-rendered landing page
+```
+
+Deploy via Compose (uses `A07_PORT` from `.env`, default 90):
+
+```bash
+docker compose up -d --build
+```
+
+### Production wiring
+
+- **Public URL:** `https://mtiker-js-a07.proxy.itcollege.ee` — the TalTech
+  proxy is configured to forward to host port `90` on the runner host.
+- **Backend CORS:** `assignment05_final2/docker-compose.prod.yml` exposes a
+  third allowlist slot (`Cors__AllowedOrigins__2`) defaulting to
+  `https://mtiker-js-a07.proxy.itcollege.ee`. Redeploy the backend after
+  pulling the updated compose file so the new slot is honoured.
+- **Env file on the runner:** `/home/gitlab-runner/mtiker-js-a07.env`
+  (`A07_PORT`, `VITE_API_BASE_URL`, optional `A07_CLIENT_IMAGE`). See
+  `.env.example`.
+- **CI:** `courses/javascript/assignment-07-client/.gitlab-ci.yml` runs
+  lint + build in `test`, `docker compose build` in `package`, and
+  `scripts/deploy.sh` in `deploy` (default-branch / tag only).
+- **Smoke test:** reuse the cweb script with the a07 origin —
+  ```bash
+  BACKEND_URL=https://mtiker-cweb-4.proxy.itcollege.ee \
+  CLIENT_URL=https://mtiker-js-a07.proxy.itcollege.ee \
+  SMOKE_CORS_ORIGIN=https://mtiker-js-a07.proxy.itcollege.ee \
+  SMOKE_EMAIL=member@peakforge.local \
+  SMOKE_PASSWORD=GymStrong123! \
+  SMOKE_GYM_CODE=peakforge \
+  bash ../../webapp-csharp/assignment05_final2/scripts/smoke-deploy.sh
+  ```
+  This verifies backend `/health`, Swagger, client `/healthz`, CORS preflight
+  from the a07 origin, login + refresh-token rotation, and one authenticated
+  tenant read.

@@ -31,6 +31,10 @@ variables:
   - courses/javascript/assignment-06-express-api/**/*
   - .gitlab-ci.yml
 
+.javascript_assignment07_changes: &javascript_assignment07_changes
+  - courses/javascript/assignment-07-client/**/*
+  - .gitlab-ci.yml
+
 .assignment18_changes: &assignment18_changes
   - courses/webapp-csharp/assignment-18-dental-clinic-platform/**/*
   - .gitlab-ci.yml
@@ -81,6 +85,16 @@ javascript_assignment06_pipeline:
     strategy: depend
   rules:
     - changes: *javascript_assignment06_changes
+    - when: never
+
+javascript_assignment07_pipeline:
+  stage: orchestrate
+  trigger:
+    include:
+      - local: "courses/javascript/assignment-07-client/.gitlab-ci.yml"
+    strategy: depend
+  rules:
+    - changes: *javascript_assignment07_changes
     - when: never
 
 assignment18_pipeline:
