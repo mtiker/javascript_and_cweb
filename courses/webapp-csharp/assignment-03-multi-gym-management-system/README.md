@@ -410,7 +410,9 @@ full deployment and Compose validation commands.
 
 Smoke status on 2026-05-26:
 - local prod-stack smoke against `docker-compose.prod.yml --profile client`: 4/4 green (`/health`, `/healthz`, login, authenticated tenant API)
-- public backend live at `https://mtiker-cweb-a3.proxy.itcollege.ee` (note: the actual proxy slot uses the `cweb-a3` name with the `a` prefix, not `cweb-4` as previously documented). `/health` and `/swagger` both return 200. The embedded `/client` path is not served by the currently deployed image; the React client is demonstrated locally for defense.
+- **public smoke against `https://mtiker-cweb-a3.proxy.itcollege.ee` is 4/4 green**: backend `/health` → 200 Healthy, `/swagger` → 301 (redirects to `/swagger/index.html`), login with `admin@peakforge.local` → JWT issued, authenticated `GET /api/v1/peak-forge/maintenance-tasks` → 200. The proxy slot uses `cweb-a3` (not `cweb-4` as some legacy docs say). The container is bound to `testserver:92` (`WEBAPP_PORT=92` CI/CD variable scoped to `assignment-03-production`) — the proxy maps the public hostname to that upstream.
+- the embedded `/client` SPA path is not served by the currently deployed image; the React client is demonstrated locally for defense.
+- recovery note: the public deploy initially failed because the runner's PostgreSQL data volume had been initialized with a different `POSTGRES_PASSWORD` than the current CI/CD variable. Resolved by a one-time `docker compose down -v` in `scripts/deploy.sh` (since reverted to non-destructive `down`).
 
 Smoke status on 2026-05-11:
 - local and production Compose configuration validation passed
