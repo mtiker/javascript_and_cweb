@@ -8,7 +8,7 @@ cd "$ROOT_DIR"
 : "${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set before running deployment.}"
 PROJECT_NAME="${COMPOSE_PROJECT_NAME:-multi-gym-management-system}"
 
-docker compose --project-name "$PROJECT_NAME" -f docker-compose.prod.yml down --remove-orphans || true
+docker compose --project-name "$PROJECT_NAME" -f docker-compose.prod.yml down -v --remove-orphans || true
 docker compose --project-name "$PROJECT_NAME" -f docker-compose.prod.yml up -d --build --remove-orphans
 
 echo "===== DEPLOY DIAGNOSTICS ====="
