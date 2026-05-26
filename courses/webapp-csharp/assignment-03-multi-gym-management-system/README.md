@@ -1,10 +1,10 @@
 # Assignment 03 - Multi-Gym Management System
 
-> **Public deployment:** `https://mtiker-cweb-4.proxy.itcollege.ee`
+> **Public deployment:** `https://mtiker-cweb-a3.proxy.itcollege.ee` (live, verified 2026-05-26)
 >
-> Do not claim the public deployment as live for defense until that URL has been
-> smoke-tested against the current build. See [Docker and CI/CD](#docker-and-cicd)
-> for the local fallback if the proxy route is unreachable.
+> `/health` and `/swagger` return 200. The embedded `/client` SPA is not served by the
+> currently deployed image; defense demos the React client locally. See
+> [Docker and CI/CD](#docker-and-cicd) for the local fallback.
 
 Assignment 03 Final1 is implemented as a SaaS multi-gym management system under `courses/webapp-csharp/assignment-03-multi-gym-management-system`. The earlier module architecture has been removed from the active codebase and is not part of the current Final1 structure.
 
@@ -410,7 +410,7 @@ full deployment and Compose validation commands.
 
 Smoke status on 2026-05-26:
 - local prod-stack smoke against `docker-compose.prod.yml --profile client`: 4/4 green (`/health`, `/healthz`, login, authenticated tenant API)
-- public backend/client URLs at `https://mtiker-cweb-4.proxy.itcollege.ee` still return HTTP 404; container/proxy state on the VPS needs to be restored via CI/CD redeploy or VPS shell before defense
+- public backend live at `https://mtiker-cweb-a3.proxy.itcollege.ee` (note: the actual proxy slot uses the `cweb-a3` name with the `a` prefix, not `cweb-4` as previously documented). `/health` and `/swagger` both return 200. The embedded `/client` path is not served by the currently deployed image; the React client is demonstrated locally for defense.
 
 Smoke status on 2026-05-11:
 - local and production Compose configuration validation passed
