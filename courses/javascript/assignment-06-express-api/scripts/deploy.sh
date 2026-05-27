@@ -19,6 +19,15 @@ REACT_PORT="${A06_REACT_PORT:-89}"
 
 docker compose --project-name "$PROJECT_NAME" -f docker-compose.yml up -d --build --remove-orphans
 
+dump_diagnostics() {
+  echo "=== docker compose ps ===" >&2
+  docker compose --project-name "$PROJECT_NAME" -f docker-compose.yml ps >&2 || true
+  for svc in postgres express-api vue-client react-client; do
+    echo "=== logs: $svc (tail 100) ===" >&2
+    docker compose --project-name "$PROJECT_NAME" -f docker-compose.yml logs --tail 100 "$svc" >&2 || true
+  done
+}
+
 if command -v curl >/dev/null 2>&1; then
   health_check() {
     local url="$1"
@@ -32,6 +41,7 @@ if command -v curl >/dev/null 2>&1; then
     done
     echo "  FAIL: $url did not become healthy; final attempt output:" >&2
     curl --fail --show-error "$url" || true
+    dump_diagnostics
     return 1
   }
 
