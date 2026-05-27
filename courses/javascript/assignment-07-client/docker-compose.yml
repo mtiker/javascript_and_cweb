@@ -4,7 +4,7 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-https://mtiker-cweb-4.proxy.itcollege.ee}
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-https://mtiker-cweb-a4.proxy.itcollege.ee}
     image: ${A07_CLIENT_IMAGE:-mtiker-js-a07-client:local}
     container_name: mtiker-js-a07-client
     restart: unless-stopped

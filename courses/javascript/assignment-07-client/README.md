@@ -1,7 +1,7 @@
 # Assignment 07 — Full client app (Multi-Gym)
 
 > Target deploy URL: `https://mtiker-js-a07.proxy.itcollege.ee`
-> Backend (cweb Assignment 05 Final2): `https://mtiker-cweb-4.proxy.itcollege.ee`
+> Backend (cweb Assignment 05 Final2): `https://mtiker-cweb-a4.proxy.itcollege.ee`
 
 React + Vite + TypeScript client for the C# Web Multi-Gym Management
 backend (`courses/webapp-csharp/assignment05_final2`). Implements the
@@ -62,7 +62,7 @@ npm run dev
 ```
 
 `VITE_API_BASE_URL` overrides the backend URL (default:
-`https://mtiker-cweb-4.proxy.itcollege.ee`).
+`https://mtiker-cweb-a4.proxy.itcollege.ee`).
 
 ```sh
 npm run dev
@@ -71,7 +71,7 @@ npm run dev
 On Windows PowerShell:
 
 ```powershell
-$env:VITE_API_BASE_URL = "https://mtiker-cweb-4.proxy.itcollege.ee"
+$env:VITE_API_BASE_URL = "https://mtiker-cweb-a4.proxy.itcollege.ee"
 npm run dev
 ```
 
@@ -101,7 +101,7 @@ Build the image:
 
 ```bash
 docker build \
-  --build-arg VITE_API_BASE_URL=https://mtiker-cweb-4.proxy.itcollege.ee \
+  --build-arg VITE_API_BASE_URL=https://mtiker-cweb-a4.proxy.itcollege.ee \
   -t mtiker-js-a07-client:local .
 ```
 
@@ -136,7 +136,7 @@ docker compose up -d --build
   `scripts/deploy.sh` in `deploy` (default-branch / tag only).
 - **Smoke test:** reuse the cweb script with the a07 origin —
   ```bash
-  BACKEND_URL=https://mtiker-cweb-4.proxy.itcollege.ee \
+  BACKEND_URL=https://mtiker-cweb-a4.proxy.itcollege.ee \
   CLIENT_URL=https://mtiker-js-a07.proxy.itcollege.ee \
   SMOKE_CORS_ORIGIN=https://mtiker-js-a07.proxy.itcollege.ee \
   SMOKE_EMAIL=member@peakforge.local \

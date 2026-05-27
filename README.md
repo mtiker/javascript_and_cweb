@@ -37,10 +37,10 @@ Code: `232786IADB`
 - JavaScript Assignment 06 React client public URL: `https://mtiker-js-react-a6.proxy.itcollege.ee`
 - JavaScript Assignment 06 React client proxy target: `http://192.168.181.122:89`
 - JavaScript Assignment 07 client public URL: `https://mtiker-js-a07.proxy.itcollege.ee`
-- Web App C# Assignment 03 public URL: `https://mtiker-cweb-4.proxy.itcollege.ee`
+- Web App C# Assignment 03 public URL: `https://mtiker-cweb-a4.proxy.itcollege.ee`
 - Web App C# Assignment 03 proxy target: `http://192.168.181.122:83`
-- Web App C# Assignment 05 Final2 backend public URL: `https://mtiker-cweb-4.proxy.itcollege.ee`
-- Web App C# Assignment 05 Final2 standalone client public URL: `https://mtiker-cweb-4-client.proxy.itcollege.ee`
+- Web App C# Assignment 05 Final2 backend public URL: `https://mtiker-cweb-a4.proxy.itcollege.ee`
+- Web App C# Assignment 05 Final2 standalone client public URL: `https://mtiker-cweb-a4-client.proxy.itcollege.ee`
 - Web App C# Assignment 18 public URL: `https://mtiker-cweb-a3.proxy.itcollege.ee`
 
 Deployment still pending:

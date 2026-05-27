@@ -242,7 +242,7 @@ Default allowed origins:
 - `https://localhost:5173`
 - `http://127.0.0.1:5173`
 
-Production Compose sets the first allowed origin to `https://mtiker-cweb-4.proxy.itcollege.ee` by default.
+Production Compose sets the first allowed origin to `https://mtiker-cweb-a4.proxy.itcollege.ee` by default.
 The list is configurable through `Cors:AllowedOrigins` or `Cors__AllowedOrigins__0`.
 
 ## Design Choices

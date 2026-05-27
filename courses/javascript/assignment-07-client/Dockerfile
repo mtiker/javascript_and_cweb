@@ -14,7 +14,7 @@ FROM node:20-alpine AS build
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-ARG VITE_API_BASE_URL=https://mtiker-cweb-4.proxy.itcollege.ee
+ARG VITE_API_BASE_URL=https://mtiker-cweb-a4.proxy.itcollege.ee
 ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
 RUN npm run build
 

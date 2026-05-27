@@ -4,7 +4,7 @@ set -euo pipefail
 # Deploys the standalone React client container alongside the backend stack.
 # Required environment variables (typically supplied by GitLab CI/CD):
 #   VITE_API_BASE_URL          Absolute backend URL baked into the JS bundle.
-#                              Example: https://mtiker-cweb-4.proxy.itcollege.ee
+#                              Example: https://mtiker-cweb-a4.proxy.itcollege.ee
 #
 # Optional:
 #   CLIENT_PORT                Host port for the client container. Default: 8081.

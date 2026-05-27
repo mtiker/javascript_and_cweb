@@ -26,7 +26,7 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:8080
-      Cors__AllowedOrigins__0: ${CORS_ALLOWED_ORIGIN:-https://mtiker-cweb-4.proxy.itcollege.ee}
+      Cors__AllowedOrigins__0: ${CORS_ALLOWED_ORIGIN:-https://mtiker-cweb-a4.proxy.itcollege.ee}
       Cors__AllowedOrigins__1: ${CORS_ALLOWED_ORIGIN_CLIENT:-}
       Cors__AllowedOrigins__2: ${CORS_ALLOWED_ORIGIN_A07:-https://mtiker-js-a07.proxy.itcollege.ee}
       ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=${POSTGRES_DB:-multi_gym_management_system};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}

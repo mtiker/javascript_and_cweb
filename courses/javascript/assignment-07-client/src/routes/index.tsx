@@ -207,7 +207,7 @@ function Index() {
                 API Endpoint
               </span>
               <code className="text-sm text-primary">
-                {import.meta.env.VITE_API_BASE_URL ?? "https://mtiker-cweb-4.proxy.itcollege.ee"}
+                {import.meta.env.VITE_API_BASE_URL ?? "https://mtiker-cweb-a4.proxy.itcollege.ee"}
               </code>
             </div>
             <Button asChild size="lg" className="shadow-[var(--shadow-glow)]">

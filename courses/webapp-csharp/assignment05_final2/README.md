@@ -1,4 +1,4 @@
-Configured public URL: `https://mtiker-cweb-4.proxy.itcollege.ee`
+Configured public URL: `https://mtiker-cweb-a4.proxy.itcollege.ee`
 
 Do not claim the public deployment as live for defense. The 2026-05-25 Phase
 14 smoke attempt reached the public host, but `/health` returned HTTP 404, so
@@ -387,8 +387,8 @@ Phase 14 deployment-smoke snapshot, 2026-05-25:
 | `docker compose --profile client -f docker-compose.prod.yml config` | Pass with standalone client profile |
 | `docker compose --profile client -f docker-compose.prod.yml build` | Pass after starting Docker Desktop; backend and standalone client images built |
 | `docker compose --project-name assignment05-final2-smoke --profile client -f docker-compose.prod.yml up -d --no-build --wait` | Pass on local smoke ports `18083` and `18081`; backend, PostgreSQL, and standalone client containers healthy |
-| `scripts/smoke-deploy.sh` against local production stack | Pass with `BACKEND_URL=http://localhost:18083`, `CLIENT_URL=http://localhost:18081`, and `SMOKE_CORS_ORIGIN=https://mtiker-cweb-4-client.proxy.itcollege.ee` |
-| `scripts/smoke-deploy.sh` against `https://mtiker-cweb-4.proxy.itcollege.ee` and `https://mtiker-cweb-4-client.proxy.itcollege.ee` | Failed at backend `/health`; public host returned HTTP 404 |
+| `scripts/smoke-deploy.sh` against local production stack | Pass with `BACKEND_URL=http://localhost:18083`, `CLIENT_URL=http://localhost:18081`, and `SMOKE_CORS_ORIGIN=https://mtiker-cweb-a4-client.proxy.itcollege.ee` |
+| `scripts/smoke-deploy.sh` against `https://mtiker-cweb-a4.proxy.itcollege.ee` and `https://mtiker-cweb-a4-client.proxy.itcollege.ee` | Failed at backend `/health`; public host returned HTTP 404 |
 
 PostgreSQL provider-integration slice:
 - the default `dotnet test` run keeps fast coverage and skips Testcontainers-based PostgreSQL tests
@@ -437,7 +437,7 @@ Required production secrets/configuration:
 - `POSTGRES_PASSWORD`
 - `JWT__Issuer`, defaulted by Compose to `MultiGymManagementSystem`
 - `JWT__Audience`, defaulted by Compose to `MultiGymManagementSystem`
-- `CORS_ALLOWED_ORIGIN`, defaulted by Compose to `https://mtiker-cweb-4.proxy.itcollege.ee`
+- `CORS_ALLOWED_ORIGIN`, defaulted by Compose to `https://mtiker-cweb-a4.proxy.itcollege.ee`
 - `POSTGRES_DB` and `POSTGRES_USER`, defaulted by Compose unless overridden
 
 `POSTGRES_PASSWORD` has no production default. `docker-compose.prod.yml` and

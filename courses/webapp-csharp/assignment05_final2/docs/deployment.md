@@ -66,13 +66,13 @@ Mode B, standalone client:
 - backend CORS must allow the standalone client origin
 
 Current documented public backend route:
-- `https://mtiker-cweb-4.proxy.itcollege.ee`
+- `https://mtiker-cweb-a4.proxy.itcollege.ee`
 
 Current documented backend proxy target:
 - `http://192.168.181.122:83`
 
 Suggested standalone client route:
-- `https://mtiker-cweb-4-client.proxy.itcollege.ee`
+- `https://mtiker-cweb-a4-client.proxy.itcollege.ee`
 
 JavaScript Assignment 07 standalone route:
 - `https://mtiker-js-a07.proxy.itcollege.ee`
@@ -185,7 +185,7 @@ Build:
 
 ```bash
 docker build \
-  --build-arg VITE_API_BASE_URL=https://mtiker-cweb-4.proxy.itcollege.ee \
+  --build-arg VITE_API_BASE_URL=https://mtiker-cweb-a4.proxy.itcollege.ee \
   -t multi-gym-management-system-client:local \
   -f client/Dockerfile \
   client
@@ -194,8 +194,8 @@ docker build \
 Run with Compose profile:
 
 ```bash
-VITE_API_BASE_URL=https://mtiker-cweb-4.proxy.itcollege.ee \
-CORS_ALLOWED_ORIGIN_CLIENT=https://mtiker-cweb-4-client.proxy.itcollege.ee \
+VITE_API_BASE_URL=https://mtiker-cweb-a4.proxy.itcollege.ee \
+CORS_ALLOWED_ORIGIN_CLIENT=https://mtiker-cweb-a4-client.proxy.itcollege.ee \
 JWT__Key=... \
 POSTGRES_PASSWORD=... \
 docker compose --profile client -f docker-compose.prod.yml up -d --build
@@ -262,8 +262,8 @@ Phase 14 partial deployment validation from 2026-05-25:
   after Docker Desktop was started
 - local production-stack smoke passed with backend on `http://localhost:18083`,
   standalone client on `http://localhost:18081`, and
-  `SMOKE_CORS_ORIGIN=https://mtiker-cweb-4-client.proxy.itcollege.ee`
+  `SMOKE_CORS_ORIGIN=https://mtiker-cweb-a4-client.proxy.itcollege.ee`
 - `scripts/smoke-deploy.sh` was attempted against
-  `https://mtiker-cweb-4.proxy.itcollege.ee` and
-  `https://mtiker-cweb-4-client.proxy.itcollege.ee`; it failed at backend
+  `https://mtiker-cweb-a4.proxy.itcollege.ee` and
+  `https://mtiker-cweb-a4-client.proxy.itcollege.ee`; it failed at backend
   `/health` with HTTP 404

@@ -336,7 +336,7 @@ PostgreSQL/Testcontainers + local prod-stack smoke addendum, 2026-05-26:
 | `docker compose -f docker-compose.prod.yml --profile client up -d --build` | Pass, web + client + postgres all healthy |
 | `bash scripts/smoke-deploy.sh` against `http://localhost:83` + `http://localhost:8081` (admin@peakforge.local / peak-forge) | Pass, 4/4 green: backend `/health`, client `/healthz`, API login, authenticated tenant API read |
 
-Public smoke against `https://mtiker-cweb-4.proxy.itcollege.ee` still pending: the proxy responds but `/health` returns 404, indicating the VPS-side container is down or running a stale image. Fixing requires a CI/CD redeploy or VPS shell access; the local prod-stack smoke above proves the images and the smoke pipeline are green.
+Public smoke against `https://mtiker-cweb-a4.proxy.itcollege.ee` still pending: the proxy responds but `/health` returns 404, indicating the VPS-side container is down or running a stale image. Fixing requires a CI/CD redeploy or VPS shell access; the local prod-stack smoke above proves the images and the smoke pipeline are green.
 
 PostgreSQL provider-integration slice:
 - the default `dotnet test` run keeps fast coverage and skips Testcontainers-based PostgreSQL tests
@@ -385,7 +385,7 @@ Required production secrets/configuration:
 - `POSTGRES_PASSWORD`
 - `JWT__Issuer`, defaulted by Compose to `MultiGymManagementSystem`
 - `JWT__Audience`, defaulted by Compose to `MultiGymManagementSystem`
-- `CORS_ALLOWED_ORIGIN`, defaulted by Compose to `https://mtiker-cweb-4.proxy.itcollege.ee`
+- `CORS_ALLOWED_ORIGIN`, defaulted by Compose to `https://mtiker-cweb-a4.proxy.itcollege.ee`
 - `POSTGRES_DB` and `POSTGRES_USER`, defaulted by Compose unless overridden
 
 `POSTGRES_PASSWORD` has no production default. `docker-compose.prod.yml` and

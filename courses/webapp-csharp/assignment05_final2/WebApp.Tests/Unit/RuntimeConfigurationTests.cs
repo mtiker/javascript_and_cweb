@@ -102,9 +102,9 @@ public class RuntimeConfigurationTests
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["Cors:AllowedOrigins:0"] = "https://mtiker-cweb-4.proxy.itcollege.ee",
-                ["Cors:AllowedOrigins:1"] = "https://mtiker-cweb-4-client.proxy.itcollege.ee",
-                ["Cors:AllowedOrigins:2"] = "https://mtiker-cweb-4.proxy.itcollege.ee"
+                ["Cors:AllowedOrigins:0"] = "https://mtiker-cweb-a4.proxy.itcollege.ee",
+                ["Cors:AllowedOrigins:1"] = "https://mtiker-cweb-a4-client.proxy.itcollege.ee",
+                ["Cors:AllowedOrigins:2"] = "https://mtiker-cweb-a4.proxy.itcollege.ee"
             })
             .Build();
 
@@ -118,8 +118,8 @@ public class RuntimeConfigurationTests
         Assert.NotNull(policy);
         Assert.Equal(
             [
-                "https://mtiker-cweb-4.proxy.itcollege.ee",
-                "https://mtiker-cweb-4-client.proxy.itcollege.ee"
+                "https://mtiker-cweb-a4.proxy.itcollege.ee",
+                "https://mtiker-cweb-a4-client.proxy.itcollege.ee"
             ],
             policy!.Origins);
         Assert.True(policy.AllowAnyHeader);

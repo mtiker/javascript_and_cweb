@@ -8,7 +8,7 @@ set -euo pipefail
 #
 # Optional:
 #   VITE_API_BASE_URL      Absolute backend URL baked into the JS bundle.
-#                          Default: https://mtiker-cweb-4.proxy.itcollege.ee
+#                          Default: https://mtiker-cweb-a4.proxy.itcollege.ee
 #   A07_PORT               Host port the TalTech proxy forwards to. Default: 90.
 #   A07_CLIENT_IMAGE       Pre-built image tag to pull instead of building.
 #   COMPOSE_PROJECT_NAME   Compose project name. Default: mtiker-js-a07.

@@ -97,7 +97,7 @@ Latest Final2 Phase 14 local deployment smoke validation was run on
 |---|---|
 | `docker compose --profile client -f docker-compose.prod.yml build` | Pass, backend and standalone client images built |
 | `docker compose --project-name assignment05-final2-smoke --profile client -f docker-compose.prod.yml up -d --no-build --wait` | Pass, backend/PostgreSQL/client containers healthy on local smoke ports |
-| `scripts/smoke-deploy.sh` with `BACKEND_URL=http://localhost:18083`, `CLIENT_URL=http://localhost:18081`, and `SMOKE_CORS_ORIGIN=https://mtiker-cweb-4-client.proxy.itcollege.ee` | Pass |
+| `scripts/smoke-deploy.sh` with `BACKEND_URL=http://localhost:18083`, `CLIENT_URL=http://localhost:18081`, and `SMOKE_CORS_ORIGIN=https://mtiker-cweb-a4-client.proxy.itcollege.ee` | Pass |
 | `scripts/smoke-deploy.sh` against documented public backend/client URLs | Failed at backend `/health` with HTTP 404 |
 
 Earlier 2026-05-11 validation also covered `dotnet format` and Compose config

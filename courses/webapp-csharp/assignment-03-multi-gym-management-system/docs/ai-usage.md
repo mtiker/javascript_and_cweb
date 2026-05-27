@@ -900,7 +900,7 @@ Files affected:
 - JavaScript Assignment 04 deployment docs and port defaults
 
 What AI helped with:
-- mapping `https://mtiker-cweb-4.proxy.itcollege.ee` to VPS port `83`
+- mapping `https://mtiker-cweb-a4.proxy.itcollege.ee` to VPS port `83`
 - setting Assignment 03 production Compose to expose host port `83`
 - adding the production CORS origin default for the public proxy route
 - updating repository-level deployment documentation to reserve JavaScript Vue for port `84`

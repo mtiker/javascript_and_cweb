@@ -57,13 +57,13 @@ Mode B, standalone client:
 - backend CORS must allow the standalone client origin
 
 Current documented public backend route:
-- `https://mtiker-cweb-4.proxy.itcollege.ee`
+- `https://mtiker-cweb-a4.proxy.itcollege.ee`
 
 Current documented backend proxy target:
 - `http://192.168.181.122:83`
 
 Suggested standalone client route:
-- `https://mtiker-cweb-4-client.proxy.itcollege.ee`
+- `https://mtiker-cweb-a4-client.proxy.itcollege.ee`
 
 Suggested standalone client host port:
 - `8081`
@@ -159,7 +159,7 @@ Build:
 
 ```bash
 docker build \
-  --build-arg VITE_API_BASE_URL=https://mtiker-cweb-4.proxy.itcollege.ee \
+  --build-arg VITE_API_BASE_URL=https://mtiker-cweb-a4.proxy.itcollege.ee \
   -t multi-gym-management-system-client:local \
   -f client/Dockerfile \
   client
@@ -168,8 +168,8 @@ docker build \
 Run with Compose profile:
 
 ```bash
-VITE_API_BASE_URL=https://mtiker-cweb-4.proxy.itcollege.ee \
-CORS_ALLOWED_ORIGIN_CLIENT=https://mtiker-cweb-4-client.proxy.itcollege.ee \
+VITE_API_BASE_URL=https://mtiker-cweb-a4.proxy.itcollege.ee \
+CORS_ALLOWED_ORIGIN_CLIENT=https://mtiker-cweb-a4-client.proxy.itcollege.ee \
 JWT__Key=... \
 POSTGRES_PASSWORD=... \
 docker compose --profile client -f docker-compose.prod.yml up -d --build

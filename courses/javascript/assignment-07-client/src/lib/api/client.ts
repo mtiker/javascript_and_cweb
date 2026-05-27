@@ -242,5 +242,5 @@ export class ApiClient {
 export function resolveApiBaseUrl(): string {
   const explicit = import.meta.env.VITE_API_BASE_URL as string | undefined;
   if (explicit) return explicit;
-  return "https://mtiker-cweb-4.proxy.itcollege.ee";
+  return "https://mtiker-cweb-a4.proxy.itcollege.ee";
 }

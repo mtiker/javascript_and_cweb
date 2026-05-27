@@ -185,14 +185,14 @@ for defense-time verification on Docker-capable runners.
 
 The Assignment 03 proxy mapping is:
 
-- `https://mtiker-cweb-4.proxy.itcollege.ee` => `http://192.168.181.122:83`
+- `https://mtiker-cweb-a4.proxy.itcollege.ee` => `http://192.168.181.122:83`
 
 ## Assignment 03 Multi-Gym Variables
 
 For Assignment 03 production deployment, configure these values in GitLab CI/CD variables or on the VPS runner host:
 
 - `JWT__Key`
-- `CORS_ALLOWED_ORIGIN` if you want to override the default `https://mtiker-cweb-4.proxy.itcollege.ee`
+- `CORS_ALLOWED_ORIGIN` if you want to override the default `https://mtiker-cweb-a4.proxy.itcollege.ee`
 - `POSTGRES_PASSWORD`
 - `POSTGRES_DB` if you want to override the default database name
 - `POSTGRES_USER` if you want to override the default database user
@@ -205,7 +205,7 @@ For Assignment 03 production deployment, configure these values in GitLab CI/CD 
 - `MULTI_GYM_IMAGE` if you want a custom local image name
 - `COMPOSE_PROJECT_NAME` if you want a non-default Docker Compose project name
 
-At minimum, `JWT__Key` must be set. `CORS_ALLOWED_ORIGIN` defaults to `https://mtiker-cweb-4.proxy.itcollege.ee` for Assignment 03.
+At minimum, `JWT__Key` must be set. `CORS_ALLOWED_ORIGIN` defaults to `https://mtiker-cweb-a4.proxy.itcollege.ee` for Assignment 03.
 
 ## Assignment 05 Final2 Multi-Gym Deployment Model
 
@@ -226,8 +226,8 @@ The assignment pipeline runs:
 
 The documented Final2 routes are:
 
-- backend: `https://mtiker-cweb-4.proxy.itcollege.ee` => `http://192.168.181.122:83`
-- standalone client: `https://mtiker-cweb-4-client.proxy.itcollege.ee` => `http://192.168.181.122:8081`
+- backend: `https://mtiker-cweb-a4.proxy.itcollege.ee` => `http://192.168.181.122:83`
+- standalone client: `https://mtiker-cweb-a4-client.proxy.itcollege.ee` => `http://192.168.181.122:8081`
 
 The standalone client deployment requires production CORS to include only the
 deployed client origin. `scripts/smoke-deploy.sh` checks backend health, client
@@ -244,7 +244,7 @@ Latest recorded Final2 deployment evidence from 2026-05-25:
 - local Docker production-stack smoke passed for backend, PostgreSQL,
   standalone client, public-origin CORS, login, refresh-token renewal, and an
   authenticated tenant API read
-- public smoke against `https://mtiker-cweb-4.proxy.itcollege.ee` still failed
+- public smoke against `https://mtiker-cweb-a4.proxy.itcollege.ee` still failed
   at backend `/health` with HTTP 404, so the public deployment is not verified
 
 ## Assignment 05 Final2 Variables
