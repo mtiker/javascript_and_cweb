@@ -22,13 +22,17 @@ docker compose --project-name "$PROJECT_NAME" -f docker-compose.yml up -d --buil
 if command -v curl >/dev/null 2>&1; then
   health_check() {
     local url="$1"
+    echo "Health-checking $url"
     for _ in $(seq 1 30); do
-      if curl --fail --silent "$url" >/dev/null; then
+      if curl --fail --silent --show-error "$url" >/dev/null; then
+        echo "  OK: $url"
         return 0
       fi
       sleep 2
     done
-    curl --fail --silent "$url" >/dev/null
+    echo "  FAIL: $url did not become healthy; final attempt output:" >&2
+    curl --fail --show-error "$url" || true
+    return 1
   }
 
   health_check "http://127.0.0.1:${API_PORT}/api/v1/health"
