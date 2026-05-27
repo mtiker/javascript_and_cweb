@@ -17,10 +17,6 @@ API_PORT="${A06_API_PORT:-86}"
 VUE_PORT="${A06_VUE_PORT:-87}"
 REACT_PORT="${A06_REACT_PORT:-89}"
 
-# TEMPORARY: wipe stale pgdata volume to recover from postgres password mismatch.
-# Revert this line in a follow-up commit once CI redeploys cleanly.
-docker compose --project-name "$PROJECT_NAME" -f docker-compose.yml down -v --remove-orphans || true
-
 docker compose --project-name "$PROJECT_NAME" -f docker-compose.yml up -d --build --remove-orphans
 
 dump_diagnostics() {
