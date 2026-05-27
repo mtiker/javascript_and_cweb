@@ -197,7 +197,17 @@ export class ApiClient {
     const session = this.getSession();
     if (requiresAuth && session?.jwt) headers.set("Authorization", `Bearer ${session.jwt}`);
 
-    const res = await fetch(`${this.baseUrl}${path}`, { ...init, headers });
+    const url = `${this.baseUrl}${path}`;
+    let res: Response;
+    try {
+      res = await fetch(url, { ...init, headers });
+    } catch (err) {
+      const reason = err instanceof Error ? err.message : String(err);
+      throw new ApiError(
+        `Cannot reach the API at ${this.baseUrl}. Check your network or whether the backend is online. (${reason})`,
+        0,
+      );
+    }
 
     if (res.status === 401 && requiresAuth && retry && session) {
       const ok = await this.refresh();
@@ -217,11 +227,16 @@ export class ApiClient {
     if (!session) return false;
 
     this.refreshInFlight = (async () => {
-      const res = await fetch(`${this.baseUrl}/api/v1/account/renew-refresh-token`, {
-        method: "POST",
-        headers: { Accept: "application/json", "Content-Type": "application/json" },
-        body: JSON.stringify({ jwt: session.jwt, refreshToken: session.refreshToken }),
-      });
+      let res: Response;
+      try {
+        res = await fetch(`${this.baseUrl}/api/v1/account/renew-refresh-token`, {
+          method: "POST",
+          headers: { Accept: "application/json", "Content-Type": "application/json" },
+          body: JSON.stringify({ jwt: session.jwt, refreshToken: session.refreshToken }),
+        });
+      } catch {
+        return false;
+      }
       if (!res.ok) {
         this.clearSession();
         return false;
