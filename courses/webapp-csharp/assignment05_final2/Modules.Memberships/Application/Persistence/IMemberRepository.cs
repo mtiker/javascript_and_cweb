@@ -23,6 +23,11 @@ public interface IMemberRepository
         Guid? excludeMemberId,
         CancellationToken cancellationToken = default);
 
+    Task<int> GetMaxMemberCodeSequenceAsync(
+        Guid gymId,
+        string prefix,
+        CancellationToken cancellationToken = default);
+
     Task<bool> PersonalCodeExistsAsync(
         string personalCode,
         Guid? excludePersonId,

@@ -85,9 +85,13 @@ public class MemberWorkflowService(
     {
         var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, SharedKernel.RoleNames.GymOwner, SharedKernel.RoleNames.GymAdmin);
         await subscriptionTierLimitService.EnsureCanCreateMemberAsync(gymId, cancellationToken);
-        var normalized = NormalizeRequest(request);
+        var normalized = NormalizeRequest(request, requireMemberCode: false);
 
-        await EnsureUniqueMemberFieldsAsync(gymId, normalized.MemberCode, normalized.PersonalCode, null, null, cancellationToken);
+        var memberCode = string.IsNullOrWhiteSpace(normalized.MemberCode)
+            ? await GenerateMemberCodeAsync(gymId, gymCode, cancellationToken)
+            : normalized.MemberCode;
+
+        await EnsureUniqueMemberFieldsAsync(gymId, memberCode, normalized.PersonalCode, null, null, cancellationToken);
 
         var person = new Person
         {
@@ -101,7 +105,7 @@ public class MemberWorkflowService(
         {
             GymId = gymId,
             Person = person,
-            MemberCode = normalized.MemberCode,
+            MemberCode = memberCode,
             Status = normalized.Status
         };
 
@@ -111,6 +115,23 @@ public class MemberWorkflowService(
         return memberMapper.ToDetail(member);
     }
 
+    private async Task<string> GenerateMemberCodeAsync(Guid gymId, string gymCode, CancellationToken cancellationToken)
+    {
+        var prefix = $"M-{gymCode.ToUpperInvariant()}-";
+        var nextSeq = await memberRepository.GetMaxMemberCodeSequenceAsync(gymId, prefix, cancellationToken) + 1;
+
+        for (var attempt = 0; attempt < 20; attempt++)
+        {
+            var candidate = $"{prefix}{(nextSeq + attempt):D4}";
+            if (!await memberRepository.MemberCodeExistsAsync(gymId, candidate, null, cancellationToken))
+            {
+                return candidate;
+            }
+        }
+
+        throw new ConflictAppException("Could not generate a unique member code.");
+    }
+
     public async Task<MemberDetailResponse> UpdateMemberAsync(string gymCode, Guid id, MemberUpsertRequest request, CancellationToken cancellationToken = default)
     {
         var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, SharedKernel.RoleNames.GymOwner, SharedKernel.RoleNames.GymAdmin);
@@ -118,6 +139,11 @@ public class MemberWorkflowService(
 
         var member = await memberRepository.FindWithPersonAsync(gymId, id, cancellationToken)
                      ?? throw new NotFoundException("Member was not found.");
+
+        if (string.IsNullOrWhiteSpace(normalized.MemberCode))
+        {
+            throw new ValidationAppException("Member code is required.");
+        }
 
         await EnsureUniqueMemberFieldsAsync(gymId, normalized.MemberCode, normalized.PersonalCode, member.Id, member.PersonId, cancellationToken);
 
@@ -170,7 +196,7 @@ public class MemberWorkflowService(
         }
     }
 
-    private static MemberUpsertRequest NormalizeRequest(MemberUpsertRequest request)
+    private static MemberUpsertRequest NormalizeRequest(MemberUpsertRequest request, bool requireMemberCode = true)
     {
         if (string.IsNullOrWhiteSpace(request.FirstName))
         {
@@ -182,7 +208,7 @@ public class MemberWorkflowService(
             throw new ValidationAppException("Last name is required.");
         }
 
-        if (string.IsNullOrWhiteSpace(request.MemberCode))
+        if (requireMemberCode && string.IsNullOrWhiteSpace(request.MemberCode))
         {
             throw new ValidationAppException("Member code is required.");
         }
@@ -193,7 +219,7 @@ public class MemberWorkflowService(
             LastName = request.LastName.Trim(),
             PersonalCode = string.IsNullOrWhiteSpace(request.PersonalCode) ? null : request.PersonalCode.Trim(),
             DateOfBirth = request.DateOfBirth,
-            MemberCode = request.MemberCode.Trim(),
+            MemberCode = string.IsNullOrWhiteSpace(request.MemberCode) ? string.Empty : request.MemberCode.Trim(),
             Status = request.Status
         };
     }

@@ -75,6 +75,30 @@ public sealed class EfMemberRepository(AppDbContext dbContext) : IMemberReposito
             cancellationToken);
     }
 
+    public async Task<int> GetMaxMemberCodeSequenceAsync(
+        Guid gymId,
+        string prefix,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(prefix);
+
+        var suffixes = await dbContext.Members
+            .Where(member => member.GymId == gymId && member.MemberCode.StartsWith(prefix))
+            .Select(member => member.MemberCode.Substring(prefix.Length))
+            .ToListAsync(cancellationToken);
+
+        var max = 0;
+        foreach (var suffix in suffixes)
+        {
+            if (int.TryParse(suffix, out var value) && value > max)
+            {
+                max = value;
+            }
+        }
+
+        return max;
+    }
+
     public Task<bool> PersonalCodeExistsAsync(
         string personalCode,
         Guid? excludePersonId,
