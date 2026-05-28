@@ -1,0 +1,62 @@
+@model AdminEquipmentFormViewModel
+@inject IStringLocalizer<SharedResources> L
+
+<section class="panel">
+    <p class="eyebrow">@L["AdminWorkspace"]</p>
+    <h1>@L["EditEquipment"]</h1>
+    <p>@L["ActiveGym"]: <strong>@Model.GymCode</strong></p>
+</section>
+
+<section class="panel">
+    <form asp-area="Admin" asp-controller="Operations" asp-action="EquipmentEdit" asp-route-id="@Model.Id" method="post" class="form-grid">
+        <div asp-validation-summary="All" class="validation-summary-errors"></div>
+        <input type="hidden" asp-for="Id" />
+
+        <div class="form-row">
+            <label asp-for="EquipmentModelId">@L["EquipmentModel"]</label>
+            <select asp-for="EquipmentModelId" asp-items="Model.EquipmentModelOptions"></select>
+            <span asp-validation-for="EquipmentModelId" class="field-validation-error"></span>
+        </div>
+
+        <div class="form-row">
+            <label asp-for="AssetTag">@L["AssetTag"]</label>
+            <input asp-for="AssetTag" />
+            <span asp-validation-for="AssetTag" class="field-validation-error"></span>
+        </div>
+
+        <div class="form-row">
+            <label asp-for="SerialNumber">@L["SerialNumber"]</label>
+            <input asp-for="SerialNumber" />
+            <span asp-validation-for="SerialNumber" class="field-validation-error"></span>
+        </div>
+
+        <div class="form-row">
+            <label asp-for="CurrentStatus">@L["Status"]</label>
+            <select asp-for="CurrentStatus" asp-items="Html.GetEnumSelectList<Shared.Contracts.Enums.EquipmentStatus>()"></select>
+            <span asp-validation-for="CurrentStatus" class="field-validation-error"></span>
+        </div>
+
+        <div class="form-row">
+            <label asp-for="CommissionedAt">@L["CommissionedAt"]</label>
+            <input asp-for="CommissionedAt" type="date" />
+            <span asp-validation-for="CommissionedAt" class="field-validation-error"></span>
+        </div>
+
+        <div class="form-row">
+            <label asp-for="DecommissionedAt">@L["DecommissionedAt"]</label>
+            <input asp-for="DecommissionedAt" type="date" />
+            <span asp-validation-for="DecommissionedAt" class="field-validation-error"></span>
+        </div>
+
+        <div class="form-row">
+            <label asp-for="Notes">@L["Notes"]</label>
+            <textarea asp-for="Notes" rows="3"></textarea>
+            <span asp-validation-for="Notes" class="field-validation-error"></span>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="primary">@L["Save"]</button>
+            <a asp-area="Admin" asp-controller="Operations" asp-action="Index" class="secondary">@L["Cancel"]</a>
+        </div>
+    </form>
+</section>

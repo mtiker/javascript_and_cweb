@@ -25,4 +25,6 @@ public interface IUsersAuthService
     Task<ForgotPasswordResponse> ForgotPasswordAsync(ForgotPasswordRequest request, CancellationToken cancellationToken = default);
 
     Task ResetPasswordAsync(ResetPasswordRequest request, CancellationToken cancellationToken = default);
+
+    Task ChangePasswordAsync(ChangePasswordRequest request, CancellationToken cancellationToken = default);
 }

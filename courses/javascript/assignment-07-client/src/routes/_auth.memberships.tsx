@@ -1,23 +1,55 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { useAuth } from "@/lib/api/auth-context";
 import { MembershipStatus, PaymentStatus, getErrorMessages } from "@/lib/api/types";
 import { NoActiveGym, enumLabel, fmtDate, fmtMoney } from "@/lib/ui-helpers";
 import { PageBanner } from "@/components/page-banner";
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import bannerImg from "@/assets/banner-memberships.jpg";
 
 export const Route = createFileRoute("/_auth/memberships")({
   component: MembershipsPage,
 });
 
+const CANCELLABLE_STATUSES = [
+  MembershipStatus.Pending,
+  MembershipStatus.Active,
+  MembershipStatus.Paused,
+];
+
 function MembershipsPage() {
   const auth = useAuth();
   const gym = auth.activeGym;
+  const queryClient = useQueryClient();
 
   const wsQ = useQuery({
     enabled: !!gym,
     queryKey: ["member-workspace", gym],
     queryFn: () => auth.api.getMemberWorkspace(gym!),
+  });
+
+  const cancelMut = useMutation({
+    mutationFn: (membershipId: string) =>
+      auth.api.updateMembershipStatus(gym!, membershipId, {
+        status: MembershipStatus.Cancelled,
+      }),
+    onSuccess: () => {
+      toast.success("Membership cancelled.");
+      queryClient.invalidateQueries({ queryKey: ["member-workspace", gym] });
+    },
+    onError: (err) => getErrorMessages(err).forEach((m) => toast.error(m)),
   });
 
   if (!gym) return <NoActiveGym />;
@@ -59,6 +91,7 @@ function MembershipsPage() {
                   <th className="px-3 py-2">End</th>
                   <th className="px-3 py-2">Price</th>
                   <th className="px-3 py-2">Status</th>
+                  <th className="px-3 py-2 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -68,6 +101,34 @@ function MembershipsPage() {
                     <td className="px-3 py-2">{fmtDate(m.endDate)}</td>
                     <td className="px-3 py-2">{fmtMoney(m.priceAtPurchase, m.currencyCode)}</td>
                     <td className="px-3 py-2">{enumLabel(MembershipStatus, m.status)}</td>
+                    <td className="px-3 py-2 text-right">
+                      {CANCELLABLE_STATUSES.includes(m.status) ? (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="outline" size="sm" disabled={cancelMut.isPending}>
+                              Cancel membership
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Cancel this membership?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Your membership will be marked as cancelled. You can buy a new one
+                                later, but this action ends the current one immediately.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Keep membership</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => cancelMut.mutate(m.id)}>
+                                Cancel membership
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>

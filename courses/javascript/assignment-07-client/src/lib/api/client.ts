@@ -4,12 +4,14 @@ import {
   type AuthSession,
   type Booking,
   type BookingCreateRequest,
+  type ChangePasswordRequest,
   type LoginRequest,
   type MemberDetail,
   type MemberSummary,
   type MemberUpsertRequest,
   type MemberWorkspace,
   type Membership,
+  type MembershipStatusUpdateRequest,
   type MessageResponse,
   type Payment,
   type RegisterRequest,
@@ -69,6 +71,12 @@ export class ApiClient {
     return this.req<AuthSession>("/api/v1/account/switch-role", {
       method: "POST",
       body: JSON.stringify({ roleName }),
+    });
+  }
+  changePassword(request: ChangePasswordRequest): Promise<MessageResponse> {
+    return this.req<MessageResponse>("/api/v1/account/change-password", {
+      method: "POST",
+      body: JSON.stringify(request),
     });
   }
 
@@ -174,6 +182,12 @@ export class ApiClient {
   // ---- memberships / payments ----
   getMemberships(gym: string) {
     return this.req<Membership[]>(`${this.t(gym)}/memberships`);
+  }
+  updateMembershipStatus(gym: string, id: string, body: MembershipStatusUpdateRequest) {
+    return this.req<Membership>(`${this.t(gym)}/memberships/${encodeURIComponent(id)}/status`, {
+      method: "PUT",
+      body: JSON.stringify(body),
+    });
   }
   getPayments(gym: string) {
     return this.req<Payment[]>(`${this.t(gym)}/payments`);

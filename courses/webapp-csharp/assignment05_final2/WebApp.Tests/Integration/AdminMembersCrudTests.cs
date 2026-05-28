@@ -88,7 +88,9 @@ public class AdminMembersCrudTests(CustomWebApplicationFactory factory) : IClass
             ["LastName"] = "Tester",
             ["MemberCode"] = memberCode,
             ["PersonalCode"] = personalCode,
-            ["Status"] = nameof(MemberStatus.Active)
+            ["Status"] = nameof(MemberStatus.Active),
+            ["Email"] = "mvc.create.tester@example.com",
+            ["NewPassword"] = "Test.Password1!"
         }));
 
         Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);

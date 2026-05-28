@@ -1,6 +1,16 @@
 # Agent Rules For This Repository
 
-These rules apply to this repository in future Codex sessions.
+These rules guide future Codex sessions in this repository. Use them as project-specific defaults, not as a reason to block simple work.
+
+## Operating Principles
+
+- Act as a principal engineer: optimize for correctness, maintainability, clarity, security, and operability.
+- Understand the local architecture and conventions before changing non-trivial code.
+- Prefer the smallest correct change that fits the existing project shape.
+- Keep domain logic, data access, orchestration, and UI/API boundaries clear.
+- Avoid unnecessary dependencies, speculative abstractions, fake implementations, and placeholder logic.
+- Do not make silent breaking changes.
+- Scale process to risk: small mechanical changes need light validation; architectural, auth, data, deployment, or assignment-scope changes need stronger planning and verification.
 
 ## Repository Structure
 
@@ -9,145 +19,87 @@ These rules apply to this repository in future Codex sessions.
   - `courses/webapp-csharp`
   - `shared`
   - `docs`
-- Assignment folders use: `assignment-XX-short-name`.
-- Use lowercase kebab-case for folder/file names.
+- Assignment folders use `assignment-XX-short-name`.
+- Use lowercase kebab-case for new folders and files unless an existing framework convention requires otherwise.
 
-## Branch Naming
+## Branch And Commit Naming
 
-- Feature: `feat/<subject>/aXX-<short-name>`
-- Fix: `fix/<subject>/aXX-<short-name>`
-- Docs: `docs/<subject>/aXX-<short-name>`
+- Branches:
+  - Feature: `feat/<subject>/aXX-<short-name>`
+  - Fix: `fix/<subject>/aXX-<short-name>`
+  - Docs: `docs/<subject>/aXX-<short-name>`
+- Subjects:
+  - `javascript`
+  - `webapp-csharp`
+- Commits use Conventional Commits with subject/assignment scope:
+  - `feat(javascript/a01): ...`
+  - `fix(webapp-csharp/a01): ...`
+  - `docs(javascript/a01): ...`
 
-Subjects:
-- `javascript`
-- `webapp-csharp`
+## Documentation
 
-## Commit Naming
-
-Use Conventional Commits with subject/assignment scope:
-- `feat(javascript/a01): ...`
-- `fix(webapp-csharp/a01): ...`
-- `docs(javascript/a01): ...`
-
-## Documentation Rules
-
-- Keep root `README.md` as repository map and workflow rules.
-- Keep per-assignment `README.md` inside each assignment folder.
-- If an assignment is deployed and reachable from a third device/network, place its live URL at the beginning of that assignment `README.md`.
-- Log meaningful AI assistance in `docs/ai-prompts.md`.
-- Each AI log entry should include, where relevant:
-  - date
-  - task or assignment context
-  - prompt summary or prompt text
-  - files affected
-  - what AI helped with
-  - what AI got wrong or what had to be corrected
-  - what was reviewed/corrected manually
-  - alternative solutions considered
-  - ADR/ERD notes when relevant
-- With every implemented change, verify that related documentation stays in sync, including relevant `README.md` files and `docs/ai-prompts.md`.
-- If an assignment has an explicit plan, blueprint, or target-architecture document, update that document in the same change whenever scope, architecture, entities, roles, APIs, tests, deployment expectations, or delivery status change.
-- For `courses/webapp-csharp/assignment-03-multi-gym-management-system`, keep `docs/a3-saas-plan.md` aligned with implementation and README changes.
-
-## Documentation Standard
-
-Write documentation at a professional level expected from a strong senior/top-level developer.
-
-Documentation must be:
-- accurate
-- concise but complete
-- easy for a new contributor to follow
-- updated in the same change when behavior changes
-
-When implementing or changing features, keep in sync where relevant:
-- root `README.md`
-- assignment-level `README.md`
-- deployed assignment URL at the start of the assignment `README.md` when public third-device access exists
-- setup steps
-- run/test instructions
-- architectural notes
-- known limitations
-- `docs/ai-prompts.md`
+- Keep documentation accurate when a change affects setup, behavior, architecture, deployment, or assignment status.
+- Do not force documentation updates for purely internal, mechanical, or exploratory changes.
+- Keep root `README.md` as the repository map and workflow entry point.
+- Keep per-assignment `README.md` files focused on running, testing, deploying, and understanding that assignment.
+- If an assignment is publicly deployed and reachable from another device/network, place the live URL near the beginning of that assignment `README.md`.
+- Log meaningful AI assistance in `docs/ai-prompts.md` when it materially affects assignment work or design decisions. Routine small edits do not need a log entry.
+- For `courses/webapp-csharp/assignment-03-multi-gym-management-system`, keep `docs/a3-saas-plan.md` aligned when implementation scope, architecture, entities, roles, APIs, tests, deployment expectations, or delivery status change.
 
 ## Course Source Priority
 
-- For `courses/javascript` tasks, prioritize:
+- For `courses/javascript` work, prefer the current official course material:
   - `https://courses.taltech.akaver.com/javascript/`
-- For `courses/webapp-csharp` tasks, prioritize:
+- For `courses/webapp-csharp` work, prefer the current official course material:
   - `https://courses.taltech.akaver.com/web-applications-with-csharp`
   - `https://courses.taltech.akaver.com/programming-in-csharp`
-- When course material conflicts with generic guidance, follow course material first.
-- If a task maps to a specific assignment, defense, or course phase, read the relevant official course pages before implementing and extract the current required stack, deliverables, and defense expectations.
+- If course material conflicts with generic advice, follow the course material.
+- Read official course pages before implementing only when the task depends on current assignment requirements, defense expectations, or course phase. For localized bug fixes or cleanup, use existing repo context first.
 
-## Course-Driven Planning Rules
+## Planning Defaults
 
-- Before writing code, identify the subject, assignment number, current course phase, and whether the work is cumulative from earlier assignments.
-- Translate official course requirements into a concrete checklist before implementation:
+For non-trivial assignment work:
+
+- Identify the subject, assignment number, active course phase, and whether the work is cumulative.
+- Convert requirements into a short checklist covering only relevant areas:
   - architecture and stack
-  - domain scope and entities
-  - roles/auth requirements
-  - tests
-  - documentation
-  - diagrams/evidence
-  - deployment/CI expectations
-- Do not skip prerequisite artifacts when the course requires them, such as project proposal approval, a real client application, deployment documentation, or diagrams.
-- Favor course-taught tools and patterns before introducing alternatives. If deviating, document why and keep the result easy to defend verbally.
-- Build around real assignment/domain rules early so later work is not blocked by missing entities, relationships, validation, authorization, or deployment setup.
-- If the task looks large enough that context may become tight, plan and implement one layer at a time instead of spreading partial work across the whole stack at once.
-- In context-sensitive work, prefer an order such as domain/data model -> business/application layer -> API/UI layer -> tests -> documentation, unless the task clearly requires a different order.
-- Tell the user early when work will be split into layer-based batches because context compaction can lose lower-level details, temporary findings, or assumptions if too much is changed at once.
-- Before any context compaction or major checkpoint, summarize completed work, current assumptions, open risks, and the next concrete layer to continue from.
+  - domain entities and relationships
+  - roles/auth boundaries
+  - tests and validation
+  - docs, diagrams, deployment, or CI when affected
+- Work layer-by-layer when the change is large enough to become hard to review.
+- Surface assumptions, tradeoffs, and risks before editing when requirements are ambiguous or the change could affect architecture, data integrity, auth, deployment, or grading.
 
-## Subject-Specific Defaults
+For small tasks:
 
-### `courses/javascript`
+- Do the change directly after checking the local context.
+- Avoid ceremony that does not reduce risk.
 
-- Match the current assignment phase rather than jumping ahead:
-  - A1: pure JavaScript, browser-based CRUD, browser storage, async handling, and validation.
-  - A2: strict TypeScript migration with custom types, at least 3 generic utilities, recurring-task/domain enhancements, relationship modeling, Zod runtime validation, and a test suite with coverage reporting.
-  - A3: Vite + Vue 3 + TypeScript + Pinia + Vue Router, reusable components, responsive/mobile-first UI, local persistence, drag-drop where relevant, and deployment-ready frontend structure.
-  - A4: Vite + React + TypeScript with React Router, Zustand or Context + `useReducer`, at least 3 custom hooks, at least 5 reusable components, protected-route patterns, error boundaries, memoization where appropriate, and loading states.
-  - A5: Docker, GitLab CI/CD, VPS deployment, multi-stage images, local/prod compose files, reverse-proxy/SSL concerns, health checks, and deployment documentation.
-  - A6: NestJS + TypeScript + PostgreSQL (or SQLite) with Prisma or TypeORM, migrations, Swagger, JWT + refresh token rotation, integrated Vue/React frontend auth, and comprehensive unit/component/integration/E2E testing.
-  - A7: Angular 17+ integrated with the backend, using standalone components, services, interceptors, route guards, RxJS-based HTTP flows, reactive forms, and Angular auth integration.
-- Treat A6-A7 as extended curriculum, not guaranteed baseline work:
-  - the official syllabus says Node.js/NestJS and/or Angular weeks may be dropped or condensed based on class progress
-  - if that happens, do not force backend/Angular work into the plan; instead strengthen the required React/full-app/demo/testing scope that remains
-- At least one framework implementation must behave like a full application, not a thin CRUD shell. Plan for:
-  - aggregated dashboards or summary views
-  - multi-step or workflow-style flows where appropriate
-  - backend integration
-  - polished UX states
-  - a deployed demo
-- For JS backend/full-stack work, model required domain complexity early:
-  - minimum 10 domain entities when the course requires it
-  - identity/auth entities
-  - meaningful relationships
-  - at least 3 main entities with full CRUD
-- Preferred test stack where supported:
-  - Vitest for unit tests
-  - framework component tests for interaction-heavy UI
-  - Supertest for backend integration tests
-  - Playwright for E2E/auth flows
+## JavaScript Course Defaults
 
-### `courses/webapp-csharp`
+- Match the current assignment phase instead of jumping ahead:
+  - A1: browser JavaScript, CRUD, browser storage, async handling, and validation.
+  - A2: TypeScript migration, custom types, generic utilities where required, domain enhancements, runtime validation, and tests.
+  - A3: Vite + Vue 3 + TypeScript + Pinia + Vue Router, reusable components, responsive UI, local persistence, drag-drop where relevant.
+  - A4: Vite + React + TypeScript with React Router, Zustand or Context + `useReducer`, custom hooks, reusable components, protected routes, error boundaries, memoization where useful, and loading states.
+  - A5: Docker, GitLab CI/CD, VPS deployment, multi-stage images, compose files, reverse-proxy/SSL concerns, health checks, and deployment notes where required.
+  - A6: NestJS + TypeScript + PostgreSQL or SQLite with Prisma or TypeORM, migrations, Swagger, JWT/refresh tokens, frontend auth integration, and meaningful tests when this phase is active.
+  - A7: Angular 17+ integration with standalone components, services, interceptors, guards, RxJS HTTP flows, reactive forms, and auth integration when this phase is active.
+- Treat A6-A7 as extended curriculum unless the active course phase requires them.
+- Prefer Vitest for unit tests, framework component tests for interaction-heavy UI, Supertest for backend integration tests, and Playwright for E2E/auth flows when the project already supports them.
+- At least one framework implementation should behave like a real application when the assignment asks for a full app, not just a thin CRUD shell.
 
-- Follow the architecture progression expected by the course:
-  - A1: server-rendered ASP.NET Core MVC N-tier app with Identity, i18n, htmx/Alpine.js, and tests from the start
-  - A2: new student project using Clean/Onion Architecture + REST API + JWT + working client app
-  - A3: Docker + CI/CD + VPS deployment
-  - A4: modular monolith refactor of the same A2/A3 project
-  - A5: extract one module into a simple microservice
-- Treat testing as cross-cutting from A1 onward:
-  - there is no separate testing assignment later
-  - unit, integration, and E2E coverage should be maintained and extended as the architecture evolves
-- Do not collapse A1 and A2 into one architecture. A1 is a separate foundational exercise; A2-A5 are cumulative on the same student project.
-- Treat A2 as blocked until the project proposal is approved when the course requires that prerequisite.
-- Preserve cumulative deliverables from earlier phases. Moving from A2 to A5 must not silently regress the client app, deployment, auth flow, or test coverage already required.
-- Treat A4-A5 as advanced curriculum that may be reduced if the teacher drops modular monolith and/or microservices:
-  - do not prematurely over-architect an A2/A3 project if the active course phase does not require it yet
-  - if advanced curriculum is reduced, keep the Clean Architecture + REST API + client + DevOps baseline polished and defense-ready instead
-- Use the course-aligned stack by default:
+## Webapp C# Course Defaults
+
+- Follow the course architecture progression:
+  - A1: ASP.NET Core MVC N-tier app with Identity, i18n, htmx/Alpine.js where required, and tests where practical.
+  - A2: new student project with Clean/Onion Architecture, REST API, JWT, and a working client app.
+  - A3: Docker, CI/CD, and VPS deployment.
+  - A4: modular monolith refactor of the same A2/A3 project when required.
+  - A5: extract one module into a simple microservice when required.
+- Do not collapse A1 and A2 into one architecture.
+- Treat A2-A5 as cumulative unless the teacher reduces scope.
+- Use the course-aligned stack by default where applicable:
   - .NET 10
   - ASP.NET Core
   - EF Core Code First migrations
@@ -155,176 +107,49 @@ When implementing or changing features, keep in sync where relevant:
   - Swagger
   - Docker Desktop
   - Postman/Bruno
-- Treat multi-tenancy as a first-class invariant where the course assignment expects SaaS:
-  - strict `CompanyId` filtering
-  - no cross-tenant leaks
-  - system-level and company-level roles
-  - audit trail
-  - soft delete for business entities
-  - subscription-tier or feature-limit rules
-  - multi-company membership where applicable
-- Treat client/API/auth work as mandatory, not optional polish:
-  - a real client app is required when the course expects it; Swagger/Postman alone is not enough
-  - JWT access tokens plus refresh token rotation
-  - authorization and tenant isolation tests
-  - consistent `ProblemDetails` error responses
-  - validation in the application layer, not only controllers
-- Treat DevOps and deployment artifacts as part of the feature set when the course phase expects them:
-  - CI must run the existing tests
-  - deployment docs must stay current
-  - production URL and health-check path must be maintained where applicable
-  - docker-compose and environment setup must reflect the actual runnable system
-- Keep the C# codebase aligned with course-taught design principles:
-  - nullable reference types and null safety
-  - DTOs at boundaries
-  - base entities and audit fields where appropriate
-  - mapping discipline
-  - clean layer boundaries with inward dependencies
-  - global exception handling and structured logging
-  - architecture-boundary verification/tests where practical
-- For teacher-assigned SaaS domains, derive entities, roles, and business constraints from the assignment description before coding.
-- Maintain required diagrams and evidence when relevant:
-  - ERD in Mermaid
-  - DB/architecture/auth-flow diagrams
-  - module/context maps for modular monolith work
-  - trade-off notes for refactors and service extraction
+- For SaaS assignments, treat tenant isolation as a first-class invariant:
+  - strict tenant filtering
+  - no cross-tenant data leaks
+  - appropriate system/company roles
+  - audit trail and soft delete where the domain needs them
+  - subscription or feature limits when required
+- Keep DTO boundaries, validation, null safety, structured errors, logging, and dependency direction aligned with Clean Architecture principles.
+- A real client app is required when the course expects it; Swagger/Postman alone is not enough.
 
-## Definition of Done and Evidence
+## Quality And Security
 
-Do not present partial implementation as complete.
+- Frontend work should be responsive, accessible, visually coherent, and complete enough for the assignment or feature scope.
+- For user-facing mutations, include success/error feedback, validation feedback, disabled/in-progress states, and destructive-action confirmation when relevant.
+- For lists and searches, handle loading, empty, filtered-empty, and error states when relevant.
+- Use safe DOM APIs and avoid unsafe HTML insertion unless explicitly justified and sanitized.
+- Validate inputs at appropriate boundaries. For APIs, prefer consistent error responses.
+- For auth, tenant, and security-sensitive work, add explicit forbidden-path checks where practical.
 
-For course assignments, completion normally includes all relevant parts moving together:
-- implementation
-- tests
-- documentation
-- diagrams/evidence
-- deployment or startup instructions
-- AI usage log
+## Testing And Verification
 
-For every user-facing feature or meaningful change, verify and complete where relevant:
-- create/add flow
-- read/list/details flow
-- edit/update flow
-- delete/remove flow
-- filter/search flow
-- loading state
-- empty state
-- filtered-empty state
-- error state
-- success feedback
-- validation feedback
-- disabled/in-progress state
+- Add or update tests for meaningful behavior changes when the project supports testing.
+- Focus test depth on risk:
+  - unit tests for logic and helpers
+  - component/UI tests for interaction-heavy frontend behavior
+  - integration or E2E tests for cross-module flows, auth, data access, and deployment-critical paths
+- For bug fixes, reproduce the bug with a test when practical, then keep the regression test.
+- Run the strongest relevant checks available for the changed area: tests, linting, type checks, build, or smoke startup.
+- Do not claim something works unless it was actually verified. If verification is skipped or blocked, state that clearly.
 
-If the assignment involves defense/demo expectations, also verify where relevant:
-- app builds successfully
-- app starts successfully
-- core happy-path scenario is smoke-tested
-- demo or seed data exists where needed
-- README contains current run/test/deploy commands
-- diagrams/evidence are updated
+## Architecture And Change Discipline
 
-## Defense-Readiness Rules
-
-- Never leave assignment work in a state that does not compile, start, or run its core scenario if the task is being reported as complete.
-- Prefer a stable, explainable, course-aligned solution over risky last-minute refactors.
-- Before and after substantial refactors, verify the current known-good build/test/start path.
-- For defense-oriented work, keep the repository ready for a known-good commit/tag by maintaining runnable code, clear setup instructions, and synchronized documentation.
-- If a task affects architecture, auth, tenant isolation, or deployment, verify the corresponding evidence and explanation artifacts too, not just the code.
-- Close to defense or code-freeze milestones, prefer preserving a last known working commit/tag and avoid leaving the branch in a half-migrated state.
-
-## Quality Defaults
-
-- Put strong emphasis on visual quality in frontend outputs:
-  - responsive layout
-  - clear hierarchy and typography
-  - intentional color/motion choices
-  - consistent spacing and component states
-  - accessible interaction patterns
-
-- For frontend features, require complete UX behavior where relevant:
-  - success toast for successful mutations
-  - error toast for failed mutations
-  - confirmation for destructive actions such as delete
-  - clear empty-state messaging
-  - clear filtered-empty-state messaging
-  - filter reset/clear option
-  - loading and disabled states during async work
-
-- Put strong emphasis on security in all assignments:
-  - strict input validation
-  - safe DOM writes (`textContent`, no unsafe HTML insertion)
-  - defensive error handling
-  - secure-by-default browser settings where practical (for example CSP)
-
-- Require tests for implemented changes whenever the codebase supports them, covering:
-  - positive scenarios
-  - negative scenarios
-  - edge cases
-  - regression-prone paths
-
-## Testing Rules
-
-When the repository supports testing, every meaningful change must add or update tests at the appropriate level.
-
-Test expectations:
-- unit tests for logic and helpers
-- component/UI tests for interaction-heavy frontend behavior
-- integration tests for end-to-end feature flow across modules where practical
-
-For CRUD-style work, cover where relevant:
-- create success and failure
-- edit success and failure
-- delete success and failure
-- filtering/search behavior
-- validation errors
-- loading state
-- empty state
-- error state
-
-When fixing a bug:
-- first reproduce it with a failing or missing test when practical
-- then implement the fix
-- keep the regression test in place
-
-For auth, multi-tenant, and security-sensitive work, add explicit tests for forbidden paths when practical:
-- unauthorized requests
-- wrong-role access
-- cross-tenant data access attempts
-- invalid token or refresh-token flows
-
-## Architecture and Change Discipline
-
-- Modify the minimum necessary files, but do not skip adjacent required updates.
-- If a change affects behavior, also review and update where relevant:
-  - tests
-  - documentation
-  - types/contracts
-  - UI states
-  - validation
-  - error handling
-  - diagrams/evidence
+- Modify the minimum necessary files, but include adjacent updates that are required for correctness.
+- If behavior changes, review related tests, types/contracts, validation, UI states, error handling, and documentation where relevant.
 - Do not leave critical TODOs for required functionality.
-- Start larger features by clarifying:
-  - domain entities and relationships
-  - authorization boundaries
-  - validation rules
-  - state transitions
-  - error cases
-  - deployment/runtime implications
 - Prefer course-aligned patterns that are easy to explain in defense over unnecessary abstraction or unsupported libraries.
+- When both subjects start sharing functionality, create or extend a dedicated integration area under `courses`; move only truly reusable parts to `shared`.
 
-## Integration Rule
+## Final Response
 
-When both subjects start sharing functionality:
-- Create/extend a dedicated integration area under `courses`.
-- Move only truly reusable parts to `shared`.
-- Do not duplicate shared logic across subject folders.
+When finishing implementation work, summarize:
 
-## Required Final Response
-
-When finishing work, summarize:
-1. what was changed
-2. which files were changed
+1. what changed
+2. which files changed
 3. what tests were added or updated
-4. what documentation was updated
-5. any remaining limitations or follow-up items
+4. what documentation changed, or that none was needed
+5. what remains unverified or worth following up

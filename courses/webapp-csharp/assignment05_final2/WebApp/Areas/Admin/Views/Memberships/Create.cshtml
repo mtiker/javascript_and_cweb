@@ -1,0 +1,54 @@
+@model AdminMembershipSellFormViewModel
+@inject IStringLocalizer<SharedResources> L
+
+<section class="panel">
+    <p class="eyebrow">@L["AdminWorkspace"]</p>
+    <h1>@L["SellMembership"]</h1>
+    <p>@L["ActiveGym"]: <strong>@Model.GymCode</strong></p>
+</section>
+
+<section class="panel">
+    @if (Model.MemberOptions.Count == 0 || Model.PackageOptions.Count == 0)
+    {
+        <p class="muted-text">@L["NeedMemberAndPackageFirst"]</p>
+    }
+    else
+    {
+        <form asp-area="Admin" asp-controller="Memberships" asp-action="Create" method="post" class="form-grid">
+            <div asp-validation-summary="All" class="validation-summary-errors"></div>
+
+            <div class="form-row">
+                <label asp-for="MemberId">@L["Member"]</label>
+                <select asp-for="MemberId" asp-items="Model.MemberOptions">
+                    <option value="">--</option>
+                </select>
+                <span asp-validation-for="MemberId" class="field-validation-error"></span>
+            </div>
+
+            <div class="form-row">
+                <label asp-for="MembershipPackageId">@L["Package"]</label>
+                <select asp-for="MembershipPackageId" asp-items="Model.PackageOptions">
+                    <option value="">--</option>
+                </select>
+                <span asp-validation-for="MembershipPackageId" class="field-validation-error"></span>
+            </div>
+
+            <div class="form-row">
+                <label asp-for="RequestedStartDate">@L["StartDate"]</label>
+                <input asp-for="RequestedStartDate" type="date" />
+                <span asp-validation-for="RequestedStartDate" class="field-validation-error"></span>
+            </div>
+
+            <div class="form-row">
+                <label asp-for="PaymentReference">@L["PaymentReference"]</label>
+                <input asp-for="PaymentReference" />
+                <span asp-validation-for="PaymentReference" class="field-validation-error"></span>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="primary">@L["SellMembership"]</button>
+                <a asp-area="Admin" asp-controller="Memberships" asp-action="Index" class="secondary">@L["Cancel"]</a>
+            </div>
+        </form>
+    }
+</section>

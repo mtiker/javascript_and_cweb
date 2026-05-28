@@ -1,0 +1,48 @@
+@model AdminMembershipEditFormViewModel
+@inject IStringLocalizer<SharedResources> L
+
+<section class="panel">
+    <p class="eyebrow">@L["AdminWorkspace"]</p>
+    <h1>@L["EditMembership"]</h1>
+    <p>@L["ActiveGym"]: <strong>@Model.GymCode</strong></p>
+    @if (!string.IsNullOrWhiteSpace(Model.MemberName))
+    {
+        <p>@L["Member"]: <strong>@Model.MemberName</strong></p>
+    }
+</section>
+
+<section class="panel">
+    <form asp-area="Admin" asp-controller="Memberships" asp-action="Edit" asp-route-id="@Model.Id" method="post" class="form-grid">
+        <div asp-validation-summary="All" class="validation-summary-errors"></div>
+        <input type="hidden" asp-for="Id" />
+
+        <div class="form-row">
+            <label asp-for="MembershipPackageId">@L["Package"]</label>
+            <select asp-for="MembershipPackageId" asp-items="Model.PackageOptions"></select>
+            <span asp-validation-for="MembershipPackageId" class="field-validation-error"></span>
+        </div>
+
+        <div class="form-row">
+            <label asp-for="StartDate">@L["StartDate"]</label>
+            <input asp-for="StartDate" type="date" />
+            <span asp-validation-for="StartDate" class="field-validation-error"></span>
+        </div>
+
+        <div class="form-row">
+            <label asp-for="EndDate">@L["EndDate"]</label>
+            <input asp-for="EndDate" type="date" />
+            <span asp-validation-for="EndDate" class="field-validation-error"></span>
+        </div>
+
+        <div class="form-row">
+            <label asp-for="Status">@L["Status"]</label>
+            <select asp-for="Status" asp-items="Html.GetEnumSelectList<Shared.Contracts.Enums.MembershipStatus>()"></select>
+            <span asp-validation-for="Status" class="field-validation-error"></span>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="primary">@L["Save"]</button>
+            <a asp-area="Admin" asp-controller="Memberships" asp-action="Index" class="secondary">@L["Cancel"]</a>
+        </div>
+    </form>
+</section>

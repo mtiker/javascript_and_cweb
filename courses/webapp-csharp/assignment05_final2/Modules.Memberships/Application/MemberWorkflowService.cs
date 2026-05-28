@@ -13,6 +13,7 @@ public class MemberWorkflowService(
     IMemberRepository memberRepository,
     IAuthorizationService authorizationService,
     ISubscriptionTierLimitService subscriptionTierLimitService,
+    IMemberAccountService memberAccountService,
     IMemberMapper memberMapper) : IMemberWorkflowService
 {
     public async Task<IReadOnlyCollection<MemberResponse>> GetMembersAsync(string gymCode, MemberFilter? filter = null, CancellationToken cancellationToken = default)
@@ -91,23 +92,43 @@ public class MemberWorkflowService(
             ? await GenerateMemberCodeAsync(gymId, gymCode, cancellationToken)
             : normalized.MemberCode;
 
-        await EnsureUniqueMemberFieldsAsync(gymId, memberCode, normalized.PersonalCode, null, null, cancellationToken);
-
-        var person = new Person
-        {
-            FirstName = normalized.FirstName,
-            LastName = normalized.LastName,
-            PersonalCode = normalized.PersonalCode,
-            DateOfBirth = normalized.DateOfBirth
-        };
+        var (email, password) = NormalizeLoginCredentials(normalized.Email, normalized.Password);
 
         var member = new Member
         {
             GymId = gymId,
-            Person = person,
             MemberCode = memberCode,
             Status = normalized.Status
         };
+
+        // Provisioning persists the person (new or reused) before the member
+        // row is created, so exclude that person from the personal-code
+        // uniqueness check — otherwise it would collide with itself.
+        Guid? provisionedPersonId = null;
+        if (email is not null)
+        {
+            var provision = await memberAccountService.ProvisionMemberLoginAsync(
+                gymId,
+                email,
+                password!,
+                new MemberPersonDraft(normalized.FirstName, normalized.LastName, normalized.PersonalCode, normalized.DateOfBirth),
+                cancellationToken);
+
+            member.PersonId = provision.PersonId;
+            provisionedPersonId = provision.PersonId;
+        }
+        else
+        {
+            member.Person = new Person
+            {
+                FirstName = normalized.FirstName,
+                LastName = normalized.LastName,
+                PersonalCode = normalized.PersonalCode,
+                DateOfBirth = normalized.DateOfBirth
+            };
+        }
+
+        await EnsureUniqueMemberFieldsAsync(gymId, memberCode, normalized.PersonalCode, null, provisionedPersonId, cancellationToken);
 
         await memberRepository.AddAsync(member, cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);
@@ -220,7 +241,22 @@ public class MemberWorkflowService(
             PersonalCode = string.IsNullOrWhiteSpace(request.PersonalCode) ? null : request.PersonalCode.Trim(),
             DateOfBirth = request.DateOfBirth,
             MemberCode = string.IsNullOrWhiteSpace(request.MemberCode) ? string.Empty : request.MemberCode.Trim(),
-            Status = request.Status
+            Status = request.Status,
+            Email = request.Email,
+            Password = request.Password
         };
+    }
+
+    private static (string? Email, string? Password) NormalizeLoginCredentials(string? email, string? password)
+    {
+        var hasEmail = !string.IsNullOrWhiteSpace(email);
+        var hasPassword = !string.IsNullOrWhiteSpace(password);
+
+        if (hasEmail != hasPassword)
+        {
+            throw new ValidationAppException("Email and password must both be supplied to create a member login.");
+        }
+
+        return hasEmail ? (email!.Trim(), password) : (null, null);
     }
 }

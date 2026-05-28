@@ -3,9 +3,10 @@ using Shared.Contracts.Enums;
 
 namespace App.BLL.Contracts.Services.Admin;
 
-public sealed record AdminEquipmentRow(string AssetTag, LangStr? ModelName, EquipmentStatus Status);
+public sealed record AdminEquipmentRow(Guid Id, string AssetTag, LangStr? ModelName, EquipmentStatus Status);
 
 public sealed record AdminMaintenanceTaskRow(
+    Guid Id,
     string AssetTag,
     MaintenanceTaskType TaskType,
     MaintenanceTaskStatus Status,

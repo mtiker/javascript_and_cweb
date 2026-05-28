@@ -53,6 +53,16 @@ public class AdminMemberFormViewModel
     [Display(Name = "Status")]
     public MemberStatus Status { get; set; } = MemberStatus.Active;
 
+    [EmailAddress]
+    [StringLength(256)]
+    [Display(Name = "Login email")]
+    public string? Email { get; set; }
+
+    [StringLength(100, MinimumLength = 6)]
+    [DataType(DataType.Password)]
+    [Display(Name = "Password")]
+    public string? NewPassword { get; set; }
+
     [BindNever]
     public string? GymCode { get; set; }
 

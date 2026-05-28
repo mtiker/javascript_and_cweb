@@ -35,4 +35,7 @@ internal sealed class UsersAuthService(
 
     public Task ResetPasswordAsync(ResetPasswordRequest request, CancellationToken cancellationToken = default)
         => identityService.ResetPasswordAsync(request, cancellationToken);
+
+    public Task ChangePasswordAsync(ChangePasswordRequest request, CancellationToken cancellationToken = default)
+        => accountAuthService.ChangeOwnPasswordAsync(request, cancellationToken);
 }

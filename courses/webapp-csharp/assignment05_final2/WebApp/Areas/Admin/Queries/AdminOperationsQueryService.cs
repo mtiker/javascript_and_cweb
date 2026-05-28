@@ -12,6 +12,7 @@ public sealed class AdminOperationsQueryService(IMaintenanceRepository maintenan
     {
         var equipment = (await maintenanceRepository.ListEquipmentWithModelByGymAsync(gymId, DisplayLimit, cancellationToken))
             .Select(entity => new AdminEquipmentRow(
+                entity.Id,
                 ResolveAssetTag(entity),
                 entity.EquipmentModel?.Name,
                 entity.CurrentStatus))
@@ -19,6 +20,7 @@ public sealed class AdminOperationsQueryService(IMaintenanceRepository maintenan
 
         var maintenanceTasks = (await maintenanceRepository.ListIncompleteMaintenanceTasksWithStaffByGymAsync(gymId, DisplayLimit, cancellationToken))
             .Select(entity => new AdminMaintenanceTaskRow(
+                entity.Id,
                 ResolveTaskAssetTag(entity),
                 entity.TaskType,
                 entity.Status,

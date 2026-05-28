@@ -1,0 +1,28 @@
+@model AdminEquipmentDeleteViewModel
+@inject IStringLocalizer<SharedResources> L
+
+<section class="panel">
+    <p class="eyebrow">@L["AdminWorkspace"]</p>
+    <h1>@L["DeleteEquipment"]</h1>
+    <p>@L["ActiveGym"]: <strong>@Model.GymCode</strong></p>
+</section>
+
+<section class="panel">
+    <p>@L["ConfirmEquipmentRemoval"]</p>
+    <dl class="definition-list">
+        <dt>@L["AssetTag"]</dt>
+        <dd>@Model.AssetTag</dd>
+        <dt>@L["Model"]</dt>
+        <dd>@Model.ModelName</dd>
+        <dt>@L["Status"]</dt>
+        <dd>@Model.Status</dd>
+    </dl>
+
+    <form asp-area="Admin" asp-controller="Operations" asp-action="EquipmentDelete" asp-route-id="@Model.Id" method="post" class="form-grid">
+        <input type="hidden" name="id" value="@Model.Id" />
+        <div class="form-actions">
+            <button type="submit" class="danger">@L["DeleteEquipment"]</button>
+            <a asp-area="Admin" asp-controller="Operations" asp-action="Index" class="secondary">@L["Cancel"]</a>
+        </div>
+    </form>
+</section>

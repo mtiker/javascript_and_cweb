@@ -89,6 +89,29 @@ public sealed class AccountAuthService(
         return await BuildJwtResponseAsync(user, activeLink, replacementToken, cancellationToken);
     }
 
+    public async Task ChangeOwnPasswordAsync(ChangePasswordRequest request, CancellationToken cancellationToken = default)
+    {
+        var context = userContextService.GetCurrent();
+        if (!context.UserId.HasValue)
+        {
+            throw new ForbiddenException("Authentication is required.");
+        }
+
+        if (string.IsNullOrWhiteSpace(request.NewPassword))
+        {
+            throw new ValidationAppException("New password is required.");
+        }
+
+        var user = await userManager.FindByIdAsync(context.UserId.Value.ToString())
+                   ?? throw new NotFoundException("User not found.");
+
+        var result = await userManager.ChangePasswordAsync(user, request.CurrentPassword, request.NewPassword);
+        if (!result.Succeeded)
+        {
+            throw new ValidationAppException(result.Errors.Select(error => error.Description));
+        }
+    }
+
     private async Task<JwtResponse> BuildJwtResponseAsync(
         AppUser user,
         AppUserGymRole? activeLink,

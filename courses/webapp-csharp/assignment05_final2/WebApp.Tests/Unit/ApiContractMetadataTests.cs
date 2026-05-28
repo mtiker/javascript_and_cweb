@@ -160,6 +160,7 @@ public class ApiContractMetadataTests
             "POST api/v{version:apiVersion}/{gymCode}/staff",
             "POST api/v{version:apiVersion}/{gymCode}/training-categories",
             "POST api/v{version:apiVersion}/{gymCode}/training-sessions",
+            "POST api/v{version:apiVersion}/account/change-password",
             "POST api/v{version:apiVersion}/account/forgot-password",
             "POST api/v{version:apiVersion}/account/login",
             "POST api/v{version:apiVersion}/account/logout",

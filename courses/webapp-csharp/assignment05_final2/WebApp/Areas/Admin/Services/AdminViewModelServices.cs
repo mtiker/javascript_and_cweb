@@ -5,8 +5,11 @@ using App.BLL.Contracts.Services;
 using App.BLL.Contracts.Services.Admin;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Shared.Contracts.Enums;
+using Shared.Contracts.Dtos.v1.Equipment;
+using Shared.Contracts.Dtos.v1.MaintenanceTasks;
 using Shared.Contracts.Dtos.v1.Members;
 using Shared.Contracts.Dtos.v1.MembershipPackages;
+using Shared.Contracts.Dtos.v1.Memberships;
 using Shared.Contracts.Dtos.v1.TrainingCategories;
 using Shared.Contracts.Dtos.v1.TrainingSessions;
 using Modules.Memberships.Application.Persistence;
@@ -25,9 +28,46 @@ public interface IAdminGymsPageService
     Task<AdminGymsPageViewModel> BuildAsync(CancellationToken cancellationToken = default);
 }
 
+public enum AdminEquipmentOperationStatus
+{
+    Success,
+    NotFound,
+    ValidationFailed
+}
+
+public sealed record AdminEquipmentOperationResult(
+    AdminEquipmentOperationStatus Status,
+    IReadOnlyList<string> Errors)
+{
+    public static AdminEquipmentOperationResult Success { get; } =
+        new(AdminEquipmentOperationStatus.Success, Array.Empty<string>());
+
+    public static AdminEquipmentOperationResult NotFound { get; } =
+        new(AdminEquipmentOperationStatus.NotFound, Array.Empty<string>());
+
+    public static AdminEquipmentOperationResult ValidationFailed(IEnumerable<string> errors) =>
+        new(AdminEquipmentOperationStatus.ValidationFailed, errors.ToArray());
+}
+
 public interface IAdminOperationsPageService
 {
     Task<AdminOperationsPageViewModel> BuildAsync(Guid gymId, string gymCode, CancellationToken cancellationToken = default);
+    Task<AdminEquipmentFormViewModel> BuildEquipmentCreateFormAsync(string gymCode, CancellationToken cancellationToken = default);
+    Task<AdminEquipmentFormViewModel?> GetEquipmentEditFormAsync(string gymCode, Guid equipmentId, CancellationToken cancellationToken = default);
+    Task<AdminEquipmentDeleteViewModel?> GetEquipmentDeleteViewAsync(string gymCode, Guid equipmentId, CancellationToken cancellationToken = default);
+    Task<AdminEquipmentOperationResult> CreateEquipmentAsync(string gymCode, AdminEquipmentFormViewModel form, CancellationToken cancellationToken = default);
+    Task<AdminEquipmentOperationResult> UpdateEquipmentAsync(string gymCode, Guid equipmentId, AdminEquipmentFormViewModel form, CancellationToken cancellationToken = default);
+    Task<AdminEquipmentOperationResult> DeleteEquipmentAsync(string gymCode, Guid equipmentId, CancellationToken cancellationToken = default);
+    Task PopulateEquipmentOptionsAsync(string gymCode, AdminEquipmentFormViewModel form, CancellationToken cancellationToken = default);
+
+    Task<AdminMaintenanceTaskFormViewModel> BuildTaskCreateFormAsync(string gymCode, CancellationToken cancellationToken = default);
+    Task<AdminMaintenanceTaskEditFormViewModel?> GetTaskEditFormAsync(string gymCode, Guid taskId, CancellationToken cancellationToken = default);
+    Task<AdminMaintenanceTaskDeleteViewModel?> GetTaskDeleteViewAsync(string gymCode, Guid taskId, CancellationToken cancellationToken = default);
+    Task<AdminEquipmentOperationResult> CreateTaskAsync(string gymCode, AdminMaintenanceTaskFormViewModel form, CancellationToken cancellationToken = default);
+    Task<AdminEquipmentOperationResult> UpdateTaskAsync(string gymCode, Guid taskId, AdminMaintenanceTaskEditFormViewModel form, CancellationToken cancellationToken = default);
+    Task<AdminEquipmentOperationResult> DeleteTaskAsync(string gymCode, Guid taskId, CancellationToken cancellationToken = default);
+    Task PopulateTaskCreateOptionsAsync(string gymCode, AdminMaintenanceTaskFormViewModel form, CancellationToken cancellationToken = default);
+    Task PopulateTaskEditOptionsAsync(string gymCode, AdminMaintenanceTaskEditFormViewModel form, CancellationToken cancellationToken = default);
 }
 
 public enum AdminSessionOperationStatus
@@ -61,6 +101,40 @@ public interface IAdminSessionsPageService
     Task<AdminSessionOperationResult> UpdateAsync(string gymCode, Guid sessionId, AdminSessionFormViewModel form, CancellationToken cancellationToken = default);
     Task<AdminSessionOperationResult> DeleteAsync(string gymCode, Guid sessionId, CancellationToken cancellationToken = default);
     Task PopulateOptionsAsync(string gymCode, AdminSessionFormViewModel form, CancellationToken cancellationToken = default);
+}
+
+public enum AdminMembershipOperationStatus
+{
+    Success,
+    NotFound,
+    ValidationFailed
+}
+
+public sealed record AdminMembershipOperationResult(
+    AdminMembershipOperationStatus Status,
+    IReadOnlyList<string> Errors)
+{
+    public static AdminMembershipOperationResult Success { get; } =
+        new(AdminMembershipOperationStatus.Success, Array.Empty<string>());
+
+    public static AdminMembershipOperationResult NotFound { get; } =
+        new(AdminMembershipOperationStatus.NotFound, Array.Empty<string>());
+
+    public static AdminMembershipOperationResult ValidationFailed(IEnumerable<string> errors) =>
+        new(AdminMembershipOperationStatus.ValidationFailed, errors.ToArray());
+}
+
+public interface IAdminMembershipsPageService
+{
+    Task<AdminMembershipsPageViewModel> BuildIndexAsync(string gymCode, CancellationToken cancellationToken = default);
+    Task<AdminMembershipSellFormViewModel> BuildSellFormAsync(string gymCode, CancellationToken cancellationToken = default);
+    Task<AdminMembershipEditFormViewModel?> GetEditFormAsync(string gymCode, Guid membershipId, CancellationToken cancellationToken = default);
+    Task<AdminMembershipDeleteViewModel?> GetDeleteViewAsync(string gymCode, Guid membershipId, CancellationToken cancellationToken = default);
+    Task<AdminMembershipOperationResult> SellAsync(string gymCode, AdminMembershipSellFormViewModel form, CancellationToken cancellationToken = default);
+    Task<AdminMembershipOperationResult> UpdateAsync(string gymCode, Guid membershipId, AdminMembershipEditFormViewModel form, CancellationToken cancellationToken = default);
+    Task<AdminMembershipOperationResult> DeleteAsync(string gymCode, Guid membershipId, CancellationToken cancellationToken = default);
+    Task PopulateSellOptionsAsync(string gymCode, AdminMembershipSellFormViewModel form, CancellationToken cancellationToken = default);
+    Task PopulateEditOptionsAsync(string gymCode, AdminMembershipEditFormViewModel form, CancellationToken cancellationToken = default);
 }
 
 public enum AdminMemberOperationStatus
@@ -148,7 +222,10 @@ public sealed class AdminGymsPageService(IPlatformService platformService) : IAd
     }
 }
 
-public sealed class AdminOperationsPageService(IAdminOperationsQueryService operationsQueryService) : IAdminOperationsPageService
+public sealed class AdminOperationsPageService(
+    IAdminOperationsQueryService operationsQueryService,
+    IMaintenanceWorkflowService maintenanceWorkflowService,
+    IStaffWorkflowService staffWorkflowService) : IAdminOperationsPageService
 {
     public async Task<AdminOperationsPageViewModel> BuildAsync(Guid gymId, string gymCode, CancellationToken cancellationToken = default)
     {
@@ -161,6 +238,7 @@ public sealed class AdminOperationsPageService(IAdminOperationsQueryService oper
             Equipment = snapshot.Equipment
                 .Select(row => new EquipmentSummaryViewModel
                 {
+                    Id = row.Id,
                     AssetTag = row.AssetTag,
                     ModelName = row.ModelName?.Translate(culture) ?? string.Empty,
                     Status = row.Status
@@ -169,6 +247,7 @@ public sealed class AdminOperationsPageService(IAdminOperationsQueryService oper
             MaintenanceTasks = snapshot.MaintenanceTasks
                 .Select(row => new MaintenanceSummaryViewModel
                 {
+                    Id = row.Id,
                     AssetTag = row.AssetTag,
                     TaskType = row.TaskType,
                     Status = row.Status,
@@ -178,6 +257,319 @@ public sealed class AdminOperationsPageService(IAdminOperationsQueryService oper
                 .ToArray()
         };
     }
+
+    public async Task<AdminEquipmentFormViewModel> BuildEquipmentCreateFormAsync(string gymCode, CancellationToken cancellationToken = default)
+    {
+        var form = new AdminEquipmentFormViewModel
+        {
+            GymCode = gymCode,
+            CurrentStatus = EquipmentStatus.Active
+        };
+
+        await PopulateEquipmentOptionsAsync(gymCode, form, cancellationToken);
+        return form;
+    }
+
+    public async Task<AdminEquipmentFormViewModel?> GetEquipmentEditFormAsync(string gymCode, Guid equipmentId, CancellationToken cancellationToken = default)
+    {
+        var equipment = (await maintenanceWorkflowService.GetEquipmentAsync(gymCode, cancellationToken: cancellationToken))
+            .FirstOrDefault(item => item.Id == equipmentId);
+        if (equipment is null)
+        {
+            return null;
+        }
+
+        var form = new AdminEquipmentFormViewModel
+        {
+            Id = equipment.Id,
+            GymCode = gymCode,
+            EquipmentModelId = equipment.EquipmentModelId,
+            AssetTag = equipment.AssetTag,
+            SerialNumber = equipment.SerialNumber,
+            CurrentStatus = equipment.CurrentStatus,
+            CommissionedAt = equipment.CommissionedAt,
+            DecommissionedAt = equipment.DecommissionedAt,
+            Notes = equipment.Notes
+        };
+
+        await PopulateEquipmentOptionsAsync(gymCode, form, cancellationToken);
+        return form;
+    }
+
+    public async Task<AdminEquipmentDeleteViewModel?> GetEquipmentDeleteViewAsync(string gymCode, Guid equipmentId, CancellationToken cancellationToken = default)
+    {
+        var equipment = (await maintenanceWorkflowService.GetEquipmentAsync(gymCode, cancellationToken: cancellationToken))
+            .FirstOrDefault(item => item.Id == equipmentId);
+        if (equipment is null)
+        {
+            return null;
+        }
+
+        var models = await maintenanceWorkflowService.GetEquipmentModelsAsync(gymCode, cancellationToken);
+        var modelName = models.FirstOrDefault(model => model.Id == equipment.EquipmentModelId)?.Name ?? string.Empty;
+
+        return new AdminEquipmentDeleteViewModel
+        {
+            Id = equipment.Id,
+            GymCode = gymCode,
+            AssetTag = equipment.AssetTag ?? equipment.SerialNumber ?? equipment.Id.ToString(),
+            ModelName = modelName,
+            Status = equipment.CurrentStatus
+        };
+    }
+
+    public async Task<AdminEquipmentOperationResult> CreateEquipmentAsync(string gymCode, AdminEquipmentFormViewModel form, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            await maintenanceWorkflowService.CreateEquipmentAsync(gymCode, ToUpsertRequest(form), cancellationToken);
+            return AdminEquipmentOperationResult.Success;
+        }
+        catch (ValidationAppException exception)
+        {
+            return AdminEquipmentOperationResult.ValidationFailed(exception.Errors);
+        }
+        catch (NotFoundException)
+        {
+            return AdminEquipmentOperationResult.NotFound;
+        }
+    }
+
+    public async Task<AdminEquipmentOperationResult> UpdateEquipmentAsync(string gymCode, Guid equipmentId, AdminEquipmentFormViewModel form, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            await maintenanceWorkflowService.UpdateEquipmentAsync(gymCode, equipmentId, ToUpsertRequest(form), cancellationToken);
+            return AdminEquipmentOperationResult.Success;
+        }
+        catch (ValidationAppException exception)
+        {
+            return AdminEquipmentOperationResult.ValidationFailed(exception.Errors);
+        }
+        catch (NotFoundException)
+        {
+            return AdminEquipmentOperationResult.NotFound;
+        }
+    }
+
+    public async Task<AdminEquipmentOperationResult> DeleteEquipmentAsync(string gymCode, Guid equipmentId, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            await maintenanceWorkflowService.DeleteEquipmentAsync(gymCode, equipmentId, cancellationToken);
+            return AdminEquipmentOperationResult.Success;
+        }
+        catch (ValidationAppException exception)
+        {
+            return AdminEquipmentOperationResult.ValidationFailed(exception.Errors);
+        }
+        catch (NotFoundException)
+        {
+            return AdminEquipmentOperationResult.NotFound;
+        }
+    }
+
+    public async Task PopulateEquipmentOptionsAsync(string gymCode, AdminEquipmentFormViewModel form, CancellationToken cancellationToken = default)
+    {
+        var models = await maintenanceWorkflowService.GetEquipmentModelsAsync(gymCode, cancellationToken);
+        form.EquipmentModelOptions = models
+            .Select(model => new SelectListItem(
+                model.Manufacturer is null ? model.Name : $"{model.Name} ({model.Manufacturer})",
+                model.Id.ToString(),
+                model.Id == form.EquipmentModelId))
+            .ToArray();
+    }
+
+    private static EquipmentUpsertRequest ToUpsertRequest(AdminEquipmentFormViewModel form) =>
+        new()
+        {
+            EquipmentModelId = form.EquipmentModelId,
+            AssetTag = string.IsNullOrWhiteSpace(form.AssetTag) ? null : form.AssetTag.Trim(),
+            SerialNumber = string.IsNullOrWhiteSpace(form.SerialNumber) ? null : form.SerialNumber.Trim(),
+            CurrentStatus = form.CurrentStatus,
+            CommissionedAt = form.CommissionedAt,
+            DecommissionedAt = form.DecommissionedAt,
+            Notes = string.IsNullOrWhiteSpace(form.Notes) ? null : form.Notes.Trim()
+        };
+
+    public async Task<AdminMaintenanceTaskFormViewModel> BuildTaskCreateFormAsync(string gymCode, CancellationToken cancellationToken = default)
+    {
+        var form = new AdminMaintenanceTaskFormViewModel
+        {
+            GymCode = gymCode,
+            TaskType = MaintenanceTaskType.Scheduled,
+            Priority = MaintenancePriority.Medium,
+            Status = MaintenanceTaskStatus.Open
+        };
+
+        await PopulateTaskCreateOptionsAsync(gymCode, form, cancellationToken);
+        return form;
+    }
+
+    public async Task<AdminMaintenanceTaskEditFormViewModel?> GetTaskEditFormAsync(string gymCode, Guid taskId, CancellationToken cancellationToken = default)
+    {
+        var task = await FindTaskAsync(gymCode, taskId, cancellationToken);
+        if (task is null)
+        {
+            return null;
+        }
+
+        var form = new AdminMaintenanceTaskEditFormViewModel
+        {
+            Id = task.Id,
+            GymCode = gymCode,
+            EquipmentName = string.IsNullOrWhiteSpace(task.EquipmentAssetTag) ? task.EquipmentName : $"{task.EquipmentName} ({task.EquipmentAssetTag})",
+            TaskType = task.TaskType,
+            Priority = task.Priority,
+            Status = task.Status,
+            AssignedStaffId = task.AssignedStaffId,
+            Notes = task.Notes
+        };
+
+        await PopulateTaskEditOptionsAsync(gymCode, form, cancellationToken);
+        return form;
+    }
+
+    public async Task<AdminMaintenanceTaskDeleteViewModel?> GetTaskDeleteViewAsync(string gymCode, Guid taskId, CancellationToken cancellationToken = default)
+    {
+        var task = await FindTaskAsync(gymCode, taskId, cancellationToken);
+        if (task is null)
+        {
+            return null;
+        }
+
+        return new AdminMaintenanceTaskDeleteViewModel
+        {
+            Id = task.Id,
+            GymCode = gymCode,
+            EquipmentName = string.IsNullOrWhiteSpace(task.EquipmentAssetTag) ? task.EquipmentName : $"{task.EquipmentName} ({task.EquipmentAssetTag})",
+            TaskType = task.TaskType,
+            Status = task.Status,
+            DueAtUtc = task.DueAtUtc
+        };
+    }
+
+    public async Task<AdminEquipmentOperationResult> CreateTaskAsync(string gymCode, AdminMaintenanceTaskFormViewModel form, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            await maintenanceWorkflowService.CreateTaskAsync(gymCode, new MaintenanceTaskUpsertRequest
+            {
+                EquipmentId = form.EquipmentId,
+                AssignedStaffId = form.AssignedStaffId,
+                TaskType = form.TaskType,
+                Priority = form.Priority,
+                Status = form.Status,
+                DueAtUtc = form.DueAt.HasValue ? ToUtc(form.DueAt.Value) : null,
+                Notes = string.IsNullOrWhiteSpace(form.Notes) ? null : form.Notes.Trim()
+            }, cancellationToken);
+            return AdminEquipmentOperationResult.Success;
+        }
+        catch (ValidationAppException exception)
+        {
+            return AdminEquipmentOperationResult.ValidationFailed(exception.Errors);
+        }
+        catch (NotFoundException)
+        {
+            return AdminEquipmentOperationResult.NotFound;
+        }
+    }
+
+    public async Task<AdminEquipmentOperationResult> UpdateTaskAsync(string gymCode, Guid taskId, AdminMaintenanceTaskEditFormViewModel form, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var current = await FindTaskAsync(gymCode, taskId, cancellationToken);
+            if (current is null)
+            {
+                return AdminEquipmentOperationResult.NotFound;
+            }
+
+            if (current.AssignedStaffId != form.AssignedStaffId)
+            {
+                await maintenanceWorkflowService.UpdateTaskAssignmentAsync(gymCode, taskId, new MaintenanceAssignmentUpdateRequest
+                {
+                    AssignedStaffId = form.AssignedStaffId,
+                    Notes = string.IsNullOrWhiteSpace(form.Notes) ? null : form.Notes.Trim()
+                }, cancellationToken);
+            }
+
+            if (current.Status != form.Status)
+            {
+                await maintenanceWorkflowService.UpdateTaskStatusAsync(gymCode, taskId, new MaintenanceStatusUpdateRequest
+                {
+                    Status = form.Status,
+                    Notes = string.IsNullOrWhiteSpace(form.Notes) ? null : form.Notes.Trim()
+                }, cancellationToken);
+            }
+
+            return AdminEquipmentOperationResult.Success;
+        }
+        catch (ValidationAppException exception)
+        {
+            return AdminEquipmentOperationResult.ValidationFailed(exception.Errors);
+        }
+        catch (NotFoundException)
+        {
+            return AdminEquipmentOperationResult.NotFound;
+        }
+    }
+
+    public async Task<AdminEquipmentOperationResult> DeleteTaskAsync(string gymCode, Guid taskId, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            await maintenanceWorkflowService.DeleteMaintenanceTaskAsync(gymCode, taskId, cancellationToken);
+            return AdminEquipmentOperationResult.Success;
+        }
+        catch (ValidationAppException exception)
+        {
+            return AdminEquipmentOperationResult.ValidationFailed(exception.Errors);
+        }
+        catch (NotFoundException)
+        {
+            return AdminEquipmentOperationResult.NotFound;
+        }
+    }
+
+    public async Task PopulateTaskCreateOptionsAsync(string gymCode, AdminMaintenanceTaskFormViewModel form, CancellationToken cancellationToken = default)
+    {
+        var equipment = await maintenanceWorkflowService.GetEquipmentAsync(gymCode, cancellationToken: cancellationToken);
+        form.EquipmentOptions = equipment
+            .Select(item => new SelectListItem(
+                item.AssetTag ?? item.SerialNumber ?? item.Id.ToString(),
+                item.Id.ToString(),
+                item.Id == form.EquipmentId))
+            .ToArray();
+
+        form.StaffOptions = await BuildStaffOptionsAsync(gymCode, form.AssignedStaffId, cancellationToken);
+    }
+
+    public async Task PopulateTaskEditOptionsAsync(string gymCode, AdminMaintenanceTaskEditFormViewModel form, CancellationToken cancellationToken = default)
+    {
+        form.StaffOptions = await BuildStaffOptionsAsync(gymCode, form.AssignedStaffId, cancellationToken);
+    }
+
+    private async Task<MaintenanceTaskResponse?> FindTaskAsync(string gymCode, Guid taskId, CancellationToken cancellationToken)
+    {
+        var tasks = await maintenanceWorkflowService.GetMaintenanceTasksAsync(gymCode, cancellationToken: cancellationToken);
+        return tasks.FirstOrDefault(task => task.Id == taskId);
+    }
+
+    private async Task<IReadOnlyCollection<SelectListItem>> BuildStaffOptionsAsync(string gymCode, Guid? selectedStaffId, CancellationToken cancellationToken)
+    {
+        var staff = await staffWorkflowService.GetStaffAsync(gymCode, cancellationToken: cancellationToken);
+        return staff
+            .Where(member => member.Status == StaffStatus.Active)
+            .Select(member => new SelectListItem(
+                member.FullName,
+                member.Id.ToString(),
+                selectedStaffId.HasValue && member.Id == selectedStaffId.Value))
+            .ToArray();
+    }
+
+    private static DateTime ToUtc(DateTime localWallClock) =>
+        DateTime.SpecifyKind(localWallClock, DateTimeKind.Local).ToUniversalTime();
 }
 
 public sealed class AdminSessionsPageService(
@@ -370,7 +762,233 @@ public sealed class AdminSessionsPageService(
         new DateTime(value.Year, value.Month, value.Day, value.Hour, 0, 0, value.Kind).AddHours(1);
 }
 
-public sealed class AdminMembersPageService(IMemberWorkflowService memberWorkflowService) : IAdminMembersPageService
+public sealed class AdminMembershipsPageService(
+    IMembershipService membershipService,
+    IMembershipPackageService membershipPackageService,
+    IMemberWorkflowService memberWorkflowService) : IAdminMembershipsPageService
+{
+    public async Task<AdminMembershipsPageViewModel> BuildIndexAsync(string gymCode, CancellationToken cancellationToken = default)
+    {
+        var packages = (await membershipPackageService.GetPackagesAsync(gymCode, cancellationToken))
+            .OrderBy(package => package.BasePrice)
+            .Select(package => new MembershipPackageSummaryViewModel
+            {
+                Name = package.Name,
+                BasePrice = package.BasePrice,
+                CurrencyCode = package.CurrencyCode,
+                IsTrainingFree = package.IsTrainingFree,
+                TrainingDiscountPercent = package.TrainingDiscountPercent
+            })
+            .ToArray();
+
+        var activeMemberships = (await membershipService.GetActiveMembershipSummariesAsync(gymCode, cancellationToken))
+            .Select(membership => new ActiveMembershipSummaryViewModel
+            {
+                Id = membership.Id,
+                MemberName = membership.MemberName,
+                PackageName = membership.PackageName,
+                StartDate = membership.StartDate,
+                EndDate = membership.EndDate,
+                Status = membership.Status
+            })
+            .ToArray();
+
+        return new AdminMembershipsPageViewModel
+        {
+            GymCode = gymCode,
+            Packages = packages,
+            ActiveMemberships = activeMemberships
+        };
+    }
+
+    public async Task<AdminMembershipSellFormViewModel> BuildSellFormAsync(string gymCode, CancellationToken cancellationToken = default)
+    {
+        var form = new AdminMembershipSellFormViewModel
+        {
+            GymCode = gymCode,
+            RequestedStartDate = DateOnly.FromDateTime(DateTime.UtcNow.Date)
+        };
+
+        await PopulateSellOptionsAsync(gymCode, form, cancellationToken);
+        return form;
+    }
+
+    public async Task<AdminMembershipEditFormViewModel?> GetEditFormAsync(string gymCode, Guid membershipId, CancellationToken cancellationToken = default)
+    {
+        var membership = await FindMembershipAsync(gymCode, membershipId, cancellationToken);
+        if (membership is null)
+        {
+            return null;
+        }
+
+        var memberNames = await BuildMemberNameLookupAsync(gymCode, cancellationToken);
+        var form = new AdminMembershipEditFormViewModel
+        {
+            Id = membership.Id,
+            GymCode = gymCode,
+            MemberName = memberNames.GetValueOrDefault(membership.MemberId, string.Empty),
+            MembershipPackageId = membership.MembershipPackageId,
+            StartDate = membership.StartDate,
+            EndDate = membership.EndDate,
+            Status = membership.Status
+        };
+
+        await PopulateEditOptionsAsync(gymCode, form, cancellationToken);
+        return form;
+    }
+
+    public async Task<AdminMembershipDeleteViewModel?> GetDeleteViewAsync(string gymCode, Guid membershipId, CancellationToken cancellationToken = default)
+    {
+        var membership = await FindMembershipAsync(gymCode, membershipId, cancellationToken);
+        if (membership is null)
+        {
+            return null;
+        }
+
+        var memberNames = await BuildMemberNameLookupAsync(gymCode, cancellationToken);
+        var packageNames = await BuildPackageNameLookupAsync(gymCode, cancellationToken);
+
+        return new AdminMembershipDeleteViewModel
+        {
+            Id = membership.Id,
+            GymCode = gymCode,
+            MemberName = memberNames.GetValueOrDefault(membership.MemberId, string.Empty),
+            PackageName = packageNames.GetValueOrDefault(membership.MembershipPackageId, string.Empty),
+            StartDate = membership.StartDate,
+            EndDate = membership.EndDate,
+            Status = membership.Status
+        };
+    }
+
+    public async Task<AdminMembershipOperationResult> SellAsync(string gymCode, AdminMembershipSellFormViewModel form, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            await membershipService.SellMembershipAsync(gymCode, new SellMembershipRequest
+            {
+                MemberId = form.MemberId,
+                MembershipPackageId = form.MembershipPackageId,
+                RequestedStartDate = form.RequestedStartDate,
+                PaymentReference = string.IsNullOrWhiteSpace(form.PaymentReference) ? null : form.PaymentReference.Trim()
+            }, cancellationToken);
+            return AdminMembershipOperationResult.Success;
+        }
+        catch (ValidationAppException exception)
+        {
+            return AdminMembershipOperationResult.ValidationFailed(exception.Errors);
+        }
+        catch (NotFoundException)
+        {
+            return AdminMembershipOperationResult.NotFound;
+        }
+    }
+
+    public async Task<AdminMembershipOperationResult> UpdateAsync(string gymCode, Guid membershipId, AdminMembershipEditFormViewModel form, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var current = await FindMembershipAsync(gymCode, membershipId, cancellationToken);
+            if (current is null)
+            {
+                return AdminMembershipOperationResult.NotFound;
+            }
+
+            await membershipService.UpdateMembershipAsync(gymCode, membershipId, new MembershipEditRequest
+            {
+                MembershipPackageId = form.MembershipPackageId,
+                StartDate = form.StartDate,
+                EndDate = form.EndDate
+            }, cancellationToken);
+
+            if (form.Status != current.Status)
+            {
+                await membershipService.UpdateMembershipStatusAsync(gymCode, membershipId, new MembershipStatusUpdateRequest
+                {
+                    Status = form.Status
+                }, cancellationToken);
+            }
+
+            return AdminMembershipOperationResult.Success;
+        }
+        catch (ValidationAppException exception)
+        {
+            return AdminMembershipOperationResult.ValidationFailed(exception.Errors);
+        }
+        catch (NotFoundException)
+        {
+            return AdminMembershipOperationResult.NotFound;
+        }
+    }
+
+    public async Task<AdminMembershipOperationResult> DeleteAsync(string gymCode, Guid membershipId, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            await membershipService.DeleteMembershipAsync(gymCode, membershipId, cancellationToken);
+            return AdminMembershipOperationResult.Success;
+        }
+        catch (ValidationAppException exception)
+        {
+            return AdminMembershipOperationResult.ValidationFailed(exception.Errors);
+        }
+        catch (NotFoundException)
+        {
+            return AdminMembershipOperationResult.NotFound;
+        }
+    }
+
+    public async Task PopulateSellOptionsAsync(string gymCode, AdminMembershipSellFormViewModel form, CancellationToken cancellationToken = default)
+    {
+        var members = await memberWorkflowService.GetMembersAsync(gymCode, cancellationToken: cancellationToken);
+        form.MemberOptions = members
+            .Select(member => new SelectListItem(
+                $"{member.FullName} ({member.MemberCode})",
+                member.Id.ToString(),
+                member.Id == form.MemberId))
+            .ToArray();
+
+        var packages = await membershipPackageService.GetPackagesAsync(gymCode, cancellationToken);
+        form.PackageOptions = packages
+            .Select(package => new SelectListItem(
+                $"{package.Name} - {package.BasePrice} {package.CurrencyCode}",
+                package.Id.ToString(),
+                package.Id == form.MembershipPackageId))
+            .ToArray();
+    }
+
+    public async Task PopulateEditOptionsAsync(string gymCode, AdminMembershipEditFormViewModel form, CancellationToken cancellationToken = default)
+    {
+        var packages = await membershipPackageService.GetPackagesAsync(gymCode, cancellationToken);
+        form.PackageOptions = packages
+            .Select(package => new SelectListItem(
+                $"{package.Name} - {package.BasePrice} {package.CurrencyCode}",
+                package.Id.ToString(),
+                package.Id == form.MembershipPackageId))
+            .ToArray();
+    }
+
+    private async Task<MembershipResponse?> FindMembershipAsync(string gymCode, Guid membershipId, CancellationToken cancellationToken)
+    {
+        var memberships = await membershipService.GetMembershipsAsync(gymCode, cancellationToken: cancellationToken);
+        return memberships.FirstOrDefault(membership => membership.Id == membershipId);
+    }
+
+    private async Task<Dictionary<Guid, string>> BuildMemberNameLookupAsync(string gymCode, CancellationToken cancellationToken)
+    {
+        var members = await memberWorkflowService.GetMembersAsync(gymCode, cancellationToken: cancellationToken);
+        return members.ToDictionary(member => member.Id, member => member.FullName);
+    }
+
+    private async Task<Dictionary<Guid, string>> BuildPackageNameLookupAsync(string gymCode, CancellationToken cancellationToken)
+    {
+        var packages = await membershipPackageService.GetPackagesAsync(gymCode, cancellationToken);
+        return packages.ToDictionary(package => package.Id, package => package.Name);
+    }
+}
+
+public sealed class AdminMembersPageService(
+    IMemberWorkflowService memberWorkflowService,
+    IMemberAccountService memberAccountService) : IAdminMembersPageService
 {
     public async Task<AdminMembersPageViewModel> BuildIndexAsync(string gymCode, CancellationToken cancellationToken = default)
     {
@@ -401,6 +1019,7 @@ public sealed class AdminMembersPageService(IMemberWorkflowService memberWorkflo
         try
         {
             var member = await memberWorkflowService.GetMemberAsync(gymCode, memberId, cancellationToken);
+            var email = await memberAccountService.GetLoginEmailByMemberAsync(gymCode, memberId, cancellationToken);
             return new AdminMemberFormViewModel
             {
                 Id = member.Id,
@@ -410,6 +1029,7 @@ public sealed class AdminMembersPageService(IMemberWorkflowService memberWorkflo
                 PersonalCode = member.PersonalCode ?? string.Empty,
                 DateOfBirth = member.DateOfBirth,
                 Status = member.Status,
+                Email = email,
                 GymCode = gymCode
             };
         }
@@ -441,6 +1061,11 @@ public sealed class AdminMembersPageService(IMemberWorkflowService memberWorkflo
 
     public async Task<AdminMemberOperationResult> CreateAsync(string gymCode, AdminMemberFormViewModel form, CancellationToken cancellationToken = default)
     {
+        if (string.IsNullOrWhiteSpace(form.Email) || string.IsNullOrWhiteSpace(form.NewPassword))
+        {
+            return AdminMemberOperationResult.ValidationFailed(["A login email and an initial password are required when creating a member."]);
+        }
+
         try
         {
             await memberWorkflowService.CreateMemberAsync(gymCode, ToUpsertRequest(form), cancellationToken);
@@ -461,6 +1086,12 @@ public sealed class AdminMembersPageService(IMemberWorkflowService memberWorkflo
         try
         {
             await memberWorkflowService.UpdateMemberAsync(gymCode, memberId, ToUpsertRequest(form), cancellationToken);
+
+            if (!string.IsNullOrWhiteSpace(form.NewPassword))
+            {
+                await memberAccountService.SetPasswordByMemberAsync(gymCode, memberId, form.NewPassword, cancellationToken);
+            }
+
             return AdminMemberOperationResult.Success;
         }
         catch (ValidationAppException exception)
@@ -495,7 +1126,9 @@ public sealed class AdminMembersPageService(IMemberWorkflowService memberWorkflo
             MemberCode = form.MemberCode,
             PersonalCode = string.IsNullOrWhiteSpace(form.PersonalCode) ? null : form.PersonalCode,
             DateOfBirth = form.DateOfBirth,
-            Status = form.Status
+            Status = form.Status,
+            Email = string.IsNullOrWhiteSpace(form.Email) ? null : form.Email.Trim(),
+            Password = string.IsNullOrWhiteSpace(form.NewPassword) ? null : form.NewPassword
         };
     }
 }

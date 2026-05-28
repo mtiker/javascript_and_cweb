@@ -9,4 +9,6 @@ public interface IAccountAuthService
     Task LogoutAsync(CancellationToken cancellationToken = default);
 
     Task<JwtResponse> RenewRefreshTokenAsync(RefreshTokenRequest request, CancellationToken cancellationToken = default);
+
+    Task ChangeOwnPasswordAsync(ChangePasswordRequest request, CancellationToken cancellationToken = default);
 }

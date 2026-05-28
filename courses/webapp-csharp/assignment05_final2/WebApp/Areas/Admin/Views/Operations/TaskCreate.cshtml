@@ -1,0 +1,71 @@
+@model AdminMaintenanceTaskFormViewModel
+@inject IStringLocalizer<SharedResources> L
+
+<section class="panel">
+    <p class="eyebrow">@L["AdminWorkspace"]</p>
+    <h1>@L["CreateMaintenanceTask"]</h1>
+    <p>@L["ActiveGym"]: <strong>@Model.GymCode</strong></p>
+</section>
+
+<section class="panel">
+    @if (Model.EquipmentOptions.Count == 0)
+    {
+        <p class="muted-text">@L["NoEquipmentForTaskFirst"]</p>
+        <a asp-area="Admin" asp-controller="Operations" asp-action="EquipmentCreate" class="secondary">@L["AddNewEquipment"]</a>
+    }
+    else
+    {
+        <form asp-area="Admin" asp-controller="Operations" asp-action="TaskCreate" method="post" class="form-grid">
+            <div asp-validation-summary="All" class="validation-summary-errors"></div>
+
+            <div class="form-row">
+                <label asp-for="EquipmentId">@L["Equipment"]</label>
+                <select asp-for="EquipmentId" asp-items="Model.EquipmentOptions"></select>
+                <span asp-validation-for="EquipmentId" class="field-validation-error"></span>
+            </div>
+
+            <div class="form-row">
+                <label asp-for="TaskType">@L["Type"]</label>
+                <select asp-for="TaskType" asp-items="Html.GetEnumSelectList<Shared.Contracts.Enums.MaintenanceTaskType>()"></select>
+                <span asp-validation-for="TaskType" class="field-validation-error"></span>
+            </div>
+
+            <div class="form-row">
+                <label asp-for="Priority">@L["Priority"]</label>
+                <select asp-for="Priority" asp-items="Html.GetEnumSelectList<Shared.Contracts.Enums.MaintenancePriority>()"></select>
+                <span asp-validation-for="Priority" class="field-validation-error"></span>
+            </div>
+
+            <div class="form-row">
+                <label asp-for="Status">@L["Status"]</label>
+                <select asp-for="Status" asp-items="Html.GetEnumSelectList<Shared.Contracts.Enums.MaintenanceTaskStatus>()"></select>
+                <span asp-validation-for="Status" class="field-validation-error"></span>
+            </div>
+
+            <div class="form-row">
+                <label asp-for="AssignedStaffId">@L["AssignedTo"]</label>
+                <select asp-for="AssignedStaffId" asp-items="Model.StaffOptions">
+                    <option value="">@L["Unassigned"]</option>
+                </select>
+                <span asp-validation-for="AssignedStaffId" class="field-validation-error"></span>
+            </div>
+
+            <div class="form-row">
+                <label asp-for="DueAt">@L["Due"]</label>
+                <input asp-for="DueAt" type="datetime-local" asp-format="{0:yyyy-MM-ddTHH:mm}" />
+                <span asp-validation-for="DueAt" class="field-validation-error"></span>
+            </div>
+
+            <div class="form-row">
+                <label asp-for="Notes">@L["Notes"]</label>
+                <textarea asp-for="Notes" rows="3"></textarea>
+                <span asp-validation-for="Notes" class="field-validation-error"></span>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="primary">@L["CreateMaintenanceTask"]</button>
+                <a asp-area="Admin" asp-controller="Operations" asp-action="Index" class="secondary">@L["Cancel"]</a>
+            </div>
+        </form>
+    }
+</section>

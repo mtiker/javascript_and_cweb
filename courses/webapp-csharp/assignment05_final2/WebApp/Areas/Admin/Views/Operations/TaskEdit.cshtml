@@ -1,0 +1,41 @@
+@model AdminMaintenanceTaskEditFormViewModel
+@inject IStringLocalizer<SharedResources> L
+
+<section class="panel">
+    <p class="eyebrow">@L["AdminWorkspace"]</p>
+    <h1>@L["EditMaintenanceTask"]</h1>
+    <p>@L["ActiveGym"]: <strong>@Model.GymCode</strong></p>
+    <p>@L["Equipment"]: <strong>@Model.EquipmentName</strong> · @L["Type"]: @Model.TaskType · @L["Priority"]: @Model.Priority</p>
+</section>
+
+<section class="panel">
+    <form asp-area="Admin" asp-controller="Operations" asp-action="TaskEdit" asp-route-id="@Model.Id" method="post" class="form-grid">
+        <div asp-validation-summary="All" class="validation-summary-errors"></div>
+        <input type="hidden" asp-for="Id" />
+
+        <div class="form-row">
+            <label asp-for="Status">@L["Status"]</label>
+            <select asp-for="Status" asp-items="Html.GetEnumSelectList<Shared.Contracts.Enums.MaintenanceTaskStatus>()"></select>
+            <span asp-validation-for="Status" class="field-validation-error"></span>
+        </div>
+
+        <div class="form-row">
+            <label asp-for="AssignedStaffId">@L["AssignedTo"]</label>
+            <select asp-for="AssignedStaffId" asp-items="Model.StaffOptions">
+                <option value="">@L["Unassigned"]</option>
+            </select>
+            <span asp-validation-for="AssignedStaffId" class="field-validation-error"></span>
+        </div>
+
+        <div class="form-row">
+            <label asp-for="Notes">@L["Notes"]</label>
+            <textarea asp-for="Notes" rows="3"></textarea>
+            <span asp-validation-for="Notes" class="field-validation-error"></span>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="primary">@L["Save"]</button>
+            <a asp-area="Admin" asp-controller="Operations" asp-action="Index" class="secondary">@L["Cancel"]</a>
+        </div>
+    </form>
+</section>

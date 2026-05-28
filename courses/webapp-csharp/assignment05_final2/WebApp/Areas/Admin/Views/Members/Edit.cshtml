@@ -48,6 +48,18 @@
             <span asp-validation-for="Status" class="field-validation-error"></span>
         </div>
 
+        <div class="form-row">
+            <label asp-for="Email">@L["MemberLoginEmail"]</label>
+            <input asp-for="Email" type="email" readonly />
+        </div>
+
+        <div class="form-row">
+            <label asp-for="NewPassword">@L["MemberNewPassword"]</label>
+            <input asp-for="NewPassword" type="password" autocomplete="new-password" />
+            <p class="muted-text">@L["MemberNewPasswordNote"]</p>
+            <span asp-validation-for="NewPassword" class="field-validation-error"></span>
+        </div>
+
         <div class="form-actions">
             <button type="submit" class="primary">@L["SaveChanges"]</button>
             <a asp-area="Admin" asp-controller="Members" asp-action="Index" class="secondary">@L["Cancel"]</a>

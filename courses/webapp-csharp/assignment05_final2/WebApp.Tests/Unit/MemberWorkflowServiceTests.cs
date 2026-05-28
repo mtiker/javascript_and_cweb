@@ -262,7 +262,36 @@ public class MemberWorkflowServiceTests
             new EfMemberRepository(dbContext),
             authorization ?? new TestAuthorizationService(gymId),
             new TestSubscriptionTierLimitService(),
+            new TestMemberAccountService(dbContext),
             mapper);
+    }
+
+    private sealed class TestMemberAccountService(AppDbContext dbContext) : IMemberAccountService
+    {
+        public async Task<MemberLoginProvisionResult> ProvisionMemberLoginAsync(
+            Guid gymId,
+            string email,
+            string password,
+            MemberPersonDraft demographics,
+            CancellationToken cancellationToken = default)
+        {
+            var person = new Person
+            {
+                FirstName = demographics.FirstName,
+                LastName = demographics.LastName,
+                PersonalCode = demographics.PersonalCode,
+                DateOfBirth = demographics.DateOfBirth
+            };
+            dbContext.People.Add(person);
+            await dbContext.SaveChangesAsync(cancellationToken);
+            return new MemberLoginProvisionResult(person.Id, ReusedExistingAccount: false);
+        }
+
+        public Task SetPasswordByMemberAsync(string gymCode, Guid memberId, string newPassword, CancellationToken cancellationToken = default)
+            => Task.CompletedTask;
+
+        public Task<string?> GetLoginEmailByMemberAsync(string gymCode, Guid memberId, CancellationToken cancellationToken = default)
+            => Task.FromResult<string?>(null);
     }
 
     private sealed class TestGymContext(Guid gymId) : IGymContext

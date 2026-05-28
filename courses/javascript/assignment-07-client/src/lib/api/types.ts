@@ -69,6 +69,18 @@ export interface MemberUpsertRequest {
   dateOfBirth?: string | null;
   memberCode: string;
   status: MemberStatus;
+  email?: string | null;
+  password?: string | null;
+}
+
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+}
+
+export interface MembershipStatusUpdateRequest {
+  status: MembershipStatus;
+  reason?: string | null;
 }
 
 // Training categories

@@ -51,6 +51,7 @@ public static class UsersModuleExtensions
         services.AddScoped<IAuthResponseMapper, AuthResponseMapper>();
         services.AddScoped<IAccountAuthService, AccountAuthService>();
         services.AddScoped<IIdentityService, IdentityService>();
+        services.AddScoped<IMemberAccountService, MemberAccountService>();
 
         services.AddControllers()
             .AddApplicationPart(typeof(UsersModuleMarker).Assembly);

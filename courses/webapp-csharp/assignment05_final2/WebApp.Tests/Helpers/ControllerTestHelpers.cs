@@ -536,6 +536,9 @@ public sealed class DelegatingAccountAuthService : IAccountAuthService
     public Func<RefreshTokenRequest, CancellationToken, Task<JwtResponse>> RenewRefreshTokenAsyncHandler { get; set; } =
         static (_, _) => Task.FromException<JwtResponse>(new InvalidOperationException("RenewRefreshTokenAsyncHandler not configured."));
 
+    public Func<ChangePasswordRequest, CancellationToken, Task> ChangeOwnPasswordAsyncHandler { get; set; } =
+        static (_, _) => Task.CompletedTask;
+
     public Task<JwtResponse> LoginAsync(LoginRequest request, CancellationToken cancellationToken = default) =>
         LoginAsyncHandler(request, cancellationToken);
 
@@ -544,6 +547,9 @@ public sealed class DelegatingAccountAuthService : IAccountAuthService
 
     public Task<JwtResponse> RenewRefreshTokenAsync(RefreshTokenRequest request, CancellationToken cancellationToken = default) =>
         RenewRefreshTokenAsyncHandler(request, cancellationToken);
+
+    public Task ChangeOwnPasswordAsync(ChangePasswordRequest request, CancellationToken cancellationToken = default) =>
+        ChangeOwnPasswordAsyncHandler(request, cancellationToken);
 }
 
 public sealed class DelegatingMemberWorkspaceService : IMemberWorkspaceService

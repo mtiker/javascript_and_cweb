@@ -85,4 +85,13 @@ public class AccountController(IUsersAuthService usersAuthService) : ControllerB
         await usersAuthService.ResetPasswordAsync(request, cancellationToken);
         return Ok(new Message("Password updated."));
     }
+
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    [HttpPost("change-password")]
+    [ProducesResponseType(typeof(Message), StatusCodes.Status200OK)]
+    public async Task<ActionResult<Message>> ChangePassword([FromBody] ChangePasswordRequest request, CancellationToken cancellationToken)
+    {
+        await usersAuthService.ChangePasswordAsync(request, cancellationToken);
+        return Ok(new Message("Password updated."));
+    }
 }
