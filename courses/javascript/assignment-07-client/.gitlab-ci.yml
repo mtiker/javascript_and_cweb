@@ -57,5 +57,10 @@ javascript_assignment07_deploy:
   before_script:
     - cd courses/javascript/assignment-07-client
   script:
+    # Pin the backend URL here so the deploy-stage rebuild does not inherit a
+    # stale VITE_API_BASE_URL from the runner env file. Compose substitution
+    # prefers this shell variable over the copied .env, so the bundle always
+    # bakes in the live cweb-a4 host.
+    - export VITE_API_BASE_URL="https://mtiker-cweb-a4.proxy.itcollege.ee"
     - chmod +x scripts/deploy.sh
     - ./scripts/deploy.sh
