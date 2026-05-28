@@ -1,0 +1,30 @@
+@model AdminSessionDeleteViewModel
+@inject IStringLocalizer<SharedResources> L
+
+<section class="panel">
+    <p class="eyebrow">@L["AdminWorkspace"]</p>
+    <h1>@L["DeleteSession"]</h1>
+    <p>@L["ActiveGym"]: <strong>@Model.GymCode</strong></p>
+</section>
+
+<section class="panel">
+    <p>@L["ConfirmSessionRemoval"]</p>
+    <dl class="definition-list">
+        <dt>@L["Session"]</dt>
+        <dd>@Model.Name</dd>
+        <dt>@L["Time"]</dt>
+        <dd>@($"{Model.StartAtUtc.ToLocalTime():g} - {Model.EndAtUtc.ToLocalTime():t}")</dd>
+        <dt>@L["Bookings"]</dt>
+        <dd>@Model.BookingCount</dd>
+        <dt>@L["Status"]</dt>
+        <dd>@Model.Status</dd>
+    </dl>
+
+    <form asp-area="Admin" asp-controller="Sessions" asp-action="Delete" asp-route-id="@Model.Id" method="post" class="form-grid">
+        <input type="hidden" name="id" value="@Model.Id" />
+        <div class="form-actions">
+            <button type="submit" class="danger">@L["DeleteSession"]</button>
+            <a asp-area="Admin" asp-controller="Sessions" asp-action="Index" class="secondary">@L["Cancel"]</a>
+        </div>
+    </form>
+</section>

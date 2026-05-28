@@ -21,6 +21,36 @@
   <data name="ClientAppHint" xml:space="preserve">
     <value>Liikmetele mõeldud SaaS klient. Admini tegevused jäävad siia admini alasse.</value>
   </data>
+  <data name="AddNewSession" xml:space="preserve">
+    <value>Lisa uus treening</value>
+  </data>
+  <data name="CreateSession" xml:space="preserve">
+    <value>Loo treening</value>
+  </data>
+  <data name="EditSession" xml:space="preserve">
+    <value>Muuda treeningut</value>
+  </data>
+  <data name="DeleteSession" xml:space="preserve">
+    <value>Kustuta treening</value>
+  </data>
+  <data name="StartTime" xml:space="preserve">
+    <value>Algusaeg</value>
+  </data>
+  <data name="EndTime" xml:space="preserve">
+    <value>Lõpuaeg</value>
+  </data>
+  <data name="Trainer" xml:space="preserve">
+    <value>Treener</value>
+  </data>
+  <data name="NoCategoriesCreateFirst" xml:space="preserve">
+    <value>Loo enne treeningu kategooria.</value>
+  </data>
+  <data name="AddNewCategory" xml:space="preserve">
+    <value>Lisa uus kategooria</value>
+  </data>
+  <data name="ConfirmSessionRemoval" xml:space="preserve">
+    <value>Kas oled kindel, et soovid selle treeningu kustutada?</value>
+  </data>
   <data name="Login" xml:space="preserve">
     <value>Logi sisse</value>
   </data>

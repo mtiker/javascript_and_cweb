@@ -3,10 +3,12 @@ using SharedKernel.Exceptions;
 using App.DAL.Contracts.Persistence;
 using App.BLL.Contracts.Services;
 using App.BLL.Contracts.Services.Admin;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Shared.Contracts.Enums;
 using Shared.Contracts.Dtos.v1.Members;
 using Shared.Contracts.Dtos.v1.MembershipPackages;
 using Shared.Contracts.Dtos.v1.TrainingCategories;
+using Shared.Contracts.Dtos.v1.TrainingSessions;
 using Modules.Memberships.Application.Persistence;
 using Modules.Training.Application.Persistence;
 using WebApp.Models;
@@ -28,9 +30,37 @@ public interface IAdminOperationsPageService
     Task<AdminOperationsPageViewModel> BuildAsync(Guid gymId, string gymCode, CancellationToken cancellationToken = default);
 }
 
+public enum AdminSessionOperationStatus
+{
+    Success,
+    NotFound,
+    ValidationFailed
+}
+
+public sealed record AdminSessionOperationResult(
+    AdminSessionOperationStatus Status,
+    IReadOnlyList<string> Errors)
+{
+    public static AdminSessionOperationResult Success { get; } =
+        new(AdminSessionOperationStatus.Success, Array.Empty<string>());
+
+    public static AdminSessionOperationResult NotFound { get; } =
+        new(AdminSessionOperationStatus.NotFound, Array.Empty<string>());
+
+    public static AdminSessionOperationResult ValidationFailed(IEnumerable<string> errors) =>
+        new(AdminSessionOperationStatus.ValidationFailed, errors.ToArray());
+}
+
 public interface IAdminSessionsPageService
 {
     Task<AdminSessionsPageViewModel> BuildAsync(Guid gymId, string gymCode, CancellationToken cancellationToken = default);
+    Task<AdminSessionFormViewModel> BuildCreateFormAsync(string gymCode, CancellationToken cancellationToken = default);
+    Task<AdminSessionFormViewModel?> GetEditFormAsync(string gymCode, Guid sessionId, CancellationToken cancellationToken = default);
+    Task<AdminSessionDeleteViewModel?> GetDeleteViewAsync(string gymCode, Guid sessionId, CancellationToken cancellationToken = default);
+    Task<AdminSessionOperationResult> CreateAsync(string gymCode, AdminSessionFormViewModel form, CancellationToken cancellationToken = default);
+    Task<AdminSessionOperationResult> UpdateAsync(string gymCode, Guid sessionId, AdminSessionFormViewModel form, CancellationToken cancellationToken = default);
+    Task<AdminSessionOperationResult> DeleteAsync(string gymCode, Guid sessionId, CancellationToken cancellationToken = default);
+    Task PopulateOptionsAsync(string gymCode, AdminSessionFormViewModel form, CancellationToken cancellationToken = default);
 }
 
 public enum AdminMemberOperationStatus
@@ -150,7 +180,10 @@ public sealed class AdminOperationsPageService(IAdminOperationsQueryService oper
     }
 }
 
-public sealed class AdminSessionsPageService(IAdminSessionsQueryService sessionsQueryService) : IAdminSessionsPageService
+public sealed class AdminSessionsPageService(
+    IAdminSessionsQueryService sessionsQueryService,
+    ITrainingWorkflowService trainingWorkflowService,
+    IStaffWorkflowService staffWorkflowService) : IAdminSessionsPageService
 {
     public async Task<AdminSessionsPageViewModel> BuildAsync(Guid gymId, string gymCode, CancellationToken cancellationToken = default)
     {
@@ -163,6 +196,7 @@ public sealed class AdminSessionsPageService(IAdminSessionsQueryService sessions
             Sessions = sessions
                 .Select(row => new AdminSessionSummaryViewModel
                 {
+                    Id = row.Id,
                     Name = row.Name.Translate(culture) ?? row.Name.ToString(),
                     StartAtUtc = row.StartAtUtc,
                     EndAtUtc = row.EndAtUtc,
@@ -174,6 +208,166 @@ public sealed class AdminSessionsPageService(IAdminSessionsQueryService sessions
                 .ToArray()
         };
     }
+
+    public async Task<AdminSessionFormViewModel> BuildCreateFormAsync(string gymCode, CancellationToken cancellationToken = default)
+    {
+        var start = RoundToNextHour(DateTime.Now);
+        var form = new AdminSessionFormViewModel
+        {
+            GymCode = gymCode,
+            StartAt = start,
+            EndAt = start.AddHours(1),
+            Capacity = 10,
+            CurrencyCode = "EUR",
+            Status = TrainingSessionStatus.Draft
+        };
+
+        await PopulateOptionsAsync(gymCode, form, cancellationToken);
+        return form;
+    }
+
+    public async Task<AdminSessionFormViewModel?> GetEditFormAsync(string gymCode, Guid sessionId, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var session = await trainingWorkflowService.GetSessionAsync(gymCode, sessionId, cancellationToken);
+            var form = new AdminSessionFormViewModel
+            {
+                Id = session.Id,
+                GymCode = gymCode,
+                CategoryId = session.CategoryId,
+                Name = session.Name,
+                Description = session.Description,
+                StartAt = ToLocal(session.StartAtUtc),
+                EndAt = ToLocal(session.EndAtUtc),
+                Capacity = session.Capacity,
+                BasePrice = session.BasePrice,
+                CurrencyCode = session.CurrencyCode,
+                Status = session.Status,
+                TrainerStaffId = session.TrainerStaffId
+            };
+
+            await PopulateOptionsAsync(gymCode, form, cancellationToken);
+            return form;
+        }
+        catch (NotFoundException)
+        {
+            return null;
+        }
+    }
+
+    public async Task<AdminSessionDeleteViewModel?> GetDeleteViewAsync(string gymCode, Guid sessionId, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var session = await trainingWorkflowService.GetSessionAsync(gymCode, sessionId, cancellationToken);
+            return new AdminSessionDeleteViewModel
+            {
+                Id = session.Id,
+                GymCode = gymCode,
+                Name = session.Name,
+                StartAtUtc = session.StartAtUtc,
+                EndAtUtc = session.EndAtUtc,
+                Status = session.Status
+            };
+        }
+        catch (NotFoundException)
+        {
+            return null;
+        }
+    }
+
+    public async Task<AdminSessionOperationResult> CreateAsync(string gymCode, AdminSessionFormViewModel form, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            await trainingWorkflowService.UpsertTrainingSessionAsync(gymCode, null, ToUpsertRequest(form), cancellationToken);
+            return AdminSessionOperationResult.Success;
+        }
+        catch (ValidationAppException exception)
+        {
+            return AdminSessionOperationResult.ValidationFailed(exception.Errors);
+        }
+        catch (NotFoundException)
+        {
+            return AdminSessionOperationResult.NotFound;
+        }
+    }
+
+    public async Task<AdminSessionOperationResult> UpdateAsync(string gymCode, Guid sessionId, AdminSessionFormViewModel form, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            await trainingWorkflowService.UpsertTrainingSessionAsync(gymCode, sessionId, ToUpsertRequest(form), cancellationToken);
+            return AdminSessionOperationResult.Success;
+        }
+        catch (ValidationAppException exception)
+        {
+            return AdminSessionOperationResult.ValidationFailed(exception.Errors);
+        }
+        catch (NotFoundException)
+        {
+            return AdminSessionOperationResult.NotFound;
+        }
+    }
+
+    public async Task<AdminSessionOperationResult> DeleteAsync(string gymCode, Guid sessionId, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            await trainingWorkflowService.DeleteSessionAsync(gymCode, sessionId, cancellationToken);
+            return AdminSessionOperationResult.Success;
+        }
+        catch (ValidationAppException exception)
+        {
+            return AdminSessionOperationResult.ValidationFailed(exception.Errors);
+        }
+        catch (NotFoundException)
+        {
+            return AdminSessionOperationResult.NotFound;
+        }
+    }
+
+    public async Task PopulateOptionsAsync(string gymCode, AdminSessionFormViewModel form, CancellationToken cancellationToken = default)
+    {
+        var categories = await trainingWorkflowService.GetCategoriesAsync(gymCode, cancellationToken);
+        form.CategoryOptions = categories
+            .Select(category => new SelectListItem(category.Name, category.Id.ToString(), category.Id == form.CategoryId))
+            .ToArray();
+
+        var staff = await staffWorkflowService.GetStaffAsync(gymCode, cancellationToken: cancellationToken);
+        form.TrainerOptions = staff
+            .Where(member => member.Status == StaffStatus.Active)
+            .Select(member => new SelectListItem(
+                member.FullName,
+                member.Id.ToString(),
+                form.TrainerStaffId.HasValue && member.Id == form.TrainerStaffId.Value))
+            .ToArray();
+    }
+
+    private static TrainingSessionUpsertRequest ToUpsertRequest(AdminSessionFormViewModel form) =>
+        new()
+        {
+            CategoryId = form.CategoryId,
+            Name = form.Name.Trim(),
+            Description = string.IsNullOrWhiteSpace(form.Description) ? null : form.Description.Trim(),
+            StartAtUtc = ToUtc(form.StartAt),
+            EndAtUtc = ToUtc(form.EndAt),
+            Capacity = form.Capacity,
+            BasePrice = form.BasePrice,
+            CurrencyCode = string.IsNullOrWhiteSpace(form.CurrencyCode) ? "EUR" : form.CurrencyCode.Trim().ToUpperInvariant(),
+            Status = form.Status,
+            TrainerStaffId = form.TrainerStaffId
+        };
+
+    private static DateTime ToUtc(DateTime localWallClock) =>
+        DateTime.SpecifyKind(localWallClock, DateTimeKind.Local).ToUniversalTime();
+
+    private static DateTime ToLocal(DateTime utc) =>
+        DateTime.SpecifyKind(utc, DateTimeKind.Utc).ToLocalTime();
+
+    private static DateTime RoundToNextHour(DateTime value) =>
+        new DateTime(value.Year, value.Month, value.Day, value.Hour, 0, 0, value.Kind).AddHours(1);
 }
 
 public sealed class AdminMembersPageService(IMemberWorkflowService memberWorkflowService) : IAdminMembersPageService

@@ -14,6 +14,7 @@ public sealed class AdminSessionsQueryService(ITrainingSessionRepository trainin
         var sessions = await trainingSessionRepository.ListWithBookingsAndTrainerByGymAsync(gymId, DisplayLimit, cancellationToken);
         return sessions
             .Select(session => new AdminSessionRow(
+                session.Id,
                 session.Name,
                 session.StartAtUtc,
                 session.EndAtUtc,

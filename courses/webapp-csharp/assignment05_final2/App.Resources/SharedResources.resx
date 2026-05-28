@@ -21,6 +21,36 @@
   <data name="ClientAppHint" xml:space="preserve">
     <value>Member-facing SaaS client. Admin tasks stay here in the admin area.</value>
   </data>
+  <data name="AddNewSession" xml:space="preserve">
+    <value>Add new session</value>
+  </data>
+  <data name="CreateSession" xml:space="preserve">
+    <value>Create session</value>
+  </data>
+  <data name="EditSession" xml:space="preserve">
+    <value>Edit session</value>
+  </data>
+  <data name="DeleteSession" xml:space="preserve">
+    <value>Delete session</value>
+  </data>
+  <data name="StartTime" xml:space="preserve">
+    <value>Start time</value>
+  </data>
+  <data name="EndTime" xml:space="preserve">
+    <value>End time</value>
+  </data>
+  <data name="Trainer" xml:space="preserve">
+    <value>Trainer</value>
+  </data>
+  <data name="NoCategoriesCreateFirst" xml:space="preserve">
+    <value>Create a training category before scheduling sessions.</value>
+  </data>
+  <data name="AddNewCategory" xml:space="preserve">
+    <value>Add new category</value>
+  </data>
+  <data name="ConfirmSessionRemoval" xml:space="preserve">
+    <value>Are you sure you want to delete this session?</value>
+  </data>
   <data name="Login" xml:space="preserve">
     <value>Log in</value>
   </data>

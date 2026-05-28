@@ -17,6 +17,7 @@ public sealed record AdminOperationsSnapshot(
     IReadOnlyList<AdminMaintenanceTaskRow> MaintenanceTasks);
 
 public sealed record AdminSessionRow(
+    Guid Id,
     LangStr Name,
     DateTime StartAtUtc,
     DateTime EndAtUtc,
