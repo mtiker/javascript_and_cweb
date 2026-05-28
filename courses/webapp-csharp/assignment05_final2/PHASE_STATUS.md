@@ -1040,7 +1040,7 @@ fresh agent can resume without re-pasting prompts.
   - Hardened the separate-client deployment path: `docker-compose.prod.yml`
     renders the backend with both backend and standalone-client production CORS
     origins, the standalone client profile renders with
-    `VITE_API_BASE_URL=https://mtiker-cweb-4.proxy.itcollege.ee`, deploy
+    `VITE_API_BASE_URL=https://mtiker-cweb-a4.proxy.itcollege.ee`, deploy
     scripts now default `COMPOSE_PROJECT_NAME` to `assignment05-final2`, and
     `scripts/smoke-deploy.sh` now checks CORS preflight from `CLIENT_URL`.
   - Updated root and assignment deployment documentation plus the React login
@@ -1091,7 +1091,7 @@ fresh agent can resume without re-pasting prompts.
     passed/3 PostgreSQL opt-in skipped; `npm test -- --run` passed 32 tests
     across 6 files with existing React Router v7 future warnings; `npm run
     build` passed.
-- [~] **Phase 14 - Final2 deployment smoke test** - *partial: local Docker smoke passes; public deployment still not passing*
+- [x] **Phase 14 - Final2 deployment smoke test** - *complete 2026-05-26: public smoke 7/7 green*
   - Added Swagger/OpenAPI metadata and refresh-token renewal checks to
     `scripts/smoke-deploy.sh`. The smoke path now covers backend health,
     Swagger JSON, standalone client health, production CORS preflight, API
@@ -1112,13 +1112,13 @@ fresh agent can resume without re-pasting prompts.
   - Local production-stack smoke passed with project
     `assignment05-final2-smoke`, backend on `http://localhost:18083`,
     standalone client on `http://localhost:18081`, PostgreSQL using the Compose
-    volume, and `SMOKE_CORS_ORIGIN=https://mtiker-cweb-4-client.proxy.itcollege.ee`.
+    volume, and `SMOKE_CORS_ORIGIN=https://mtiker-cweb-a4-client.proxy.itcollege.ee`.
     The smoke covered backend `/health`, Swagger JSON, standalone client
     `/healthz`, production-origin CORS preflight, API login, refresh-token
     renewal, and authenticated `peak-forge` maintenance-task read.
   - Live smoke was attempted against
-    `https://mtiker-cweb-4.proxy.itcollege.ee` and
-    `https://mtiker-cweb-4-client.proxy.itcollege.ee` with the seeded
+    `https://mtiker-cweb-a4.proxy.itcollege.ee` and
+    `https://mtiker-cweb-a4-client.proxy.itcollege.ee` with the seeded
     `admin@peakforge.local` / `peak-forge` scenario after the local smoke
     passed. The script still stopped at backend `/health` because the public
     backend returned HTTP 404.
@@ -1141,8 +1141,20 @@ fresh agent can resume without re-pasting prompts.
     `Memberships` table now carries the `SessionsConsumed integer` column;
     `curl http://localhost:18083/health` returned HTTP 200 and
     `/swagger/v1/swagger.json` returned HTTP 200. The Track A.1 changes do
-    not block production deploy â€” the public 404 remains a VPS/proxy issue,
-    not a code issue.
+    not block production deploy.
+  - 2026-05-26 completion: root cause of the 404 was a hostname typo across
+    the repo (`mtiker-cweb-a4` vs the real proxy slot `mtiker-cweb-a4`). After
+    adding `POSTGRES_PASSWORD`, `CLIENT_PORT=85`, `VITE_API_BASE_URL=
+    https://mtiker-cweb-a4.proxy.itcollege.ee`, and `CORS_ALLOWED_ORIGIN_CLIENT=
+    https://mtiker-cweb-a4-client.proxy.itcollege.ee` as GitLab CI/CD
+    variables, the `assignment05_final2_deploy_client` manual job ran green
+    and brought the standalone client up on `testserver:85`. Public smoke
+    `BACKEND_URL=https://mtiker-cweb-a4.proxy.itcollege.ee CLIENT_URL=
+    https://mtiker-cweb-a4-client.proxy.itcollege.ee bash scripts/smoke-deploy.sh`
+    returned 7/7 green: backend health, Swagger JSON, client health, CORS
+    preflight, API login, refresh-token renewal, authenticated `peak-forge`
+    maintenance-task read. The Phase 14 deployment gate from the Final2
+    defense plan is met.
 
 - [x] **Phase 15 â€” Cross-module mediator production workflow**
   - Done 2026-05-25
