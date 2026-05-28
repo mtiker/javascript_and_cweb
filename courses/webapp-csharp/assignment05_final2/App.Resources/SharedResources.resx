@@ -15,6 +15,12 @@
   <data name="AppTitle" xml:space="preserve">
     <value>Multi-Gym Management System</value>
   </data>
+  <data name="OpenClientApp" xml:space="preserve">
+    <value>Open client app</value>
+  </data>
+  <data name="ClientAppHint" xml:space="preserve">
+    <value>Member-facing SaaS client. Admin tasks stay here in the admin area.</value>
+  </data>
   <data name="Login" xml:space="preserve">
     <value>Log in</value>
   </data>

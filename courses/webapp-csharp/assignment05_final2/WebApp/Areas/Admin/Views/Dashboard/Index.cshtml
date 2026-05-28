@@ -32,25 +32,24 @@
 <section class="panel">
     <h2>@L["QuickLinks"]</h2>
     <div class="link-strip">
-        <a href="@clientAppBaseUrl">@L["ClientArea"]</a>
         @if (hasSystemRole)
         {
-            <a href="@ClientAppUrlResolver.GetRouteUrl(Configuration, "/platform")">@L["AdminArea"]</a>
-            <a href="@ClientAppUrlResolver.GetRouteUrl(Configuration, "/console")">@L["Operations"]</a>
+            <a asp-area="Admin" asp-controller="Gyms" asp-action="Index">@L["Gyms"]</a>
         }
         @if (hasTenantAdminRole)
         {
-            <a href="@ClientAppUrlResolver.GetRouteUrl(Configuration, "/members")">@L["Members"]</a>
-            <a href="@ClientAppUrlResolver.GetRouteUrl(Configuration, "/sessions")">@L["Sessions"]</a>
-            <a href="@ClientAppUrlResolver.GetRouteUrl(Configuration, "/training-categories")">@L["TrainingCategories"]</a>
-            <a href="@ClientAppUrlResolver.GetRouteUrl(Configuration, "/membership-packages")">@L["MembershipPackages"]</a>
-            <a href="@ClientAppUrlResolver.GetRouteUrl(Configuration, "/finance-workspace")">@L["FinanceWorkspace"]</a>
-            <a href="@ClientAppUrlResolver.GetRouteUrl(Configuration, "/maintenance")">@L["Maintenance"]</a>
+            <a asp-area="Admin" asp-controller="Members" asp-action="Index">@L["Members"]</a>
+            <a asp-area="Admin" asp-controller="Memberships" asp-action="Index">@L["Memberships"]</a>
+            <a asp-area="Admin" asp-controller="MembershipPackages" asp-action="Index">@L["MembershipPackages"]</a>
+            <a asp-area="Admin" asp-controller="Sessions" asp-action="Index">@L["Sessions"]</a>
+            <a asp-area="Admin" asp-controller="TrainingCategories" asp-action="Index">@L["TrainingCategories"]</a>
+            <a asp-area="Admin" asp-controller="Operations" asp-action="Index">@L["Operations"]</a>
         }
-        <a asp-area="Admin" asp-controller="Gyms" asp-action="Index">@L["Gyms"]</a>
-        <a asp-area="Admin" asp-controller="Members" asp-action="Index">@L["Members"]</a>
-        <a asp-area="Admin" asp-controller="Memberships" asp-action="Index">@L["Memberships"]</a>
-        <a asp-area="Admin" asp-controller="Sessions" asp-action="Index">@L["Sessions"]</a>
-        <a asp-area="Admin" asp-controller="Operations" asp-action="Index">@L["Operations"]</a>
     </div>
+</section>
+
+<section class="panel">
+    <h2>@L["ClientArea"]</h2>
+    <p class="muted-text">@L["ClientAppHint"]</p>
+    <a class="primary" href="@clientAppBaseUrl">@L["OpenClientApp"]</a>
 </section>

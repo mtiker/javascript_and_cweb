@@ -59,7 +59,7 @@ public class SmokeTests(CustomWebApplicationFactory factory) : IClassFixture<Cus
     }
 
     [Fact]
-    public async Task AdminDashboard_QuickLinks_ExposeFunctionalSaasRoutes()
+    public async Task AdminDashboard_QuickLinks_StayInAdminAreaWithSingleClientEntry()
     {
         var client = await CreateMvcClientAsync("admin@peakforge.local");
 
@@ -67,13 +67,23 @@ public class SmokeTests(CustomWebApplicationFactory factory) : IClassFixture<Cus
         var html = await response.Content.ReadAsStringAsync();
 
         response.EnsureSuccessStatusCode();
+
+        // Admin work happens inside the admin area, so the quick links point there.
+        Assert.Contains("/Admin/Members", html);
+        Assert.Contains("/Admin/Memberships", html);
+        Assert.Contains("/Admin/MembershipPackages", html);
+        Assert.Contains("/Admin/Sessions", html);
+        Assert.Contains("/Admin/TrainingCategories", html);
+        Assert.Contains("/Admin/Operations", html);
+
+        // A single entry point into the SaaS client, with no per-feature deep links.
         Assert.Contains("href=\"/client\"", html);
-        Assert.Contains("href=\"/client/members\"", html);
-        Assert.Contains("href=\"/client/sessions\"", html);
-        Assert.Contains("href=\"/client/training-categories\"", html);
-        Assert.Contains("href=\"/client/membership-packages\"", html);
-        Assert.Contains("href=\"/client/finance-workspace\"", html);
-        Assert.Contains("href=\"/client/maintenance\"", html);
+        Assert.DoesNotContain("href=\"/client/members\"", html);
+        Assert.DoesNotContain("href=\"/client/sessions\"", html);
+        Assert.DoesNotContain("href=\"/client/training-categories\"", html);
+        Assert.DoesNotContain("href=\"/client/membership-packages\"", html);
+        Assert.DoesNotContain("href=\"/client/finance-workspace\"", html);
+        Assert.DoesNotContain("href=\"/client/maintenance\"", html);
     }
 
     [Fact]

@@ -15,6 +15,12 @@
   <data name="AppTitle" xml:space="preserve">
     <value>Mitme jõusaali haldussüsteem</value>
   </data>
+  <data name="OpenClientApp" xml:space="preserve">
+    <value>Ava kliendirakendus</value>
+  </data>
+  <data name="ClientAppHint" xml:space="preserve">
+    <value>Liikmetele mõeldud SaaS klient. Admini tegevused jäävad siia admini alasse.</value>
+  </data>
   <data name="Login" xml:space="preserve">
     <value>Logi sisse</value>
   </data>
