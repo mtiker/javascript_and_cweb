@@ -17,6 +17,7 @@ import { Route as AuthSessionsRouteImport } from './routes/_auth.sessions'
 import { Route as AuthProfileRouteImport } from './routes/_auth.profile'
 import { Route as AuthMembershipsRouteImport } from './routes/_auth.memberships'
 import { Route as AuthAdminRouteImport } from './routes/_auth.admin'
+import { Route as AuthSessionsIndexRouteImport } from './routes/_auth.sessions.index'
 import { Route as AuthSessionsSessionIdRouteImport } from './routes/_auth.sessions.$sessionId'
 import { Route as AuthAdminSessionsRouteImport } from './routes/_auth.admin.sessions'
 import { Route as AuthAdminMembersRouteImport } from './routes/_auth.admin.members'
@@ -61,6 +62,11 @@ const AuthAdminRoute = AuthAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthRoute,
 } as any)
+const AuthSessionsIndexRoute = AuthSessionsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthSessionsRoute,
+} as any)
 const AuthSessionsSessionIdRoute = AuthSessionsSessionIdRouteImport.update({
   id: '/$sessionId',
   path: '/$sessionId',
@@ -94,6 +100,7 @@ export interface FileRoutesByFullPath {
   '/admin/members': typeof AuthAdminMembersRoute
   '/admin/sessions': typeof AuthAdminSessionsRoute
   '/sessions/$sessionId': typeof AuthSessionsSessionIdRoute
+  '/sessions/': typeof AuthSessionsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -102,11 +109,11 @@ export interface FileRoutesByTo {
   '/admin': typeof AuthAdminRouteWithChildren
   '/memberships': typeof AuthMembershipsRoute
   '/profile': typeof AuthProfileRoute
-  '/sessions': typeof AuthSessionsRouteWithChildren
   '/admin/categories': typeof AuthAdminCategoriesRoute
   '/admin/members': typeof AuthAdminMembersRoute
   '/admin/sessions': typeof AuthAdminSessionsRoute
   '/sessions/$sessionId': typeof AuthSessionsSessionIdRoute
+  '/sessions': typeof AuthSessionsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -122,6 +129,7 @@ export interface FileRoutesById {
   '/_auth/admin/members': typeof AuthAdminMembersRoute
   '/_auth/admin/sessions': typeof AuthAdminSessionsRoute
   '/_auth/sessions/$sessionId': typeof AuthSessionsSessionIdRoute
+  '/_auth/sessions/': typeof AuthSessionsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -137,6 +145,7 @@ export interface FileRouteTypes {
     | '/admin/members'
     | '/admin/sessions'
     | '/sessions/$sessionId'
+    | '/sessions/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -145,11 +154,11 @@ export interface FileRouteTypes {
     | '/admin'
     | '/memberships'
     | '/profile'
-    | '/sessions'
     | '/admin/categories'
     | '/admin/members'
     | '/admin/sessions'
     | '/sessions/$sessionId'
+    | '/sessions'
   id:
     | '__root__'
     | '/'
@@ -164,6 +173,7 @@ export interface FileRouteTypes {
     | '/_auth/admin/members'
     | '/_auth/admin/sessions'
     | '/_auth/sessions/$sessionId'
+    | '/_auth/sessions/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -231,6 +241,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthAdminRouteImport
       parentRoute: typeof AuthRoute
     }
+    '/_auth/sessions/': {
+      id: '/_auth/sessions/'
+      path: '/'
+      fullPath: '/sessions/'
+      preLoaderRoute: typeof AuthSessionsIndexRouteImport
+      parentRoute: typeof AuthSessionsRoute
+    }
     '/_auth/sessions/$sessionId': {
       id: '/_auth/sessions/$sessionId'
       path: '/$sessionId'
@@ -280,10 +297,12 @@ const AuthAdminRouteWithChildren = AuthAdminRoute._addFileChildren(
 
 interface AuthSessionsRouteChildren {
   AuthSessionsSessionIdRoute: typeof AuthSessionsSessionIdRoute
+  AuthSessionsIndexRoute: typeof AuthSessionsIndexRoute
 }
 
 const AuthSessionsRouteChildren: AuthSessionsRouteChildren = {
   AuthSessionsSessionIdRoute: AuthSessionsSessionIdRoute,
+  AuthSessionsIndexRoute: AuthSessionsIndexRoute,
 }
 
 const AuthSessionsRouteWithChildren = AuthSessionsRoute._addFileChildren(
