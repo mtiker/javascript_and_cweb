@@ -10,7 +10,7 @@ namespace Modules.Users.Infrastructure;
 /// uses the active <see cref="AppDbContext"/> migration path until module
 /// migrations replace the compatibility bridge.
 /// </summary>
-public sealed class EfRefreshTokenRepository(AppDbContext dbContext) : IRefreshTokenRepository
+internal sealed class EfRefreshTokenRepository(AppDbContext dbContext) : IRefreshTokenRepository
 {
     public async Task<AppRefreshToken?> GetByUserAndTokenAsync(Guid userId, string refreshToken, CancellationToken cancellationToken = default)
     {

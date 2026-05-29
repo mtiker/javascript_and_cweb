@@ -3,7 +3,7 @@ using Modules.Maintenance.Application.Persistence;
 
 namespace Modules.Maintenance.Infrastructure;
 
-public sealed class EfMaintenancePersistenceContext(AppDbContext dbContext) : IMaintenancePersistenceContext
+internal sealed class EfMaintenancePersistenceContext(AppDbContext dbContext) : IMaintenancePersistenceContext
 {
     public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {

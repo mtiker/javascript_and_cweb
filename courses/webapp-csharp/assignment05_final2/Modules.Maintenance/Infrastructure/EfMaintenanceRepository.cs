@@ -6,7 +6,7 @@ using Modules.Maintenance.Application.Persistence;
 
 namespace Modules.Maintenance.Infrastructure;
 
-public sealed class EfMaintenanceRepository(AppDbContext dbContext) : IMaintenanceRepository
+internal sealed class EfMaintenanceRepository(AppDbContext dbContext) : IMaintenanceRepository
 {
     public async Task<IReadOnlyList<EquipmentModel>> ListEquipmentModelsByGymAsync(Guid gymId, CancellationToken cancellationToken = default)
     {

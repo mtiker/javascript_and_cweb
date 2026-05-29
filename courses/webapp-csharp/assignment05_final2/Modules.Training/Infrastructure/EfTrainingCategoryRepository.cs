@@ -5,7 +5,7 @@ using Modules.Training.Application.Persistence;
 
 namespace Modules.Training.Infrastructure;
 
-public sealed class EfTrainingCategoryRepository(AppDbContext dbContext) : ITrainingCategoryRepository
+internal sealed class EfTrainingCategoryRepository(AppDbContext dbContext) : ITrainingCategoryRepository
 {
     public async Task<IReadOnlyList<TrainingCategory>> ListByGymAsync(Guid gymId, CancellationToken cancellationToken = default)
     {

@@ -3,7 +3,7 @@ using Modules.Training.Application.Persistence;
 
 namespace Modules.Training.Infrastructure;
 
-public sealed class EfTrainingPersistenceContext(AppDbContext dbContext) : ITrainingPersistenceContext
+internal sealed class EfTrainingPersistenceContext(AppDbContext dbContext) : ITrainingPersistenceContext
 {
     public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {

@@ -6,7 +6,7 @@ using Shared.Contracts.Enums;
 
 namespace Modules.Memberships.Infrastructure;
 
-public sealed class EfMembershipRepository(AppDbContext dbContext) : IMembershipRepository
+internal sealed class EfMembershipRepository(AppDbContext dbContext) : IMembershipRepository
 {
     public async Task<IReadOnlyList<Membership>> ListByGymAsync(Guid gymId, CancellationToken cancellationToken = default)
     {

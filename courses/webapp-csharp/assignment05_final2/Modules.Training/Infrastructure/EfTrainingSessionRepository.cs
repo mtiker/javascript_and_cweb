@@ -6,7 +6,7 @@ using Modules.Training.Application.Persistence;
 
 namespace Modules.Training.Infrastructure;
 
-public sealed class EfTrainingSessionRepository(AppDbContext dbContext) : ITrainingSessionRepository
+internal sealed class EfTrainingSessionRepository(AppDbContext dbContext) : ITrainingSessionRepository
 {
     public async Task<IReadOnlyList<TrainingSession>> ListByGymAsync(Guid gymId, CancellationToken cancellationToken = default)
     {

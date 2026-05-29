@@ -5,7 +5,7 @@ using Modules.Memberships.Application.Persistence;
 
 namespace Modules.Memberships.Infrastructure;
 
-public sealed class EfMembershipPackageRepository(AppDbContext dbContext) : IMembershipPackageRepository
+internal sealed class EfMembershipPackageRepository(AppDbContext dbContext) : IMembershipPackageRepository
 {
     public async Task<IReadOnlyList<MembershipPackage>> ListByGymAsync(Guid gymId, CancellationToken cancellationToken = default)
     {

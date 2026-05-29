@@ -4,7 +4,7 @@ using Modules.Gyms.Application.Persistence;
 
 namespace Modules.Gyms.Infrastructure;
 
-public sealed class EfAuthorizationQueryRepository(AppDbContext dbContext) : IAuthorizationQueryRepository
+internal sealed class EfAuthorizationQueryRepository(AppDbContext dbContext) : IAuthorizationQueryRepository
 {
     public Task<AuthorizationGymLookup?> FindGymByCodeAsync(
         string gymCode,
