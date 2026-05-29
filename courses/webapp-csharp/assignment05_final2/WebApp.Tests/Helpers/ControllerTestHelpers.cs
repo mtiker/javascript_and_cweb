@@ -470,6 +470,9 @@ public sealed class DelegatingPlatformService : IPlatformService
     public Func<Guid, UpdateGymActivationRequest, CancellationToken, Task> UpdateGymActivationAsyncHandler { get; set; } =
         static (_, _, _) => Task.CompletedTask;
 
+    public Func<Guid, UpdateGymProfileRequest, CancellationToken, Task> UpdateGymProfileAsyncHandler { get; set; } =
+        static (_, _, _) => Task.CompletedTask;
+
     public Func<Guid, CancellationToken, Task<CompanySnapshotResponse>> GetGymSnapshotAsyncHandler { get; set; } =
         static (_, _) => Task.FromException<CompanySnapshotResponse>(new InvalidOperationException("GetGymSnapshotAsyncHandler not configured."));
 
@@ -484,6 +487,9 @@ public sealed class DelegatingPlatformService : IPlatformService
 
     public Task UpdateGymActivationAsync(Guid gymId, UpdateGymActivationRequest request, CancellationToken cancellationToken = default) =>
         UpdateGymActivationAsyncHandler(gymId, request, cancellationToken);
+
+    public Task UpdateGymProfileAsync(Guid gymId, UpdateGymProfileRequest request, CancellationToken cancellationToken = default) =>
+        UpdateGymProfileAsyncHandler(gymId, request, cancellationToken);
 
     public Task<CompanySnapshotResponse> GetGymSnapshotAsync(Guid gymId, CancellationToken cancellationToken = default) =>
         GetGymSnapshotAsyncHandler(gymId, cancellationToken);

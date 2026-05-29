@@ -10,8 +10,11 @@ using Shared.Contracts.Dtos.v1.MaintenanceTasks;
 using Shared.Contracts.Dtos.v1.Members;
 using Shared.Contracts.Dtos.v1.MembershipPackages;
 using Shared.Contracts.Dtos.v1.Memberships;
+using Shared.Contracts.Dtos.v1.Staff;
 using Shared.Contracts.Dtos.v1.TrainingCategories;
 using Shared.Contracts.Dtos.v1.TrainingSessions;
+using Shared.Contracts.Dtos.v1.System;
+using Shared.Contracts.Dtos.v1.System.Platform;
 using Modules.Memberships.Application.Persistence;
 using Modules.Training.Application.Persistence;
 using WebApp.Models;
@@ -23,9 +26,33 @@ public interface IAdminDashboardPageService
     Task<AdminDashboardViewModel> BuildAsync(CancellationToken cancellationToken = default);
 }
 
+public enum AdminGymOperationStatus
+{
+    Success,
+    NotFound,
+    ValidationFailed
+}
+
+public sealed record AdminGymOperationResult(
+    AdminGymOperationStatus Status,
+    IReadOnlyList<string> Errors)
+{
+    public static AdminGymOperationResult Success { get; } =
+        new(AdminGymOperationStatus.Success, Array.Empty<string>());
+
+    public static AdminGymOperationResult NotFound { get; } =
+        new(AdminGymOperationStatus.NotFound, Array.Empty<string>());
+
+    public static AdminGymOperationResult ValidationFailed(IEnumerable<string> errors) =>
+        new(AdminGymOperationStatus.ValidationFailed, errors.ToArray());
+}
+
 public interface IAdminGymsPageService
 {
     Task<AdminGymsPageViewModel> BuildAsync(CancellationToken cancellationToken = default);
+    Task<AdminGymFormViewModel?> GetEditFormAsync(Guid gymId, CancellationToken cancellationToken = default);
+    Task<AdminGymOperationResult> CreateAsync(AdminGymFormViewModel form, CancellationToken cancellationToken = default);
+    Task<AdminGymOperationResult> UpdateAsync(Guid gymId, AdminGymFormViewModel form, CancellationToken cancellationToken = default);
 }
 
 public enum AdminEquipmentOperationStatus
@@ -208,6 +235,7 @@ public sealed class AdminGymsPageService(IPlatformService platformService) : IAd
         var gyms = (await platformService.GetGymsAsync(cancellationToken))
             .Select(gym => new AdminGymSummaryViewModel
             {
+                Id = gym.GymId,
                 Name = gym.Name,
                 Code = gym.Code,
                 City = gym.City,
@@ -219,6 +247,90 @@ public sealed class AdminGymsPageService(IPlatformService platformService) : IAd
         {
             Gyms = gyms
         };
+    }
+
+    public async Task<AdminGymFormViewModel?> GetEditFormAsync(Guid gymId, CancellationToken cancellationToken = default)
+    {
+        var gym = (await platformService.GetGymsAsync(cancellationToken))
+            .FirstOrDefault(item => item.GymId == gymId);
+        if (gym is null)
+        {
+            return null;
+        }
+
+        return new AdminGymFormViewModel
+        {
+            Id = gym.GymId,
+            Name = gym.Name,
+            Code = gym.Code,
+            RegistrationCode = gym.RegistrationCode,
+            AddressLine = gym.AddressLine,
+            City = gym.City,
+            PostalCode = gym.PostalCode,
+            Country = gym.Country,
+            IsActive = gym.IsActive
+        };
+    }
+
+    public async Task<AdminGymOperationResult> CreateAsync(AdminGymFormViewModel form, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(form.OwnerEmail) ||
+            string.IsNullOrWhiteSpace(form.OwnerPassword) ||
+            string.IsNullOrWhiteSpace(form.OwnerFirstName) ||
+            string.IsNullOrWhiteSpace(form.OwnerLastName))
+        {
+            return AdminGymOperationResult.ValidationFailed(
+                ["Owner email, password, first name and last name are required when registering a gym."]);
+        }
+
+        try
+        {
+            await platformService.RegisterGymAsync(new RegisterGymRequest
+            {
+                Name = form.Name.Trim(),
+                Code = form.Code.Trim(),
+                RegistrationCode = string.IsNullOrWhiteSpace(form.RegistrationCode) ? null : form.RegistrationCode.Trim(),
+                AddressLine = form.AddressLine.Trim(),
+                City = form.City.Trim(),
+                PostalCode = form.PostalCode.Trim(),
+                Country = form.Country.Trim(),
+                OwnerEmail = form.OwnerEmail.Trim(),
+                OwnerPassword = form.OwnerPassword,
+                OwnerFirstName = form.OwnerFirstName.Trim(),
+                OwnerLastName = form.OwnerLastName.Trim()
+            }, cancellationToken);
+            return AdminGymOperationResult.Success;
+        }
+        catch (ValidationAppException exception)
+        {
+            return AdminGymOperationResult.ValidationFailed(exception.Errors);
+        }
+    }
+
+    public async Task<AdminGymOperationResult> UpdateAsync(Guid gymId, AdminGymFormViewModel form, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            await platformService.UpdateGymProfileAsync(gymId, new UpdateGymProfileRequest
+            {
+                Name = form.Name.Trim(),
+                RegistrationCode = string.IsNullOrWhiteSpace(form.RegistrationCode) ? null : form.RegistrationCode.Trim(),
+                AddressLine = form.AddressLine.Trim(),
+                City = form.City.Trim(),
+                PostalCode = form.PostalCode.Trim(),
+                Country = form.Country.Trim(),
+                IsActive = form.IsActive
+            }, cancellationToken);
+            return AdminGymOperationResult.Success;
+        }
+        catch (ValidationAppException exception)
+        {
+            return AdminGymOperationResult.ValidationFailed(exception.Errors);
+        }
+        catch (NotFoundException)
+        {
+            return AdminGymOperationResult.NotFound;
+        }
     }
 }
 
@@ -1509,5 +1621,174 @@ public sealed class AdminTrainingCategoriesPageService(
             Name = form.Name?.Trim() ?? string.Empty,
             Description = string.IsNullOrWhiteSpace(form.Description) ? null : form.Description.Trim()
         };
+    }
+}
+
+public enum AdminStaffOperationStatus
+{
+    Success,
+    ValidationFailed,
+    NotFound
+}
+
+public sealed record AdminStaffOperationResult(
+    AdminStaffOperationStatus Status,
+    IReadOnlyList<string> Errors)
+{
+    public static AdminStaffOperationResult Success { get; } =
+        new(AdminStaffOperationStatus.Success, Array.Empty<string>());
+
+    public static AdminStaffOperationResult NotFound { get; } =
+        new(AdminStaffOperationStatus.NotFound, Array.Empty<string>());
+
+    public static AdminStaffOperationResult ValidationFailed(IEnumerable<string> errors) =>
+        new(AdminStaffOperationStatus.ValidationFailed, errors.ToArray());
+}
+
+public interface IAdminStaffPageService
+{
+    Task<AdminStaffPageViewModel> BuildIndexAsync(string gymCode, CancellationToken cancellationToken = default);
+    Task<AdminStaffFormViewModel?> GetEditFormAsync(string gymCode, Guid staffId, CancellationToken cancellationToken = default);
+    Task<AdminStaffDeleteViewModel?> GetDeleteViewAsync(string gymCode, Guid staffId, CancellationToken cancellationToken = default);
+    Task<AdminStaffOperationResult> CreateAsync(string gymCode, AdminStaffFormViewModel form, CancellationToken cancellationToken = default);
+    Task<AdminStaffOperationResult> UpdateAsync(string gymCode, Guid staffId, AdminStaffFormViewModel form, CancellationToken cancellationToken = default);
+    Task<AdminStaffOperationResult> DeleteAsync(string gymCode, Guid staffId, CancellationToken cancellationToken = default);
+}
+
+public sealed class AdminStaffPageService(IStaffWorkflowService staffWorkflowService) : IAdminStaffPageService
+{
+    public async Task<AdminStaffPageViewModel> BuildIndexAsync(string gymCode, CancellationToken cancellationToken = default)
+    {
+        var staff = await staffWorkflowService.GetStaffAsync(gymCode, cancellationToken: cancellationToken);
+        var summaries = staff
+            .Select(member => new AdminStaffSummaryViewModel
+            {
+                Id = member.Id,
+                StaffCode = member.StaffCode,
+                FullName = member.FullName,
+                Status = member.Status
+            })
+            .ToArray();
+
+        return new AdminStaffPageViewModel
+        {
+            GymCode = gymCode,
+            TotalCount = summaries.Length,
+            ActiveCount = summaries.Count(member => member.Status == StaffStatus.Active),
+            SuspendedCount = summaries.Count(member => member.Status == StaffStatus.Suspended),
+            InactiveCount = summaries.Count(member => member.Status == StaffStatus.Inactive),
+            Staff = summaries
+        };
+    }
+
+    public async Task<AdminStaffFormViewModel?> GetEditFormAsync(string gymCode, Guid staffId, CancellationToken cancellationToken = default)
+    {
+        var staff = await FindSummaryAsync(gymCode, staffId, cancellationToken);
+        if (staff is null)
+        {
+            return null;
+        }
+
+        var (firstName, lastName) = SplitFullName(staff.FullName);
+        return new AdminStaffFormViewModel
+        {
+            Id = staff.Id,
+            FirstName = firstName,
+            LastName = lastName,
+            StaffCode = staff.StaffCode,
+            Status = staff.Status,
+            GymCode = gymCode
+        };
+    }
+
+    public async Task<AdminStaffDeleteViewModel?> GetDeleteViewAsync(string gymCode, Guid staffId, CancellationToken cancellationToken = default)
+    {
+        var staff = await FindSummaryAsync(gymCode, staffId, cancellationToken);
+        if (staff is null)
+        {
+            return null;
+        }
+
+        return new AdminStaffDeleteViewModel
+        {
+            Id = staff.Id,
+            StaffCode = staff.StaffCode,
+            FullName = staff.FullName,
+            Status = staff.Status,
+            GymCode = gymCode
+        };
+    }
+
+    public async Task<AdminStaffOperationResult> CreateAsync(string gymCode, AdminStaffFormViewModel form, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            await staffWorkflowService.CreateStaffAsync(gymCode, ToUpsertRequest(form), cancellationToken);
+            return AdminStaffOperationResult.Success;
+        }
+        catch (ValidationAppException exception)
+        {
+            return AdminStaffOperationResult.ValidationFailed(exception.Errors);
+        }
+        catch (NotFoundException)
+        {
+            return AdminStaffOperationResult.NotFound;
+        }
+    }
+
+    public async Task<AdminStaffOperationResult> UpdateAsync(string gymCode, Guid staffId, AdminStaffFormViewModel form, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            await staffWorkflowService.UpdateStaffAsync(gymCode, staffId, ToUpsertRequest(form), cancellationToken);
+            return AdminStaffOperationResult.Success;
+        }
+        catch (ValidationAppException exception)
+        {
+            return AdminStaffOperationResult.ValidationFailed(exception.Errors);
+        }
+        catch (NotFoundException)
+        {
+            return AdminStaffOperationResult.NotFound;
+        }
+    }
+
+    public async Task<AdminStaffOperationResult> DeleteAsync(string gymCode, Guid staffId, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            await staffWorkflowService.DeleteStaffAsync(gymCode, staffId, cancellationToken);
+            return AdminStaffOperationResult.Success;
+        }
+        catch (NotFoundException)
+        {
+            return AdminStaffOperationResult.NotFound;
+        }
+    }
+
+    private async Task<StaffResponse?> FindSummaryAsync(string gymCode, Guid staffId, CancellationToken cancellationToken)
+    {
+        var staff = await staffWorkflowService.GetStaffAsync(gymCode, cancellationToken: cancellationToken);
+        return staff.FirstOrDefault(member => member.Id == staffId);
+    }
+
+    private static StaffUpsertRequest ToUpsertRequest(AdminStaffFormViewModel form)
+    {
+        return new StaffUpsertRequest
+        {
+            FirstName = form.FirstName.Trim(),
+            LastName = form.LastName.Trim(),
+            StaffCode = form.StaffCode.Trim(),
+            Status = form.Status
+        };
+    }
+
+    private static (string FirstName, string LastName) SplitFullName(string fullName)
+    {
+        var trimmed = fullName.Trim();
+        var space = trimmed.IndexOf(' ');
+        return space < 0
+            ? (trimmed, string.Empty)
+            : (trimmed[..space], trimmed[(space + 1)..]);
     }
 }

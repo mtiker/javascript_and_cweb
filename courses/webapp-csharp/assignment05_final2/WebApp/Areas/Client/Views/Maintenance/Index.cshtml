@@ -2,20 +2,20 @@
 @inject IStringLocalizer<SharedResources> L
 <section class="panel">
     <h1>@L["Maintenance"]</h1>
-    <p>Gym: <strong>@Model.GymCode</strong></p>
+    <p>@L["Gym"]: <strong>@Model.GymCode</strong></p>
     @if (Model.Tasks.Count == 0)
     {
-        <p class="muted-text">No maintenance tasks are assigned to you in the active gym.</p>
+        <p class="muted-text">@L["NoMaintenanceTasksAssigned"]</p>
     }
     else
     {
         <table class="data-table">
             <thead>
             <tr>
-                <th>Task</th>
-                <th>Status</th>
-                <th>Due</th>
-                <th>Notes</th>
+                <th>@L["Task"]</th>
+                <th>@L["Status"]</th>
+                <th>@L["Due"]</th>
+                <th>@L["Notes"]</th>
                 <th></th>
             </tr>
             </thead>
@@ -27,7 +27,7 @@
                     <td>@task.Status</td>
                     <td>@task.DueAtUtc?.ToLocalTime().ToString("g")</td>
                     <td>@task.Notes</td>
-                    <td><a asp-action="Details" asp-route-id="@task.Id">Update</a></td>
+                    <td><a asp-action="Details" asp-route-id="@task.Id">@L["Update"]</a></td>
                 </tr>
             }
             </tbody>

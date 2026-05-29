@@ -1,0 +1,44 @@
+@model AdminStaffFormViewModel
+@inject IStringLocalizer<SharedResources> L
+
+<section class="panel">
+    <p class="eyebrow">@L["AdminWorkspace"]</p>
+    <h1>@L["EditTrainer"]</h1>
+    <p>@L["ActiveGym"]: <strong>@Model.GymCode</strong></p>
+</section>
+
+<section class="panel">
+    <form asp-area="Admin" asp-controller="Staff" asp-action="Edit" asp-route-id="@Model.Id" method="post" class="form-grid">
+        <div asp-validation-summary="All" class="validation-summary-errors"></div>
+        <input type="hidden" asp-for="Id" />
+
+        <div class="form-row">
+            <label asp-for="FirstName">@L["FirstName"]</label>
+            <input asp-for="FirstName" autocomplete="given-name" />
+            <span asp-validation-for="FirstName" class="field-validation-error"></span>
+        </div>
+
+        <div class="form-row">
+            <label asp-for="LastName">@L["LastName"]</label>
+            <input asp-for="LastName" autocomplete="family-name" />
+            <span asp-validation-for="LastName" class="field-validation-error"></span>
+        </div>
+
+        <div class="form-row">
+            <label asp-for="StaffCode">@L["StaffCode"]</label>
+            <input asp-for="StaffCode" />
+            <span asp-validation-for="StaffCode" class="field-validation-error"></span>
+        </div>
+
+        <div class="form-row">
+            <label asp-for="Status">@L["Status"]</label>
+            <select asp-for="Status" asp-items="Html.GetEnumSelectList<Shared.Contracts.Enums.StaffStatus>()"></select>
+            <span asp-validation-for="Status" class="field-validation-error"></span>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="primary">@L["SaveChanges"]</button>
+            <a asp-area="Admin" asp-controller="Staff" asp-action="Index" class="secondary">@L["Cancel"]</a>
+        </div>
+    </form>
+</section>

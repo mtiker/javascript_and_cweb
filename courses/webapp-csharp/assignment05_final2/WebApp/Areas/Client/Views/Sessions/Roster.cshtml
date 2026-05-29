@@ -1,11 +1,12 @@
 @model TrainerRosterPageViewModel
 @using Shared.Contracts.Enums
+@inject IStringLocalizer<SharedResources> L
 @{
     var statusMessage = TempData["StatusMessage"] as string;
 }
 
 <section class="panel">
-    <p class="eyebrow">Trainer roster</p>
+    <p class="eyebrow">@L["TrainerRoster"]</p>
     <h1>@Model.SessionName</h1>
     <p>@Model.StartAtUtc.ToLocalTime():g</p>
     @if (!string.IsNullOrWhiteSpace(statusMessage))
@@ -15,17 +16,17 @@
 
     @if (Model.Bookings.Count == 0)
     {
-        <p class="muted-text">No bookings for this session yet.</p>
+        <p class="muted-text">@L["NoBookingsYet"]</p>
     }
     else
     {
         <table class="data-table">
             <thead>
             <tr>
-                <th>Member</th>
-                <th>Status</th>
-                <th>Payment</th>
-                <th>Attendance</th>
+                <th>@L["Member"]</th>
+                <th>@L["Status"]</th>
+                <th>@L["Payment"]</th>
+                <th>@L["Attendance"]</th>
             </tr>
             </thead>
             <tbody>
@@ -40,12 +41,12 @@
                             <input type="hidden" name="sessionId" value="@Model.SessionId" />
                             <input type="hidden" name="bookingId" value="@booking.BookingId" />
                             <select name="status">
-                                <option value="@BookingStatus.Booked">Booked</option>
-                                <option value="@BookingStatus.Attended">Attended</option>
-                                <option value="@BookingStatus.NoShow">No show</option>
-                                <option value="@BookingStatus.Cancelled">Cancelled</option>
+                                <option value="@BookingStatus.Booked">@L["Booked"]</option>
+                                <option value="@BookingStatus.Attended">@L["Attended"]</option>
+                                <option value="@BookingStatus.NoShow">@L["NoShow"]</option>
+                                <option value="@BookingStatus.Cancelled">@L["Cancelled"]</option>
                             </select>
-                            <button type="submit">Save</button>
+                            <button type="submit">@L["Save"]</button>
                         </form>
                     </td>
                 </tr>
@@ -53,5 +54,5 @@
             </tbody>
         </table>
     }
-    <a asp-action="Details" asp-route-id="@Model.SessionId">Back to session</a>
+    <a asp-action="Details" asp-route-id="@Model.SessionId">@L["BackToSession"]</a>
 </section>

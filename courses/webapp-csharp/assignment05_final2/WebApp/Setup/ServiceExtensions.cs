@@ -26,6 +26,7 @@ public static class ServiceExtensions
         services.AddScoped<IAdminMembershipsPageService, AdminMembershipsPageService>();
         services.AddScoped<IAdminMembershipPackagesPageService, AdminMembershipPackagesPageService>();
         services.AddScoped<IAdminTrainingCategoriesPageService, AdminTrainingCategoriesPageService>();
+        services.AddScoped<IAdminStaffPageService, AdminStaffPageService>();
         services.AddScoped<IClientDashboardPageService, ClientDashboardPageService>();
         services.AddScoped<IClientSessionsPageService, ClientSessionsPageService>();
         services.AddScoped<IClientProfilePageService, ClientProfilePageService>();

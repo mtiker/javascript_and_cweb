@@ -1,4 +1,5 @@
 @model SessionDetailPageViewModel
+@inject IStringLocalizer<SharedResources> L
 @{
     var statusMessage = TempData["StatusMessage"] as string;
 }
@@ -12,16 +13,16 @@
     }
     <p>@Model.Session.Description</p>
     <dl class="definition-list">
-        <dt>Starts</dt>
+        <dt>@L["Starts"]</dt>
         <dd>@Model.Session.StartAtUtc.ToLocalTime():g</dd>
-        <dt>Ends</dt>
+        <dt>@L["Ends"]</dt>
         <dd>@Model.Session.EndAtUtc.ToLocalTime():g</dd>
-        <dt>Capacity</dt>
+        <dt>@L["Capacity"]</dt>
         <dd>@Model.Session.Capacity</dd>
-        <dt>Price</dt>
+        <dt>@L["Price"]</dt>
         <dd>@Model.Session.BasePrice @Model.Session.CurrencyCode</dd>
-        <dt>Trainers</dt>
-        <dd>@(Model.TrainerNames.Count == 0 ? "No trainers assigned" : string.Join(", ", Model.TrainerNames))</dd>
+        <dt>@L["Trainers"]</dt>
+        <dd>@(Model.TrainerNames.Count == 0 ? L["NoTrainersAssigned"].Value : string.Join(", ", Model.TrainerNames))</dd>
     </dl>
 
     @if (Model.CanBook)
@@ -29,27 +30,27 @@
         <form asp-action="Book" method="post" class="inline-form">
             <input type="hidden" name="id" value="@Model.Session.Id" />
             <label>
-                Payment reference
-                <input name="paymentReference" placeholder="Required when payment is due" />
+                @L["PaymentReference"]
+                <input name="paymentReference" placeholder="@L["PaymentReferenceHint"]" />
             </label>
-            <button type="submit">Book session</button>
+            <button type="submit">@L["BookSession"]</button>
         </form>
     }
     else if (Model.CurrentBookingId.HasValue)
     {
-        <p>Current booking status: <strong>@Model.CurrentBookingStatus</strong></p>
+        <p>@L["CurrentBookingStatus"] <strong>@Model.CurrentBookingStatus</strong></p>
         <form asp-action="CancelBooking" method="post" class="inline-form">
             <input type="hidden" name="id" value="@Model.Session.Id" />
             <input type="hidden" name="bookingId" value="@Model.CurrentBookingId" />
-            <button type="submit">Cancel booking</button>
+            <button type="submit">@L["CancelBooking"]</button>
         </form>
     }
 
     <div class="link-strip">
-        <a asp-action="Index">Back to sessions</a>
+        <a asp-action="Index">@L["BackToSessions"]</a>
         @if (Model.CanManageRoster)
         {
-            <a asp-action="Roster" asp-route-id="@Model.Session.Id">Trainer roster</a>
+            <a asp-action="Roster" asp-route-id="@Model.Session.Id">@L["TrainerRoster"]</a>
         }
     </div>
 </section>

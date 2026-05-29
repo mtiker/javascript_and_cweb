@@ -29,7 +29,10 @@ public class PlatformService(
                 Code = entity.Code,
                 IsActive = entity.IsActive,
                 City = entity.City,
-                Country = entity.Country
+                Country = entity.Country,
+                RegistrationCode = entity.RegistrationCode,
+                AddressLine = entity.AddressLine,
+                PostalCode = entity.PostalCode
             })
             .ToArrayAsync(cancellationToken);
     }
@@ -111,6 +114,22 @@ public class PlatformService(
                   ?? throw new NotFoundException("Gym was not found.");
 
         gym.IsActive = request.IsActive;
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task UpdateGymProfileAsync(Guid gymId, UpdateGymProfileRequest request, CancellationToken cancellationToken = default)
+    {
+        var gym = await dbContext.Gyms.FirstOrDefaultAsync(entity => entity.Id == gymId, cancellationToken)
+                  ?? throw new NotFoundException("Gym was not found.");
+
+        gym.Name = request.Name.Trim();
+        gym.RegistrationCode = string.IsNullOrWhiteSpace(request.RegistrationCode) ? null : request.RegistrationCode.Trim();
+        gym.AddressLine = request.AddressLine.Trim();
+        gym.City = request.City.Trim();
+        gym.PostalCode = request.PostalCode.Trim();
+        gym.Country = request.Country.Trim();
+        gym.IsActive = request.IsActive;
+
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 

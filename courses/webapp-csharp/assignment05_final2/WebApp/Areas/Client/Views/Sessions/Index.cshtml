@@ -2,21 +2,21 @@
 @inject IStringLocalizer<SharedResources> L
 <section class="panel">
     <h1>@L["Sessions"]</h1>
-    <p>Gym: <strong>@Model.GymCode</strong></p>
+    <p>@L["Gym"]: <strong>@Model.GymCode</strong></p>
     @if (Model.Sessions.Count == 0)
     {
-        <p class="muted-text">No sessions are currently scheduled.</p>
+        <p class="muted-text">@L["NoSessionsScheduled"]</p>
     }
     else
     {
         <table class="data-table">
             <thead>
             <tr>
-                <th>Name</th>
-                <th>Start</th>
-                <th>End</th>
-                <th>Status</th>
-                <th>Price</th>
+                <th>@L["Name"]</th>
+                <th>@L["Start"]</th>
+                <th>@L["End"]</th>
+                <th>@L["Status"]</th>
+                <th>@L["Price"]</th>
             </tr>
             </thead>
             <tbody>
@@ -28,7 +28,7 @@
                     <td>@session.EndAtUtc.ToLocalTime():g</td>
                     <td>@session.Status</td>
                     <td>@session.BasePrice @session.CurrencyCode</td>
-                    <td><a asp-action="Details" asp-route-id="@session.Id">Details</a></td>
+                    <td><a asp-action="Details" asp-route-id="@session.Id">@L["Details"]</a></td>
                 </tr>
             }
             </tbody>

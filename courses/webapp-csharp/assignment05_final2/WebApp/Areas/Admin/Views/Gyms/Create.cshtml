@@ -1,0 +1,91 @@
+@model AdminGymFormViewModel
+@inject IStringLocalizer<SharedResources> L
+
+<section class="panel">
+    <p class="eyebrow">@L["AdminWorkspace"]</p>
+    <h1>@L["CreateGym"]</h1>
+</section>
+
+<section class="panel">
+    <form asp-area="Admin" asp-controller="Gyms" asp-action="Create" method="post" class="form-grid">
+        <div asp-validation-summary="ModelOnly" class="validation-summary-errors"></div>
+
+        <div class="form-row">
+            <label asp-for="Name">@L["Name"]</label>
+            <input asp-for="Name" />
+            <span asp-validation-for="Name" class="field-validation-error"></span>
+        </div>
+
+        <div class="form-row">
+            <label asp-for="Code">@L["Code"]</label>
+            <input asp-for="Code" />
+            <span asp-validation-for="Code" class="field-validation-error"></span>
+        </div>
+
+        <div class="form-row">
+            <label asp-for="RegistrationCode">@L["RegistrationCode"]</label>
+            <input asp-for="RegistrationCode" />
+            <span asp-validation-for="RegistrationCode" class="field-validation-error"></span>
+        </div>
+
+        <div class="form-row">
+            <label asp-for="AddressLine">@L["Address"]</label>
+            <input asp-for="AddressLine" />
+            <span asp-validation-for="AddressLine" class="field-validation-error"></span>
+        </div>
+
+        <div class="form-row">
+            <label asp-for="City">@L["City"]</label>
+            <input asp-for="City" />
+            <span asp-validation-for="City" class="field-validation-error"></span>
+        </div>
+
+        <div class="form-row">
+            <label asp-for="PostalCode">@L["PostalCode"]</label>
+            <input asp-for="PostalCode" />
+            <span asp-validation-for="PostalCode" class="field-validation-error"></span>
+        </div>
+
+        <div class="form-row">
+            <label asp-for="Country">@L["Country"]</label>
+            <input asp-for="Country" />
+            <span asp-validation-for="Country" class="field-validation-error"></span>
+        </div>
+
+        <div class="form-row">
+            <label asp-for="IsActive">@L["Active"]</label>
+            <input asp-for="IsActive" type="checkbox" />
+        </div>
+
+        <h2>@L["GymOwnerCredentials"]</h2>
+
+        <div class="form-row">
+            <label asp-for="OwnerFirstName">@L["OwnerFirstName"]</label>
+            <input asp-for="OwnerFirstName" autocomplete="given-name" />
+            <span asp-validation-for="OwnerFirstName" class="field-validation-error"></span>
+        </div>
+
+        <div class="form-row">
+            <label asp-for="OwnerLastName">@L["OwnerLastName"]</label>
+            <input asp-for="OwnerLastName" autocomplete="family-name" />
+            <span asp-validation-for="OwnerLastName" class="field-validation-error"></span>
+        </div>
+
+        <div class="form-row">
+            <label asp-for="OwnerEmail">@L["OwnerEmail"]</label>
+            <input asp-for="OwnerEmail" type="email" autocomplete="email" />
+            <span asp-validation-for="OwnerEmail" class="field-validation-error"></span>
+        </div>
+
+        <div class="form-row">
+            <label asp-for="OwnerPassword">@L["OwnerPassword"]</label>
+            <input asp-for="OwnerPassword" type="password" autocomplete="new-password" />
+            <span asp-validation-for="OwnerPassword" class="field-validation-error"></span>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="primary">@L["RegisterGym"]</button>
+            <a asp-area="Admin" asp-controller="Gyms" asp-action="Index" class="secondary">@L["Cancel"]</a>
+        </div>
+    </form>
+</section>

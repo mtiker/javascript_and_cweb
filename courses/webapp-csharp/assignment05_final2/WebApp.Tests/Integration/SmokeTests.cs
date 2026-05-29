@@ -96,16 +96,16 @@ public class SmokeTests(CustomWebApplicationFactory factory) : IClassFixture<Cus
         await AssertStyledPageAsync(memberClient, "/mvc-client", "peak-forge");
         await AssertStyledPageAsync(memberClient, "/mvc-client/Profile", "MEM-001");
         await AssertStyledPageAsync(memberClient, "/mvc-client/Sessions", "peak-forge");
-        await AssertStyledPageAsync(memberClient, $"/mvc-client/Sessions/Details/{sessionId}", "Capacity");
+        await AssertStyledPageAsync(memberClient, $"/mvc-client/Sessions/Details/{sessionId}", "Mahutavus");
 
         var trainerClient = await CreateMvcClientAsync("trainer@peakforge.local");
         await AssertStyledPageAsync(trainerClient, "/mvc-client/Sessions", "peak-forge");
-        await AssertStyledPageAsync(trainerClient, $"/mvc-client/Sessions/Roster/{sessionId}", "Trainer roster");
+        await AssertStyledPageAsync(trainerClient, $"/mvc-client/Sessions/Roster/{sessionId}", "Treeneri nimekiri");
 
         var caretakerClient = await CreateMvcClientAsync("caretaker@peakforge.local");
         await AssertStyledPageAsync(caretakerClient, "/mvc-client/Sessions", "peak-forge");
         await AssertStyledPageAsync(caretakerClient, "/mvc-client/Maintenance", "Maintenance");
-        await AssertStyledPageAsync(caretakerClient, $"/mvc-client/Maintenance/Details/{maintenanceTaskId}", "Maintenance task");
+        await AssertStyledPageAsync(caretakerClient, $"/mvc-client/Maintenance/Details/{maintenanceTaskId}", "Hooldustöö");
     }
 
     [Fact]

@@ -8,6 +8,7 @@ public interface IPlatformService
     Task<IReadOnlyCollection<GymSummaryResponse>> GetGymsAsync(CancellationToken cancellationToken = default);
     Task<RegisterGymResponse> RegisterGymAsync(RegisterGymRequest request, CancellationToken cancellationToken = default);
     Task UpdateGymActivationAsync(Guid gymId, UpdateGymActivationRequest request, CancellationToken cancellationToken = default);
+    Task UpdateGymProfileAsync(Guid gymId, UpdateGymProfileRequest request, CancellationToken cancellationToken = default);
     Task<CompanySnapshotResponse> GetGymSnapshotAsync(Guid gymId, CancellationToken cancellationToken = default);
     Task<PlatformAnalyticsResponse> GetAnalyticsAsync(CancellationToken cancellationToken = default);
 }
