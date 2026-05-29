@@ -19,6 +19,7 @@ import { Route as AuthMembershipsRouteImport } from './routes/_auth.memberships'
 import { Route as AuthAdminRouteImport } from './routes/_auth.admin'
 import { Route as AuthSessionsIndexRouteImport } from './routes/_auth.sessions.index'
 import { Route as AuthSessionsSessionIdRouteImport } from './routes/_auth.sessions.$sessionId'
+import { Route as AuthAdminStaffRouteImport } from './routes/_auth.admin.staff'
 import { Route as AuthAdminSessionsRouteImport } from './routes/_auth.admin.sessions'
 import { Route as AuthAdminMembersRouteImport } from './routes/_auth.admin.members'
 import { Route as AuthAdminCategoriesRouteImport } from './routes/_auth.admin.categories'
@@ -72,6 +73,11 @@ const AuthSessionsSessionIdRoute = AuthSessionsSessionIdRouteImport.update({
   path: '/$sessionId',
   getParentRoute: () => AuthSessionsRoute,
 } as any)
+const AuthAdminStaffRoute = AuthAdminStaffRouteImport.update({
+  id: '/staff',
+  path: '/staff',
+  getParentRoute: () => AuthAdminRoute,
+} as any)
 const AuthAdminSessionsRoute = AuthAdminSessionsRouteImport.update({
   id: '/sessions',
   path: '/sessions',
@@ -99,6 +105,7 @@ export interface FileRoutesByFullPath {
   '/admin/categories': typeof AuthAdminCategoriesRoute
   '/admin/members': typeof AuthAdminMembersRoute
   '/admin/sessions': typeof AuthAdminSessionsRoute
+  '/admin/staff': typeof AuthAdminStaffRoute
   '/sessions/$sessionId': typeof AuthSessionsSessionIdRoute
   '/sessions/': typeof AuthSessionsIndexRoute
 }
@@ -112,6 +119,7 @@ export interface FileRoutesByTo {
   '/admin/categories': typeof AuthAdminCategoriesRoute
   '/admin/members': typeof AuthAdminMembersRoute
   '/admin/sessions': typeof AuthAdminSessionsRoute
+  '/admin/staff': typeof AuthAdminStaffRoute
   '/sessions/$sessionId': typeof AuthSessionsSessionIdRoute
   '/sessions': typeof AuthSessionsIndexRoute
 }
@@ -128,6 +136,7 @@ export interface FileRoutesById {
   '/_auth/admin/categories': typeof AuthAdminCategoriesRoute
   '/_auth/admin/members': typeof AuthAdminMembersRoute
   '/_auth/admin/sessions': typeof AuthAdminSessionsRoute
+  '/_auth/admin/staff': typeof AuthAdminStaffRoute
   '/_auth/sessions/$sessionId': typeof AuthSessionsSessionIdRoute
   '/_auth/sessions/': typeof AuthSessionsIndexRoute
 }
@@ -144,6 +153,7 @@ export interface FileRouteTypes {
     | '/admin/categories'
     | '/admin/members'
     | '/admin/sessions'
+    | '/admin/staff'
     | '/sessions/$sessionId'
     | '/sessions/'
   fileRoutesByTo: FileRoutesByTo
@@ -157,6 +167,7 @@ export interface FileRouteTypes {
     | '/admin/categories'
     | '/admin/members'
     | '/admin/sessions'
+    | '/admin/staff'
     | '/sessions/$sessionId'
     | '/sessions'
   id:
@@ -172,6 +183,7 @@ export interface FileRouteTypes {
     | '/_auth/admin/categories'
     | '/_auth/admin/members'
     | '/_auth/admin/sessions'
+    | '/_auth/admin/staff'
     | '/_auth/sessions/$sessionId'
     | '/_auth/sessions/'
   fileRoutesById: FileRoutesById
@@ -255,6 +267,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthSessionsSessionIdRouteImport
       parentRoute: typeof AuthSessionsRoute
     }
+    '/_auth/admin/staff': {
+      id: '/_auth/admin/staff'
+      path: '/staff'
+      fullPath: '/admin/staff'
+      preLoaderRoute: typeof AuthAdminStaffRouteImport
+      parentRoute: typeof AuthAdminRoute
+    }
     '/_auth/admin/sessions': {
       id: '/_auth/admin/sessions'
       path: '/sessions'
@@ -283,12 +302,14 @@ interface AuthAdminRouteChildren {
   AuthAdminCategoriesRoute: typeof AuthAdminCategoriesRoute
   AuthAdminMembersRoute: typeof AuthAdminMembersRoute
   AuthAdminSessionsRoute: typeof AuthAdminSessionsRoute
+  AuthAdminStaffRoute: typeof AuthAdminStaffRoute
 }
 
 const AuthAdminRouteChildren: AuthAdminRouteChildren = {
   AuthAdminCategoriesRoute: AuthAdminCategoriesRoute,
   AuthAdminMembersRoute: AuthAdminMembersRoute,
   AuthAdminSessionsRoute: AuthAdminSessionsRoute,
+  AuthAdminStaffRoute: AuthAdminStaffRoute,
 }
 
 const AuthAdminRouteWithChildren = AuthAdminRoute._addFileChildren(

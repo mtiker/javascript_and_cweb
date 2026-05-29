@@ -16,6 +16,8 @@ import {
   type Payment,
   type RegisterRequest,
   type Staff,
+  type StaffStatusUpdateRequest,
+  type StaffUpsertRequest,
   type TrainingCategory,
   type TrainingCategoryUpsertRequest,
   type TrainingSession,
@@ -157,6 +159,27 @@ export class ApiClient {
   // ---- staff ----
   getStaff(gym: string) {
     return this.req<Staff[]>(`${this.t(gym)}/staff`);
+  }
+  createStaff(gym: string, body: StaffUpsertRequest) {
+    return this.req<Staff>(`${this.t(gym)}/staff`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  }
+  updateStaff(gym: string, id: string, body: StaffUpsertRequest) {
+    return this.req<Staff>(`${this.t(gym)}/staff/${encodeURIComponent(id)}`, {
+      method: "PUT",
+      body: JSON.stringify(body),
+    });
+  }
+  updateStaffStatus(gym: string, id: string, body: StaffStatusUpdateRequest) {
+    return this.req<Staff>(`${this.t(gym)}/staff/${encodeURIComponent(id)}/status`, {
+      method: "PUT",
+      body: JSON.stringify(body),
+    });
+  }
+  deleteStaff(gym: string, id: string) {
+    return this.req<void>(`${this.t(gym)}/staff/${encodeURIComponent(id)}`, { method: "DELETE" });
   }
 
   // ---- bookings ----

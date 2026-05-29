@@ -2,7 +2,7 @@ import { createFileRoute, Outlet, Navigate, Link, useLocation } from "@tanstack/
 import { useAuth } from "@/lib/api/auth-context";
 import { PageBanner } from "@/components/page-banner";
 import bannerImg from "@/assets/banner-admin.jpg";
-import { Users, Tags, CalendarCog } from "lucide-react";
+import { Users, Tags, CalendarCog, Dumbbell } from "lucide-react";
 
 export const Route = createFileRoute("/_auth/admin")({
   component: AdminLayout,
@@ -26,6 +26,7 @@ function AdminLayout() {
   const tabs = [
     { to: "/admin/members", label: "Members", icon: Users },
     { to: "/admin/categories", label: "Categories", icon: Tags },
+    { to: "/admin/staff", label: "Trainers", icon: Dumbbell },
     { to: "/admin/sessions", label: "Sessions", icon: CalendarCog },
   ];
 

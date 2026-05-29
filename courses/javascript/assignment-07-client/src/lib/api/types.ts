@@ -237,6 +237,17 @@ export interface Staff {
   status: StaffStatus;
 }
 
+export interface StaffUpsertRequest {
+  firstName: string;
+  lastName: string;
+  staffCode: string;
+  status: StaffStatus;
+}
+
+export interface StaffStatusUpdateRequest {
+  status: StaffStatus;
+}
+
 // Errors
 export class ApiError extends Error {
   status: number;
