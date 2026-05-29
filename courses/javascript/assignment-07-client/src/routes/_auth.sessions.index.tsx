@@ -107,56 +107,56 @@ function SessionsPage() {
         {rows.map((s) => {
           const isPast = new Date(s.startAtUtc).getTime() < Date.now();
           return (
-          <Link
-            key={s.id}
-            to="/sessions/$sessionId"
-            params={{ sessionId: s.id }}
-            className={`group relative block overflow-hidden rounded-xl border p-5 shadow-[var(--shadow-elegant)] transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 ${
-              isPast
-                ? "border-green-500/40 bg-green-500/10 dark:bg-green-500/15"
-                : "border-border/60 bg-card"
-            }`}
-          >
-            <div
-              aria-hidden
-              className="pointer-events-none absolute -right-10 -top-10 size-32 rounded-full opacity-0 blur-3xl transition-opacity duration-500 group-hover:opacity-100"
-              style={{ background: "var(--gradient-primary)" }}
-            />
-            <div className="relative flex items-start justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <div className="flex size-9 items-center justify-center rounded-lg bg-primary/15 text-primary ring-1 ring-primary/30">
-                  <Calendar className="size-4" />
+            <Link
+              key={s.id}
+              to="/sessions/$sessionId"
+              params={{ sessionId: s.id }}
+              className={`group relative block overflow-hidden rounded-xl border p-5 shadow-[var(--shadow-elegant)] transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 ${
+                isPast
+                  ? "border-green-500/40 bg-green-500/10 dark:bg-green-500/15"
+                  : "border-border/60 bg-card"
+              }`}
+            >
+              <div
+                aria-hidden
+                className="pointer-events-none absolute -right-10 -top-10 size-32 rounded-full opacity-0 blur-3xl transition-opacity duration-500 group-hover:opacity-100"
+                style={{ background: "var(--gradient-primary)" }}
+              />
+              <div className="relative flex items-start justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <div className="flex size-9 items-center justify-center rounded-lg bg-primary/15 text-primary ring-1 ring-primary/30">
+                    <Calendar className="size-4" />
+                  </div>
+                  <h3 className="font-semibold leading-tight">{s.name}</h3>
                 </div>
-                <h3 className="font-semibold leading-tight">{s.name}</h3>
+                <Badge variant="secondary">{enumLabel(TrainingSessionStatus, s.status)}</Badge>
               </div>
-              <Badge variant="secondary">{enumLabel(TrainingSessionStatus, s.status)}</Badge>
-            </div>
-            <p className="relative mt-3 line-clamp-2 text-xs text-muted-foreground">
-              {s.description ?? "—"}
-            </p>
-            <dl className="relative mt-4 grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
-              <DataCell
-                icon={<Calendar className="size-3" />}
-                label="Start"
-                value={fmtDate(s.startAtUtc)}
-              />
-              <DataCell
-                icon={<Users className="size-3" />}
-                label="Capacity"
-                value={String(s.capacity)}
-              />
-              <DataCell
-                icon={<Wallet className="size-3" />}
-                label="Price"
-                value={fmtMoney(s.basePrice, s.currencyCode)}
-              />
-              <DataCell
-                icon={<UserCircle2 className="size-3" />}
-                label="Trainer"
-                value={s.trainerName ?? "—"}
-              />
-            </dl>
-          </Link>
+              <p className="relative mt-3 line-clamp-2 text-xs text-muted-foreground">
+                {s.description ?? "—"}
+              </p>
+              <dl className="relative mt-4 grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
+                <DataCell
+                  icon={<Calendar className="size-3" />}
+                  label="Start"
+                  value={fmtDate(s.startAtUtc)}
+                />
+                <DataCell
+                  icon={<Users className="size-3" />}
+                  label="Capacity"
+                  value={String(s.capacity)}
+                />
+                <DataCell
+                  icon={<Wallet className="size-3" />}
+                  label="Price"
+                  value={fmtMoney(s.basePrice, s.currencyCode)}
+                />
+                <DataCell
+                  icon={<UserCircle2 className="size-3" />}
+                  label="Trainer"
+                  value={s.trainerName ?? "—"}
+                />
+              </dl>
+            </Link>
           );
         })}
         {!sessionsQ.isLoading && rows.length === 0 && (
