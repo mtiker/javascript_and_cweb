@@ -104,12 +104,18 @@ function SessionsPage() {
       )}
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {rows.map((s) => (
+        {rows.map((s) => {
+          const isPast = new Date(s.startAtUtc).getTime() < Date.now();
+          return (
           <Link
             key={s.id}
             to="/sessions/$sessionId"
             params={{ sessionId: s.id }}
-            className="group relative block overflow-hidden rounded-xl border border-border/60 bg-card p-5 shadow-[var(--shadow-elegant)] transition-all duration-300 hover:-translate-y-1 hover:border-primary/40"
+            className={`group relative block overflow-hidden rounded-xl border p-5 shadow-[var(--shadow-elegant)] transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 ${
+              isPast
+                ? "border-green-500/40 bg-green-500/10 dark:bg-green-500/15"
+                : "border-border/60 bg-card"
+            }`}
           >
             <div
               aria-hidden
@@ -151,7 +157,8 @@ function SessionsPage() {
               />
             </dl>
           </Link>
-        ))}
+          );
+        })}
         {!sessionsQ.isLoading && rows.length === 0 && (
           <p className="col-span-full text-sm text-muted-foreground">No sessions match.</p>
         )}
