@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Modules.Gyms.Application;
 using Modules.Gyms.Application.Authorization;
+using Modules.Gyms.Application.Mappers;
 using Modules.Gyms.Application.Persistence;
 using Modules.Gyms.Application.Platform;
 using Modules.Gyms.Infrastructure;
@@ -47,6 +48,11 @@ public static class GymsModuleExtensions
         services.AddScoped<IAuthorizationService, AuthorizationService>();
         services.AddScoped<ISubscriptionTierLimitService, SubscriptionTierLimitService>();
         services.AddScoped<IPlatformService, PlatformService>();
+
+        services.AddScoped<IGymsTenantRepository, EfGymsTenantRepository>();
+        services.AddScoped<IGymsTenantPersistenceContext, EfGymsTenantPersistenceContext>();
+        services.AddScoped<IGymsTenantMapper, GymsTenantMapper>();
+        services.AddScoped<IGymsTenantWorkflowService, GymsTenantWorkflowService>();
 
         services.AddControllers()
             .AddApplicationPart(typeof(GymsModuleMarker).Assembly);

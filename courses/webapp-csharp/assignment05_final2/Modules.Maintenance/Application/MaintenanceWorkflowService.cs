@@ -7,8 +7,6 @@ using App.Domain.Entities;
 using Shared.Contracts.Enums;
 using Shared.Contracts.Dtos.v1.Equipment;
 using Shared.Contracts.Dtos.v1.EquipmentModels;
-using Shared.Contracts.Dtos.v1.GymSettings;
-using Shared.Contracts.Dtos.v1.GymUsers;
 using Shared.Contracts.Dtos.v1.MaintenanceTasks;
 using Modules.Maintenance.Application.Mappers;
 using Modules.Maintenance.Application.Persistence;
@@ -302,72 +300,6 @@ public class MaintenanceWorkflowService(
         var entity = await maintenanceRepository.FindMaintenanceTaskAsync(gymId, id, cancellationToken)
                      ?? throw new NotFoundException("Maintenance task was not found.");
         maintenanceRepository.RemoveMaintenanceTask(entity);
-        await persistenceContext.SaveChangesAsync(cancellationToken);
-    }
-
-    public async Task<GymSettingsResponse> GetGymSettingsAsync(string gymCode, CancellationToken cancellationToken = default)
-    {
-        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin, RoleNames.Member, RoleNames.Trainer, RoleNames.Caretaker);
-        var entity = await maintenanceRepository.FindGymSettingsAsync(gymId, cancellationToken)
-                     ?? throw new NotFoundException("Gym settings were not found.");
-        return mapper.ToGymSettings(entity);
-    }
-
-    public async Task<GymSettingsResponse> UpdateGymSettingsAsync(string gymCode, GymSettingsUpdateRequest request, CancellationToken cancellationToken = default)
-    {
-        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin);
-        var entity = await maintenanceRepository.FindGymSettingsAsync(gymId, cancellationToken)
-                     ?? throw new NotFoundException("Gym settings were not found.");
-        entity.CurrencyCode = request.CurrencyCode.Trim();
-        entity.TimeZone = request.TimeZone.Trim();
-        entity.AllowNonMemberBookings = request.AllowNonMemberBookings;
-        entity.BookingCancellationHours = request.BookingCancellationHours;
-        entity.PublicDescription = string.IsNullOrWhiteSpace(request.PublicDescription) ? entity.PublicDescription : ToLangStr(request.PublicDescription);
-        await persistenceContext.SaveChangesAsync(cancellationToken);
-        return mapper.ToGymSettings(entity);
-    }
-
-    public async Task<IReadOnlyCollection<GymUserResponse>> GetGymUsersAsync(string gymCode, CancellationToken cancellationToken = default)
-    {
-        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin);
-        var users = await maintenanceRepository.ListGymUsersAsync(gymId, cancellationToken);
-        return mapper.ToGymUserList(users);
-    }
-
-    public async Task<GymUserResponse> UpsertGymUserAsync(string gymCode, GymUserUpsertRequest request, CancellationToken cancellationToken = default)
-    {
-        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin);
-        var link = await maintenanceRepository.FindGymUserRoleAsync(gymId, request.AppUserId, request.RoleName, cancellationToken);
-        if (link == null)
-        {
-            link = new AppUserGymRole
-            {
-                GymId = gymId,
-                AppUserId = request.AppUserId,
-                RoleName = request.RoleName
-            };
-            await maintenanceRepository.AddGymUserRoleAsync(link, cancellationToken);
-        }
-
-        link.IsActive = request.IsActive;
-
-        await persistenceContext.SaveChangesAsync(cancellationToken);
-        link.AppUser ??= new App.Domain.Identity.AppUser
-        {
-            Id = link.AppUserId,
-            Email = await maintenanceRepository.FindUserEmailAsync(link.AppUserId, cancellationToken)
-                    ?? throw new NotFoundException("App user was not found.")
-        };
-
-        return mapper.ToGymUser(link);
-    }
-
-    public async Task DeleteGymUserAsync(string gymCode, Guid appUserId, string roleName, CancellationToken cancellationToken = default)
-    {
-        var gymId = await authorizationService.EnsureTenantAccessAsync(gymCode, cancellationToken, RoleNames.GymOwner, RoleNames.GymAdmin);
-        var entity = await maintenanceRepository.FindGymUserRoleAsync(gymId, appUserId, roleName, cancellationToken)
-                     ?? throw new NotFoundException("Gym user role was not found.");
-        maintenanceRepository.RemoveGymUserRole(entity);
         await persistenceContext.SaveChangesAsync(cancellationToken);
     }
 

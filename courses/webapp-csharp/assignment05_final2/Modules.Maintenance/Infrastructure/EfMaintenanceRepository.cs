@@ -211,45 +211,6 @@ internal sealed class EfMaintenanceRepository(AppDbContext dbContext) : IMainten
         dbContext.MaintenanceTasks.Remove(entity);
     }
 
-    public Task<GymSettings?> FindGymSettingsAsync(Guid gymId, CancellationToken cancellationToken = default)
-    {
-        return dbContext.GymSettings.FirstOrDefaultAsync(entity => entity.GymId == gymId, cancellationToken);
-    }
-
-    public async Task<IReadOnlyList<AppUserGymRole>> ListGymUsersAsync(Guid gymId, CancellationToken cancellationToken = default)
-    {
-        return await dbContext.AppUserGymRoles
-            .Include(entity => entity.AppUser)
-            .Where(entity => entity.GymId == gymId)
-            .OrderBy(entity => entity.RoleName)
-            .ToListAsync(cancellationToken);
-    }
-
-    public Task<AppUserGymRole?> FindGymUserRoleAsync(Guid gymId, Guid appUserId, string roleName, CancellationToken cancellationToken = default)
-    {
-        return dbContext.AppUserGymRoles.FirstOrDefaultAsync(
-            entity => entity.GymId == gymId && entity.AppUserId == appUserId && entity.RoleName == roleName,
-            cancellationToken);
-    }
-
-    public async Task AddGymUserRoleAsync(AppUserGymRole entity, CancellationToken cancellationToken = default)
-    {
-        await dbContext.AppUserGymRoles.AddAsync(entity, cancellationToken);
-    }
-
-    public void RemoveGymUserRole(AppUserGymRole entity)
-    {
-        dbContext.AppUserGymRoles.Remove(entity);
-    }
-
-    public async Task<string?> FindUserEmailAsync(Guid appUserId, CancellationToken cancellationToken = default)
-    {
-        return await dbContext.Users
-            .Where(entity => entity.Id == appUserId)
-            .Select(entity => entity.Email)
-            .FirstOrDefaultAsync(cancellationToken);
-    }
-
     private IQueryable<MaintenanceTask> MaintenanceTaskAggregateQuery()
     {
         return dbContext.MaintenanceTasks

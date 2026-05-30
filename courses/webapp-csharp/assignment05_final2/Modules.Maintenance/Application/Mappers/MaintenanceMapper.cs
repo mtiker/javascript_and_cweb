@@ -4,8 +4,6 @@ using App.Domain.Entities;
 using Shared.Contracts.Enums;
 using Shared.Contracts.Dtos.v1.Equipment;
 using Shared.Contracts.Dtos.v1.EquipmentModels;
-using Shared.Contracts.Dtos.v1.GymSettings;
-using Shared.Contracts.Dtos.v1.GymUsers;
 using Shared.Contracts.Dtos.v1.MaintenanceTasks;
 
 namespace Modules.Maintenance.Application.Mappers;
@@ -52,38 +50,6 @@ public sealed class MaintenanceMapper : IMaintenanceMapper
     {
         ArgumentNullException.ThrowIfNull(entities);
         return entities.Select(ToEquipment).ToArray();
-    }
-
-    public GymSettingsResponse ToGymSettings(GymSettings entity)
-    {
-        ArgumentNullException.ThrowIfNull(entity);
-        return new GymSettingsResponse
-        {
-            GymId = entity.GymId,
-            CurrencyCode = entity.CurrencyCode,
-            TimeZone = entity.TimeZone,
-            AllowNonMemberBookings = entity.AllowNonMemberBookings,
-            BookingCancellationHours = entity.BookingCancellationHours,
-            PublicDescription = Translate(entity.PublicDescription)
-        };
-    }
-
-    public GymUserResponse ToGymUser(AppUserGymRole entity)
-    {
-        ArgumentNullException.ThrowIfNull(entity);
-        return new GymUserResponse
-        {
-            AppUserId = entity.AppUserId,
-            Email = entity.AppUser?.Email ?? string.Empty,
-            RoleName = entity.RoleName,
-            IsActive = entity.IsActive
-        };
-    }
-
-    public IReadOnlyCollection<GymUserResponse> ToGymUserList(IEnumerable<AppUserGymRole> entities)
-    {
-        ArgumentNullException.ThrowIfNull(entities);
-        return entities.Select(ToGymUser).ToArray();
     }
 
     public MaintenanceTaskResponse ToMaintenanceTask(MaintenanceTask entity)
