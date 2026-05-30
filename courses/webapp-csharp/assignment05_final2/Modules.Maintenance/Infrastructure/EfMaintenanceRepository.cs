@@ -214,8 +214,6 @@ internal sealed class EfMaintenanceRepository(AppDbContext dbContext) : IMainten
     private IQueryable<MaintenanceTask> MaintenanceTaskAggregateQuery()
     {
         return dbContext.MaintenanceTasks
-            .Include(entity => entity.AssignedStaff)
-                .ThenInclude(entity => entity!.Person)
             .Include(entity => entity.Equipment)
                 .ThenInclude(entity => entity!.EquipmentModel);
     }

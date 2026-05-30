@@ -52,7 +52,7 @@ public sealed class MaintenanceMapper : IMaintenanceMapper
         return entities.Select(ToEquipment).ToArray();
     }
 
-    public MaintenanceTaskResponse ToMaintenanceTask(MaintenanceTask entity)
+    public MaintenanceTaskResponse ToMaintenanceTask(MaintenanceTask entity, string? assignedStaffName)
     {
         ArgumentNullException.ThrowIfNull(entity);
         return new MaintenanceTaskResponse
@@ -62,7 +62,7 @@ public sealed class MaintenanceMapper : IMaintenanceMapper
             EquipmentAssetTag = entity.Equipment?.AssetTag,
             EquipmentName = Translate(entity.Equipment?.EquipmentModel?.Name) ?? entity.Equipment?.AssetTag ?? "Equipment",
             AssignedStaffId = entity.AssignedStaffId,
-            AssignedStaffName = FormatStaffName(entity.AssignedStaff),
+            AssignedStaffName = assignedStaffName,
             CreatedByStaffId = entity.CreatedByStaffId,
             TaskType = entity.TaskType,
             Priority = entity.Priority,
@@ -78,17 +78,19 @@ public sealed class MaintenanceMapper : IMaintenanceMapper
         };
     }
 
-    public IReadOnlyCollection<MaintenanceTaskResponse> ToMaintenanceTaskList(IEnumerable<MaintenanceTask> entities)
+    public IReadOnlyCollection<MaintenanceTaskResponse> ToMaintenanceTaskList(
+        IEnumerable<MaintenanceTask> entities,
+        IReadOnlyDictionary<Guid, string> staffNameByStaffId)
     {
         ArgumentNullException.ThrowIfNull(entities);
-        return entities.Select(ToMaintenanceTask).ToArray();
-    }
-
-    private static string? FormatStaffName(Staff? staff)
-    {
-        return staff == null
-            ? null
-            : $"{staff.Person?.FirstName} {staff.Person?.LastName}".Trim();
+        ArgumentNullException.ThrowIfNull(staffNameByStaffId);
+        return entities
+            .Select(entity => ToMaintenanceTask(
+                entity,
+                entity.AssignedStaffId.HasValue && staffNameByStaffId.TryGetValue(entity.AssignedStaffId.Value, out var name)
+                    ? name
+                    : null))
+            .ToArray();
     }
 
     private static string? Translate(LangStr? value)

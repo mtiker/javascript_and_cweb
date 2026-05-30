@@ -149,7 +149,7 @@ public class MaintenanceWorkflowService(
         var tasks = hasFilter
             ? await maintenanceRepository.ListMaintenanceTasksByGymFilteredAsync(gymId, filter!.Status, filter.Priority, filter.TaskType, filter.EquipmentId, filter.AssignedStaffId, filter.DueBeforeUtc, cancellationToken)
             : await maintenanceRepository.ListMaintenanceTasksByGymAsync(gymId, cancellationToken);
-        return mapper.ToMaintenanceTaskList(tasks);
+        return mapper.ToMaintenanceTaskList(tasks, await ResolveStaffNamesAsync(gymId, tasks, cancellationToken));
     }
 
     public async Task<MaintenanceTaskResponse> CreateTaskAsync(string gymCode, MaintenanceTaskUpsertRequest request, CancellationToken cancellationToken = default)
@@ -197,7 +197,7 @@ public class MaintenanceWorkflowService(
         var saved = await maintenanceRepository.FindMaintenanceTaskAggregateAsync(gymId, task.Id, cancellationToken)
                     ?? throw new NotFoundException("Maintenance task was not found after creation.");
 
-        return mapper.ToMaintenanceTask(saved);
+        return mapper.ToMaintenanceTask(saved, await ResolveStaffNameAsync(gymId, saved.AssignedStaffId, cancellationToken));
     }
 
     public async Task<MaintenanceTaskResponse> UpdateTaskStatusAsync(string gymCode, Guid taskId, MaintenanceStatusUpdateRequest request, CancellationToken cancellationToken = default)
@@ -211,7 +211,7 @@ public class MaintenanceWorkflowService(
         ApplyTaskStatusUpdate(task, request);
 
         await persistenceContext.SaveChangesAsync(cancellationToken);
-        return mapper.ToMaintenanceTask(task);
+        return mapper.ToMaintenanceTask(task, await ResolveStaffNameAsync(gymId, task.AssignedStaffId, cancellationToken));
     }
 
     public async Task<MaintenanceTaskResponse> UpdateTaskAssignmentAsync(string gymCode, Guid taskId, MaintenanceAssignmentUpdateRequest request, CancellationToken cancellationToken = default)
@@ -239,7 +239,7 @@ public class MaintenanceWorkflowService(
         var saved = await maintenanceRepository.FindMaintenanceTaskAggregateAsync(gymId, task.Id, cancellationToken)
                     ?? throw new NotFoundException("Maintenance task was not found after assignment update.");
 
-        return mapper.ToMaintenanceTask(saved);
+        return mapper.ToMaintenanceTask(saved, await ResolveStaffNameAsync(gymId, saved.AssignedStaffId, cancellationToken));
     }
 
     public async Task<int> GenerateDueScheduledTasksAsync(string gymCode, CancellationToken cancellationToken = default)
@@ -310,6 +310,32 @@ public class MaintenanceWorkflowService(
         {
             throw new ValidationAppException(missingMessage);
         }
+    }
+
+    private async Task<string?> ResolveStaffNameAsync(Guid gymId, Guid? staffId, CancellationToken cancellationToken)
+    {
+        if (!staffId.HasValue) return null;
+        var staff = await trainingModuleApi.GetStaffSummaryAsync(gymId, staffId.Value, cancellationToken);
+        return staff?.FullName;
+    }
+
+    private async Task<IReadOnlyDictionary<Guid, string>> ResolveStaffNamesAsync(
+        Guid gymId,
+        IEnumerable<MaintenanceTask> tasks,
+        CancellationToken cancellationToken)
+    {
+        var staffIds = tasks
+            .Where(task => task.AssignedStaffId.HasValue)
+            .Select(task => task.AssignedStaffId!.Value)
+            .Distinct()
+            .ToArray();
+        var dict = new Dictionary<Guid, string>();
+        foreach (var staffId in staffIds)
+        {
+            var staff = await trainingModuleApi.GetStaffSummaryAsync(gymId, staffId, cancellationToken);
+            if (staff is not null) dict[staffId] = staff.FullName;
+        }
+        return dict;
     }
 
     private static void ApplyTaskStatusUpdate(MaintenanceTask task, MaintenanceStatusUpdateRequest request)
